@@ -135,8 +135,20 @@ void init_ffi_schedule(py::module_ &m) {
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("separate_tail", &Schedule::separateTail,
              "noDuplicateVarDefs"_a = false)
-        .def("as_matmul", &Schedule::asMatMul, "loop"_a,
-             "mode"_a = AsMatMulMode::KeepMemLayout)
+        .def("as_matmul",
+             static_cast<void (Schedule::*)(
+                 const ID &, AsMatMulMode, const Ref<Target> &, MatMulBackend)>(
+                 &Schedule::asMatMul),
+             "loop"_a, "mode"_a, "target"_a, "backend"_a)
+        .def("as_matmul",
+             static_cast<void (Schedule::*)(const ID &, AsMatMulMode,
+                                            const Ref<Target> &)>(
+                 &Schedule::asMatMul),
+             "loop"_a, "mode"_a, "target"_a)
+        .def("as_matmul",
+             static_cast<void (Schedule::*)(const ID &, AsMatMulMode)>(
+                 &Schedule::asMatMul),
+             "loop"_a, "mode"_a = AsMatMulMode::KeepMemLayout)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
              "nest_level_0"_a = 0, "nest_level_1"_a = 0,
              "fusable_overlap_threshold"_a = 1,

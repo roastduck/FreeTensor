@@ -22,7 +22,7 @@ def test_basic():
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert logs == ["as_matmul(Li)"]
+    assert logs == ["as_matmul(Li, mkl)"]
 
 
 def test_fission_when_prefer_libs():
@@ -48,5 +48,5 @@ def test_fission_when_prefer_libs():
     print(s.ast())
     logs = list(map(str, s.logs()))
     print(logs)
-    assert "as_matmul($fission.0.lib{Li})" in logs
-    assert "as_matmul($fission.1.lib{Li})" in logs
+    assert "as_matmul($fission.0.lib{Li}, mkl)" in logs
+    assert "as_matmul($fission.1.lib{Li}, mkl)" in logs

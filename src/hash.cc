@@ -150,6 +150,7 @@ size_t Hasher::compHash(const EvalNode &op) {
 
 size_t Hasher::compHash(const MatMulNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
+    h = ((h + std::hash<MatMulBackend>()(op.backend_)) * K2 + B2) % P;
     h = ((h + op.equivalent_->hash()) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
@@ -412,6 +413,9 @@ bool HashComparator::compare(const Eval &lhs, const Eval &rhs) const {
 }
 
 bool HashComparator::compare(const MatMul &lhs, const MatMul &rhs) const {
+    if (lhs->backend_ != rhs->backend_) {
+        return false;
+    }
     return (*this)(lhs->equivalent_, rhs->equivalent_);
 }
 

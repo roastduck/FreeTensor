@@ -114,6 +114,19 @@ void init_ffi_ast_stmt(py::module_ &m) {
         .def_readonly("tape_name", &MarkVersionNode::tapeName_)
         .def_readonly("var", &MarkVersionNode::var_);
 
+    py::class_<MatMulBackend>(m, "MatMulBackend")
+        .def(py::init<MatMulBackend>())
+        .def(py::init(&parseMatMulBackend))
+        .def("__str__",
+             static_cast<std::string (*)(const MatMulBackend &)>(&toString))
+        .def("__hash__", [](MatMulBackend backend) { return (size_t)backend; })
+        .def("__eq__",
+             [](MatMulBackend lhs, MatMulBackend rhs) { return lhs == rhs; })
+        .def("__eq__", [](MatMulBackend lhs, const std::string &rhs) {
+            return lhs == parseMatMulBackend(rhs);
+        });
+    // no py::implicitly_convertible from str, because it fails silently
+
     // makers
     m.def("makeAny", []() { return makeAny(); });
     m.def(

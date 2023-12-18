@@ -55,7 +55,9 @@ void init_ffi_codegen(py::module_ &m) {
 
     m.def("code_gen", &codeGen, "func"_a, "target"_a);
     m.def("code_gen_cpu", &codeGenCPU, "func"_a, "target"_a);
+#ifdef FT_WITH_CUDA
     m.def("code_gen_cuda", &codeGenCUDA, "func"_a, "target"_a);
+#endif // FT_WITH_CUDA
 }
 
 } // namespace freetensor

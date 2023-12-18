@@ -339,7 +339,7 @@ class Mutator {
 
     virtual Stmt visit(const MatMul &op) {
         return makeMatMul(
-            (*this)(op->a_), (*this)(op->b_), (*this)(op->c_),
+            op->backend_, (*this)(op->a_), (*this)(op->b_), (*this)(op->c_),
             (*this)(op->alpha_), (*this)(op->beta_), (*this)(op->m_),
             (*this)(op->k_), (*this)(op->n_), (*this)(op->lda_),
             (*this)(op->ldb_), (*this)(op->ldc_), (*this)(op->stridea_),

@@ -1,6 +1,8 @@
 #ifndef FREE_TENSOR_CODE_GEN_CUDA_H
 #define FREE_TENSOR_CODE_GEN_CUDA_H
 
+#ifdef FT_WITH_CUDA
+
 #include <unordered_map>
 #include <unordered_set>
 
@@ -20,19 +22,21 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     typedef CodeGenCUDAStream Stream;
 
   private:
+    Ref<GPUTarget> target_;
     std::string kernelPrefix_;
     int nKernel_ = 0;
     Expr sharedStackTop_ = makeIntConst(0);
     Expr globalStackTop_ = makeIntConst(0);
     Expr globalSize_ = makeIntConst(0);
     std::unordered_set<Stmt> streamScopes_;
-    bool inCublas_ = false;
+    bool inMatmul_ = false;
 
   public:
     CodeGenCUDA(const std::vector<FuncParam> &params,
                 const std::vector<FuncRet> &returns,
-                const std::string &kernelPrefix)
-        : CodeGenC(params, returns), kernelPrefix_(kernelPrefix) {}
+                const Ref<GPUTarget> &target, const std::string &kernelPrefix)
+        : CodeGenC(params, returns), target_(target),
+          kernelPrefix_(kernelPrefix) {}
 
     using CodeGenC<CodeGenCUDAStream>::genMdPtrType;
     using CodeGenC<CodeGenCUDAStream>::genMdPtrDef;
@@ -102,5 +106,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 NativeCode codeGenCUDA(const Func &func, const Ref<Target> &target);
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_CODE_GEN_CUDA_H

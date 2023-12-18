@@ -16,6 +16,8 @@ from .analyze import find_stmt
 from .jit import JITTemplate
 from .meta import MemType
 from .utils import as_decorator
+from .driver import TargetType
+from . import config
 
 
 class IDMap:
@@ -779,7 +781,11 @@ class Schedule(ffi.Schedule):
         """
         super().separate_tail(noDuplicateVarDefs)
 
-    def as_matmul(self, loop, mode: AsMatMulMode = AsMatMulMode.KeepMemLayout):
+    def as_matmul(self,
+                  loop,
+                  mode: AsMatMulMode = AsMatMulMode.KeepMemLayout,
+                  target=None,
+                  backend: Union[str, ffi.MatMulBackend] = None):
         """
         Transform nested loops to be a external call to a matrix multiplication
 
@@ -795,13 +801,30 @@ class Schedule(ffi.Schedule):
             => try `var_reorder` on some variables, but may affect performance of
             other use of these variable. `TryTranspose` => try `cache` and then
             `var_reorder` on some variables, but will incur extra overhead.
+        target : Target
+            Hardware target. If omitted, use the default target in config, or the
+            target set by `with` scopes.
+        backend : str, ffi.MatMulBackend
+            Backend library. Defaults to "mkl" for CPU targets, "cublas" for GPU
+            targets.
 
         Raises
         ------
         InvalidSchedule
             if the loop cannot be transformed to be a matrix multiplication
         """
-        super().as_matmul(self._lookup(loop), mode)
+        if target is None:
+            target = config.default_target()
+        if backend is None:
+            if target.type() == TargetType.CPU:
+                backend = "mkl"
+            elif target.type() == TargetType.GPU:
+                backend = "cublas"
+            else:
+                raise ffi.InvalidSchedule(
+                    "No default MatMul backend for target " + target)
+        super().as_matmul(self._lookup(loop), mode, target,
+                          ffi.MatMulBackend(backend))
 
     def pluto_fuse(self,
                    loop0,

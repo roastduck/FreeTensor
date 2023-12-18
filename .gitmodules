@@ -21,3 +21,6 @@
 [submodule "3rd-party/range-v3"]
     path = 3rd-party/range-v3
     url = ../../ericniebler/range-v3.git
+[submodule "3rd-party/cutlass"]
+	path = 3rd-party/cutlass
+	url = ../../NVIDIA/cutlass.git

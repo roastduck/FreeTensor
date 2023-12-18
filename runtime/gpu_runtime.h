@@ -9,6 +9,9 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include "cutlass/cutlass.h"
+#include "cutlass/gemm/device/gemm.h"
+
 #include "gpu_context.h"
 
 #include "mdspan.h"
@@ -19,6 +22,16 @@
 #define restrict __restrict__
 
 #define checkCudaError(...) runtimeCheckCudaError(__VA_ARGS__)
+
+#define checkCutlassError(call)                                                \
+    {                                                                          \
+        auto err = (call);                                                     \
+        if (cutlass::Status::kSuccess != err) {                                \
+            fprintf(stderr, "Cutlass error in file '%s' in line %i : %s.\n",   \
+                    __FILE__, __LINE__, cutlassGetStatusString(err));          \
+            throw std::runtime_error("cutlass error");                         \
+        }                                                                      \
+    }
 
 inline void *cudaNew(size_t size, cudaStream_t stream) {
     void *ptr = nullptr;

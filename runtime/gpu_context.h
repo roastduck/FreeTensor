@@ -52,6 +52,8 @@ inline const char *cublasGetErrorString(cublasStatus_t error) {
     return "<unknown>";
 }
 
+// checkCutlassError is defined in gpu_runtime.h
+
 class GPUContext : public Context {
     bool initialized_ = false;
     cublasHandle_t cublas_;
