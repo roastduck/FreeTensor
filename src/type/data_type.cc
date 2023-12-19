@@ -11,6 +11,8 @@ size_t sizeOf(BaseDataType dtype) {
     case BaseDataType::Float32:
     case BaseDataType::Int32:
         return 4;
+    case BaseDataType::Float16:
+        return 2;
     case BaseDataType::Bool:
         return 1;
     case BaseDataType::Custom:
@@ -38,6 +40,7 @@ bool isFloat(BaseDataType dtype) {
     case BaseDataType::Never:
     case BaseDataType::Float64:
     case BaseDataType::Float32:
+    case BaseDataType::Float16:
         return true;
     default:
         return false;

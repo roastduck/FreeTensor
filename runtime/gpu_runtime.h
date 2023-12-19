@@ -9,8 +9,11 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "cutlass/cutlass.h"
-#include "cutlass/gemm/device/gemm.h"
+#include <cuda_fp16.h>
+
+#include <cutlass/cutlass.h>
+#include <cutlass/gemm/device/gemm.h>
+#include <cutlass/numeric_types.h>
 
 #include "gpu_context.h"
 

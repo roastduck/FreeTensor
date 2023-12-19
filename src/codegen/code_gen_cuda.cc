@@ -15,12 +15,14 @@
 
 namespace freetensor {
 
-static std::string genCUBLASType(DataType dtype) {
+static std::string genCUBLASType(const DataType &dtype) {
     switch (dtype.base()) {
     case DataType::Float64:
         return "CUDA_R_64F";
     case DataType::Float32:
         return "CUDA_R_32F";
+    case DataType::Float16:
+        return "CUDA_R_16F";
     case DataType::Int64:
         return "CUDA_R_64I";
     case DataType::Int32:
@@ -30,9 +32,32 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
+static std::string genCUTLASSType(const DataType &dtype) {
+    switch (dtype.base()) {
+    case DataType::Float64:
+        return "double";
+    case DataType::Float32:
+        return "float";
+    case DataType::Float16:
+        return "cutlass::half_t";
+    case DataType::Int64:
+        return "int64_t";
+    case DataType::Int32:
+        return "int32_t";
+    case DataType::Bool:
+        return "bool";
+    default:
+        ASSERT(false);
+    }
+}
+
 static bool canUseTensorCore(const Ref<GPUTarget> &target, DataType dtypeA,
                              DataType dtypeB, DataType dtypeC) {
-    // TODO: fp16 is supported after sm70
+    if (target->computeCapability().first >= 7 && dtypeA == DataType::Float16 &&
+        dtypeB == DataType::Float16 &&
+        (dtypeC == DataType::Float16 || dtypeC == DataType::Float32)) {
+        return true;
+    }
     if (target->computeCapability().first >= 8 && dtypeA == DataType::Float64 &&
         dtypeB == DataType::Float64 && dtypeC == DataType::Float64) {
         return true;
@@ -49,7 +74,17 @@ CodeGenCUDA::genMdPtrType(const VarDef &def, bool isConst) {
         // Use pointer instead of reference for scalars, because when passing an
         // argument from host to a kernel, a reference means copy the value from
         // CPU to GPU, while a pointer means passing the address
+
+        // NOTE: `[=]` implicitly capturing `this` is deprecated in C++20. Using
+        // `[=]` will trigger a warning in GCC (because of deprecation), but
+        // using
+        // `[=, this]` will trigger a warning in Clang<17 (because it will think
+        // `this` is duplicated).
+#if defined(__clang__) && __clang_major__ < 17
         return [=](std::ostream &os) -> std::ostream & {
+#else
+        return [=, this](std::ostream &os) -> std::ostream & {
+#endif
             if (isConst) {
                 os << "const ";
             }
@@ -75,6 +110,14 @@ void CodeGenCUDA::genMdPtrDef(const VarDef &def,
         return;
     }
     CodeGenC<CodeGenCUDAStream>::genMdPtrDef(def, genRawPtr, isConst);
+}
+
+std::string CodeGenCUDA::gen(const DataType &dtype) {
+    if (dtype == DataType::Float16) {
+        return "__half";
+    } else {
+        return CodeGenC::gen(dtype);
+    }
 }
 
 void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
@@ -381,6 +424,72 @@ void CodeGenCUDA::visit(const Ceil &op) {
     os() << "runtime_ceil("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);
     os() << ")";
+}
+
+void CodeGenCUDA::visit(const Cast &op) {
+    if (op->destType_.base() == DataType::Float16) {
+        switch (op->expr_->dtype().base()) {
+        case DataType::Int32:
+            os() << "__int2half_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Int64:
+            os() << "__ll2half_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float16:
+            (*this)(op->expr_);
+            break;
+        case DataType::Float32:
+            os() << "__float2half_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float64:
+            os() << "__double2half("; // Always `_rn` (round to nearest even)
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        default:
+            throw InvalidProgram("Converting from " +
+                                 freetensor::toString(op->dtype()) +
+                                 " to float16 is not supported");
+        }
+    } else if (op->expr_->dtype().base() == DataType::Float16) {
+        switch (op->destType_.base()) {
+        case DataType::Int32:
+            os() << "__half2int_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Int64:
+            os() << "__half2ll_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float16:
+            (*this)(op->expr_);
+            break;
+        case DataType::Float32:
+            os() << "__half2float("; // Short to long, no rounding is needed
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float64:
+            os() << "__half2double("; // Short to long, no rounding is needed
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        default:
+            throw InvalidProgram("Converting from float16 to " +
+                                 freetensor::toString(op->dtype()) +
+                                 " is not supported");
+        }
+    } else {
+        CodeGenC::visit(op);
+    }
 }
 
 void CodeGenCUDA::visit(const Store &op) {
@@ -843,50 +952,64 @@ void CodeGenCUDA::visit(const MatMul &op) {
         }
 
         makeIndent();
-        os() << "cutlass::gemm::device::Gemm<" << gen(op->a_->dtype()) << ", "
+        beginBlock();
+        makeIndent();
+        os() << "using Gemm = cutlass::gemm::device::Gemm<"
+             << genCUTLASSType(op->a_->dtype()) << ", "
              << (transA ? "cutlass::layout::ColumnMajor"
                         : "cutlass::layout::RowMajor")
-             << ", " << gen(op->b_->dtype()) << ", "
+             << ", " << genCUTLASSType(op->b_->dtype()) << ", "
              << (transB ? "cutlass::layout::ColumnMajor"
                         : "cutlass::layout::RowMajor")
-             << ", " << gen(op->c_->dtype()) << ", "
+             << ", " << genCUTLASSType(op->c_->dtype()) << ", "
              << (transC ? "cutlass::layout::ColumnMajor"
                         : "cutlass::layout::RowMajor")
-             << ", " << gen(op->c_->dtype()) // TODO: accumulator type
+             << ", "
+             << genCUTLASSType(op->c_->dtype()) // TODO: accumulator type
              << ", "
              << (canUseTensorCore(target_, op->a_->dtype(), op->b_->dtype(),
                                   op->c_->dtype())
                      ? "cutlass::arch::OpClassTensorOp"
                      : "cutlass::arch::OpClassSimt")
-             << ", FT_CUTLASS_ARCH> gemm;" << std::endl;
+             << ", FT_CUTLASS_ARCH>;" << std::endl;
         makeIndent();
-        os() << "checkCutlassError(gemm({{";
+        os() << "Gemm gemm;" << std::endl;
+        // In order for clearer error message, please keep the explicit argument
+        // types in the following statement.
+        makeIndent();
+        os() << "checkCutlassError(gemm(Gemm::Arguments{{";
         (*this)(m);
         os() << ", ";
         (*this)(n);
         os() << ", ";
         (*this)(k);
-        os() << "}, {&";
+        os() << "}, Gemm::TensorRefA{(const " << genCUTLASSType(op->a_->dtype())
+             << "*)&";
         (*this)(a);
         os() << ", ";
         (*this)(lda);
-        os() << "}, {&";
+        os() << "}, Gemm::TensorRefB{(const " << genCUTLASSType(op->b_->dtype())
+             << "*)&";
         (*this)(b);
         os() << ", ";
         (*this)(ldb);
-        os() << "}, {&";
+        os() << "}, Gemm::TensorRefC{(const " << genCUTLASSType(op->c_->dtype())
+             << "*)&";
         (*this)(c);
         os() << ", ";
         (*this)(ldc);
-        os() << "}, {&";
+        os() << "}, Gemm::TensorRefD{(" << genCUTLASSType(op->c_->dtype())
+             << "*)&";
         (*this)(c);
         os() << ", ";
         (*this)(ldc);
-        os() << "}, {";
+        os() << "}, Gemm::EpilogueOutputOp::Params{("
+             << genCUTLASSType(op->c_->dtype()) << ")(";
         (*this)(op->alpha_);
-        os() << ", ";
+        os() << "), (" << genCUTLASSType(op->c_->dtype()) << ")(";
         (*this)(op->beta_);
-        os() << "}}, nullptr, __stream));" << std::endl;
+        os() << ")}}, nullptr, __stream));" << std::endl;
+        endBlock();
         break;
     }
 
@@ -988,7 +1111,7 @@ extern "C" {
                     for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
                         os << "__ByValArray<";
                     }
-                    os << CodeGenCUDA::gen(tensor->dtype());
+                    os << visitor.gen(tensor->dtype());
                     for (auto it = shape.rbegin(); it != shape.rend(); it++) {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";

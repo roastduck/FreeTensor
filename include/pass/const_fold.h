@@ -118,6 +118,7 @@ class ConstFold : public Mutator {
             case DataType::Int32:
             case DataType::Int64:
                 return wrap(int64_t(v));
+            case DataType::Float16:
             case DataType::Float32:
             case DataType::Float64:
                 return wrap(double(v));

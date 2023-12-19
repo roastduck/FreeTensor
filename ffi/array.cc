@@ -52,6 +52,8 @@ static DataType dtypeFromPyTorch(torch::ScalarType t) {
         return DataType::Int32;
     case torch::ScalarType::Long:
         return DataType::Int64;
+    case torch::ScalarType::Half:
+        return DataType::Float16;
     case torch::ScalarType::Float:
         return DataType::Float32;
     case torch::ScalarType::Double:
@@ -69,6 +71,8 @@ static torch::ScalarType dtypeToPyTorch(DataType dtype) {
         return torch::ScalarType::Int;
     case DataType::Int64:
         return torch::ScalarType::Long;
+    case DataType::Float16:
+        return torch::ScalarType::Half;
     case DataType::Float32:
         return torch::ScalarType::Float;
     case DataType::Float64:
@@ -116,9 +120,10 @@ void init_ffi_array(py::module_ &m) {
                  // or it will all end up in float64 (the first initializer)
                  throw DriverError(
                      "Unsupported data type or strides from a NumPy Array. "
-                     "Please "
-                     "use freetensor.array factory function, instead of "
-                     "freetensor.Array, for strided arrays");
+                     "If you are using strided arrays, please use "
+                     "freetensor.array factory function, instead of "
+                     "freetensor.Array. If you are using float16, please use "
+                     "the PyTorch interface instead.");
              }),
              "data"_a, "dont_drop_borrow"_a = false, "moved"_a = false)
         .def("__eq__", [](const Ref<Array> &lhs, const Ref<Array> &rhs) {
@@ -172,6 +177,14 @@ void init_ffi_array(py::module_ &m) {
                 SHARE_TO_NUMPY(int64_t, DataType::Int64)
                 SHARE_TO_NUMPY(int32_t, DataType::Int32)
                 SHARE_TO_NUMPY(bool, DataType::Bool)
+            case DataType::Float16:
+                // TODO: Support fp16 after PyBind11 for NumPy fp16 is
+                // available. Status:
+                // https://github.com/pybind/pybind11/issues/1776,
+                // https://github.com/pybind/pybind11/issues/4061
+                throw DriverError(
+                    "NumPy interface for float16 is not supported yet. Please "
+                    "use the PyTorch interface instead.");
             default:
                 ASSERT(false);
             }

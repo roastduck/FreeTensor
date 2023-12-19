@@ -47,6 +47,8 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
 
     Expr globalSize() const { return globalSize_; }
 
+    std::string gen(const DataType &dtype) override;
+
   private:
     bool inKernel() const;
 
@@ -87,6 +89,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;
+    void visit(const Cast &op) override;
     void visit(const ReduceTo &op) override;
     void visit(const Var &op) override;
     void visit(const For &op) override;

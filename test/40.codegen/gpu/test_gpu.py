@@ -44,6 +44,40 @@ def test_basic():
     assert np.array_equal(y_np, y_std)
 
 
+def test_float16_compute():
+    # Not testing float16 I/O here
+
+    @ft.transform
+    def test(x, y):
+        x: ft.Var[(4, 4), "float32", "input", "gpu/global"]
+        y: ft.Var[(4,), "float32", "output", "gpu/global"]
+        #! label: L1
+        for i in range(4):
+            x16 = ft.empty((4,), "float16", "gpu/local")
+            y16 = ft.empty((), "float16", "gpu/local")
+            for j in range(4):
+                x16[j] = ft.cast(x[i, j], "float16")
+            y16[...] = 0
+            for j in range(4):
+                y16[j] += x16[j]
+            y[i] = ft.cast(y16[...], "float32")
+
+    with device:
+        s = ft.Schedule(test)
+        s.parallelize("L1", "threadIdx.x")
+        func = ft.lower(s.func(), verbose=1)
+        code = ft.codegen(func, verbose=True)
+        x_np = np.random.uniform(size=(4, 4)).astype("float32")
+        y_np = np.zeros((4,), dtype="float32")
+        x_arr = ft.array(x_np)
+        y_arr = ft.array(y_np)
+        ft.build_binary(code)(x=x_arr, y=y_arr)
+        y_np = y_arr.numpy()
+
+    y_std = np.sum(x_np.astype("float16"), axis=-1).astype("float32")
+    assert np.all(np.isclose(y_np, y_std, atol=1e-2))
+
+
 def test_error_wrong_target():
 
     @ft.transform
