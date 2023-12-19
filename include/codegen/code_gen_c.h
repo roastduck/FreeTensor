@@ -22,7 +22,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
              const std::vector<FuncRet> &returns)
         : params_(params), returns_(returns) {}
 
-    static std::string gen(DataType dtype);
+    virtual std::string gen(const DataType &dtype);
 
   protected:
     virtual void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,

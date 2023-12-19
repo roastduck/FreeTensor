@@ -626,3 +626,17 @@ def test_name_conflict():
         x[...] = y3[...]
 
     assert expect.body.match(test.body)
+
+
+def test_metadata_redundant_spaces():
+
+    @ft.transform
+    def f(x):
+        x: ft.Var[(4, 4), "float32", "output"]
+        #!label: S1
+        x[2, 3] = 2.0
+        #!    label: S2
+        x[1, 0] = 3.0
+
+    assert len(ft.find_all_stmt(f, "S1")) == 1
+    assert len(ft.find_all_stmt(f, "S2")) == 1

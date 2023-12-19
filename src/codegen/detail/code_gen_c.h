@@ -19,10 +19,15 @@ namespace freetensor {
 template <class Stream>
 std::function<std::ostream &(std::ostream &)>
 CodeGenC<Stream>::genMdPtrType(const VarDef &def, bool isConst) {
-    // NOTE: `[=]` implicitly capturing `this` is deprecated in C++20, but if we
-    // use `[=, this]`, clang will raise a warning because it will think `this`
-    // is duplicated.
+    // NOTE: `[=]` implicitly capturing `this` is deprecated in C++20. Using
+    // `[=]` will trigger a warning in GCC (because of deprecation), but using
+    // `[=, this]` will trigger a warning in Clang<17 (because it will think
+    // `this` is duplicated).
+#if defined(__clang__) && __clang_major__ < 17
     return [=](std::ostream &os) -> std::ostream & {
+#else
+    return [=, this](std::ostream &os) -> std::ostream & {
+#endif
         auto &&buf = def->buffer_;
 
         if (buf->tensor()->shape().empty()) {
@@ -755,7 +760,8 @@ template <class Stream> void CodeGenC<Stream>::visit(const Eval &op) {
     this->os() << ";" << std::endl;
 }
 
-template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
+template <class Stream>
+std::string CodeGenC<Stream>::gen(const DataType &dtype) {
     switch (dtype.base()) {
     case DataType::Float64:
         return "double";
@@ -768,7 +774,8 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
     case DataType::Bool:
         return "bool";
     default:
-        ASSERT(false);
+        throw InvalidProgram(toString(dtype) +
+                             " is not supported by this codegen backend");
     }
 }
 

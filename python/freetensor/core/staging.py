@@ -82,8 +82,8 @@ def process_annotating_comments(src: str):
     for line in src.splitlines():
         indent = re.match('\\s*', line)[0]
         rest_line = line[len(indent):]
-        if rest_line.startswith('#! '):
-            arg = rest_line[3:].replace('"', '\\"')
+        if rest_line.startswith('#!'):
+            arg = rest_line[2:].strip().replace('"', '\\"')
             new_src.append(f'{indent}__staging_overload__.metadata("{arg}")')
         else:
             new_src.append(line)

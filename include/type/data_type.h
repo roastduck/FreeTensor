@@ -12,6 +12,7 @@ namespace freetensor {
 
 enum class BaseDataType : size_t {
     Void = 0, // Returns nothing. It is a Unit Type
+    Float16,
     Float32,
     Float64,
     Int32,
@@ -24,7 +25,8 @@ enum class BaseDataType : size_t {
 };
 
 constexpr std::array baseDataTypeNames = {
-    "void", "float32", "float64", "int32", "int64", "bool", "custom", "never",
+    "void",  "float16", "float32", "float64", "int32",
+    "int64", "bool",    "custom",  "never",
 };
 static_assert(baseDataTypeNames.size() == (size_t)BaseDataType::NumTypes);
 
@@ -105,6 +107,7 @@ class DataType {
     // and remove the following lines
     constexpr static auto Bool = BaseDataType::Bool;
     constexpr static auto Custom = BaseDataType::Custom;
+    constexpr static auto Float16 = BaseDataType::Float16;
     constexpr static auto Float32 = BaseDataType::Float32;
     constexpr static auto Float64 = BaseDataType::Float64;
     constexpr static auto Int32 = BaseDataType::Int32;
