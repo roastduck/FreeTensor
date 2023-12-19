@@ -1190,16 +1190,17 @@ Enumerations</h2></td></tr>
 <tr class="separator:a923130db6aad12a2b5d46dfe001c08cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af346f9de09dc96bd110e29ff9af378c3"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3">BaseDataType</a> : size_t { <br />
 &#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a81ceb48a978444906d80119200aa358d">Void</a> = 0
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a26e6ed77470c6f2f830ecf874e6c0d55">Float16</a>
 , <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a166495adc0d0f53bee6baecc577f5204">Float32</a>
 , <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ad2b556d8a8f5c8ac323f51a4b82e79a0">Float64</a>
-, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ac06129f6e6e15c09328365e553f1dc31">Int32</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3afbde23b11d7e59af7828e81144c8b487">Int64</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ac06129f6e6e15c09328365e553f1dc31">Int32</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3afbde23b11d7e59af7828e81144c8b487">Int64</a>
 , <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3ac26f15e86e3de4c398a8273272aba034">Bool</a>
 , <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a90589c47f06eb971d548591f23c285af">Custom</a>
-, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a6e7b34fa59e1bd229b207892956dc41c">Never</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a6e7b34fa59e1bd229b207892956dc41c">Never</a>
+, <a class="el" href="namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
 <br />
  }</td></tr>
 <tr class="separator:af346f9de09dc96bd110e29ff9af378c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -3903,6 +3904,7 @@ template&lt;class K &gt; </div>
 </div><div class="memdoc">
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a81ceb48a978444906d80119200aa358d" name="af346f9de09dc96bd110e29ff9af378c3a81ceb48a978444906d80119200aa358d"></a>Void&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a26e6ed77470c6f2f830ecf874e6c0d55" name="af346f9de09dc96bd110e29ff9af378c3a26e6ed77470c6f2f830ecf874e6c0d55"></a>Float16&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3a166495adc0d0f53bee6baecc577f5204" name="af346f9de09dc96bd110e29ff9af378c3a166495adc0d0f53bee6baecc577f5204"></a>Float32&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3ad2b556d8a8f5c8ac323f51a4b82e79a0" name="af346f9de09dc96bd110e29ff9af378c3ad2b556d8a8f5c8ac323f51a4b82e79a0"></a>Float64&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="af346f9de09dc96bd110e29ff9af378c3ac06129f6e6e15c09328365e553f1dc31" name="af346f9de09dc96bd110e29ff9af378c3ac06129f6e6e15c09328365e553f1dc31"></a>Int32&#160;</td><td class="fielddoc"></td></tr>
@@ -19853,7 +19855,8 @@ template&lt;PBMapRef T&gt; </div>
 </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">    <span class="stringliteral">&quot;void&quot;</span>, <span class="stringliteral">&quot;float32&quot;</span>, <span class="stringliteral">&quot;float64&quot;</span>, <span class="stringliteral">&quot;int32&quot;</span>, <span class="stringliteral">&quot;int64&quot;</span>, <span class="stringliteral">&quot;bool&quot;</span>, <span class="stringliteral">&quot;custom&quot;</span>, <span class="stringliteral">&quot;never&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;void&quot;</span>,  <span class="stringliteral">&quot;float16&quot;</span>, <span class="stringliteral">&quot;float32&quot;</span>, <span class="stringliteral">&quot;float64&quot;</span>, <span class="stringliteral">&quot;int32&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;int64&quot;</span>, <span class="stringliteral">&quot;bool&quot;</span>,    <span class="stringliteral">&quot;custom&quot;</span>,  <span class="stringliteral">&quot;never&quot;</span>,</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
