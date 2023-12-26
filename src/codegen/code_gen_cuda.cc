@@ -920,26 +920,26 @@ void CodeGenCUDA::visit(const MatMul &op) {
         (*this)(k);
         os() << ", &cublasAlpha, &";
         (*this)(a);
-        os() << ", " << genCUBLASType(op->a_->dtype()) << ", ";
+        os() << ", " << genCUBLASType(a->dtype()) << ", ";
         (*this)(lda);
         os() << ", ";
         (*this)(stridea);
         os() << ", &";
         (*this)(b);
-        os() << ", " << genCUBLASType(op->b_->dtype()) << ", ";
+        os() << ", " << genCUBLASType(b->dtype()) << ", ";
         (*this)(ldb);
         os() << ", ";
         (*this)(strideb);
         os() << ", &cublasBeta, &";
         (*this)(c);
-        os() << ", " << genCUBLASType(op->c_->dtype()) << ", ";
+        os() << ", " << genCUBLASType(c->dtype()) << ", ";
         (*this)(ldc);
         os() << ", ";
         (*this)(stridec);
         os() << ", ";
         (*this)(op->batchSize_);
-        os() << ", " << genCUBLASType(op->c_->dtype())
-             << ", CUBLAS_GEMM_DEFAULT);" << std::endl;
+        os() << ", " << genCUBLASType(c->dtype()) << ", CUBLAS_GEMM_DEFAULT);"
+             << std::endl;
         endBlock();
         break;
     }
@@ -955,20 +955,18 @@ void CodeGenCUDA::visit(const MatMul &op) {
         beginBlock();
         makeIndent();
         os() << "using Gemm = cutlass::gemm::device::Gemm<"
-             << genCUTLASSType(op->a_->dtype()) << ", "
+             << genCUTLASSType(a->dtype()) << ", "
              << (transA ? "cutlass::layout::ColumnMajor"
                         : "cutlass::layout::RowMajor")
-             << ", " << genCUTLASSType(op->b_->dtype()) << ", "
+             << ", " << genCUTLASSType(b->dtype()) << ", "
              << (transB ? "cutlass::layout::ColumnMajor"
                         : "cutlass::layout::RowMajor")
-             << ", " << genCUTLASSType(op->c_->dtype()) << ", "
+             << ", " << genCUTLASSType(c->dtype()) << ", "
              << (transC ? "cutlass::layout::ColumnMajor"
                         : "cutlass::layout::RowMajor")
+             << ", " << genCUTLASSType(c->dtype()) // TODO: accumulator type
              << ", "
-             << genCUTLASSType(op->c_->dtype()) // TODO: accumulator type
-             << ", "
-             << (canUseTensorCore(target_, op->a_->dtype(), op->b_->dtype(),
-                                  op->c_->dtype())
+             << (canUseTensorCore(target_, a->dtype(), b->dtype(), c->dtype())
                      ? "cutlass::arch::OpClassTensorOp"
                      : "cutlass::arch::OpClassSimt")
              << ", FT_CUTLASS_ARCH>;" << std::endl;
@@ -983,30 +981,29 @@ void CodeGenCUDA::visit(const MatMul &op) {
         (*this)(n);
         os() << ", ";
         (*this)(k);
-        os() << "}, Gemm::TensorRefA{(const " << genCUTLASSType(op->a_->dtype())
+        os() << "}, Gemm::TensorRefA{(const " << genCUTLASSType(a->dtype())
              << "*)&";
         (*this)(a);
         os() << ", ";
         (*this)(lda);
-        os() << "}, Gemm::TensorRefB{(const " << genCUTLASSType(op->b_->dtype())
+        os() << "}, Gemm::TensorRefB{(const " << genCUTLASSType(b->dtype())
              << "*)&";
         (*this)(b);
         os() << ", ";
         (*this)(ldb);
-        os() << "}, Gemm::TensorRefC{(const " << genCUTLASSType(op->c_->dtype())
+        os() << "}, Gemm::TensorRefC{(const " << genCUTLASSType(c->dtype())
              << "*)&";
         (*this)(c);
         os() << ", ";
         (*this)(ldc);
-        os() << "}, Gemm::TensorRefD{(" << genCUTLASSType(op->c_->dtype())
-             << "*)&";
+        os() << "}, Gemm::TensorRefD{(" << genCUTLASSType(c->dtype()) << "*)&";
         (*this)(c);
         os() << ", ";
         (*this)(ldc);
         os() << "}, Gemm::EpilogueOutputOp::Params{("
-             << genCUTLASSType(op->c_->dtype()) << ")(";
+             << genCUTLASSType(c->dtype()) << ")(";
         (*this)(op->alpha_);
-        os() << "), (" << genCUTLASSType(op->c_->dtype()) << ")(";
+        os() << "), (" << genCUTLASSType(c->dtype()) << ")(";
         (*this)(op->beta_);
         os() << ")}}, nullptr, __stream));" << std::endl;
         endBlock();

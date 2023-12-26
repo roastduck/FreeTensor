@@ -77,8 +77,17 @@ struct ForProperty : public ASTPart {
 };
 
 inline Ref<ReductionItem> deepCopy(const Ref<ReductionItem> &r) {
-    return makeReductionItem(r->op_, r->var_, r->begins_, r->ends_,
-                             r->syncFlush_);
+    std::vector<Expr> begins, ends;
+    begins.reserve(r->begins_.size());
+    ends.reserve(r->ends_.size());
+    for (auto &&item : r->begins_) {
+        begins.emplace_back(deepCopy(item));
+    }
+    for (auto &&item : r->ends_) {
+        ends.emplace_back(deepCopy(item));
+    }
+    return makeReductionItem(r->op_, r->var_, std::move(begins),
+                             std::move(ends), r->syncFlush_);
 }
 
 inline Ref<ForProperty> deepCopy(const Ref<ForProperty> &_p) {

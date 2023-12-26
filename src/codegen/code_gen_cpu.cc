@@ -351,7 +351,7 @@ void CodeGenCPU::visit(const MatMul &op) {
         }
 
         auto d = op->c_->dtype();
-        if (op->a_->dtype() != d || op->b_->dtype() != d) {
+        if (a->dtype() != d || b->dtype() != d) {
             throw InvalidProgram(
                 "MKL requires all matrices have the same data type");
         }
