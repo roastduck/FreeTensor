@@ -9,6 +9,7 @@ Expr neutralVal(DataType dtype, ReduceOp op) {
     switch (dtype.base()) {
     case DataType::Float64:
     case DataType::Float32:
+    case DataType::Float16:
         switch (op) {
         case ReduceOp::Add:
             return makeFloatConst(0.);

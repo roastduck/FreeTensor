@@ -162,7 +162,7 @@ class Schedule(ffi.Schedule):
             (outer loop ID, inner loop ID), either ID can be None if the loop is
             proved to have only a single iteration
         """
-        return (
+        return tuple(
             i if i else None
             for i in super().split(self._lookup(node), factor, nparts, shift))
 
