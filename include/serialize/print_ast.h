@@ -192,7 +192,7 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
  */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false,
                            bool hexFloat = true) {
-    return toString(op, false, true, dtypeInLoad, hexFloat, true, true, false);
+    return toString(op, false, true, dtypeInLoad, hexFloat, true, false, false);
 }
 
 /**
