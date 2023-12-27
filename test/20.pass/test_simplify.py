@@ -282,6 +282,7 @@ def test_multiple_mins_separted_by_scalar_op(p):
 
     assert std.match(ast)
 
+
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_precondition_from_if(p):
     with ft.VarDef([
@@ -433,6 +434,7 @@ def test_precondition_from_sign_type(p):
     std = ft.pop_ast()
 
     assert std.match(ast)
+
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_different_scope(p):

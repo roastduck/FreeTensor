@@ -128,12 +128,14 @@ Expr CompUniqueBoundsPB::Bound::upperExpr() const {
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::Bound::restrictScope(
     const std::unordered_set<std::string> &scope) const {
     std::vector<int> axesToProject;
-    for (int i = 0; i < bound_.nParamDims(); ++i)
-        for (auto &&used : allUses(demangleMap_->at(bound_.nameParamDim(i))))
+    for (int i = 0; i < bound_.nParamDims(); ++i) {
+        for (auto &&used : allNames(demangleMap_->at(bound_.nameParamDim(i)))) {
             if (!scope.contains(used)) {
                 axesToProject.emplace_back(i);
                 break;
             }
+        }
+    }
     auto newBound = bound_;
     for (auto axes : views::reverse(axesToProject))
         newBound = projectOutParamDims(newBound, axes, 1);
@@ -268,6 +270,7 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
                     demangled = it->second;
             }
         }
+        demangleMap[dimName] = demangled;
     }
 
     // translate the lower and upper bounds back to expression
