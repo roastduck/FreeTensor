@@ -1,6 +1,13 @@
-from typing import Sequence, Optional
+__all__ = [
+    'reduce_sum', 'reduce_sum_', 'reduce_prod', 'reduce_prod_', 'all', 'all_',
+    'any', 'any_', 'reduce_min', 'reduce_min_', 'reduce_max', 'reduce_max_',
+    'reduction_circular_axes', 'reduction_comp_shape'
+]
 
-from .utils import *
+from typing import Sequence, Optional
+import functools
+
+from .utils import begin_with_0, all_minus_one, circular_axis
 from .. import core
 
 
@@ -18,20 +25,14 @@ def _named_partial(name: str, doc: str, f, *args, **kvs):
     return g
 
 
-def _y_ndim(x_ndim, axes, keepdims):
-    return x_ndim if keepdims else x_ndim - len(axes)
-
-
-def _circular_axes(axes, x_ndim, keepdims):
+def reduction_circular_axes(axes, x_ndim, keepdims):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
 
     # None for all dimensions
     if axes is None:
         return core.static_range(x_ndim)
 
-    return sorted(
-        map(lambda x: x
-            if x >= 0 else _y_ndim(x_ndim, axes, keepdims) + x, axes))
+    return sorted(map(functools.partial(circular_axis, ndim=x_ndim), axes))
 
 
 @core.inline
@@ -78,10 +79,11 @@ def _general_reduce_(op,
     #! label: init
     _init(neutral_val, y)
     #! label: reduce
-    _reduce(op, _circular_axes(axes, core.ndim(x), keepdims), keepdims, x, y)
+    _reduce(op, reduction_circular_axes(axes, core.ndim(x), keepdims), keepdims,
+            x, y)
 
 
-def _comp_shape(axes, keepdims, x):
+def reduction_comp_shape(axes, keepdims, x):
     out_shape = []
     for i in range(core.ndim(x)):
         if len(axes) > 0 and axes[0] == i:
@@ -101,11 +103,13 @@ def _general_reduce(op,
                     keepdims: bool = True):
     #! label: y
     y = core.empty(
-        _comp_shape(_circular_axes(axes, core.ndim(x), keepdims), keepdims, x),
+        reduction_comp_shape(
+            reduction_circular_axes(axes, core.ndim(x), keepdims), keepdims, x),
         core.dtype(x), core.mtype(x))
     #! label: recur
     _general_reduce_(op, neutral_val, x, y,
-                     _circular_axes(axes, core.ndim(x), keepdims), keepdims)
+                     reduction_circular_axes(axes, core.ndim(x), keepdims),
+                     keepdims)
     return y
 
 
@@ -174,7 +178,7 @@ any = _named_partial(
 
 
 @core.inline
-def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
+def reduce_max_(x, y, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Maximum of a tensor through one or more dimensions. The result is written to another tensor
 
@@ -196,7 +200,7 @@ def reduce_max_(x, y, axes: Sequence[int], keepdims: bool = True):
 
 
 @core.inline
-def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
+def reduce_max(x, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Maximum of a tensor through one or more dimensions and return the result
 
@@ -222,7 +226,7 @@ def reduce_max(x, axes: Sequence[int], keepdims: bool = True):
 
 
 @core.inline
-def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
+def reduce_min_(x, y, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Minimum of a tensor through one or more dimensions. The result is written to another tensor
 
@@ -244,7 +248,7 @@ def reduce_min_(x, y, axes: Sequence[int], keepdims: bool = True):
 
 
 @core.inline
-def reduce_min(x, axes: Sequence[int], keepdims: bool = True):
+def reduce_min(x, axes: Sequence[int] = None, keepdims: bool = True):
     '''
     Minimum of a tensor through one or more dimensions and return the result
 

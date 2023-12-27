@@ -81,6 +81,37 @@ def test_dependence():
     assert ast_.match(ast)
 
 
+def test_legal_dependence():
+    with ft.VarDef([("x1", (1000,), "int32", "input", "cpu"),
+                    ("x2", (1000,), "int32", "input", "cpu"),
+                    ("y", (1001,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ft.For("i", 0, 1001) as i:
+            y[i] = 0
+        with ft.For("i", 0, 1000) as i:
+            ft.MarkLabel("S1")
+            y[i] += x1[i]  # Always happens afterhand swapped or not
+            ft.MarkLabel("S2")
+            y[i + 1] = x2[i]  # Always happens beforehand swapped or not
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.swap(["S2", "S1"])
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x1", (1000,), "int32", "input", "cpu"),
+                    ("x2", (1000,), "int32", "input", "cpu"),
+                    ("y", (1001,), "int32", "output", "cpu")]) as (x1, x2, y):
+        with ft.For("i", 0, 1001) as i:
+            y[i] = 0
+        with ft.For("i", 0, 1000) as i:
+            y[i + 1] = x2[i]
+            y[i] += x1[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_crossing_var_def():
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),

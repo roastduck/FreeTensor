@@ -266,6 +266,22 @@ def test_multiple_min_max(p):
     assert std.match(ast)
 
 
+@pytest.mark.parametrize('p', [ft.simplify])
+def test_multiple_mins_separted_by_scalar_op(p):
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[...] = ft.min(10 * ft.min(x[...], 8), 50)
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[...] = ft.min(10 * x[...], 50)
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_precondition_from_if(p):
     with ft.VarDef([
@@ -308,7 +324,7 @@ def test_multiple_preconditions_from_if(p):
             with ft.If(ft.l_and(x1[i] >= 0, x1[i] < x2[i])):
                 y[i] = ft.min(x1[i], x2[i])
             with ft.Else():
-                y[i] = ft.min(x1[i], x2[i]) + 1
+                y[i] = ft.min(x1[i] + 1, x2[i] + 1)
     ast = ft.pop_ast(verbose=True)
     ast = p(ast)
     print(ast)
@@ -322,7 +338,7 @@ def test_multiple_preconditions_from_if(p):
             with ft.If(ft.l_and(x1[i] >= 0, x1[i] < x2[i])):
                 y[i] = x1[i]
             with ft.Else():
-                y[i] = ft.min(x1[i], x2[i]) + 1
+                y[i] = ft.min(x1[i] + 1, x2[i] + 1)
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -393,6 +409,30 @@ def test_unreachable_assert_false(p):
 
     assert std.match(ast)
 
+
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
+def test_precondition_from_sign_type(p):
+    with ft.VarDef([
+        ("x1", (4,), "int32<0", "input", "cpu"),
+        ("x2", (4,), "int32>0", "input", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
+    ]) as (x1, x2, y):
+        with ft.For("i", 0, 4) as i:
+            y[i] = ft.min(x1[i], x2[i])
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([
+        ("x1", (4,), "int32<0", "input", "cpu"),
+        ("x2", (4,), "int32>0", "input", "cpu"),
+        ("y", (4,), "int32", "output", "cpu"),
+    ]) as (x1, x2, y):
+        with ft.For("i", 0, 4) as i:
+            y[i] = x1[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_different_scope(p):

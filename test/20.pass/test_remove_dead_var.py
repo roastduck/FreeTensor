@@ -2,7 +2,7 @@ import freetensor as ft
 
 
 def test_basic():
-    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
             a[()] = x[()] + 1
@@ -10,7 +10,7 @@ def test_basic():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] + 1
     std = ft.pop_ast()
@@ -19,7 +19,7 @@ def test_basic():
 
 
 def test_chained():
-    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
             a[()] = x[()] + 1
@@ -31,7 +31,7 @@ def test_chained():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] + 1
     std = ft.pop_ast()
@@ -40,7 +40,7 @@ def test_chained():
 
 
 def test_self_assign():
-    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
             a[()] = 0
@@ -50,9 +50,93 @@ def test_self_assign():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (), "int32", "inout", "cpu"),
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] + 1
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_remove_a_write_if_no_reads_after_it():
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            y[()] = a[()] * a[()]
+            a[()] *= 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            y[()] = a[()] * a[()]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_remove_a_write_in_a_loop_if_no_reads_after_it():
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (4,), "int32", "cache", "cpu") as a:
+            with ft.For("i", 0, 4) as i:
+                a[i] = x[i] + 1
+            with ft.For("i", 0, 4) as i:
+                y[i] = a[i] * a[i]
+            with ft.For("i", 0, 4) as i:
+                a[i] *= 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (4,), "int32", "cache", "cpu") as a:
+            with ft.For("i", 0, 4) as i:
+                a[i] = x[i] + 1
+            with ft.For("i", 0, 4) as i:
+                y[i] = a[i] * a[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_no_remove_writes_if_maybe_looped_around():
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            with ft.For("i", 0, 2) as i:
+                y[i] = a[()] * a[()]
+                a[()] *= 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (2,), "int32", "output", "cpu")]) as (x, y):
+        with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
+            a[()] = x[()] + 1
+            with ft.For("i", 0, 2) as i:
+                y[i] = a[()] * a[()]
+                a[()] *= 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_input_mutable_can_be_optimized_out():
+    with ft.VarDef([("x", (), "int32", "input-mutable", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = x[()] * 2
+        x[()] += 1
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[()] = x[()] * 2
     std = ft.pop_ast()
 
     assert std.match(ast)

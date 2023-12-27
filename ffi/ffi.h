@@ -14,6 +14,7 @@ namespace freetensor {
 namespace py = pybind11;
 
 void init_ffi_except(py::module_ &m);
+void init_ffi_mangle(py::module_ &m);
 void init_ffi_tensor_types(py::module_ &m);
 void init_ffi_device(py::module_ &m);
 void init_ffi_array(py::module_ &m);
@@ -38,7 +39,6 @@ void init_ffi_pass(py::module_ &m);
 void init_ffi_codegen(py::module_ &m);
 void init_ffi_driver(py::module_ &m);
 void init_ffi_debug(py::module_ &m);
-void init_ffi_auto_schedule(py::module_ &m);
 void init_ffi_config(py::module_ &m);
 
 } // namespace freetensor

@@ -1,3 +1,4 @@
+#include <sstream>
 #include <typeinfo>
 
 #include <except.h>
@@ -52,12 +53,17 @@ void init_ffi_ast(py::module_ &m) {
         .value("LNot", ASTNodeType::LNot)
         .value("Sqrt", ASTNodeType::Sqrt)
         .value("Exp", ASTNodeType::Exp)
+        .value("Ln", ASTNodeType::Ln)
         .value("Square", ASTNodeType::Square)
         .value("Sigmoid", ASTNodeType::Sigmoid)
+        .value("Sin", ASTNodeType::Sin)
+        .value("Cos", ASTNodeType::Cos)
+        .value("Tan", ASTNodeType::Tan)
         .value("Tanh", ASTNodeType::Tanh)
         .value("Abs", ASTNodeType::Abs)
         .value("Floor", ASTNodeType::Floor)
         .value("Ceil", ASTNodeType::Ceil)
+        .value("Unbound", ASTNodeType::Unbound)
         .value("IfExpr", ASTNodeType::IfExpr)
         .value("Cast", ASTNodeType::Cast)
         .value("For", ASTNodeType::For)
@@ -65,7 +71,9 @@ void init_ffi_ast(py::module_ &m) {
         .value("Assert", ASTNodeType::Assert)
         .value("Assume", ASTNodeType::Assume)
         .value("Intrinsic", ASTNodeType::Intrinsic)
-        .value("Eval", ASTNodeType::Eval);
+        .value("Eval", ASTNodeType::Eval)
+        .value("MarkVersion", ASTNodeType::MarkVersion)
+        .value("LoadAtVersion", ASTNodeType::LoadAtVersion);
 
     py::class_<ASTNode, AST> pyAST(m, "AST");
     py::class_<FuncNode, Func>(m, "Func", pyAST);
@@ -86,8 +94,14 @@ void init_ffi_ast(py::module_ &m) {
     m.def("make_id", static_cast<ID (*)()>(&ID::make));
     m.def("make_id", static_cast<ID (*)(uint64_t)>(&ID::make));
 
-#ifdef FT_DEBUG_LOG_NODE
-    pyAST.def_readonly("debug_creator", &ASTNode::debugCreator_);
+#ifdef FT_DEBUG_BLAME_AST
+    pyAST.def_property_readonly("debug_blame", [&](const AST &ast) {
+        std::ostringstream os;
+        os << ast->debugBlame().file_name() << ":" << ast->debugBlame().line()
+           << ":" << ast->debugBlame().column() << " in "
+           << ast->debugBlame().function_name() << std::endl;
+        return os.str();
+    });
 #endif
 
     pyAST
@@ -115,9 +129,18 @@ builds `EQ` nodes and compares at run time)'''")
 This is a normal function `hash` instead of `__hash__`. The corresponding comparing
 function is `same_as` instead of `__eq__`. The latter is used for building `EQ`
 nodes)'''")
-        .def("__str__", [](const AST &op) { return toString(op); })
+        .def("__str__",
+             [](const AST &op) {
+                 // .__str__() appears when we print an object
+                 return toString(op);
+             })
         .def("__repr__", [](const AST &op) {
-            return "<" + toString(op->nodeType()) + ": " + toString(op) + ">";
+            // .__repr__() appears in an error message, especially when we pass
+            // an invalid type of argument
+            std::ostringstream os;
+            os << "<" << op->nodeType() << " @ 0x" << std::hex << op.get()
+               << ">";
+            return os.str();
         });
     m.def("dump_ast", &dumpAST, "ast"_a, "dtype_in_load"_a = false,
           "hex_float"_a = true);
@@ -181,15 +204,22 @@ template <> struct polymorphic_type_hook<freetensor::ASTNode> {
             DISPATCH(LNot);
             DISPATCH(Sqrt);
             DISPATCH(Exp);
+            DISPATCH(Ln);
             DISPATCH(Square);
             DISPATCH(Sigmoid);
+            DISPATCH(Sin);
+            DISPATCH(Cos);
+            DISPATCH(Tan);
             DISPATCH(Tanh);
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);
+            DISPATCH(Unbound);
             DISPATCH(IfExpr);
             DISPATCH(Cast);
             DISPATCH(Intrinsic);
+            DISPATCH(MarkVersion);
+            DISPATCH(LoadAtVersion);
         default:
             ERROR("Unexpected AST node type");
         }
@@ -220,6 +250,7 @@ template <> struct polymorphic_type_hook<freetensor::StmtNode> {
             DISPATCH(Assume);
             DISPATCH(Eval);
             DISPATCH(Any);
+            DISPATCH(MarkVersion);
         default:
             ERROR("Unexpected Stmt node type");
         }
@@ -265,16 +296,22 @@ template <> struct polymorphic_type_hook<freetensor::ExprNode> {
             DISPATCH(LNot);
             DISPATCH(Sqrt);
             DISPATCH(Exp);
+            DISPATCH(Ln);
             DISPATCH(Square);
             DISPATCH(Sigmoid);
+            DISPATCH(Sin);
+            DISPATCH(Cos);
+            DISPATCH(Tan);
             DISPATCH(Tanh);
             DISPATCH(Abs);
             DISPATCH(Floor);
             DISPATCH(Ceil);
+            DISPATCH(Unbound);
             DISPATCH(IfExpr);
             DISPATCH(Cast);
             DISPATCH(Intrinsic);
             DISPATCH(AnyExpr);
+            DISPATCH(LoadAtVersion);
         default:
             ERROR("Unexpected Expr node type");
         }

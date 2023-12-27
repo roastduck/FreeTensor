@@ -9,6 +9,7 @@
 #include <analyze/find_stmt.h>
 #include <codegen/code_gen_c.h>
 #include <config.h>
+#include <container_utils.h>
 #include <serialize/mangle.h>
 
 #include "code_gen.h"
@@ -16,44 +17,54 @@
 namespace freetensor {
 
 template <class Stream>
-void CodeGenC<Stream>::genMdPtrType(std::ostream &os, const VarDef &def,
-                                    bool isConst) {
-    auto &&buf = def->buffer_;
+std::function<std::ostream &(std::ostream &)>
+CodeGenC<Stream>::genMdPtrType(const VarDef &def, bool isConst) {
+    // NOTE: `[=]` implicitly capturing `this` is deprecated in C++20. Using
+    // `[=]` will trigger a warning in GCC (because of deprecation), but using
+    // `[=, this]` will trigger a warning in Clang<17 (because it will think
+    // `this` is duplicated).
+#if defined(__clang__) && __clang_major__ < 17
+    return [=](std::ostream &os) -> std::ostream & {
+#else
+    return [=, this](std::ostream &os) -> std::ostream & {
+#endif
+        auto &&buf = def->buffer_;
 
-    if (buf->tensor()->shape().empty()) {
-        // Use reference for scalars
+        if (buf->tensor()->shape().empty()) {
+            // Use reference for scalars
+            if (isConst) {
+                os << "const ";
+            }
+            os << gen(buf->tensor()->dtype()) << " &";
+            return os;
+        }
+
+        bool isRestricted = true;
+        if (def->viewOf_.has_value() ||
+            !findAllStmt(def, [&](const Stmt &inner) {
+                 return inner->nodeType() == ASTNodeType::VarDef &&
+                        inner.as<VarDefNode>()->viewOf_ == def->name_;
+             }).empty()) {
+            isRestricted = false;
+        }
+
+        os << (Config::debugRuntimeCheck() ? "mdspan_dbg<"
+               : isRestricted              ? "mdspan_r<"
+                                           : "mdspan<");
         if (isConst) {
             os << "const ";
         }
-        os << gen(buf->tensor()->dtype()) << " &";
-        return;
-    }
-
-    bool isRestricted = true;
-    if (def->viewOf_.has_value() ||
-        !findAllStmt(def, [&](const Stmt &inner) {
-             return inner->nodeType() == ASTNodeType::VarDef &&
-                    inner.as<VarDefNode>()->viewOf_ == def->name_;
-         }).empty()) {
-        isRestricted = false;
-    }
-
-    os << (Config::debugRuntimeCheck() ? "mdspan_dbg<"
-           : isRestricted              ? "mdspan_r<"
-                                       : "mdspan<");
-    if (isConst) {
-        os << "const ";
-    }
-    os << gen(buf->tensor()->dtype()) << ", extents<";
-    for (auto &&[i, dim] : views::enumerate(buf->tensor()->shape())) {
-        os << (i > 0 ? ", " : "");
-        if (dim->nodeType() == ASTNodeType::IntConst) {
-            os << dim.template as<IntConstNode>()->val_;
-        } else {
-            os << "dynamic_extent";
+        os << gen(buf->tensor()->dtype()) << ", extents<";
+        for (auto &&[i, dim] : views::enumerate(buf->tensor()->shape())) {
+            os << (i > 0 ? ", " : "");
+            if (dim->nodeType() == ASTNodeType::IntConst) {
+                os << dim.template as<IntConstNode>()->val_;
+            } else {
+                os << "dynamic_extent";
+            }
         }
-    }
-    os << ">>";
+        return os << ">>";
+    };
 }
 
 template <class Stream>
@@ -66,21 +77,17 @@ void CodeGenC<Stream>::genMdPtrDef(const VarDef &def,
         // Use reference for scalars
         // e.g.
         // ((const int32_t &)*((const int32_t *)(...)))
-        this->os() << "((";
-        genMdPtrType(def, isConst);
-        this->os() << ")*((";
+        this->os() << "((" << genMdPtrType(def, isConst) << ")*((";
         if (isConst) {
             this->os() << "const ";
         }
-        this->os() << gen(buf->tensor()->dtype()) << " *";
-        this->os() << ")(";
+        this->os() << gen(buf->tensor()->dtype()) << " *)(";
         genRawPtr();
         this->os() << ")))";
         return;
     }
 
-    genMdPtrType(def, isConst);
-    this->os() << "((";
+    this->os() << genMdPtrType(def, isConst) << "((";
     if (isConst) {
         this->os() << "const ";
     }
@@ -149,10 +156,11 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         }
         this->os() << "auto &&" << name << " = ";
         genMdPtrDef(op, mangle(source->name_) + ".data_handle()",
-                    source->buffer_->atype() == AccessType::Input);
+                    !isWritable(source->buffer_->atype()));
         this->os() << ";" << std::endl;
 
-    } else if (op->buffer_->atype() == AccessType::Cache) {
+    } else if (!isInputting(op->buffer_->atype()) &&
+               !isOutputting(op->buffer_->atype())) {
         // e.g. 1. float x;
         //      2. float x[5][5][5];
         this->os() << gen(tensor->dtype()) << " " << name;
@@ -163,14 +171,18 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         }
         this->os() << ";" << std::endl;
     } else {
-        auto nthParamIter = std::find_if(
-            params_.begin(), params_.end(),
-            [&](const FuncParam &p) { return p.name_ == op->name_; });
-        auto nthReturnsIter = std::find_if(
-            returns_.begin(), returns_.end(),
-            [&](const FuncRet &item) { return item.name_ == op->name_; });
-        bool isParam = nthParamIter != params_.end();
-        bool isReturn = nthReturnsIter != returns_.end();
+        auto paramPositions = ranges::to<std::vector>(
+            params_ | views::enumerate | views::filter([&](auto &&pair) {
+                return pair.second.name_ == op->name_;
+            }) |
+            views::keys);
+        auto returnPositions = ranges::to<std::vector>(
+            returns_ | views::enumerate | views::filter([&](auto &&pair) {
+                return pair.second.name_ == op->name_;
+            }) |
+            views::keys);
+        bool isParam = !paramPositions.empty();
+        bool isReturn = !returnPositions.empty();
         if (!isParam && !isReturn) {
             throw InvalidProgram("I/O variable " + op->name_ +
                                  " used but not defined as a function's "
@@ -178,18 +190,25 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         }
         std::string rawPtr;
         if (isParam) {
-            int nthParam = nthParamIter - params_.begin();
-            rawPtr = "_params[" + std::to_string(nthParam) + "]";
-        } else {
-            if (op->buffer_->atype() != AccessType::Output) {
-                throw InvalidProgram(
-                    "Only output variable can be as a return value");
+            if (paramPositions.size() > 1) {
+                throw InvalidProgram("Parameter '" + op->name_ +
+                                     "' is duplicated");
             }
-            int nthReturn = nthReturnsIter - returns_.begin();
-            rawPtr = "_returns[" + std::to_string(nthReturn) + "]";
+            int nthParam = paramPositions.front();
+            rawPtr = "params[" + std::to_string(nthParam) + "]";
+        } else {
+            if (!isOutputting(op->buffer_->atype())) {
+                throw InvalidProgram(
+                    "Only outputting variable can be as a return value");
+            }
+            // If there are multiple position with the same name, we only fill
+            // the first position. Driver::collectReturns will only collect the
+            // first
+            int nthReturn = returnPositions.front();
+            rawPtr = "returns[" + std::to_string(nthReturn) + "]";
             std::string shapePtr =
-                "_retShapes[" + std::to_string(nthReturn) + "]";
-            std::string dimPtr = "_retDims[" + std::to_string(nthReturn) + "]";
+                "retShapes[" + std::to_string(nthReturn) + "]";
+            std::string dimPtr = "retDims[" + std::to_string(nthReturn) + "]";
             this->os() << "if (" + rawPtr + " == NULL) ";
             this->beginBlock();
             this->genAlloc(op->buffer_->tensor(), rawPtr, shapePtr, dimPtr);
@@ -201,14 +220,14 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
         case MemType::ByValue:
             // e.g. (1)
             // float x;
-            // x = *((float*)_params[0]);
+            // x = *((float*)params[0]);
 
             // e.g. (2)
             // __ByValArray<__ByValArray<float, 2>, 2> x;
-            // x[0][0] = *((float*)_params[0])[0];
-            // x[0][1] = *((float*)_params[0])[1];
-            // x[1][0] = *((float*)_params[0])[2];
-            // x[1][1] = *((float*)_params[0])[3];
+            // x[0][0] = *((float*)params[0])[0];
+            // x[0][1] = *((float*)params[0])[1];
+            // x[1][0] = *((float*)params[0])[2];
+            // x[1][1] = *((float*)params[0])[3];
             if (op->buffer_->atype() != AccessType::Input) {
                 throw InvalidProgram("ByValue typed var " + op->name_ +
                                      " can only be Input");
@@ -257,9 +276,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const VarDef &op) {
 
         default:
             // e.g.
-            // auto &&x = mdspan_r<const float, extents<5, 5>>(_params[0]);
+            // auto &&x = mdspan_r<const float, extents<5, 5>>(params[0]);
             this->os() << "auto &&" << name << " = ";
-            genMdPtrDef(op, rawPtr, op->buffer_->atype() == AccessType::Input);
+            genMdPtrDef(op, rawPtr, !isWritable(op->buffer_->atype()));
             this->os() << ";" << std::endl;
         }
     }
@@ -345,9 +364,6 @@ template <class Stream> void CodeGenC<Stream>::visit(const ReduceTo &op) {
     switch (op->op_) {
     case ReduceOp::Add:
         genAddr(), this->os() << " += ", genExpr();
-        break;
-    case ReduceOp::Sub:
-        genAddr(), this->os() << " -= ", genExpr();
         break;
     case ReduceOp::Mul:
         genAddr(), this->os() << " *= ", genExpr();
@@ -579,6 +595,12 @@ template <class Stream> void CodeGenC<Stream>::visit(const Exp &op) {
     this->os() << ")";
 }
 
+template <class Stream> void CodeGenC<Stream>::visit(const Ln &op) {
+    this->os() << "log(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
 template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
     this->os() << "runtime_square(";
     (*this)(op->expr_);
@@ -587,6 +609,24 @@ template <class Stream> void CodeGenC<Stream>::visit(const Square &op) {
 
 template <class Stream> void CodeGenC<Stream>::visit(const Sigmoid &op) {
     this->os() << "runtime_sigmoid(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Sin &op) {
+    this->os() << "std::sin(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Cos &op) {
+    this->os() << "std::cos(";
+    (*this)(op->expr_);
+    this->os() << ")";
+}
+
+template <class Stream> void CodeGenC<Stream>::visit(const Tan &op) {
+    this->os() << "std::tan(";
     (*this)(op->expr_);
     this->os() << ")";
 }
@@ -691,16 +731,27 @@ template <class Stream> void CodeGenC<Stream>::visit(const Assert &op) {
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Intrinsic &op) {
-    this->os() << "(";
-    int i = 0;
-    for (char c : op->format_) {
-        if (c == '%') {
-            (*this)(op->params_.at(i++));
+    bool parentIsEval =
+        op->parent().as<ASTNode>()->nodeType() != ASTNodeType::Eval;
+    if (parentIsEval)
+        this->os() << "(";
+    size_t i = 0, j = 0, n = op->format_.length();
+    while (j < n) {
+        if (op->format_[j] == '%') {
+            if (j + 1 < n && op->format_[j + 1] == '%') {
+                this->os() << '%';
+                j += 2;
+            } else {
+                (*this)(op->params_.at(i++));
+                j++;
+            }
         } else {
-            this->os() << c;
+            this->os() << op->format_[j];
+            j++;
         }
     }
-    this->os() << ")";
+    if (parentIsEval)
+        this->os() << ")";
 }
 
 template <class Stream> void CodeGenC<Stream>::visit(const Eval &op) {
@@ -709,8 +760,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const Eval &op) {
     this->os() << ";" << std::endl;
 }
 
-template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
-    switch (dtype) {
+template <class Stream>
+std::string CodeGenC<Stream>::gen(const DataType &dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return "double";
     case DataType::Float32:
@@ -722,7 +774,8 @@ template <class Stream> std::string CodeGenC<Stream>::gen(DataType dtype) {
     case DataType::Bool:
         return "bool";
     default:
-        ASSERT(false);
+        throw InvalidProgram(toString(dtype) +
+                             " is not supported by this codegen backend");
     }
 }
 

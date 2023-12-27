@@ -62,7 +62,7 @@ def test_if_in_between():
     assert std.match(ast)
 
 
-def test_stmt_in_between():
+def test_move_out_imperfect_stmt_in_between_before():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -70,7 +70,62 @@ def test_stmt_in_between():
             with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveOutImperfect),
+        verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, label="L1") as i:
+            z[i] = i
+        with ft.For("j", 0, 8, label="L2") as j:
+            with ft.For("i", 0, 4, label="L1") as i:
+                y[i, j] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_move_out_imperfect_stmt_in_between_after():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                y[i, j] = i + j
+            z[i] = i
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveOutImperfect),
+        verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("j", 0, 8, label="L2") as j:
+            with ft.For("i", 0, 4, label="L1") as i:
+                y[i, j] = i + j
+        with ft.For("i", 0, 4, label="L1") as i:
+            z[i] = i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_move_in_imperfect_stmt_in_between_before():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, label="L1") as i:
+            z[i] = i
+            with ft.For("j", 0, 8, label="L2") as j:
+                y[i, j] = i + j
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -85,7 +140,33 @@ def test_stmt_in_between():
     assert std.match(ast)
 
 
-def test_loop_in_between():
+def test_move_in_imperfect_stmt_in_between_after():
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                y[i, j] = i + j
+            z[i] = i
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect),
+        verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
+                    ("z", (4,), "int32", "output", "cpu")]) as (y, z):
+        with ft.For("j", 0, 8) as j:
+            with ft.For("i", 0, 4) as i:
+                y[i, j] = i + j
+                with ft.If(j == 7):
+                    z[i] = i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_move_in_imperfect_loop_in_between():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -94,7 +175,10 @@ def test_loop_in_between():
             with ft.For("j", 0, 8, label="L3") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L3", "L1"], ft.ReorderMode.MoveInImperfect),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -110,7 +194,7 @@ def test_loop_in_between():
     assert std.match(ast)
 
 
-def test_multiple_loops_in_between_separated_by_vardef():
+def test_move_in_imperfect_multiple_loops_in_between_separated_by_vardef():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4, 8), "int32", "output", "cpu"),
                     ("w", (4, 8), "int32", "output", "cpu"),
@@ -125,7 +209,10 @@ def test_multiple_loops_in_between_separated_by_vardef():
             with ft.For("j", 0, 8, label="L3") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L3", "L1"], ft.ReorderMode.MoveInImperfect),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -199,7 +286,7 @@ def test_illegal_dependence():
     assert ast_.match(ast)
 
 
-def test_illegal_dependence_of_stmt_in_between():
+def test_move_in_imperfect_illegal_dependence_of_stmt_in_between():
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (), "int32", "cache", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -209,13 +296,30 @@ def test_illegal_dependence_of_stmt_in_between():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.reorder(["L2", "L1"])
+        s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
+def test_move_in_imperfect_illegal_dependence_of_stmt_in_between_on_local_var():
+
+    @ft.transform
+    def f(x: ft.Var[(4,), "int32", "input"], y: ft.Var[(4,), "int32", "inout"]):
+        #! label: L1
+        for i in range(0, 4):
+            t = ft.empty((), "int32")
+            t[...] = x[i] * 2
+            #! label: L2
+            for j in range(0, 4):
+                y[i] += t[...] * j
+
+    s = ft.Schedule(f, verbose=2)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect)
+
+
 def test_reduction():
-    with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
         with ft.For("i", 0, 4, label="L1") as i:
@@ -225,7 +329,7 @@ def test_reduction():
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (4, 8), "int32", "output", "cpu"),
+    with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
         with ft.For("j", 0, 8) as j:
@@ -358,6 +462,17 @@ def test_dep_by_external_var_reversed_loop():
                 # May be overriden by some next statements, for example,
                 # when (i, j) == (0, 1), idx1[i, j] + i == 0 + 0 == 0, and
                 # when (i, j) == (1, 0), idx1[i, j] + i == -1 + 1 == 0, and so is to j
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    with pytest.raises(ft.InvalidSchedule):
+        s.reorder(["L2", "L1"])
+
+
+def test_no_merge_if_outer_iter_var_is_used_in_inner():
+    with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, i, label="L2") as j:
+                y[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):

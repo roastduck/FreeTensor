@@ -9,17 +9,36 @@ plugins:
     - mkdocstrings:
         handlers:
             python:
-                selection:
+                selection:  # Merge to `options:` when using the new python handler
                     docstring_style: numpy
                     inherited_members: True
+                rendering:  # Merge to `options:` when using the new python handler
+                    show_object_full_path: True
+                    show_source: False  # If true, it would be hard to use Ctrl+F to search in the doc
+                                        # (it will search in the code!)
+                # New options only affective with the new python handler
+                #options:
+                #    show_submodules: True
+                #    docstring_section_style: list
         watch:
             - python/
             # We cannot watch build/. Reload mkdocs manually after rebuilding
+
+extra_javascript:
+    # The followings are required by MathJax
+    - javascripts/mathjax.js
+    - https://polyfill.io/v3/polyfill.min.js?features=es6
+    - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 markdown_extensions:
     - admonition
     - toc:
         permalink: true
+        toc_depth: "2-5"  # Show Level 2-5 in the TOC of each page, but hide Level 2-5 from the side
+                          # nav-bar. (But hiding from the nav-bar is inconvenient for the API page.
+                          # How to fix it?)
+    - pymdownx.arithmatex:
+        generic: true  # Required by MathJax
 
 nav:
     - 'FreeTensor':
@@ -30,6 +49,7 @@ nav:
         - 'Build and Run': 'guide/build-and-run.md'
         - 'Your First Program with FreeTenor': 'guide/first-program.md'
         - 'Optimize a Program with Schedules': 'guide/schedules.md'
+        - 'Optimize a Program with Hints': 'guide/hint.md'
         - 'Running on a GPU': 'guide/gpu.md'
         - 'Automatic Differentiation': 'guide/ad.md'
     - 'API Reference':

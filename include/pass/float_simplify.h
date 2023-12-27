@@ -15,13 +15,6 @@ namespace freetensor {
 class FloatSimplify : public SymbolTable<ConstFold> {
     typedef SymbolTable<ConstFold> BaseClass;
 
-    std::unordered_set<Expr> nonNeg_, nonPosi_;
-
-    void setNonNeg(const Expr &op) { nonNeg_.insert(op); }
-    void setNonPosi(const Expr &op) { nonPosi_.insert(op); }
-    bool nonNeg(const Expr &op) const;
-    bool nonPosi(const Expr &op) const;
-
     template <class T> bool equals(const Expr &op, T &&val) const {
         if (op->nodeType() == ASTNodeType::IntConst &&
             op.as<IntConstNode>()->val_ == val) {
@@ -38,6 +31,7 @@ class FloatSimplify : public SymbolTable<ConstFold> {
 
   protected:
     using BaseClass::visit;
+    Expr visitExpr(const Expr &expr) override;
     Expr visit(const Add &op) override;
     Expr visit(const Sub &op) override;
     Expr visit(const Mul &op) override;
@@ -45,13 +39,15 @@ class FloatSimplify : public SymbolTable<ConstFold> {
     Expr visit(const Min &op) override;
     Expr visit(const Max &op) override;
     Expr visit(const Sqrt &op) override;
-    Expr visit(const Exp &op) override;
     Expr visit(const Square &op) override;
     Expr visit(const Abs &op) override;
+    // TODO: Cancel Exp against Ln
 };
 
 /**
  * Simplify floating-point expressions in an AST
+ *
+ * This pass is by-passed when Config::fastMath is unset
  */
 Stmt floatSimplify(const Stmt &op);
 

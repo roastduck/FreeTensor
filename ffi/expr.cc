@@ -127,12 +127,24 @@ void init_ffi_ast_expr(py::module_ &m) {
     py::class_<ExpNode, Exp>(m, "Exp", pyExpr)
         .def_property_readonly("expr",
                                [](const Exp &op) -> Expr { return op->expr_; });
+    py::class_<LnNode, Ln>(m, "Ln", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Ln &op) -> Expr { return op->expr_; });
     py::class_<SquareNode, Square>(m, "Square", pyExpr)
         .def_property_readonly(
             "expr", [](const Square &op) -> Expr { return op->expr_; });
     py::class_<SigmoidNode, Sigmoid>(m, "Sigmoid", pyExpr)
         .def_property_readonly(
             "expr", [](const Sigmoid &op) -> Expr { return op->expr_; });
+    py::class_<SinNode, Sin>(m, "Sin", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Sin &op) -> Expr { return op->expr_; });
+    py::class_<CosNode, Cos>(m, "Cos", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Cos &op) -> Expr { return op->expr_; });
+    py::class_<TanNode, Tan>(m, "Tan", pyExpr)
+        .def_property_readonly("expr",
+                               [](const Tan &op) -> Expr { return op->expr_; });
     py::class_<TanhNode, Tanh>(m, "Tanh", pyExpr)
         .def_property_readonly(
             "expr", [](const Tanh &op) -> Expr { return op->expr_; });
@@ -161,6 +173,12 @@ void init_ffi_ast_expr(py::module_ &m) {
         });
     py::class_<IntrinsicNode, Intrinsic> pyIntrinsic(m, "Intrinsic", pyExpr);
     py::class_<AnyExprNode, AnyExpr> pyAnyExpr(m, "AnyExpr", pyExpr);
+    py::class_<LoadAtVersionNode, LoadAtVersion>(m, "LoadAtVersion", pyExpr)
+        .def_readonly("tape_name", &LoadAtVersionNode::tapeName_)
+        .def_property_readonly(
+            "indices", [](const LoadAtVersion &op) -> std::vector<Expr> {
+                return op->indices_;
+            });
 
     // NOTE: ORDER of the constructor matters!
     pyExpr.def(py::init([](const Expr &expr) { return deepCopy(expr); }))
@@ -260,67 +278,107 @@ void init_ffi_ast_expr(py::module_ &m) {
     py::implicitly_convertible<FrontendVar, ExprNode>();
 
     // makers
-    m.def("makeAnyExpr", &_makeAnyExpr);
-    m.def("makeVar", &_makeVar, "name"_a);
-    m.def("makeIntConst", &_makeIntConst, "val"_a);
-    m.def("makeFloatConst", &_makeFloatConst, "val"_a);
-    m.def("makeBoolConst", &_makeBoolConst, "val"_a);
-    m.def("makeLoad",
-          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
-                               DataType)>(&_makeLoad),
-          "var"_a, "indices"_a, "load_type"_a);
-    m.def("makeRemainder",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeRemainder),
-          "lhs"_a, "rhs"_a);
-    m.def("makeMin",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeMin), "lhs"_a,
-          "rhs"_a);
-    m.def("makeMax",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeMax), "lhs"_a,
-          "rhs"_a);
-    m.def("makeLAnd",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeLAnd),
-          "lhs"_a, "rhs"_a);
-    m.def("makeLOr",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeLOr), "lhs"_a,
-          "rhs"_a);
-    m.def("makeLNot", static_cast<Expr (*)(const Expr &)>(&_makeLNot),
-          "expr"_a);
-    m.def("makeSqrt", static_cast<Expr (*)(const Expr &)>(&_makeSqrt),
-          "expr"_a);
-    m.def("makeExp", static_cast<Expr (*)(const Expr &)>(&_makeExp), "expr"_a);
-    m.def("makeSquare", static_cast<Expr (*)(const Expr &)>(&_makeSquare),
-          "expr"_a);
-    m.def("makeSigmoid", static_cast<Expr (*)(const Expr &)>(&_makeSigmoid),
-          "expr"_a);
-    m.def("makeTanh", static_cast<Expr (*)(const Expr &)>(&_makeTanh),
-          "expr"_a);
-    m.def("makeAbs", static_cast<Expr (*)(const Expr &)>(&_makeAbs), "expr"_a);
-    m.def("makeFloor", static_cast<Expr (*)(const Expr &)>(&_makeFloor),
-          "expr"_a);
-    m.def("makeCeil", static_cast<Expr (*)(const Expr &)>(&_makeCeil),
-          "expr"_a);
-    m.def("makeIfExpr",
-          static_cast<Expr (*)(const Expr &, const Expr &, const Expr &)>(
-              &_makeIfExpr),
-          "cond"_a, "thenCase"_a, "elseCase"_a);
-    m.def("makeCast", static_cast<Expr (*)(const Expr &, DataType)>(&_makeCast),
-          "expr"_a, "dtype"_a);
-    m.def("makeFloorDiv",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeFloorDiv),
-          "lhs"_a, "rhs"_a);
-    m.def("makeCeilDiv",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(&_makeCeilDiv),
-          "lhs"_a, "rhs"_a);
-    m.def("makeRoundTowards0Div",
-          static_cast<Expr (*)(const Expr &, const Expr &)>(
-              &_makeRoundTowards0Div),
-          "lhs"_a, "rhs"_a);
-    m.def("makeIntrinsic",
-          static_cast<Expr (*)(const std::string &, const std::vector<Expr> &,
-                               DataType, bool)>(&_makeIntrinsic),
-          "fmt"_a, "params"_a, "retType"_a = DataType::Void,
-          "hasSideEffect"_a = false);
+    m.def("makeAnyExpr", []() { return makeAnyExpr(); });
+    m.def(
+        "makeVar", [](const std::string &_1) { return makeVar(_1); }, "name"_a);
+    m.def(
+        "makeIntConst", [](int64_t _1) { return makeIntConst(_1); }, "val"_a);
+    m.def(
+        "makeFloatConst", [](double _1) { return makeFloatConst(_1); },
+        "val"_a);
+    m.def(
+        "makeBoolConst", [](bool _1) { return makeBoolConst(_1); }, "val"_a);
+    m.def(
+        "makeLoad",
+        [](const std::string &_1, const std::vector<Expr> &_2,
+           const DataType _3) { return makeLoad(_1, _2, _3); },
+        "var"_a, "indices"_a, "load_type"_a);
+    m.def(
+        "makeRemainder",
+        [](const Expr &_1, const Expr &_2) { return makeRemainder(_1, _2); },
+        "lhs"_a, "rhs"_a);
+    m.def(
+        "makeMin",
+        [](const Expr &_1, const Expr &_2) { return makeMin(_1, _2); }, "lhs"_a,
+        "rhs"_a);
+    m.def(
+        "makeMax",
+        [](const Expr &_1, const Expr &_2) { return makeMax(_1, _2); }, "lhs"_a,
+        "rhs"_a);
+    m.def(
+        "makeLAnd",
+        [](const Expr &_1, const Expr &_2) { return makeLAnd(_1, _2); },
+        "lhs"_a, "rhs"_a);
+    m.def(
+        "makeLOr",
+        [](const Expr &_1, const Expr &_2) { return makeLOr(_1, _2); }, "lhs"_a,
+        "rhs"_a);
+    m.def(
+        "makeLNot", [](const Expr &_1) { return makeLNot(_1); }, "expr"_a);
+    m.def(
+        "makeSqrt", [](const Expr &_1) { return makeSqrt(_1); }, "expr"_a);
+    m.def(
+        "makeExp", [](const Expr &_1) { return makeExp(_1); }, "expr"_a);
+    m.def(
+        "makeLn", [](const Expr &_1) { return makeLn(_1); }, "expr"_a);
+    m.def(
+        "makeSquare", [](const Expr &_1) { return makeSquare(_1); }, "expr"_a);
+    m.def(
+        "makeSigmoid", [](const Expr &_1) { return makeSigmoid(_1); },
+        "expr"_a);
+    m.def(
+        "makeSin", [](const Expr &_1) { return makeSin(_1); }, "expr"_a);
+    m.def(
+        "makeCos", [](const Expr &_1) { return makeCos(_1); }, "expr"_a);
+    m.def(
+        "makeTan", [](const Expr &_1) { return makeTan(_1); }, "expr"_a);
+    m.def(
+        "makeTanh", [](const Expr &_1) { return makeTanh(_1); }, "expr"_a);
+    m.def(
+        "makeAbs", [](const Expr &_1) { return makeAbs(_1); }, "expr"_a);
+    m.def(
+        "makeFloor", [](const Expr &_1) { return makeFloor(_1); }, "expr"_a);
+    m.def(
+        "makeCeil", [](const Expr &_1) { return makeCeil(_1); }, "expr"_a);
+    m.def(
+        "makeUnbound", [](const Expr &_1) { return makeUnbound(_1); },
+        "expr"_a);
+    m.def(
+        "makeIfExpr",
+        [](const Expr &_1, const Expr &_2, const Expr &_3) {
+            return makeIfExpr(_1, _2, _3);
+        },
+        "cond"_a, "thenCase"_a, "elseCase"_a);
+    m.def(
+        "makeCast",
+        [](const Expr &_1, const DataType &_2) { return makeCast(_1, _2); },
+        "expr"_a, "dtype"_a);
+    m.def(
+        "makeFloorDiv",
+        [](const Expr &_1, const Expr &_2) { return makeFloorDiv(_1, _2); },
+        "lhs"_a, "rhs"_a);
+    m.def(
+        "makeCeilDiv",
+        [](const Expr &_1, const Expr &_2) { return makeCeilDiv(_1, _2); },
+        "lhs"_a, "rhs"_a);
+    m.def(
+        "makeRoundTowards0Div",
+        [](const Expr &_1, const Expr &_2) {
+            return makeRoundTowards0Div(_1, _2);
+        },
+        "lhs"_a, "rhs"_a);
+    m.def(
+        "makeIntrinsic",
+        [](const std::string &_1, const std::vector<Expr> &_2,
+           const DataType &_3,
+           bool _4) { return makeIntrinsic(_1, _2, _3, _4); },
+        "fmt"_a, "params"_a, "retType"_a = DataType{DataType::Void},
+        "hasSideEffect"_a = false);
+    m.def(
+        "makeLoadAtVersion",
+        [](const std::string &_1, const std::vector<Expr> &_2,
+           const DataType &_3) { return makeLoadAtVersion(_1, _2, _3); },
+        "tape_name"_a, "indices"_a, "load_type"_a);
 }
 
 } // namespace freetensor

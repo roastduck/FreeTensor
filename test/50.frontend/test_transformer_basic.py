@@ -109,6 +109,23 @@ def test_multiple_return_values():
     assert z_np[()] == 11
 
 
+def test_return_the_same_variable_twice():
+
+    @ft.optimize(verbose=1)
+    def test(x):
+        x: ft.Var[(), "int32"]
+        y = ft.empty((), "int32")
+        y[()] = x[()] * 2 + 1
+        return y, y
+
+    y_arr_1, y_arr_2 = test(np.array(5, dtype="int32"))
+    y_np_1 = y_arr_1.numpy()
+    y_np_2 = y_arr_2.numpy()
+
+    assert y_np_1[()] == 11
+    assert y_np_2[()] == 11
+
+
 def test_named_return_values():
 
     @ft.optimize(verbose=1)
@@ -126,6 +143,18 @@ def test_named_return_values():
 
     assert y_np[()] == 10
     assert z_np[()] == 11
+
+
+def test_redundant_parameter():
+
+    @ft.optimize(verbose=1)
+    def func(x: ft.Var[(), "int32"], y: ft.Var[(), "int32"]):
+        z = ft.empty((), "int32")
+        z[...] = x[...]  # `y` is unused
+        return z
+
+    z_arr = func(np.array(2, dtype="int32"), np.array(3, dtype="int32"))
+    assert z_arr.numpy().item() == 2
 
 
 def test_for():
@@ -537,3 +566,77 @@ def test_attribute_assign():
         return attr
 
     assert test.body.match(test_expected.body)
+
+
+def test_not_captured_annotation():
+    ft_alter = ft
+
+    @ft.transform()
+    def test(x: ft_alter.Var[(4,), "float32"]):
+        y = x + 1
+        return y
+
+    @ft.transform()
+    def test_expected(x: ft.Var[(4,), "float32"]):
+        y = x + 1
+        return y
+
+    assert test.body.match(test_expected.body)
+
+
+def test_bind():
+
+    @ft.transform(bind={'v': 2}, verbose=1)
+    def test(x: ft.Var[(4,), "float32"], v: int):
+        y = x + v
+        return y
+
+    @ft.transform
+    def test_expected(x: ft.Var[(4,), "float32"]):
+        y = x + 2
+        return y
+
+    assert test.body.match(test_expected.body)
+
+
+def test_name_conflict():
+
+    @ft.transform(verbose=1)
+    def test(x: ft.Var[(), "int32", "inout"]):
+        y = ft.empty((), "int32")
+        y[...] = x[...] + 1
+        x[...] = y[...]
+        y = ft.empty((), "int32")
+        y[...] = x[...] + 1
+        x[...] = y[...]
+        y_1 = ft.empty((), "int32")
+        y_1[...] = x[...] + 1
+        x[...] = y_1[...]
+
+    @ft.transform
+    def expect(x: ft.Var[(), "int32", "inout"]):
+        y1 = ft.empty((), "int32")
+        y1[...] = x[...] + 1
+        x[...] = y1[...]
+        y2 = ft.empty((), "int32")
+        y2[...] = x[...] + 1
+        x[...] = y2[...]
+        y3 = ft.empty((), "int32")
+        y3[...] = x[...] + 1
+        x[...] = y3[...]
+
+    assert expect.body.match(test.body)
+
+
+def test_metadata_redundant_spaces():
+
+    @ft.transform
+    def f(x):
+        x: ft.Var[(4, 4), "float32", "output"]
+        #!label: S1
+        x[2, 3] = 2.0
+        #!    label: S2
+        x[1, 0] = 3.0
+
+    assert len(ft.find_all_stmt(f, "S1")) == 1
+    assert len(ft.find_all_stmt(f, "S2")) == 1

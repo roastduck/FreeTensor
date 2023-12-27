@@ -1,4 +1,3 @@
-#include <auto_schedule/auto_schedule.h>
 #include <driver/array.h>
 #include <ffi.h>
 #include <schedule.h>
@@ -17,6 +16,14 @@ void init_ffi_schedule(py::module_ &m) {
     py::enum_<VarSplitMode>(m, "VarSplitMode")
         .value("FixedSize", VarSplitMode::FixedSize)
         .value("RelaxedSize", VarSplitMode::RelaxedSize);
+    py::enum_<ReorderMode>(m, "ReorderMode")
+        .value("PerfectOnly", ReorderMode::PerfectOnly)
+        .value("MoveOutImperfect", ReorderMode::MoveOutImperfect)
+        .value("MoveInImperfect", ReorderMode::MoveInImperfect);
+    py::enum_<AsMatMulMode>(m, "AsMatMulMode")
+        .value("KeepMemLayout", AsMatMulMode::KeepMemLayout)
+        .value("TryVarReorder", AsMatMulMode::TryVarReorder)
+        .value("TryTranspose", AsMatMulMode::TryTranspose);
 
     py::class_<DiscreteObservation>(m, "DiscreteObservation")
         .def("__str__",
@@ -30,6 +37,10 @@ void init_ffi_schedule(py::module_ &m) {
         .def_readonly("time", &AutoScheduleTuneTrial::time_)
         .def_readonly("stddev", &AutoScheduleTuneTrial::stddev_);
 
+    py::class_<ScheduleLogItem, Ref<ScheduleLogItem>>(m, "ScheduleLogItem")
+        .def("__str__", &ScheduleLogItem::toPrettyString)
+        .def_property_readonly("result_ast", &ScheduleLogItem::resultAST);
+
     py::class_<Schedule>(m, "Schedule")
         .def(py::init<const Stmt &, int>(), "stmt"_a, "verbose"_a = 0)
         .def(py::init<const Func &, int>(), "func"_a, "verbose"_a = 0)
@@ -42,24 +53,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("ast", &Schedule::ast)
         .def("func", &Schedule::func)
         .def("logs",
-             [](const Schedule &s) {
-                 auto &&log = s.logs().asVector();
-                 std::vector<std::string> ret;
-                 ret.reserve(log.size());
-                 for (auto &&item : log) {
-                     ret.emplace_back(toString(*item));
-                 }
-                 return ret;
-             })
-        .def("pretty_logs",
-             [](const Schedule &s) {
-                 auto &&log = s.logs().asVector();
-                 std::vector<std::string> ret;
-                 ret.reserve(log.size());
-                 for (auto &&item : log) {
-                     ret.emplace_back(item->toPrettyString());
-                 }
-                 return ret;
+             [](const Schedule &s) -> std::vector<Ref<ScheduleLogItem>> {
+                 return s.logs().asVector();
              })
         .def("find",
              static_cast<Stmt (Schedule::*)(const ID &) const>(&Schedule::find))
@@ -89,7 +84,8 @@ void init_ffi_schedule(py::module_ &m) {
                              const>(&Schedule::findAtLeastOne))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
              "nparts"_a = -1, "shift"_a = 0)
-        .def("reorder", &Schedule::reorder, "order"_a)
+        .def("reorder", &Schedule::reorder, "order"_a,
+             "mode"_a = ReorderMode::PerfectOnly)
         .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
         .def(
             "permute",
@@ -106,7 +102,7 @@ void init_ffi_schedule(py::module_ &m) {
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
-             "suffix0"_a = ".0", "suffix1"_a = ".1")
+             "allow_enlarge"_a = true, "suffix0"_a = ".0", "suffix1"_a = ".1")
         .def("fuse",
              static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
                  &Schedule::fuse),
@@ -119,21 +115,44 @@ void init_ffi_schedule(py::module_ &m) {
         .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
              "mtype"_a)
-        .def("set_mem_type", &Schedule::setMemType, "vardef"_a, "mtype"_a)
+        .def("set_mem_type",
+             static_cast<void (Schedule::*)(const ID &, MemType)>(
+                 &Schedule::setMemType),
+             "vardef"_a, "mtype"_a)
+        .def("set_mem_type",
+             static_cast<void (Schedule::*)(const ID &, MemType, bool)>(
+                 &Schedule::setMemType),
+             "vardef"_a, "mtype"_a, "reject_indirect_access"_a)
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
              "factor"_a = -1, "nparts"_a = -1)
         .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a)
         .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("inline", &Schedule::inlining, "vardef"_a)
-        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a)
+        .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a,
+             "allow_reduction"_a = true)
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("separate_tail", &Schedule::separateTail,
              "noDuplicateVarDefs"_a = false)
-        .def("as_matmul", &Schedule::asMatMul)
+        .def("as_matmul",
+             static_cast<void (Schedule::*)(
+                 const ID &, AsMatMulMode, const Ref<Target> &, MatMulBackend)>(
+                 &Schedule::asMatMul),
+             "loop"_a, "mode"_a, "target"_a, "backend"_a)
+        .def("as_matmul",
+             static_cast<void (Schedule::*)(const ID &, AsMatMulMode,
+                                            const Ref<Target> &)>(
+                 &Schedule::asMatMul),
+             "loop"_a, "mode"_a, "target"_a)
+        .def("as_matmul",
+             static_cast<void (Schedule::*)(const ID &, AsMatMulMode)>(
+                 &Schedule::asMatMul),
+             "loop"_a, "mode"_a = AsMatMulMode::KeepMemLayout)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
-             "nest_level_0"_a = 0, "nest_level_1"_a = 0, "do_simplify"_a = true)
+             "nest_level_0"_a = 0, "nest_level_1"_a = 0,
+             "fusable_overlap_threshold"_a = 1,
+             "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true)
         .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
              "nest_level"_a = 0, "do_simplify"_a = true)
         .def("auto_schedule",
@@ -141,13 +160,17 @@ void init_ffi_schedule(py::module_ &m) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
                  return s.autoSchedule(target);
              })
+        .def("auto_inline", &Schedule::autoInline)
         .def("auto_use_lib", &Schedule::autoUseLib)
         .def("auto_reorder", &Schedule::autoReorder)
+        .def("auto_swap", &Schedule::autoSwap)
+        .def("auto_pluto", &Schedule::autoPluto)
         .def("auto_fission_fuse",
              [](Schedule &s, const Ref<Target> &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
                  return s.autoFissionFuse(target);
              })
+        .def("auto_mem_layout", &Schedule::autoMemLayout)
         .def("auto_parallelize", &Schedule::autoParallelize)
         .def("auto_set_mem_type", &Schedule::autoSetMemType)
         .def("auto_unroll", &Schedule::autoUnroll)

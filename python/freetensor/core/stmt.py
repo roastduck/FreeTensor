@@ -10,23 +10,22 @@ expressions in `expr.py`
 '''
 
 import collections
-from typing import Sequence, Mapping, Tuple, Any, Optional
+from typing import Sequence, Set, Mapping, Tuple, Any, Optional
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 from . import config
-from .context import ctx_stack
-from .expr import VarRef
-
-open_vardefs = {}
+from .context import ctx_stack, StmtRange
+from .expr import VarRef, VarRefFromVarDef
+from .return_values_pack import ReturnValuesPack
 
 
 def find_borrowed_vardefs(exprs: Sequence):
     borrowed_vardefs = set()
     for expr in exprs:
-        for name in ffi.all_reads(
-                expr if type(expr) is ffi.FrontendVarIdx else ffi.Expr(expr)):
-            borrowed_vardefs.add(open_vardefs[name])
+        for name in ffi.all_reads(expr if type(expr) is
+                                  ffi.FrontendVarIdx else ffi.Expr(expr)):
+            borrowed_vardefs.add(ctx_stack.open_vardefs[name])
     return borrowed_vardefs
 
 
@@ -38,6 +37,7 @@ class _VarDef:
                  dtype,
                  atype,
                  mtype=None,
+                 *,
                  view_of=None):
         '''
         Scope used for creating a VarDef AST node. A VarRef will be returned as a
@@ -102,14 +102,15 @@ class _VarDef:
             item.lend_out()
 
         ctx_stack.push()
-        if self.name in open_vardefs:
+        if self.name in ctx_stack.open_vardefs:
             raise ffi.InvalidProgram("Nested VarDefs with the same name `" +
                                      self.name + "` is not allowed")
-        open_vardefs[self.name] = self
-        return VarRef(self.name, self, self.shape, self.dtype, self.mtype)
+        ctx_stack.open_vardefs[self.name] = self
+        return VarRefFromVarDef(self.name, self, self.shape, self.dtype,
+                                self.mtype)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        del open_vardefs[self.name]
+        del ctx_stack.open_vardefs[self.name]
         for item in self.borrowed_vardefs:
             item.reclaim()
 
@@ -132,7 +133,8 @@ class _VarsDef:
     This scope is internally used by `transformer` and tests
     '''
 
-    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType]):
+    def __init__(self, defs: Tuple[str, Any, ffi.DataType, ffi.AccessType,
+                                   ffi.MemType]):
         self.defs = [VarDef(*d) for d in defs]
 
     def __enter__(self):
@@ -189,7 +191,7 @@ class For:
         self.borrowed_vardefs = set()
         for x in [begin, end, step]:
             for name in ffi.all_reads(ffi.Expr(x)):
-                self.borrowed_vardefs.add(open_vardefs[name])
+                self.borrowed_vardefs.add(ctx_stack.open_vardefs[name])
 
     def __enter__(self):
         for item in self.borrowed_vardefs:
@@ -314,7 +316,7 @@ def MarkLabel(label: str):
 
 class NamedScope:
     '''
-    Scope used to create an StmtSeq node with an explicit ID
+    Scope used to create an StmtSeq node with an explicit labels
 
     E.g.:
 
@@ -359,31 +361,43 @@ class Invoke:
                  ret_names: Sequence[str],
                  func: ffi.Func,
                  args: Sequence = [],
-                 kvs: Mapping = {}):
+                 kvs: Mapping = {},
+                 *,
+                 conflict_names: Set[str] = set(),
+                 force_allow_closures: bool = False):
         self.args = args
         self.kvs = kvs
-        self.func, returns = ffi.strip_returns(func)
-        self.vardefs = []  # Outer to inner
-        assert len(ret_names) == len(returns)
-        for name, ret in zip(ret_names, returns):
-            self.vardefs.append(
-                _VarDef(name, ret.tensor.shape, ret.tensor.dtype, "cache",
-                        ret.mtype))
+        self.conflict_names = conflict_names
+        self.force_allow_closures = force_allow_closures
+        self.func, returns_info = ffi.strip_returns(func)
+        self.vardefs = []  # (pos, vardef) each, from outer to inner
+        assert len(ret_names) == len(returns_info)
+        for pos, buf in returns_info:
+            self.vardefs.append((pos,
+                                 _VarDef(ret_names[pos], buf.tensor.shape,
+                                         buf.tensor.dtype, "cache", buf.mtype)))
 
     def __enter__(self):
-        varrefs = []
-        ret_names = []
-        for vardef in self.vardefs:
+        varrefs = [None] * len(self.func.returns)
+        ret_names = [None] * len(self.func.returns)
+        for pos, vardef in self.vardefs:
             varref = vardef.__enter__()
-            varrefs.append(varref)
-            ret_names.append(varref.name)
+            varrefs[pos] = varref
+            ret_names[pos] = varref.name
         ctx_stack.top().append_stmt(
             ffi.inlined_invoke(ctx_stack.top().get_metadata(), self.func,
-                               self.args, self.kvs, ret_names))
-        return varrefs[0] if len(varrefs) == 1 else tuple(varrefs)
+                               self.args, self.kvs, ret_names,
+                               self.conflict_names, self.force_allow_closures))
+        if len(varrefs) == 0:
+            return None
+        elif len(varrefs) == 1:
+            return varrefs[0]
+        else:
+            return ReturnValuesPack(map(lambda r: r.name, self.func.returns),
+                                    varrefs)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        for vardef in reversed(self.vardefs):
+        for pos, vardef in reversed(self.vardefs):
             vardef.__exit__(exc_type, exc_value, traceback)
 
 
@@ -416,23 +430,63 @@ def Any():
     ctx_stack.top().append_stmt(ffi.makeAny())
 
 
-class Func(ffi.Func):
+def MarkVersion(tape_name: str, var: VarRef):
+    '''
+    Create an MarkVersion node (only for custom gradient)
 
-    def __init__(self,
-                 name,
-                 params,
-                 returns,
-                 body,
-                 closure={},
-                 custom_callback=None):
-        super().__init__(
-            name, params,
-            list(map(lambda x: (x[0], ffi.DataType(x[1])), returns)), body,
-            closure)
-        self.custom_callback = custom_callback
+    This node is only used for custom gradient. See `UserGrad`.
+    '''
+    top = ctx_stack.top()
+    top.append_stmt(ffi.makeMarkVersion(tape_name, var.name,
+                                        top.get_metadata()))
 
-        # Mimic a Python function
-        self.__name__ = name
 
-    def __call__(self, *args, **kvs):
-        return self.custom_callback(*args, **kvs)
+class UserGradStaged:
+    '''
+    Internal staged implementation of `UserGrad`
+    '''
+
+    def __init__(self, *args: Sequence[VarRef], stmt_range: StmtRange = None):
+        self.ori_vars = args
+        self.body = None
+        self.grad_defs = []
+        if stmt_range is not None:
+            if isinstance(stmt_range, StmtRange):
+                self.ori_stmts = stmt_range.make()
+            else:
+                raise TypeError(
+                    "`stmt_range` should be a `StmtRange` for `UserGrad`")
+        else:
+            self.ori_stmts = {ctx_stack.get_last_stmt_id()}
+
+    def __enter__(self):
+        # Make `VarDef` scopes for the gradients
+        grad_vars = []
+        for ori_var in self.ori_vars:
+            grad_def = VarDef(ori_var.name + ".grad", ori_var.full_shape,
+                              ori_var.dtype, "cache", ori_var.mtype)
+            grad_vars.append(grad_def.__enter__())
+            self.grad_defs.append(grad_def)
+
+        # Make a context, which is used for popping out the body we need
+        ctx_stack.push()
+
+        return grad_vars
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Pop out the body we need
+        self.body = ctx_stack.pop().make_stmt()
+
+        # Although we are discarding the gradient `VarDef` scopes, we still need to close
+        # them, to restore ctx_stack. After that, we pop out the `VarDef` statement
+        if len(self.ori_vars) > 0:
+            for grad_def in reversed(self.grad_defs):
+                grad_def.__exit__(exc_type, exc_value, traceback)
+            if exc_value is not None:
+                # Do not generate an AST node
+                return False  # Do not suppress the exception
+            ctx_stack.top().stmt_seq.pop()
+
+        # Record the body to context
+        ctx_stack.user_grads.append(
+            ffi.StmtSetToUserGrad(self.ori_stmts, self.body))

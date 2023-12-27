@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <analyze/symbol_table.h>
 #include <analyze/track_stmt.h>
 #include <visitor.h>
 
@@ -105,12 +106,11 @@ class MarkStores : public TrackStmt<Visitor> {
     }
 };
 
-class FindLoopVariance : public TrackStmt<Visitor> {
-    typedef TrackStmt<Visitor> BaseClass;
+class FindLoopVariance : public SymbolTable<TrackStmt<Visitor>> {
+    typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
 
     std::vector<ID> loopStack_;
     std::vector<StmtOrExprID> condStack_;
-    std::unordered_map<std::string, For> loops_;
     LoopVariTransVarMap varInfo_;
     LoopVariUniqVarMap uniqVarInfo_;
     LoopVariExprMap exprInfo_;
@@ -159,6 +159,10 @@ bool isVariant(const LoopVariUniqVarMap &varInfo, const ID &defId,
  * This function returns two map. The first map shows whether an expression is
  * loop-variant, while the second map shows whether a variable is loop-variant.
  * The result should be get by calling `isVariant`
+ *
+ * NOTE: `findLoopVariance` currently treat expressions invariant to all their
+ * non-surrounding loops for minimize analyzing overhead, but it is possible to
+ * make this behaviour optional (see FindLoopVariance::visit(const Load &))
  *
  * `findLoopVariance` runs an iterative algorithm. The variance info is
  * expressed as a semi-lattice:

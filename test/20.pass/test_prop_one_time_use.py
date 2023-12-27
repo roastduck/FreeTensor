@@ -1,4 +1,5 @@
 import freetensor as ft
+import pytest
 
 
 def test_basic():
@@ -75,6 +76,24 @@ def test_prop_across_loops():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             y[i] = x[i] * 2 + 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_prop_out_of_a_loop():
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("t", (4,), "int32", "cache", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, t, y):
+        with ft.For("i", 0, 4) as i:
+            t[i] = x[i] * 2
+        y[...] = t[0] + t[1] + t[2] + t[3]
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+        y[...] = x[0] * 2 + x[1] * 2 + x[2] * 2 + x[3] * 2
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -177,7 +196,7 @@ def test_modify_self_no_prop():
 
 
 def test_using_local_var_no_prop():
-    with ft.VarDef([("x", (5, 10), "float64", "inout", "cpu"),
+    with ft.VarDef([("x", (5, 10), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
             with ft.For("i", 0, 5) as i:
@@ -191,7 +210,7 @@ def test_using_local_var_no_prop():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (5, 10), "float64", "inout", "cpu"),
+    with ft.VarDef([("x", (5, 10), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
             with ft.For("i", 0, 5) as i:
@@ -202,6 +221,47 @@ def test_using_local_var_no_prop():
                     t[i] = s[()] * 2  # No prop t
             with ft.For("i", 0, 5) as i:
                 y[i] = t[i]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_thread_local_no_prop():
+    with ft.VarDef([("x", (5, 10), "float32", "input", "gpu/global"),
+                    ("y", (5, 10), "float32", "output", "gpu/global")]) as (x,
+                                                                            y):
+        with ft.For("i", 0, 5, label="Li") as i:
+            with ft.VarDef([
+                ("t", (10,), "float32", "cache", "gpu/local"),
+                ("u", (10,), "float32", "cache", "gpu/shared"),
+            ]) as (t, u):
+                with ft.For("j", 0, 10, label="Lj1") as j:
+                    t[j] = x[i, j] + (t[j - 1] if j > 0 else 0)
+                    u[j] = ft.sin(t[j]) * ft.cos(t[j])
+                with ft.For("j", 0, 10, label="Lj2") as j:
+                    # Used `u` for only once, but we can't propagate the `t`-expression
+                    # here, because `t` is thread-local
+                    y[i, j] = u[j]
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.parallelize("Li", "blockIdx.x")
+    s.parallelize("Lj2", "threadIdx.x")
+    ast = s.ast()
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (5, 10), "float32", "input", "gpu/global"),
+                    ("y", (5, 10), "float32", "output", "gpu/global")]) as (x,
+                                                                            y):
+        with ft.For("i", 0, 5, label="Li") as i:
+            with ft.VarDef("u", (10,), "float32", "cache", "gpu/shared") as u:
+                with ft.VarDef("t", (10,), "float32", "cache",
+                               "gpu/local") as t:
+                    with ft.For("j", 0, 10, label="Lj1") as j:
+                        t[j] = x[i, j] + (t[j - 1] if j > 0 else 0)
+                        u[j] = ft.sin(t[j]) * ft.cos(t[j])
+                with ft.For("j", 0, 10, label="Lj2") as j:
+                    y[i, j] = u[j]  # Unchanged
     std = ft.pop_ast()
 
     assert std.match(ast)

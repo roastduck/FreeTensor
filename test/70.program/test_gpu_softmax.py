@@ -1,9 +1,6 @@
-import torch
 import pytest
-import numpy as np
 
 import freetensor as ft
-from freetensor import debug
 from freetensor import libop
 
 if not ft.with_cuda():
@@ -13,8 +10,11 @@ device = ft.GPU()
 target = device.target()
 
 
-@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+@pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
+                    reason="requires PyTorch and CUDA")
 def test_manual_static():
+    import torch
+
     # softmax in BERT
     # shape = batch_size * #heads * seq_len * seq_len
 
@@ -39,6 +39,7 @@ def test_manual_static():
 
     # L_head
     L_head = s.fuse("L<~recur<~init<~recur<~impl<~max<~softmax")
+    L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
     L_head = s.fuse(L_head)
@@ -122,8 +123,7 @@ def test_manual_static():
     f = ft.lower(s.func(), target)
     print(f)
 
-    code = ft.codegen(f, target)
-    print(debug.with_line_no(code))
+    code = ft.codegen(f, target, verbose=1)
 
     x_torch = torch.rand(batch_size,
                          n_heads,
@@ -137,7 +137,7 @@ def test_manual_static():
                           seq_len,
                           dtype=torch.float32)
     y_arr = ft.Array(y_torch.numpy())
-    ft.Driver(f, code, device)(x_arr, y_arr)
+    ft.build_binary(code, device)(x_arr, y_arr)
     y_torch = torch.Tensor(y_arr.numpy())
 
     assert torch.all(torch.isclose(y_torch, torch.softmax(x_torch, axis=-1)))

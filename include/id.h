@@ -2,8 +2,10 @@
 #define FREE_TENSOR_ID_H
 
 #include <atomic>
+#include <functional>
 #include <iostream>
 #include <optional>
+#include <serialize/stream_utils.h>
 
 namespace freetensor {
 
@@ -36,6 +38,20 @@ class ID {
     friend bool operator==(const ID &lhs, const ID &rhs);
     friend struct ::std::hash<ID>;
 };
+
+/**
+ * Control over whether to output a "#" sign before an ID
+ *
+ * Get or set the option via `std::ostream::iword()`, or set it via outputting
+ * `manipNoIdSign` to the stream
+ *
+ * Defaults to outputting with "#"
+ *
+ * @{
+ */
+extern int OSTREAM_NO_ID_SIGN;
+std::function<std::ostream &(std::ostream &)> manipNoIdSign(bool flag);
+/** @} */
 
 std::ostream &operator<<(std::ostream &os, const ID &id);
 

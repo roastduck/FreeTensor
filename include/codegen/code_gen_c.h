@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <codegen/code_gen.h>
+#include <serialize/stream_utils.h>
 
 namespace freetensor {
 
@@ -21,7 +22,7 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
              const std::vector<FuncRet> &returns)
         : params_(params), returns_(returns) {}
 
-    static std::string gen(DataType dtype);
+    virtual std::string gen(const DataType &dtype);
 
   protected:
     virtual void genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
@@ -29,11 +30,8 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
                           const std::string &dimPtr) = 0;
 
     // Generate a pointer to an multi-dimensional array
-    virtual void genMdPtrType(std::ostream &os, const VarDef &def,
-                              bool isConst = false);
-    virtual void genMdPtrType(const VarDef &def, bool isConst = false) {
-        genMdPtrType(this->os(), def, isConst);
-    }
+    virtual std::function<std::ostream &(std::ostream &)>
+    genMdPtrType(const VarDef &def, bool isConst = false);
     virtual void genMdPtrDef(const VarDef &def,
                              const std::function<void()> &genRawPtr,
                              bool isConst = false);
@@ -82,8 +80,12 @@ template <class Stream> class CodeGenC : public CodeGen<Stream> {
     virtual void visit(const LNot &op) override;
     virtual void visit(const Sqrt &op) override;
     virtual void visit(const Exp &op) override;
+    virtual void visit(const Ln &op) override;
     virtual void visit(const Square &op) override;
     virtual void visit(const Sigmoid &op) override;
+    virtual void visit(const Sin &op) override;
+    virtual void visit(const Cos &op) override;
+    virtual void visit(const Tan &op) override;
     virtual void visit(const Tanh &op) override;
     virtual void visit(const Abs &op) override;
     virtual void visit(const Floor &op) override;

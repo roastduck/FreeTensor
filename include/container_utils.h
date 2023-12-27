@@ -109,6 +109,17 @@ uni(const std::unordered_set<T, Hash, KeyEqual> &lhs,
     return ret;
 }
 
+template <class T, class Hash, class KeyEqual>
+std::unordered_set<T, Hash, KeyEqual>
+diff(const std::unordered_set<T, Hash, KeyEqual> &lhs,
+     const std::unordered_set<T, Hash, KeyEqual> &rhs) {
+    auto ret = lhs;
+    for (auto &&item : rhs) {
+        ret.erase(item);
+    }
+    return ret;
+}
+
 template <class T>
 std::vector<T> cat(const std::vector<T> &lhs, const std::vector<T> &rhs) {
     std::vector<T> ret;

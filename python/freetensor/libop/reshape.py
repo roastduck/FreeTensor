@@ -1,9 +1,16 @@
-from typing import Sequence, Optional
+__all__ = [
+    'reshape', 'reshape_', 'flatten', 'flatten_', 'flatten_onnx',
+    'flatten_onnx_', 'flatten_pytorch', 'flatten_pytorch_', 'squeeze',
+    'squeeze_', 'unsqueeze', 'unsqueeze_', 'expand', 'expand_'
+]
+
+from typing import Sequence
 from numbers import Number
+import functools
 
 from .. import core
-from .utils import *
-from .shape_utils import *
+from .utils import begin_with_0, all_minus_one, circular_axis
+from .shape_utils import copy_shape
 
 
 class _ExprHolder:
@@ -216,22 +223,25 @@ def reshape(x, shape):
 
 
 @core.inline
-def _flatten_inner_(x, y):
+def _flatten_onnx_inner_(x, y):
     if core.ndim(x) == 0:
         y[0] = x
     else:
         #! label: L_inner
         for i in range(x.shape(0)):
             #! label: recur
-            _flatten_inner_(
+            _flatten_onnx_inner_(
                 x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                         (y.shape(0) // x.shape(0))])
 
 
 @core.inline
-def flatten_(x, y, axis: int = 1):
+def flatten_onnx_(x, y, axis: int = 1):
     '''
-    Flatten a tensor to have fewer dimensions, and write to another tensor
+    Flatten a tensor to have two dimensions, and write to another tensor
+
+    NOTE: This function follows the ONNX convension that reshapes to 2-D instead
+    of 1-D.
 
     Parameters
     ----------
@@ -240,23 +250,25 @@ def flatten_(x, y, axis: int = 1):
     y : VarRef
         The result tensor
     axis : int (Optional)
-        The result tensor will have up to `axis` dimensions. All dimensions after
-        `axis` will be flatten to 1-D. Negative axis means counting form the last
-        dimension
+        The result tensor will have 2 dimensions. All dimensions up to `axis`
+        (inclusive) will be flattend to the first dimension. All dimensions after
+        `axis` (exclusive) will be flatten to the second dimension. Negative axis
+        means counting form the last dimension
     '''
+    axis = circular_axis(axis, core.ndim(x))
     if axis == 0:
         #! label: recur
-        _flatten_inner_(x, y[0])
+        _flatten_onnx_inner_(x, y[0])
     else:
         #! label: L_outer
         for i in range(x.shape(0)):
             #! label: recur
-            flatten_(
+            flatten_onnx_(
                 x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
                         (y.shape(0) // x.shape(0))], axis - 1)
 
 
-def _flatten_comp_shape(x, axis):
+def _flatten_onnx_comp_shape(x, axis):
     y_shape = [1, 1]
     for i in range(axis):
         y_shape[0] *= core.shape(x, i)
@@ -266,33 +278,179 @@ def _flatten_comp_shape(x, axis):
 
 
 @core.inline
-def flatten(x, axis=1):
+def flatten_onnx(x, axis: int = 1):
     '''
-    Flatten a tensor to have fewer dimensions, and return the result
+    Flatten a tensor to have two dimensions, and return the result
+
+    NOTE: This function follows the ONNX convension that reshapes to 2-D instead
+    of 1-D.
 
     Parameters
     ----------
     x : VarRef
         The input tensor
     axis : int (Optional)
-        The result tensor will have up to `axis` dimensions. All dimensions after
-        `axis` will be flatten to 1-D. Negative axis means counting form the last
-        dimension
+        The result tensor will have 2 dimensions. All dimensions up to `axis`
+        (inclusive) will be flattend to the first dimension. All dimensions after
+        `axis` (exclusive) will be flatten to the second dimension. Negative axis
+        means counting form the last dimension
 
     Returns
     -------
     VarRef
         The result tensor
     '''
-    y = core.empty(_flatten_comp_shape(x, axis), core.dtype(x), core.mtype(x))
+    axis = circular_axis(axis, core.ndim(x))
+    y = core.empty(_flatten_onnx_comp_shape(x, axis), core.dtype(x),
+                   core.mtype(x))
     #! label: recur
-    flatten_(x, y, axis)
+    flatten_onnx_(x, y, axis)
     return y
 
 
-def _circular_axes(axes, x_ndim):
+@core.inline
+def flatten_pytorch_(x: core.VarRef, y: core.VarRef, start_dim=0, end_dim=-1):
+    '''
+    Flatten a tensor to have fewer dimensions, and write to another tensor
+
+    NOTE: This function follows the PyTorch convension
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The result tensor
+    start_dim, end_dim : int (Optional)
+        All dimensions ranging from `start_dim` and `end_dim` (inclusive) will be
+        flattend to 1-D. Negative axis means counting form the last dimension
+    '''
+    start_dim = circular_axis(start_dim, core.ndim(x))
+    end_dim = circular_axis(end_dim, core.ndim(x))
+    if start_dim == end_dim:
+        y[...] = x[...]
+    elif start_dim > 0:
+        assert x.shape(0) == y.shape(0)
+        for i in range(x.shape(0)):
+            flatten_pytorch_(x[i], y[i], start_dim - 1, end_dim - 1)
+    else:
+        for i in range(x.shape(0)):
+            flatten_pytorch_(
+                x[i], y[i * (y.shape(0) // x.shape(0)):(i + 1) *
+                        (y.shape(0) // x.shape(0))], 0, end_dim - 1)
+
+
+@core.inline
+def flatten_pytorch(x: core.VarRef, start_dim=0, end_dim=-1) -> core.VarRef:
+    '''
+    Flatten a tensor to have fewer dimensions, and return the result
+
+    NOTE: This function follows the PyTorch convension
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    start_dim, end_dim : int (Optional)
+        All dimensions ranging from `start_dim` and `end_dim` (inclusive) will be
+        flattend to 1-D. Negative axis means counting form the last dimension
+
+    Returns
+    -------
+    VarRef
+        The result tensor
+    '''
+    start_dim = circular_axis(start_dim, core.ndim(x))
+    end_dim = circular_axis(end_dim, core.ndim(x))
+
+    def prod(iterable):
+        return functools.reduce(lambda x, y: x * y, iterable, 1)
+
+    y_shape = x.shape()[:start_dim] + [prod(x.shape()[start_dim:end_dim + 1])
+                                      ] + x.shape()[end_dim + 1:]
+    y = core.empty(y_shape, core.dtype(x), core.mtype(x))
+    flatten_pytorch_(x, y, start_dim, end_dim)
+    return y
+
+
+flatten_ = flatten_onnx_
+''' Alias of `flatten_onnx_` '''
+
+flatten = flatten_onnx
+''' Alias of `flatten_onnx` '''
+
+
+def _squeeze_circular_axes(axes, x_ndim):
     # ONNX >= 13 treats axes as a tensor, which we don't support for now
-    return sorted(map(lambda x: x if x >= 0 else x_ndim + len(axes) + x, axes))
+    return sorted(map(functools.partial(circular_axis, ndim=x_ndim), axes))
+
+
+@core.inline
+def squeeze_(x, y, axes: Sequence[int]):
+    '''
+    Remove singleton dimensions from a tensor, and write the result to another tensor
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    y : VarRef
+        The resulting tensor
+    axes :
+        Dimension numbers of the singleton dimensions. Negative axis means counting
+        from the last dimension
+    '''
+    axes = _squeeze_circular_axes(axes, core.ndim(x))
+    if x.ndim == 0:
+        y[()] = x
+    elif begin_with_0(axes):
+        assert x.shape(0) == 1
+        #! label: recur
+        squeeze_(x[0], y, all_minus_one(axes[1:]))
+    else:
+        #! label: L
+        for i in range(x.shape(0)):
+            #! label: recur
+            squeeze_(x[i], y[i], all_minus_one(axes))
+
+
+def _squeeze_comp_shape(axes, x):
+    y_shape = copy_shape(x)
+    for item in reversed(axes):
+        del y_shape[item]
+    return y_shape
+
+
+@core.inline
+def squeeze(x, axes: Sequence[int]):
+    '''
+    Remove singleton dimensions from a tensor, and return the result
+
+    Parameters
+    ----------
+    x : VarRef
+        The input tensor
+    axes :
+        Dimension numbers of the singleton dimensions. Negative axis means counting
+        from the last dimension
+
+    Returns
+    -------
+    VarRef
+        The resulting tensor
+    '''
+    y = core.empty(
+        _squeeze_comp_shape(_squeeze_circular_axes(axes, core.ndim(x)), x),
+        core.dtype(x), core.mtype(x))
+    #! label: recur
+    squeeze_(x, y, axes)
+    return y
+
+
+def _unsqueeze_circular_axes(axes, x_ndim):
+    # ONNX >= 13 treats axes as a tensor, which we don't support for now
+    return sorted(
+        map(functools.partial(circular_axis, ndim=x_ndim + len(axes)), axes))
 
 
 @core.inline
@@ -310,7 +468,7 @@ def unsqueeze_(x, y, axes: Sequence[int]):
         Dimension numbers of the new singleton dimensions. Negative axis means counting
         from the last dimension
     '''
-    axes = _circular_axes(axes, core.ndim(x))
+    axes = _unsqueeze_circular_axes(axes, core.ndim(x))
     if y.ndim == 0:
         y[()] = x
     elif begin_with_0(axes):
@@ -348,8 +506,9 @@ def unsqueeze(x, axes: Sequence[int]):
     VarRef
         The resulting tensor
     '''
-    y = core.empty(_unsqueeze_comp_shape(_circular_axes(axes, core.ndim(x)), x),
-                   core.dtype(x), core.mtype(x))
+    y = core.empty(
+        _unsqueeze_comp_shape(_unsqueeze_circular_axes(axes, core.ndim(x)), x),
+        core.dtype(x), core.mtype(x))
     #! label: recur
     unsqueeze_(x, y, axes)
     return y

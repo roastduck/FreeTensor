@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_FUNC_H
 #define FREE_TENSOR_FUNC_H
 
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -26,6 +27,8 @@ struct FuncParam {
         : name_(name), closure_(closure), updateClosure_(updateClosure) {}
 };
 
+std::ostream &operator<<(std::ostream &os, const FuncParam &p);
+
 struct FuncRet {
     std::string name_;
     DataType dtype_;
@@ -40,11 +43,16 @@ struct FuncRet {
           returnClosure_(returnClosure) {}
 };
 
+std::ostream &operator<<(std::ostream &os, const FuncRet &r);
+
 class FuncNode : public ASTNode {
   public:
     std::string name_;
     std::vector<FuncParam> params_;
-    std::vector<FuncRet> returns_;
+    std::vector<FuncRet>
+        returns_; // NOTE: multiple items in `returns_` may share the same name.
+                  // In this case, one variable should be returned to multiple
+                  // positions
     SubTree<StmtNode> body_ = ChildOf{this};
 
     bool isFunc() const override { return true; }
@@ -54,10 +62,9 @@ class FuncNode : public ASTNode {
     DEFINE_NODE_TRAIT(Func);
 };
 typedef Ref<FuncNode> Func;
-#define makeFunc(...) makeNode(Func, __VA_ARGS__)
 template <class Tbody, class Tparams, class Treturns, class Tclosure>
-Func _makeFunc(const std::string &name, Tparams &&params, Treturns &&returns,
-               Tbody &&body) {
+Func makeFunc(const std::string &name, Tparams &&params, Treturns &&returns,
+              Tbody &&body) {
     Func f = Func::make();
     f->name_ = name;
     f->params_ = std::forward<Tparams>(params);
@@ -66,8 +73,8 @@ Func _makeFunc(const std::string &name, Tparams &&params, Treturns &&returns,
     return f;
 }
 template <class Tbody>
-Func _makeFunc(const std::string &name, const std::vector<FuncParam> &params,
-               const std::vector<FuncRet> &returns, Tbody &&body) {
+Func makeFunc(const std::string &name, const std::vector<FuncParam> &params,
+              const std::vector<FuncRet> &returns, Tbody &&body) {
     Func f = Func::make();
     f->name_ = name;
     f->params_ = params;

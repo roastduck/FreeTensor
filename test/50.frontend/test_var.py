@@ -61,6 +61,24 @@ def test_chained_subscript():
     assert ft.pop_ast().match(f.body)
 
 
+def test_chained_slice():
+
+    @ft.lower(verbose=1)
+    @ft.transform(verbose=1)
+    def f(y):
+        y: ft.Var[(8, 8), "int32", "inout", "cpu"]
+        y_slice = y[:, :4][2:6]
+        for i in range(y_slice.shape(0)):
+            for j in range(y_slice.shape(1)):
+                y_slice[i, j] = 1
+
+    with ft.VarDef("y", (8, 8), "int32", "inout", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 4) as j:
+                y[i + 2, j] = 1
+    assert ft.pop_ast().match(f.body)
+
+
 def test_select():
 
     @ft.transform
@@ -134,3 +152,18 @@ def test_var_as_index_2():
                     ("y", (), "int32", "output", "cpu")]) as (idx, x, y):
         y[()] = x[idx]
     assert ft.pop_ast().match(f.body)
+
+
+def test_const_fold_in_slice():
+    # Don't introduce unnecessary `Expr`s (stage-2 expressions) in shape.
+    # Try out best to stay in constants (stage-1 expressions)
+
+    @ft.transform
+    def f(x: ft.Var[(5,), "float64"]):
+        # Use `is` to check type and value, but we have to use extra
+        # variables to supress warnings from Python
+        three, four, five = 3, 4, 5
+        assert x[:].shape(0) is five
+        assert x[1:].shape(0) is four
+        assert x[:4].shape(0) is four
+        assert x[1:4].shape(0) is three

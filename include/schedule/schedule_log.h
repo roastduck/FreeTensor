@@ -8,6 +8,7 @@
 #include <variant>
 
 #include <ast.h>
+#include <hash.h>
 #include <serialize/to_string.h>
 #include <shared_linked_list.h>
 
@@ -75,6 +76,7 @@ class ScheduleLogItem {
     virtual size_t hash() const = 0;
     virtual bool equals(const ScheduleLogItem &other) const = 0;
     virtual void run() = 0;
+    virtual Stmt resultAST() const = 0;
 };
 
 using IDMetadataPack = std::pair<ID, Metadata>;
@@ -140,6 +142,9 @@ auto getPackFromID(auto schedule, const std::tuple<Args...> &args) {
 
 /**
  * Template of a specialized `ScheduleLogItem` of a particular type of schedule
+ *
+ * Assuming return type (`_Result`) from each schedule function is either an
+ * AST, or a tuple whose first item is an AST
  */
 template <ScheduleType TYPE, class _Invocable, class _Params, class _Result>
 class ScheduleLogItemImpl : public ScheduleLogItem {
@@ -211,6 +216,21 @@ class ScheduleLogItemImpl : public ScheduleLogItem {
         } else {
             ASSERT(std::holds_alternative<std::exception_ptr>(result_));
             std::rethrow_exception(std::get<std::exception_ptr>(result_));
+        }
+    }
+
+    Stmt resultAST() const override final {
+        if (std::holds_alternative<std::nullopt_t>(result_)) {
+            ERROR("The schedule log is not run yet");
+        } else if (std::holds_alternative<Result>(result_)) {
+            Result result = std::get<Result>(result_);
+            if constexpr (std::derived_from<Result, Stmt>) {
+                return result;
+            } else {
+                return std::get<0>(result);
+            }
+        } else {
+            return nullptr;
         }
     }
 };

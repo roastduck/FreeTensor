@@ -18,8 +18,8 @@ def test_sink_stmt_seq_back():
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
-        with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
-            with ft.For("i", 0, 4) as i:
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
                 b[0] = x[i] + x[i + 1]
                 y1[i] = b[0] * i
                 y2[i] = b[0] + i
@@ -49,8 +49,8 @@ def test_sink_stmt_seq_front():
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
         y1[0] = 0
         y2[0] = 0
-        with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
-            with ft.For("i", 1, 4) as i:
+        with ft.For("i", 1, 4) as i:
+            with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
                 b[0] = x[i] + x[i + 1]
                 y1[i] = b[0] * i
                 y2[i] = b[0] + i
@@ -119,7 +119,9 @@ def test_no_sink_reduction():
                 b[()] += 1
                 y[i] = b[()] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['use_builtin_div'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['use_builtin_div', 'float_simplify'])
 
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.VarDef("b", (), "int32", "cache", "cpu") as b:

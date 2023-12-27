@@ -3,6 +3,7 @@
 #include <config.h>
 #include <container_utils.h>
 #include <serialize/print_ast.h>
+#include <serialize/stream_utils.h>
 
 #include "../codegen/detail/code_gen.h"
 
@@ -42,11 +43,15 @@ std::string PrintVisitor::prettyFuncName(const std::string &name) {
         return escaped;
 }
 
-std::string PrintVisitor::prettyId(const ID &id) {
-    if (pretty_)
-        return CYAN + freetensor::toString(id) + RESET;
-    else
-        return freetensor::toString(id);
+std::function<std::ostream &(std::ostream &)>
+PrintVisitor::prettyId(const ID &id) {
+    return [&](std::ostream &os) -> std::ostream & {
+        if (pretty_) {
+            return os << CYAN << id << RESET;
+        } else {
+            return os << id;
+        }
+    };
 }
 
 std::string PrintVisitor::prettyLiteral(const std::string &lit) {
@@ -61,6 +66,10 @@ std::string PrintVisitor::prettyKeyword(const std::string &kw) {
         return BLUE + BOLD + kw + RESET;
     else
         return kw;
+}
+
+std::string PrintVisitor::prettyDType(const DataType &dtype) {
+    return escape(freetensor::toString(dtype));
 }
 
 void PrintVisitor::recur(const Expr &op) {
@@ -81,12 +90,15 @@ void PrintVisitor::recur(const Stmt &op) {
 }
 
 void PrintVisitor::printMetadataAndId(const Stmt &op) {
-#ifdef FT_DEBUG_LOG_NODE
+#ifdef FT_DEBUG_BLAME_AST
     makeIndent();
-    os() << "// By " << op->debugCreator_ << std::endl;
+    os() << "// By " << op->debugBlame().file_name() << ":"
+         << op->debugBlame().line() << ":" << op->debugBlame().column()
+         << " in " << op->debugBlame().function_name() << std::endl;
 #endif
     if (printAllId_ ||
-        (op->metadata().isValid() && op->metadata()->printByDefault())) {
+        (op->metadata().isValid() &&
+         (printSourceLocation_ || op->metadata()->printByDefault()))) {
         makeIndent();
         os() << "#!";
         if (printAllId_)
@@ -141,7 +153,7 @@ void PrintVisitor::visit(const Func &op) {
         for (auto &&[i, ret] : views::enumerate(op->returns_)) {
             auto &&[name, dtype, closure, returnClosure] = ret;
             os() << (i > 0 ? ", " : "") << prettyVarDefName(name) << ": "
-                 << ::freetensor::toString(dtype);
+                 << prettyDType(dtype);
             if (closure.isValid()) {
                 os() << " @!closure /* " << closure.get() << " */";
             }
@@ -182,7 +194,7 @@ void PrintVisitor::visit(const VarDef &op) {
          << ::freetensor::toString(op->buffer_->mtype()) << " "
          << prettyVarDefName(op->name_) << ": ";
     auto &&tensor = op->buffer_->tensor();
-    os() << ::freetensor::toString(tensor->dtype()) << "[";
+    os() << prettyDType(tensor->dtype()) << "[";
     printList(tensor->shape());
     os() << "] ";
     if (op->viewOf_.has_value()) {
@@ -227,14 +239,14 @@ void PrintVisitor::visit(const Load &op) {
     printList(op->indices_);
     os() << "]";
     if (dtypeInLoad_) {
-        os() << SPACE << ":" << SPACE << ::freetensor::toString(op->loadType_);
+        os() << SPACE << ":" << SPACE << prettyDType(op->loadType_);
     }
 }
 
 void PrintVisitor::visit(const ReduceTo &op) {
-    if (op->atomic_) {
+    if (op->sync_) {
         makeIndent();
-        os() << "@!atomic" << std::endl;
+        os() << "@!sync" << std::endl;
     }
     makeIndent();
     os() << prettyVarDefName(op->var_) << "[";
@@ -243,9 +255,6 @@ void PrintVisitor::visit(const ReduceTo &op) {
     switch (op->op_) {
     case ReduceOp::Add:
         os() << "+=";
-        break;
-    case ReduceOp::Sub:
-        os() << "-=";
         break;
     case ReduceOp::Mul:
         os() << "*=";
@@ -480,6 +489,14 @@ void PrintVisitor::visit(const Exp &op) {
     });
 }
 
+void PrintVisitor::visit(const Ln &op) {
+    precedence_new([&] {
+        os() << "@!ln(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
 void PrintVisitor::visit(const Square &op) {
     precedence_new([&] {
         os() << "@!square(";
@@ -491,6 +508,30 @@ void PrintVisitor::visit(const Square &op) {
 void PrintVisitor::visit(const Sigmoid &op) {
     precedence_new([&] {
         os() << "@!sigmoid(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
+void PrintVisitor::visit(const Sin &op) {
+    precedence_new([&] {
+        os() << "@!sin(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
+void PrintVisitor::visit(const Cos &op) {
+    precedence_new([&] {
+        os() << "@!cos(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
+void PrintVisitor::visit(const Tan &op) {
+    precedence_new([&] {
+        os() << "@!tan(";
         recur(op->expr_);
         os() << ")";
     });
@@ -528,6 +569,14 @@ void PrintVisitor::visit(const Ceil &op) {
     });
 }
 
+void PrintVisitor::visit(const Unbound &op) {
+    precedence_new([&] {
+        os() << "@!unbound(";
+        recur(op->expr_);
+        os() << ")";
+    });
+}
+
 void PrintVisitor::visit(const IfExpr &op) {
     precedence_enclose(Precedence::TRINARY, [&] {
         recur(op->cond_);
@@ -540,7 +589,7 @@ void PrintVisitor::visit(const IfExpr &op) {
 
 void PrintVisitor::visit(const Cast &op) {
     precedence_new([&] {
-        os() << ::freetensor::toString(op->destType_) << "(";
+        os() << prettyDType(op->destType_) << "(";
         recur(op->expr_);
         os() << ")";
     });
@@ -568,9 +617,6 @@ void PrintVisitor::visit(const For &op) {
         case ReduceOp::Add:
             os() << "+= ";
             break;
-        case ReduceOp::Sub:
-            os() << "-= ";
-            break;
         case ReduceOp::Mul:
             os() << "*= ";
             break;
@@ -592,6 +638,9 @@ void PrintVisitor::visit(const For &op) {
             os() << ":";
             (*this)(e);
             os() << "]";
+        }
+        if (reduction->syncFlush_) {
+            os() << " @!sync";
         }
         os() << std::endl;
     }
@@ -662,7 +711,7 @@ void PrintVisitor::visit(const Assume &op) {
 
 void PrintVisitor::visit(const Intrinsic &op) {
     os() << "@!intrinsic(\"" << op->format_ << "\" -> "
-         << ::freetensor::toString(op->retType_);
+         << prettyDType(op->retType_);
     for (auto &&param : op->params_) {
         os() << "," << SPACE;
         recur(param);
@@ -719,6 +768,19 @@ void PrintVisitor::visit(const MatMul &op) {
     endBlock();
 }
 
+void PrintVisitor::visit(const MarkVersion &op) {
+    makeIndent();
+    os() << "@!mark_version(" << escape(op->tapeName_) << "," << SPACE
+         << escape(op->var_) << ")" << std::endl;
+}
+
+void PrintVisitor::visit(const LoadAtVersion &op) {
+    os() << "@!load_at_version(" << escape(op->tapeName_) << "," << SPACE
+         << "[";
+    printList(op->indices_);
+    os() << "]," << SPACE << prettyDType(op->loadType_) << ")";
+}
+
 std::string toString(const AST &op) {
     return toString(op, Config::prettyPrint());
 }
@@ -734,14 +796,27 @@ std::string toString(const AST &op, bool pretty, bool printAllId) {
 std::string toString(const AST &op, bool pretty, bool printAllId,
                      bool dtypeInLoad, bool hexFloat, bool compact,
                      bool parenDespitePriority) {
+    return toString(op, pretty, printAllId, dtypeInLoad, hexFloat, compact,
+                    parenDespitePriority, Config::printSourceLocation());
+}
+
+std::string toString(const AST &op, bool pretty, bool printAllId,
+                     bool dtypeInLoad, bool hexFloat, bool compact,
+                     bool parenDespitePriority, bool printSourceLocation) {
     PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat, compact,
-                         parenDespitePriority);
+                         parenDespitePriority, printSourceLocation);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });
 }
 
 int OSTREAM_NO_PRETTY = std::ostream::xalloc();
+std::function<std::ostream &(std::ostream &)> manipNoPrettyAST(bool flag) {
+    return [flag](std::ostream &os) -> std::ostream & {
+        os.iword(OSTREAM_NO_PRETTY) = flag;
+        return os;
+    };
+}
 
 std::ostream &operator<<(std::ostream &os, const AST &op) {
     if (os.iword(OSTREAM_NO_PRETTY)) {

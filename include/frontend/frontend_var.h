@@ -6,6 +6,7 @@
 #include <container_utils.h>
 #include <debug.h>
 #include <expr.h>
+#include <pass/const_fold.h>
 #include <serialize/to_string.h>
 #include <stmt.h>
 
@@ -40,7 +41,7 @@ class FrontendVarIdx {
     static FrontendVarIdx fromSingle(const Expr &single) {
         FrontendVarIdx ret;
         ret.type_ = FrontendVarIdxType::Single;
-        ret.start_ = single;
+        ret.start_ = constFold(single);
         ret.len_ = makeIntConst(1);
         return ret;
     }
@@ -54,21 +55,21 @@ class FrontendVarIdx {
         } else {
             ASSERT(stop.isValid());
             ASSERT(len.isValid());
-            ret.start_ = makeSub(stop, len);
+            ret.start_ = constFold(makeSub(stop, len));
         }
         if (stop.isValid()) {
             ret.stop_ = stop;
         } else {
             ASSERT(start.isValid());
             ASSERT(len.isValid());
-            ret.stop_ = makeAdd(start, len);
+            ret.stop_ = constFold(makeAdd(start, len));
         }
         if (len.isValid()) {
             ret.len_ = len;
         } else {
             ASSERT(start.isValid());
             ASSERT(stop.isValid());
-            ret.len_ = makeSub(stop, start);
+            ret.len_ = constFold(makeSub(stop, start));
         }
         return ret;
     }
@@ -88,13 +89,15 @@ class FrontendVar {
     DataType dtype_;
     MemType mtype_;
     std::vector<FrontendVarIdx> indices_;
+    bool isLoadAtVersion_;
 
   public:
     FrontendVar(const std::string &name, const std::vector<Expr> &fullShape,
                 DataType dtype, MemType mtype,
-                const std::vector<FrontendVarIdx> &indices)
+                const std::vector<FrontendVarIdx> &indices,
+                bool isLoadAtVersion = false)
         : name_(name), fullShape_(fullShape), dtype_(dtype), mtype_(mtype),
-          indices_(indices) {}
+          indices_(indices), isLoadAtVersion_(isLoadAtVersion) {}
 
     const std::string &name() const { return name_; }
 

@@ -1,7 +1,41 @@
-#include <analyze/analyze_version.h>
+#include <analyze/symbol_table.h>
+#include <autograd/analyze_version.h>
 #include <autograd/output_intermediates.h>
 
 namespace freetensor {
+
+namespace {
+
+class AllWritesToDefs : public SymbolTable<Visitor> {
+    typedef SymbolTable<Visitor> BaseClass;
+
+    const std::unordered_set<ID> &defs_;
+    std::unordered_map<ID, std::unordered_set<ID>> writes_;
+
+  public:
+    AllWritesToDefs(const std::unordered_set<ID> &defs) : defs_(defs) {}
+
+    const auto &writes() const { return writes_; }
+
+  protected:
+    using BaseClass::visit;
+
+    void visit(const Store &op) override {
+        BaseClass::visit(op);
+        if (defs_.count(def(op->var_)->id())) {
+            writes_[def(op->var_)->id()].emplace(op->id());
+        }
+    }
+
+    void visit(const ReduceTo &op) override {
+        BaseClass::visit(op);
+        if (defs_.count(def(op->var_)->id())) {
+            writes_[def(op->var_)->id()].emplace(op->id());
+        }
+    }
+};
+
+} // Anonymous namespace
 
 static MemType toGlobalMemType(MemType mtype) {
     switch (mtype) {
@@ -16,18 +50,17 @@ static MemType toGlobalMemType(MemType mtype) {
     }
 }
 
-bool OutputIntermediates::isSingleVersion(const ID &defId) const {
-    return totLens_.at(defId)->nodeType() == ASTNodeType::IntConst &&
-           totLens_.at(defId).as<IntConstNode>()->val_ == 1;
+std::string OutputIntermediates::savingName(const std::string &oldName) const {
+    return oldName + varSuffix_;
 }
 
 Stmt OutputIntermediates::visitStmt(const Stmt &stmt) {
     curStmt_ = stmt->id();
     auto ret = BaseClass::visitStmt(stmt);
-    if (toTape_.count(stmt->id())) {
-        auto &toTape = toTape_.at(stmt->id());
-        toTape.emplace_back(ret);
-        return makeStmtSeq(std::move(toTape));
+    if (toSave_.count(stmt->id())) {
+        auto &toSave = toSave_.at(stmt->id());
+        toSave.emplace_back(ret);
+        return makeStmtSeq(std::move(toSave));
     }
     return ret;
 }
@@ -35,27 +68,29 @@ Stmt OutputIntermediates::visitStmt(const Stmt &stmt) {
 Expr OutputIntermediates::visit(const Load &op) {
     auto ret = BaseClass::visit(op);
     auto id = StmtOrExprID(op, curStmt_);
-    if (versions_.count(id) && !isSingleVersion(def(op->var_)->id())) {
+    if (versions_.count(id) && !trivials_.count(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(id));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
-        toTape_[curStmt_].emplace_back(
-            makeStore(op->var_ + ".tape", std::move(newIndices),
-                      makeLoad(op->var_, op->indices_, op->loadType_)));
+        auto store = makeStore(savingName(op->var_), std::move(newIndices),
+                               makeLoad(op->var_, op->indices_, op->loadType_));
+        toSave_[curStmt_].emplace_back(store);
+        insertedStmts_.insert(store->id());
     }
     return ret;
 }
 
 Stmt OutputIntermediates::visit(const Store &op) {
     auto oldStore = BaseClass::visit(op);
-    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+    if (versions_.count(op->id()) && !trivials_.count(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore =
-            makeStore(op->var_ + ".tape", std::move(newIndices),
+            makeStore(savingName(op->var_), std::move(newIndices),
                       makeLoad(op->var_, op->indices_,
                                buffer(op->var_)->tensor()->dtype()));
+        insertedStmts_.insert(newStore->id());
         return makeStmtSeq({oldStore, newStore});
     } else {
         return oldStore;
@@ -64,14 +99,15 @@ Stmt OutputIntermediates::visit(const Store &op) {
 
 Stmt OutputIntermediates::visit(const ReduceTo &op) {
     auto oldReduce = BaseClass::visit(op);
-    if (versions_.count(op->id()) && !isSingleVersion(def(op->var_)->id())) {
+    if (versions_.count(op->id()) && !trivials_.count(def(op->var_)->id())) {
         std::vector<Expr> newIndices(1, versions_.at(op->id()));
         newIndices.insert(newIndices.end(), op->indices_.begin(),
                           op->indices_.end());
         auto newStore =
-            makeStore(op->var_ + ".tape", std::move(newIndices),
+            makeStore(savingName(op->var_), std::move(newIndices),
                       makeLoad(op->var_, op->indices_,
                                buffer(op->var_)->tensor()->dtype()));
+        insertedStmts_.insert(newStore->id());
         return makeStmtSeq({oldReduce, newStore});
     } else {
         return oldReduce;
@@ -80,21 +116,16 @@ Stmt OutputIntermediates::visit(const ReduceTo &op) {
 
 Stmt OutputIntermediates::visit(const VarDef &_op) {
     if (totLens_.count(_op->id())) {
-        if (_op->buffer_->atype() == AccessType::InOut) {
-            // Taping an InOut variable is currently not supported, because we
-            // need to track the input version (TODO)
-            ASSERT(false);
-        }
         // FIXME: What if the scopeLen_ is a loop-variant temporary?
-        if (isSingleVersion(_op->id())) {
+        if (trivials_.count(_op->id())) {
             // No need to create a new VarDef
             auto __op = BaseClass::visit(_op);
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
 
-            tapeNames_[op->id()] = op->name_;
-            if (op->buffer_->atype() != AccessType::InOut) {
-                op->buffer_->setAtype(AccessType::Output);
+            savedNames_[op->id()] = op->name_;
+            if (stage_ == OutputIntermediatesStage::Forward) {
+                op->buffer_->setAtype(addOutputting(op->buffer_->atype()));
             }
             return op;
         } else {
@@ -102,14 +133,23 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
             ASSERT(__op->nodeType() == ASTNodeType::VarDef);
             auto op = __op.as<VarDefNode>();
 
-            auto tapeName = tapeNames_[op->id()] = op->name_ + ".tape";
+            auto savedName = savedNames_[op->id()] = savingName(op->name_);
             Ref<Tensor> tensor = deepCopy(op->buffer_->tensor());
             tensor->shape().insert(tensor->shape().begin(),
                                    totLens_.at(op->id()));
-            return makeVarDef(tapeName,
-                              makeBuffer(std::move(tensor), AccessType::Output,
-                                         toGlobalMemType(op->buffer_->mtype())),
-                              std::nullopt, op, false);
+            if (stage_ == OutputIntermediatesStage::Forward) {
+                return makeVarDef(
+                    savedName,
+                    makeBuffer(std::move(tensor), AccessType::Output,
+                               toGlobalMemType(op->buffer_->mtype())),
+                    std::nullopt, op, false);
+            } else {
+                return makeVarDef(savedName,
+                                  makeBuffer(std::move(tensor),
+                                             op->buffer_->atype(),
+                                             op->buffer_->mtype()),
+                                  std::nullopt, op, false);
+            }
         }
     } else {
         return BaseClass::visit(_op);
@@ -117,13 +157,32 @@ Stmt OutputIntermediates::visit(const VarDef &_op) {
 }
 
 std::tuple<Stmt, std::unordered_map<ID, std::string>,
-           std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>>
-outputIntermediates(const Stmt &op,
-                    const std::unordered_set<ID> &intermediates) {
-    auto [versions, totLens] = analyzeVersion(op, intermediates);
-    OutputIntermediates mutator(versions, totLens);
+           std::unordered_map<StmtOrExprID, Expr>, std::unordered_map<ID, Expr>,
+           std::unordered_set<ID>,
+           std::unordered_map<std::string, std::pair<std::string, Expr>>>
+outputIntermediates(
+    const Stmt &op,
+    const std::unordered_map<ID, std::unordered_set<ID>> &needVersions,
+    const std::unordered_map<StmtOrExprID, Derivative::LazyFullDerivative>
+        &derivatives,
+    OutputIntermediatesStage stage, const std::string &varSuffix) {
+    auto [versions, totLens, trivials, userVersions] =
+        analyzeVersion(op, needVersions, derivatives,
+                       stage == OutputIntermediatesStage::Backward);
+    OutputIntermediates mutator(versions, totLens, trivials, stage, varSuffix);
     auto ret = mutator(op);
-    return {ret, mutator.tapeNames(), versions, totLens};
+    return {ret,     mutator.savedNames(),    versions,
+            totLens, mutator.insertedStmts(), userVersions};
+}
+
+Stmt outputAllIntermedaites(const Stmt &op,
+                            const std::unordered_set<ID> &intermediates,
+                            OutputIntermediatesStage stage,
+                            const std::string &varSuffix) {
+    AllWritesToDefs visitor{intermediates};
+    visitor(op);
+    return std::get<0>(
+        outputIntermediates(op, visitor.writes(), {}, stage, varSuffix));
 }
 
 } // namespace freetensor

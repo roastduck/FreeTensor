@@ -137,7 +137,7 @@ def test_different_indices():
     s.cache("S0", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -246,7 +246,7 @@ def test_cache_with_condition():
     s.cache("L2", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
 
     with ft.VarDef([
         ("n", (), "int32", "input", "cpu"),
@@ -286,7 +286,7 @@ def test_cache_with_multiple_conditions():
     s.cache("L2", "x", "cpu")
     ast = s.ast()
     print(ast)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
 
     with ft.VarDef([
         ("n", (), "int32", "input", "cpu"),

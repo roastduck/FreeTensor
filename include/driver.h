@@ -5,8 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <codegen/native_code.h>
 #include <driver/array.h>
-#include <func.h>
 
 #include <../runtime/cpu_context.h>
 #ifdef FT_WITH_CUDA
@@ -21,19 +21,19 @@ class Driver {
                   size_t ** /* retShapes */, size_t * /* retDims */,
                   void * /* ctx */) = nullptr;
 
-    Func f_;
-    std::string src_;
+    NativeCode nativeCode_;
     std::vector<Ref<Array>> args_; /// Ref count holders
-    std::vector<void *> rawArgs,
-        rawRets; /// Raw arguments and return values passed to (from) the
-                 /// native function
+    std::vector<void *> rawArgs_,
+        rawRets_; /// Raw arguments and return values passed to (from) the
+                  /// native function
     std::vector<size_t *> retShapes_;
     std::vector<size_t> retDims_;
     std::unordered_map<std::string, size_t> name2param_;
-    std::unordered_map<std::string, Ref<Buffer>> name2buffer_;
     Ref<Device> dev_, hostDev_;
 
     std::unique_ptr<Context> ctx_;
+
+    std::vector<std::string> cxxFlags_;
 
     bool verbose_ = false;
 
@@ -44,26 +44,27 @@ class Driver {
     /**
      * Compile a program using a backend compiler and load it into memory
      *
-     * @param func : AST of the function, where the function signature is needed
-     * to determine the parameters and return values
-     * @param src : Native code generated from codegen
+     * @param nativeCode : Native code generated from codegen
      * @param device : The device to run the program
      * @param hostDevice : The hosting CPU device (Optional)
+     * @param cxxFlags : Additional C++ flags passed to the backend compiler
+     *
      * @{
      */
-    Driver(const Func &func, const std::string &src, const Ref<Device> &device,
-           const Ref<Device> &hostDevice, bool verbose = false);
-    Driver(const Func &func, const std::string &src, const Ref<Device> &device,
-           bool verbose = false)
-        : Driver(func, src, device,
+    Driver(const NativeCode &nativeCode, const Ref<Device> &device,
+           const Ref<Device> &hostDevice,
+           const std::vector<std::string> &cxxFlags = {}, bool verbose = false);
+    Driver(const NativeCode &nativeCode, const Ref<Device> &device,
+           const std::vector<std::string> &cxxFlags = {}, bool verbose = false)
+        : Driver(nativeCode, device,
                  device->type() == TargetType::CPU
                      ? device
                      : Ref<Device>::make(TargetType::CPU),
-                 verbose) {}
+                 cxxFlags, verbose) {}
     /** @} */
 
     ~Driver() {
-        for (void *retVal : rawRets) {
+        for (void *retVal : rawRets_) {
             if (retVal != nullptr) {
                 WARNING("Return values must be collected, or there will be "
                         "memory leaks");
@@ -75,8 +76,8 @@ class Driver {
     Driver(const Driver &) = delete;
     Driver &operator=(const Driver &) = delete;
 
-    Driver(Driver &&) = default;
-    Driver &operator=(Driver &&) = default;
+    Driver(Driver &&) = delete; // If we need it, pay attention to `dlHandle_`
+    Driver &operator=(Driver &&) = delete;
 
     void setArgs(const std::vector<Ref<Array>> &args,
                  const std::unordered_map<std::string, Ref<Array>> &kws = {});
@@ -106,6 +107,8 @@ class Driver {
     std::pair<double, double> time(int rounds = 10, int warmups = 3);
 
     void unload();
+
+    const Ref<Device> &device() const { return dev_; }
 };
 
 } // namespace freetensor

@@ -111,6 +111,7 @@ void MatchVisitor::visit(const Load &op) {
     for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
         RECURSE(oIdx, iIdx);
     }
+    CHECK(op->loadType_ == instance->loadType_);
 }
 
 void MatchVisitor::visit(const ReduceTo &op) {
@@ -125,6 +126,11 @@ void MatchVisitor::visit(const ReduceTo &op) {
 }
 
 void MatchVisitor::visit(const IntConst &op) {
+    if (instance_->nodeType() == ASTNodeType::FloatConst) {
+        auto instance = instance_.as<FloatConstNode>();
+        CHECK(op->val_ == instance->val_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::IntConst);
     auto instance = instance_.as<IntConstNode>();
     CHECK(op->val_ == instance->val_);
@@ -301,6 +307,12 @@ void MatchVisitor::visit(const Max &op) {
 }
 
 void MatchVisitor::visit(const LT &op) {
+    if (instance_->nodeType() == ASTNodeType::GT) {
+        auto instance = instance_.as<GTNode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::LT);
     auto instance = instance_.as<LTNode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -308,6 +320,12 @@ void MatchVisitor::visit(const LT &op) {
 }
 
 void MatchVisitor::visit(const LE &op) {
+    if (instance_->nodeType() == ASTNodeType::GE) {
+        auto instance = instance_.as<GENode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::LE);
     auto instance = instance_.as<LENode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -315,6 +333,12 @@ void MatchVisitor::visit(const LE &op) {
 }
 
 void MatchVisitor::visit(const GT &op) {
+    if (instance_->nodeType() == ASTNodeType::LT) {
+        auto instance = instance_.as<LTNode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::GT);
     auto instance = instance_.as<GTNode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -322,6 +346,12 @@ void MatchVisitor::visit(const GT &op) {
 }
 
 void MatchVisitor::visit(const GE &op) {
+    if (instance_->nodeType() == ASTNodeType::LE) {
+        auto instance = instance_.as<LENode>();
+        RECURSE(op->lhs_, instance->rhs_);
+        RECURSE(op->rhs_, instance->lhs_);
+        return;
+    }
     CHECK(instance_->nodeType() == ASTNodeType::GE);
     auto instance = instance_.as<GENode>();
     RECURSE(op->lhs_, instance->lhs_);
@@ -394,6 +424,12 @@ void MatchVisitor::visit(const Exp &op) {
     RECURSE(op->expr_, instance->expr_);
 }
 
+void MatchVisitor::visit(const Ln &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Ln);
+    auto instance = instance_.as<LnNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
 void MatchVisitor::visit(const Square &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Square);
     auto instance = instance_.as<SquareNode>();
@@ -403,6 +439,24 @@ void MatchVisitor::visit(const Square &op) {
 void MatchVisitor::visit(const Sigmoid &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Sigmoid);
     auto instance = instance_.as<SigmoidNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Sin &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Sin);
+    auto instance = instance_.as<SinNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Cos &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Cos);
+    auto instance = instance_.as<CosNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Tan &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Tan);
+    auto instance = instance_.as<TanNode>();
     RECURSE(op->expr_, instance->expr_);
 }
 
@@ -427,6 +481,12 @@ void MatchVisitor::visit(const Floor &op) {
 void MatchVisitor::visit(const Ceil &op) {
     CHECK(instance_->nodeType() == ASTNodeType::Ceil);
     auto instance = instance_.as<CeilNode>();
+    RECURSE(op->expr_, instance->expr_);
+}
+
+void MatchVisitor::visit(const Unbound &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::Unbound);
+    auto instance = instance_.as<UnboundNode>();
     RECURSE(op->expr_, instance->expr_);
 }
 
@@ -514,6 +574,23 @@ void MatchVisitor::visit(const MatMul &op) {
     CHECK(op->bIsRowMajor_ == instance->bIsRowMajor_);
     CHECK(op->cIsRowMajor_ == instance->cIsRowMajor_);
     RECURSE(op->equivalent_, instance->equivalent_);
+}
+
+void MatchVisitor::visit(const MarkVersion &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::MarkVersion);
+    auto instance = instance_.as<MarkVersionNode>();
+    CHECK(op->tapeName_ == instance->tapeName_);
+    CHECK(op->var_ == instance->var_);
+}
+
+void MatchVisitor::visit(const LoadAtVersion &op) {
+    CHECK(instance_->nodeType() == ASTNodeType::LoadAtVersion);
+    auto instance = instance_.as<LoadAtVersionNode>();
+    CHECK(matchName(op->tapeName_, instance->tapeName_));
+    for (auto &&[oIdx, iIdx] : views::zip(op->indices_, instance->indices_)) {
+        RECURSE(oIdx, iIdx);
+    }
+    CHECK(op->loadType_ == instance->loadType_);
 }
 
 bool match(const Stmt &_pattern, const Stmt &_instance) {

@@ -21,9 +21,10 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
         return inner->nodeType() == ASTNodeType::VarDef &&
                inner.as<VarDefNode>()->viewOf_ == _op->name_;
     };
-    if (_op->buffer_->atype() != AccessType::Cache ||
-        _op->viewOf_.has_value() || !findAllStmt(_op, isViewOfThis).empty() ||
-        _op->pinned_ || !newRange_.count(_op->id())) {
+    if (isInputting(_op->buffer_->atype()) ||
+        isOutputting(_op->buffer_->atype()) || _op->viewOf_.has_value() ||
+        !findAllStmt(_op, isViewOfThis).empty() || _op->pinned_ ||
+        !newRange_.count(_op->id())) {
         return Mutator::visit(_op);
     }
 
@@ -94,7 +95,7 @@ Stmt shrinkVar(const Stmt &_op) {
     std::unordered_map<ID, AccessBound> bounds;
     for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
         bounds[varDefId] =
-            compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
+            compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, true);
     }
 
     // (2)
@@ -110,7 +111,7 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     // (1)
     std::unordered_map<ID, AccessBound> bounds;
     bounds[varDefId] =
-        compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
+        compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, true);
 
     // (2)
     op = ShrinkVar(bounds)(op);

@@ -18,13 +18,21 @@ NodeTypeAssume: '<Assume>';
 NodeTypeStore: '<Store>';
 NodeTypeReduceTo: '<ReduceTo>';
 NodeTypeEval: '<Eval>';
+NodeTypeMatMul: '<MatMul>';
 
 ChildArrow: '<-';
 DescendantArrow: '<<-';
-RootNode: '-|';
+ParentArrow: '->';
+AncestorArrow: '->>';
+DirectBeforeArrow: '<:';
+BeforeArrow: '<<:';
+DirectAfterArrow: ':>';
+AfterArrow: ':>>';
+RootNode: '<-|';
+LeafNode: '->|';
 DirectCallerArrow: '<~';
 CallerArrow: '<<~';
-RootCall: '~|';
+RootCall: '<~|';
 
 Star: '*';
 

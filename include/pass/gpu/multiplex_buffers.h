@@ -21,16 +21,15 @@ class FindParallelLoops : public Visitor {
     Ref<GPUTarget> target_;
     ID defId_;
     std::vector<For> loops_, stack_;
-    std::unordered_map<ID, std::unordered_set<ID>> affecting_;
+    std::unordered_map<ID, std::unordered_map<ID, bool>>
+        affecting_; // VarDef ID -> {For ID -> can communicate?}
 
   public:
     FindParallelLoops(const Ref<GPUTarget> &target, const ID &defId = ID())
         : target_(target), defId_(defId) {}
 
     const std::vector<For> &loops() const { return loops_; }
-    const std::unordered_map<ID, std::unordered_set<ID>> &affecting() const {
-        return affecting_;
-    }
+    const auto &affecting() const { return affecting_; }
 
   protected:
     void visit(const For &op) override;

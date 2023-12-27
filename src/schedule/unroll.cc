@@ -1,6 +1,7 @@
 #include <pass/remove_writes.h>
 #include <pass/simplify.h>
 #include <schedule.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/unroll.h>
 
 namespace freetensor {
@@ -61,6 +62,7 @@ Stmt ImmediateUnroll::visit(const For &op) {
 }
 
 Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
+    checkNotInLib(_ast, loop);
     auto ast =
         simplify(_ast); // Make things like range(n, n + 4) constant ranges
     bool done = false;

@@ -74,7 +74,7 @@ Stmt AnnotateConds::visit(const For &op) {
 
     return makeFor(op->iter_, std::move(begin), std::move(end), std::move(step),
                    std::move(len), op->property_, std::move(body),
-                   op->metadata(), op->id());
+                   op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt AnnotateConds::visit(const If &op) {
@@ -94,7 +94,7 @@ Stmt AnnotateConds::visit(const If &op) {
     }
 
     return makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
-                  op->metadata(), op->id());
+                  op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt AnnotateConds::visit(const Assert &op) {
@@ -106,7 +106,7 @@ Stmt AnnotateConds::visit(const Assert &op) {
     conds_.resize(oldCondsSize);
 
     return makeAssert(std::move(cond), std::move(body), op->metadata(),
-                      op->id());
+                      op->id(), op->debugBlame());
 }
 
 Stmt AnnotateConds::visit(const Assume &op) { return (*this)(op->body_); }

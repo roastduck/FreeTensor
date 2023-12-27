@@ -114,10 +114,11 @@ class ConstFold : public Mutator {
      */
     static Const castType(DataType type, const Const &val) {
         return dispatch(val, [type](auto v) {
-            switch (type) {
+            switch (type.base()) {
             case DataType::Int32:
             case DataType::Int64:
                 return wrap(int64_t(v));
+            case DataType::Float16:
             case DataType::Float32:
             case DataType::Float64:
                 return wrap(double(v));
@@ -155,10 +156,14 @@ class ConstFold : public Mutator {
     Expr visit(const Exp &op) override;
     Expr visit(const Square &op) override;
     Expr visit(const Sigmoid &op) override;
+    Expr visit(const Sin &op) override;
+    Expr visit(const Cos &op) override;
+    Expr visit(const Tan &op) override;
     Expr visit(const Tanh &op) override;
     Expr visit(const Abs &op) override;
     Expr visit(const Floor &op) override;
     Expr visit(const Ceil &op) override;
+    Expr visit(const Unbound &op) override;
     Expr visit(const Cast &op) override;
     Expr visit(const IfExpr &op) override;
 };

@@ -70,8 +70,7 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
     };
 
   private:
-    std::unique_ptr<CompUniqueBounds> uniqueOwn_;
-    CompUniqueBounds &unique_;
+    Ref<CompUniqueBounds> unique_;
 
     // The variable to compute
     ID varDefId_;
@@ -99,8 +98,7 @@ class CompAccessBound : public CompTransientBounds<SymbolTable<Visitor>> {
                     CompAccessBoundMode mode = COMP_ACCESS_BOUND_ALL,
                     bool includeTrivialBound = true,
                     const ID &filterSubTree = ID())
-        : uniqueOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
-          unique_(*uniqueOwn_), varDefId_(varDefId), mtype_(mtype), mode_(mode),
+        : varDefId_(varDefId), mtype_(mtype), mode_(mode),
           includeTrivialBound_(includeTrivialBound),
           filterSubTree_(filterSubTree) {
         if (!filterSubTree_.isValid()) {

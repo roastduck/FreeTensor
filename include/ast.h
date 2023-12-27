@@ -4,14 +4,16 @@
 #include <atomic>
 #include <functional>
 #include <iostream>
+#include <optional>
+#include <source_location>
 #include <string>
 
-#include <data_type.h>
 #include <id.h>
 #include <metadata.h>
 #include <ref.h>
 #include <serialize/to_string.h>
 #include <sub_tree.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 
@@ -75,17 +77,26 @@ enum class ASTNodeType : int {
     LNot,
     Sqrt,
     Exp,
+    Ln,
     Square,
     Sigmoid,
+    Sin,
+    Cos,
+    Tan,
     Tanh,
     Abs,
     Floor,
     Ceil,
+    Unbound,
 
     // Other expressions
     IfExpr,
     Cast,
     Intrinsic,
+
+    // For custom gradient only
+    MarkVersion,
+    LoadAtVersion,
 };
 
 std::ostream &operator<<(std::ostream &os, ASTNodeType type);
@@ -105,11 +116,11 @@ std::ostream &operator<<(std::ostream &os, ASTNodeType type);
  * `ASTPart`, and a derived node of `ASTNode` may contain other `ASTPart`s
  */
 class ASTNode : public ASTPart {
-  public:
-#ifdef FT_DEBUG_LOG_NODE
-    std::string debugCreator_ = "Python API";
+#ifdef FT_DEBUG_BLAME_AST
+    std::source_location debugBlame_;
 #endif
 
+  public:
     virtual ~ASTNode() {}
     virtual ASTNodeType nodeType() const = 0;
 
@@ -120,28 +131,22 @@ class ASTNode : public ASTPart {
 
     Ref<ASTNode> parentAST() const;
 
+    std::source_location debugBlame() const {
+#ifdef FT_DEBUG_BLAME_AST
+        return debugBlame_;
+#else
+        return std::source_location::current(); // Arbitrary return
+#endif
+    }
+    void setDebugBlame(std::source_location loc) {
+#ifdef FT_DEBUG_BLAME_AST
+        debugBlame_ = loc;
+#endif
+    }
+
     DEFINE_NODE_ACCESS(AST);
 };
 typedef Ref<ASTNode> AST;
-
-#ifdef FT_DEBUG_LOG_NODE
-#define makeNode(type, ...)                                                    \
-    ({                                                                         \
-        auto __x = _make##type(__VA_ARGS__);                                   \
-        __x->debugCreator_ = __FILE__ ":" + std::to_string(__LINE__);          \
-        __x;                                                                   \
-    }) // GCC Extension: Statement expression
-#define COPY_DEBUG_INFO(ret, old)                                              \
-    ({                                                                         \
-        auto __x = (ret);                                                      \
-        auto __y = (old);                                                      \
-        __x->debugCreator_ = __y->debugCreator_;                               \
-        __x;                                                                   \
-    }) // GCC Extension: Statement expression
-#else
-#define makeNode(type, ...) _make##type(__VA_ARGS__)
-#define COPY_DEBUG_INFO(ret, old) (ret)
-#endif
 
 class StmtNode;
 typedef Ref<StmtNode> Stmt;
@@ -151,7 +156,7 @@ typedef Ref<StmtNode> Stmt;
  */
 class ExprNode : public ASTNode {
   protected:
-    DataType dtype_ = DataType::Invalid;
+    std::optional<DataType> dtype_;
 
   public:
     bool isExpr() const override { return true; }
@@ -190,6 +195,8 @@ class StmtOrExprID {
     Expr expr_;
 
   public:
+    StmtOrExprID() {}
+
     StmtOrExprID(const ID &stmtId) : stmtId_(stmtId) {}
 
     StmtOrExprID(const Expr &expr, const ID &stmtId)
@@ -202,6 +209,8 @@ class StmtOrExprID {
 
     const ID &stmtId() const { return stmtId_; }
     const Expr &expr() const { return expr_; }
+
+    bool isValid() const { return stmtId_.isValid(); }
 
     friend std::ostream &operator<<(std::ostream &os, const StmtOrExprID &id);
     friend bool operator==(const StmtOrExprID &lhs, const StmtOrExprID &rhs);
@@ -237,6 +246,9 @@ class StmtNode : public ASTNode {
     /**
      * Parent, next or previous statement
      *
+     * NOTE: For an If node, the "then" case is considered before the "else"
+     * case
+     *
      * @{
      */
     Ref<StmtNode> parentStmt() const;
@@ -258,11 +270,26 @@ class StmtNode : public ASTNode {
     /** @} */
 
     /**
+     * Previous or next statement in DFS order
+     */
+    Ref<StmtNode> prevLeafStmtInDFSOrder() const;
+    Ref<StmtNode> nextLeafStmtInDFSOrder() const;
+    Ref<StmtNode> prevStmtInDFSPostOrder() const; // may return child
+    Ref<StmtNode> nextStmtInDFSPreOrder() const;  // may return child
+
+    /**
      * Find an ancestor by ID. `this` itself is also considered
      */
     Ref<StmtNode> ancestorById(const ID &lookup) const;
 
+    /**
+     * Check whether this node is an ancestoer of `other`
+     */
     bool isAncestorOf(const Stmt &other) const;
+
+    /**
+     * Check whether this node is before `other` in DFS order
+     */
     bool isBefore(const Stmt &other) const;
 
     DEFINE_NODE_ACCESS(Stmt);
@@ -284,8 +311,8 @@ Stmt lcaStmt(const Stmt &lhs, const Stmt &rhs);
  * @param sourceStmts variadic parameters that accept the source Stmts.
  */
 template <typename... Srcs>
-requires(std::convertible_to<Srcs, Stmt> &&...) auto makeMetadata(
-    const std::string &op, Srcs &&...sourceStmts) {
+    requires(std::convertible_to<Srcs, Stmt> && ...)
+auto makeMetadata(const std::string &op, Srcs &&...sourceStmts) {
     auto metadataFrom = [](const Stmt &s) -> Metadata {
         if (s->metadata().isValid())
             return s->metadata();

@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_MAKE_MATMUL_H
 #define FREE_TENSOR_MAKE_MATMUL_H
 
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -13,10 +14,50 @@
 
 namespace freetensor {
 
+enum class AsMatMulMode : int {
+    KeepMemLayout,
+    TryVarReorder,
+    TryTranspose,
+};
+inline std::ostream &operator<<(std::ostream &os, AsMatMulMode mode) {
+    switch (mode) {
+    case AsMatMulMode::KeepMemLayout:
+        return os << "keep_mem_layout";
+    case AsMatMulMode::TryVarReorder:
+        return os << "try_var_reorder";
+    case AsMatMulMode::TryTranspose:
+        return os << "try_transpose";
+    default:
+        ASSERT(false);
+    }
+}
+
+struct NeedVarReorder : Error {
+    ID vardef_;
+    std::vector<int> order_;
+
+    NeedVarReorder(const ID &vardef, const std::vector<int> &order,
+                   const std::string &msg)
+        : Error(genErrMsg(vardef, order, msg)), vardef_(vardef), order_(order) {
+    }
+
+  private:
+    static std::string genErrMsg(const ID &vardef,
+                                 const std::vector<int> &order,
+                                 const std::string &msg) {
+        std::ostringstream os;
+        os << msg << ". Consider retrying after `var_reorder`ing " << vardef
+           << " to order [" << order
+           << "], or retrying with a different `mode` of `as_matmul`";
+        return os.str();
+    }
+};
+
 class AsMatMul : public SymbolTable<Mutator> {
     typedef SymbolTable<Mutator> BaseClass;
 
     ID loop_;
+    MatMulBackend backend_;
 
     int nestCnt_ = 0;
     std::unordered_map<std::string, int> iterMap_; // iter var -> nest cnt
@@ -31,8 +72,13 @@ class AsMatMul : public SymbolTable<Mutator> {
 
     AnalyzeLinear analyzeLinear_;
 
+    bool done_ = false;
+
   public:
-    AsMatMul(const ID &loop) : loop_(loop) {}
+    AsMatMul(const ID &loop, MatMulBackend backend)
+        : loop_(loop), backend_(backend) {}
+
+    bool done() const { return done_; }
 
   private:
     const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);
@@ -77,27 +123,37 @@ class AsMatMul : public SymbolTable<Mutator> {
     }
 
     template <class T>
-    std::pair<Expr, Expr> findLenAndStride(const T &acc,
-                                           const std::vector<bool> &flag) {
-        Expr len, stride;
-        bool thisDimIn = false, lastDimIn = false;
-        Expr lastInDim;
-        for (auto &&[idx, dimLen] :
-             views::zip(acc->indices_, buffer(acc->var_)->tensor()->shape())) {
+    std::vector<bool> findDimsUsed(const T &acc,
+                                   const std::vector<bool> &loopsUsed) {
+        std::vector<bool> dimsUsed(acc->indices_.size(), false);
+        for (auto &&[dimUsed, idx, dimLen] :
+             views::zip(dimsUsed, acc->indices_,
+                        buffer(acc->var_)->tensor()->shape())) {
             auto &&lin = analyzeLinear(idx);
-            lastDimIn = thisDimIn;
-            thisDimIn = true;
+            dimUsed = true;
             if (lin.coeff_.size() != 1 ||
                 std::abs(lin.coeff_.front().k_) != 1 ||
                 lin.coeff_.front().a_->nodeType() != ASTNodeType::Var) {
-                thisDimIn = false;
+                dimUsed = false;
             } else {
                 Var var = lin.coeff_.front().a_.template as<VarNode>();
                 if (!iterMap_.count(var->name_) ||
-                    !flag[iterMap_.at(var->name_)]) {
-                    thisDimIn = false;
+                    !loopsUsed[iterMap_.at(var->name_)]) {
+                    dimUsed = false;
                 }
             }
+        }
+        return dimsUsed;
+    }
+
+    template <class T>
+    std::pair<Expr, Expr> findLenAndStride(const T &acc,
+                                           const std::vector<bool> &dimsIn) {
+        Expr len, stride;
+        bool lastDimIn = false;
+        Expr lastInDim;
+        for (auto &&[thisDimIn, idx, dimLen] : views::zip(
+                 dimsIn, acc->indices_, buffer(acc->var_)->tensor()->shape())) {
             if (thisDimIn) {
                 if (lastInDim.isValid()) {
                     if (!lastDimIn) {
@@ -114,11 +170,28 @@ class AsMatMul : public SymbolTable<Mutator> {
                                               : (Expr)dimLen;
                 }
             }
+            lastDimIn = thisDimIn;
         }
         len = len.isValid() ? len : makeIntConst(1);
         stride = stride.isValid() ? stride : makeIntConst(1);
         return std::make_pair(len, stride);
     }
+
+    void checkSameOrderOrRetry(const ID &idA, const std::vector<int> &orderA,
+                               const std::vector<bool> &filterA, const ID &idB,
+                               const std::vector<int> &orderB,
+                               const std::vector<bool> &filterB,
+                               const std::string &message);
+    void checkSameOrderNoRetry(const ID &idA, const std::vector<int> &orderA,
+                               const std::vector<bool> &filterA, const ID &idB,
+                               const std::vector<int> &orderB,
+                               const std::vector<bool> &filterB,
+                               const std::string &message);
+
+    void retryReorderingBack(const ID &id, const std::vector<bool> &filter,
+                             const std::string &message);
+    void retryReorderingFront(const ID &id, const std::vector<bool> &filter,
+                              const std::string &message);
 
   protected:
     Stmt visitStmt(const Stmt &op) override;
@@ -128,7 +201,7 @@ class AsMatMul : public SymbolTable<Mutator> {
     Stmt visit(const VarDef &op) override;
 };
 
-Stmt asMatMul(const Stmt &ast, const ID &loop);
+Stmt asMatMul(const Stmt &ast, const ID &loop, MatMulBackend backend);
 
 } // namespace freetensor
 

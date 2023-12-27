@@ -29,7 +29,6 @@ def test_basic_call():
         #! label: S1
         y[1] = 3.0
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(2,), "float32", "output", "cpu"]
@@ -44,7 +43,7 @@ def test_basic_call():
 
 def test_global_functions():
 
-    func = ft.lower(f_global, ft.CPU(), verbose=1)
+    func = f_global
 
     with ft.VarDef("y", (2,), "float32", "output", "cpu") as y:
         y[0] = 2.0
@@ -62,7 +61,6 @@ def test_called_multiple_times():
         #! label: S1
         y[1] = 3.0
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y1, y2):
         y1: ft.Var[(2,), "float32", "output", "cpu"]
@@ -97,7 +95,6 @@ def test_call_with_external_data():
             for j in range(2):
                 y[i, j] = x[i, j] * 2
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
@@ -115,7 +112,7 @@ def test_call_with_external_data():
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(f, code, ft.CPU())(y=y_arr)
+    ft.build_binary(code, ft.CPU())(y=y_arr)
     y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, data.numpy() * 2)
@@ -130,7 +127,6 @@ def test_call_with_literal_data():
             for j in range(2):
                 y[i, j] = x[i, j] * 2
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
@@ -149,7 +145,7 @@ def test_call_with_literal_data():
 
     y_np = np.zeros((2, 2), dtype="int32")
     y_arr = ft.Array(y_np)
-    ft.Driver(f, code, dev)(y=y_arr)
+    ft.build_binary(code, dev)(y=y_arr)
     y_np = y_arr.numpy()
 
     assert np.array_equal(y_np, np.array([[0, 1], [2, 3]], dtype=np.int32) * 2)
@@ -162,7 +158,6 @@ def test_call_with_fixed_dim_at_front():
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(4, 4), "float32", "input", "cpu"]
@@ -188,7 +183,7 @@ def test_call_with_fixed_dim_at_back():
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
-    @ft.lower(target=ft.CPU(), verbose=1)
+    @ft.lower(verbose=1, skip_passes=['float_simplify'])
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(4, 4), "float32", "input", "cpu"]
@@ -214,7 +209,6 @@ def test_call_with_slice():
         for i in range(4):
             y[i] = x1[i] + x2[i]
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(5,), "float32", "input", "cpu"]
@@ -239,7 +233,6 @@ def test_call_with_scalar():
     def g(x1, x2, y):
         y[()] = x1[()] + x2[()]
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, y):
         x1: ft.Var[(4,), "float32", "input", "cpu"]
@@ -263,7 +256,6 @@ def test_call_with_literal_scalar():
     def g(x1, x2, y):
         y[()] = x1 + x2
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y):
         y: ft.Var[(4,), "float32", "output", "cpu"]
@@ -296,7 +288,6 @@ def test_use_external_call_to_build_runtime_ops():
     def g(x1, x2, x3, y):
         y[()] = functools.reduce(lambda x, y: x * y, [x1, x2, x3])
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(x1, x2, x3, y):
         x1: ft.Var[(), "int32", "input", "cpu"]
@@ -345,7 +336,6 @@ def test_return():
                 d[i, j] = b[i, j] + a[i, j]
         return c, d
 
-    @ft.lower(target=ft.CPU(), skip_passes=['prop_one_time_use'], verbose=1)
     @ft.transform
     def test(y, c, d):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
@@ -395,7 +385,6 @@ def test_return_returned_value():
         y1, y2 = h(x)
         return y2, y1
 
-    @ft.lower(target=ft.CPU(), skip_passes=['prop_one_time_use'], verbose=1)
     @ft.transform
     def f(x, w1, w2):
         x: ft.Var[(8,), "int32", "input", "cpu"]
@@ -462,7 +451,6 @@ def test_variadic():
         kvs['z'][0] = 4.0
         kvs['z'][1] = 5.0
 
-    @ft.lower(target=ft.CPU(), verbose=1)
     @ft.transform
     def f(y, z):
         y: ft.Var[(2,), "float32", "output", "cpu"]
@@ -494,7 +482,6 @@ def test_no_deps_on_returned_tensor():
                 d[i, j] = b[i, j] + a[i, j]
         return c, d
 
-    @ft.lower(target=ft.CPU(), skip_passes=['prop_one_time_use'], verbose=1)
     @ft.transform
     def test(y, c, d):
         y: ft.Var[(2, 2), "int32", "output", "cpu"]
@@ -556,3 +543,19 @@ def test_late_definition_global():
         x[()] = x[()] + 1
 
     assert test.body.match(test_expected.body)
+
+
+def test_overload_of_caller_and_callee_is_the_same():
+
+    overloads = {}
+
+    @ft.inline
+    def g():
+        overloads['g'] = __staging_overload__
+
+    @ft.transform
+    def f():
+        overloads['f'] = __staging_overload__
+        g()
+
+    assert overloads['f'] is overloads['g']

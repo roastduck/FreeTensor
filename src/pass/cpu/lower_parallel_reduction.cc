@@ -8,6 +8,33 @@ namespace freetensor {
 
 namespace cpu {
 
+namespace {
+
+class FindAtomicReduction : public Visitor {
+    std::string var_;
+    bool found_ = false;
+
+  public:
+    FindAtomicReduction(const std::string &var) : var_(var) {}
+    bool found() const { return found_; }
+
+  protected:
+    void visit(const ReduceTo &op) override {
+        // no need to recurse
+        if (op->var_ == var_ && op->sync_) {
+            found_ = true;
+        }
+    }
+};
+
+bool findAtomicReduction(const Stmt &ast, const std::string &var) {
+    FindAtomicReduction finder(var);
+    finder(ast);
+    return finder.found();
+}
+
+} // Anonymous namespace
+
 std::vector<std::pair<For, int>>
 LowerParallelReduction::reducedBy(const ReduceTo &op) {
     std::vector<std::pair<For, int>> ret;
@@ -51,19 +78,38 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         op->property_->reductions_.clear();
     }
 
+    auto oldNeedRedirect = needRedirect_;
+    std::vector<bool> isHybrid;
+    isHybrid.reserve(op->property_->reductions_.size());
+    for (auto &&red : op->property_->reductions_) {
+        if (findAtomicReduction(op->body_, red->var_)) {
+            isHybrid.emplace_back(true);
+            needRedirect_.emplace(red->var_);
+        } else {
+            isHybrid.emplace_back(false);
+        }
+    }
+
     loopStack_.emplace_back(op);
     auto __op = BaseClass::visit(op);
     ASSERT(__op->nodeType() == ASTNodeType::For);
     op = __op.as<ForNode>();
     loopStack_.pop_back();
 
+    needRedirect_ = std::move(oldNeedRedirect);
+
     std::vector<Stmt> initStmts, flushStmts;
 
     std::vector<std::string> workspaces;
     std::vector<std::vector<Expr>> workspaceShapes;
     std::vector<DataType> dtypes;
-    for (size_t i = 0, n = op->property_->reductions_.size(); i < n; i++) {
-        auto &&r = op->property_->reductions_[i];
+    for (auto &&[i, isHyb, r] :
+         views::zip(views::ints(0, ranges::unreachable), isHybrid,
+                    op->property_->reductions_)) {
+        if (!isHyb) {
+            continue;
+        }
+
         auto dtype = buffer(r->var_)->tensor()->dtype();
         auto workspace =
             "__reduce_" + toString(op->id()) + "_" + std::to_string(i);
@@ -130,7 +176,7 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::ReduceTo);
     auto op = __op.as<ReduceToNode>();
 
-    if (op->atomic_) {
+    if (op->sync_ || !needRedirect_.count(op->var_)) {
         return op;
     }
 

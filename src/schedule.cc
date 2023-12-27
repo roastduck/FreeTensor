@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include <auto_schedule/utils.h>
+#include <autograd/clear_mark_version.h>
 #include <codegen/code_gen.h>
 #include <container_utils.h>
 #include <driver.h>
@@ -19,7 +19,6 @@
 #include <schedule/fuse.h>
 #include <schedule/inlining.h>
 #include <schedule/merge.h>
-#include <schedule/multi_level_tiling.h>
 #include <schedule/parallelize.h>
 #include <schedule/permute.h>
 #include <schedule/pluto.h>
@@ -47,7 +46,8 @@ Schedule::Schedule(const Stmt &ast, int verbose)
     : verbose_(verbose), memoized_(Ref<MemoizedSchedules>::make()),
       rng_(Ref<OpenMPRandomEngine>::make(0)) /* TODO: set seed */,
       randCtx_(Ref<RandCtx<OpenMPRandomEngine>>::make(*rng_)) {
-    openTrans_.emplace_back(quickOptimizations(ast), ScheduleLog());
+    openTrans_.emplace_back(quickOptimizations(clearMarkVersion(ast)),
+                            ScheduleLog());
 }
 
 void Schedule::beginTransaction() { openTrans_.emplace_back(ast(), logs()); }
@@ -92,9 +92,13 @@ void Schedule::setLogs(const ScheduleLog &logs) {
 
 void Schedule::autoSchedule(const Ref<Target> &target,
                             const Ref<RandTrace> &trace) {
+    autoInline(target);
     autoUseLib(target);
+    autoSwap(target);
+    autoPluto(target);
     autoFissionFuse(target, trace);
     autoReorder(target);
+    autoMemLayout(target);
     autoParallelize(target);
     autoSetMemType(target);
     autoUnroll(target);
@@ -124,7 +128,7 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
                     s.autoSchedule(device->target(), trace);
                     lowered = lower(s.func(), device->target());
                     code = codeGen(lowered, device->target());
-                    drivers[j] = Ref<Driver>::make(lowered, code, device);
+                    drivers[j] = Ref<Driver>::make(code, device);
                 },
                 omp_sched_static); // use schedule(static) to guarantee
                                    // deterministic RNG
@@ -146,18 +150,4 @@ std::vector<AutoScheduleTuneTrial> Schedule::tuneAutoSchedule(
     }
 }
 
-std::vector<std::pair<ID, int>>
-Schedule::multiLevelTiling(const ForsWithDataReuse &target,
-                           const MultiLevelTilingAnnotation &annotation,
-                           const std::string &pat, int level) {
-    return freetensor::multiLevelTiling(*this, target, annotation, pat, level);
-}
-std::vector<std::pair<ID, int>> Schedule::multiLevelTilingWithFusion(
-    const ForsWithDataReuse &target,
-    const MultiLevelTilingAnnotation &annotation, const std::string &pat,
-    const ElementWiseInfo &toFuse, int level, TargetType targetType,
-    bool doCacheRead) {
-    return freetensor::multiLevelTilingWithFusion(
-        *this, target, annotation, pat, toFuse, level, targetType, doCacheRead);
-}
 } // namespace freetensor

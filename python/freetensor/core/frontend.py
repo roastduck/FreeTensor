@@ -4,23 +4,22 @@ A frontend transforming user Python functions to ASTs via staging.
 
 import sys
 import numpy as np
-import functools
 import inspect
+import traceback
 from numbers import Number
 from typing import Callable, Dict, List, Sequence, Optional, Any, Union
 from dataclasses import dataclass
 
-import freetensor_ffi as ffi
+from .. import ffi
 
-from .context import pop_ast
-from .expr import (dtype, mtype, ndim, intrinsic, l_and, l_or, l_not,
-                   if_then_else, shape)
-from .stmt import (_VarDef, NamedScope, VarRef, For, If, Else, MarkLabel,
-                   ctx_stack, Func, Assert, Invoke)
-
+from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
+                   VarVersionRef)
+from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Assert, Invoke,
+                   MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
-                      StagedIterable, StagingError, StagingOverload,
-                      TransformError)
+                      StagedIterable, StagingOverload, StagingOverloadStack,
+                      StagingError)
+from .context import StmtRange
 
 assert sys.version_info >= (3, 8), \
     "Python version lower than 3.8 is not supported"
@@ -29,7 +28,7 @@ assert sys.version_info >= (3, 8), \
 def staged_callable(staging, original, doc: Optional[str] = None):
 
     def impl(*args, **kwargs):
-        if _overload.in_staging():
+        if lang_overload.in_staging():
             return staging(*args, **kwargs)
         else:
             return original(*args, **kwargs)
@@ -53,19 +52,31 @@ class LifetimeScope:
         self.inner_scopes = []
 
     def __enter__(self):
-        _overload.lifetime_stack.append(self)
+        if lang_overload.in_staging():
+            lang_overload.lifetime_stack.append(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for scope in reversed(self.inner_scopes):
             scope.__exit__(exc_type, exc_val, exc_tb)
-        popped = _overload.lifetime_stack.pop()
-        if popped != self:
-            raise _overload.error(
-                'LifetimeScope enter/exit not match, must be FILO')
+        if lang_overload.in_staging():
+            popped = lang_overload.lifetime_stack.pop()
+            if popped != self:
+                raise lang_overload.error(
+                    'LifetimeScope enter/exit not match, must be FILO')
 
     def register_inner_scope(self, scope):
         self.inner_scopes.append(scope)
         return scope.__enter__()
+
+
+class FreeTensorStagingError(StagingError):
+    '''Error occurred during staging function execution (i.e. IR tree generation).'''
+
+    def __init__(self, message: str) -> None:
+        # TODO: add output of StagingContext.call_stack
+        super().__init__(
+            f'{message}:\n{"".join(traceback.format_list(ctx_stack.debug_call_stack))}'
+            .lstrip())
 
 
 class FreeTensorOverload(StagingOverload):
@@ -94,8 +105,17 @@ class FreeTensorOverload(StagingOverload):
     def register_inlined_invoke(self, ret_names: Sequence[str], func: ffi.Func,
                                 args, kvs):
         ret_names = [self.fullname(name) for name in ret_names]
+        force_allow_closures = False
+        if '_freetensor_force_allow_closures' in kvs:
+            force_allow_closures = kvs['_freetensor_force_allow_closures']
+            del kvs['_freetensor_force_allow_closures']
         return self.lifetime_stack[-1].register_inner_scope(
-            Invoke(ret_names, func, args, kvs))
+            Invoke(ret_names,
+                   func,
+                   args,
+                   kvs,
+                   conflict_names=set(self.name_dict.keys()),
+                   force_allow_closures=force_allow_closures))
 
     def register_assert(self, pred):
         self.lifetime_stack[-1].register_inner_scope(Assert(pred))
@@ -104,13 +124,10 @@ class FreeTensorOverload(StagingOverload):
         '''Get distinct name.'''
         if name in self.name_dict:
             self.name_dict[name] += 1
-            return f'{name}_{self.name_dict[name]}'
+            return self.fullname(f'{name}_{self.name_dict[name]}')
         else:
             self.name_dict[name] = 0
             return name
-
-    def in_staging(self,):
-        return len(self.lifetime_stack) > 0
 
     def custom_attr(self, obj: Any, attr: str) -> Any:
         if attr == "ndim":
@@ -135,7 +152,17 @@ class FreeTensorOverload(StagingOverload):
 
             prev = ctx_stack.top().caller_metadata
             ctx_stack.top().set_caller_metadata(call_metadata)
+
+            # Push debug call stack with some random line number.
+            # It will be updated by `mark_position` calls in the function.
+            ctx_stack.debug_call_stack.append(
+                traceback.FrameSummary(filename, 1, func.__name__))
+
             result = basic_wrapped(*args, **kwargs)
+
+            # Pop debug call stack.
+            ctx_stack.debug_call_stack.pop()
+
             ctx_stack.top().set_caller_metadata(prev)
 
             return result
@@ -148,37 +175,57 @@ class FreeTensorOverload(StagingOverload):
             return
 
         key = parts[0]
+        val = None
         if len(parts) > 1:
-            key = key[:-1]
             val = parts[1]
 
-        if key == 'label':
-            ctx_stack.top().add_label(val)
-        elif key == 'no_deps':
-            back = inspect.currentframe().f_back
+        if key == 'label:':
+            if val is not None:
+                ctx_stack.top().add_label(val)
+                return
+        elif key == 'no_deps:':
+            if val is not None:
+                back = inspect.currentframe().f_back
 
-            if val in back.f_locals:
-                var = back.f_locals[val]
-            elif val in back.f_globals:
-                var = back.f_globals[val]
-            else:
-                raise self.error(
-                    f'Variable {val} not found for annotating comment ({key}: {val})'
-                )
+                if val in back.f_locals:
+                    var = back.f_locals[val]
+                elif val in back.f_globals:
+                    var = back.f_globals[val]
+                else:
+                    raise self.error(
+                        f'Variable {val} not found for annotating comment ({key}: {val})'
+                    )
 
-            if not isinstance(var, VarRef):
-                raise self.error(
-                    f'Variable {val} = {var} is not a VarRef, which is required by annotating comment ({key}: {val})'
-                )
-            ctx_stack.top().add_next_no_deps(var.name)
+                if not isinstance(var, VarRef):
+                    raise self.error(
+                        f'Variable {val} = {var} is not a VarRef, which is required by annotating comment ({key}: {val})'
+                    )
+                ctx_stack.top().add_next_no_deps(var.name)
+                return
         elif key == 'prefer_libs':
             ctx_stack.top().set_next_prefer_libs()
+            return
 
-    def at_position(self, filename: str, lineno: int) -> None:
-        ctx_stack.top().set_next_location(filename, lineno)
+        raise ffi.InvalidProgram('''Invalid metadata. Possible metadata are:
+`label: <label_name>`: to label the following statement,
+`no_deps: <variable_name>`: to mark a variable to have no dependence along the following loop,
+`prefer_libs`: to indicate the following statement should preferably be executed using external libraries.
+''')
+
+    def mark_position(self, lineno: int):
+        ctx_stack.mark_position(lineno)
+
+    def error(self, content: str):
+        return FreeTensorStagingError(content)
 
 
-_overload: FreeTensorOverload = FreeTensorOverload()
+class FreeTensorOverloadStack(StagingOverloadStack):
+
+    def __init__(self):
+        super().__init__(FreeTensorOverload)
+
+
+lang_overload: FreeTensorOverloadStack = FreeTensorOverloadStack()
 
 
 def _register_as_predicate(ty):
@@ -194,7 +241,7 @@ def _register_as_predicate(ty):
 
     def _if_then_else_stmt(pred: ty, then_body: Callable[[], None],
                            else_body: Optional[Callable[[], None]]):
-        with _overload.allow_shortcut_scope(False):
+        with lang_overload.allow_shortcut_scope(False):
             with If(pred):
                 with LifetimeScope():
                     then_body()
@@ -211,7 +258,7 @@ def _register_as_predicate(ty):
         raise NotImplementedError()
 
     def _assert_stmt(pred: ty):
-        _overload.register_assert(pred)
+        lang_overload.register_assert(pred)
 
     StagedPredicate.register(ty)
     ty.logical_and = _logical_and
@@ -238,10 +285,10 @@ class VarCreator(StagedAssignable):
         '''Customized assign behavior. Creates a VarDef with its full name.'''
         if not self.assigned:
             self.assigned = True
-            return _overload.register_vardef(name, self.shape, self.dtype,
-                                             'cache', self.mtype)
+            return lang_overload.register_vardef(name, self.shape, self.dtype,
+                                                 'cache', self.mtype)
         else:
-            raise _overload.error(
+            raise lang_overload.error(
                 "Create new tensors in an `a = b = c`-like multi-assignment "
                 "is not supported")
 
@@ -338,11 +385,11 @@ def capture_var_fallback(arr: ffi.Array, name: str = 'captured'):
 
 
 def capture_var_staging(arr: ffi.Array, name: str = 'captured'):
-    return _overload.register_vardef(name,
-                                     arr.shape,
-                                     arr.dtype,
-                                     'input',
-                                     capture=arr)
+    return lang_overload.register_vardef(name,
+                                         arr.shape,
+                                         arr.dtype,
+                                         'input',
+                                         capture=arr)
 
 
 capture_var = staged_callable(capture_var_staging, capture_var_fallback,
@@ -357,8 +404,6 @@ class Var(StagedTypeAnnotation):
 
         Parameters
         ----------
-        name : str
-            Name of the variable
         shape : Sequence[Expr] or Var
             Shape of the variable. A variable can be created using a literal shape,
             or another fixed-length VarRef as a shape
@@ -374,8 +419,99 @@ class Var(StagedTypeAnnotation):
         self.shape, self.dtype, self.atype, self.mtype = shape, dtype, atype, mtype
 
     def annotate(self, name: str) -> VarRef:
-        return _overload.register_vardef(name, self.shape, self.dtype,
-                                         self.atype, self.mtype)
+        return lang_overload.register_vardef(name, self.shape, self.dtype,
+                                             self.atype, self.mtype)
+
+
+@dataclass
+class VersionMarker(StagedAssignable):
+    var: VarRef
+    assigned: bool = False
+
+    def assign(self, tape_name: str) -> VarRef:
+        '''Customized assign behavior. Creates a MarkVersion with its full name.'''
+        if not self.assigned:
+            self.assigned = True
+            full_tape_name = lang_overload.fullname(tape_name)
+            MarkVersion(full_tape_name, self.var)
+            return VarVersionRef(full_tape_name, self.var.full_shape,
+                                 self.var.dtype, self.var.mtype,
+                                 self.var.indices)
+        else:
+            raise lang_overload.error(
+                "Marking version in an `a = b = c`-like multi-assignment is not"
+                " supported")
+
+
+def push_for_backward(var: VarRef):
+    '''
+    Push the current value from the forward pass to be used at the backward pass
+
+    This function is for custom gradients. See `UserGrad` for details on how to provide custom
+    gradients.
+
+    You may imagine there is a virtual stack for each variable. Each time you call `x_handle =
+    push_for_backward(x)` in the forward pass, the value of `x` **at the current iteration**
+    will be "pushed" to the virtual stack. You can access `x_handle` at the backward pass. Each
+    time you access `x_handle`, you will "pop" the stack and get the value of `x` **pushed at
+    the same iteration**. Since the "stack" is virtual, you do NOT need to "pop" the same count
+    as "push"es: the version numbering is fully automatic. Besides, there may not be a real
+    stack at runtime: it can be compiled to any data structure.
+
+    This function will be staged to `mark_version` statement in the IR.
+    '''
+
+    return VersionMarker(var)
+
+
+class UserGrad(UserGradStaged):
+    '''
+    Define a custom gradient
+
+    Follow the following steps to define custom gradient:
+
+    1. Add some `mark_version` statements in the program. `mark_version('y0', y)` marks the specific
+    versions of variable `y` **at the program position of the statement** and **at all iterations**
+    as `'y0'`.
+    2. Add a `UserGrad` scope.
+    2.1. `UserGrad` optionally receives parameter `stmt_range`, recorded by the `StmtRange` helper class,
+    which means the gradient is for the code specified in the range. Ignoring the parameter means setting
+    gradient for the previous statement of the scope.
+    2.2. Other parameters of `UserGrad` sets the mapping from original variables to gradient variables.
+    `with UserGradForPrevStmt(x, y) as (dx, dy)` provides `VarRef` `dx` and `dy` as gradient variables
+    to be used inside the scope.
+    3. In order to use the value from the forward pass in the backward pass, do not access the forward
+    variables directly in the scope. Instead, use `load_at_version` expressions. `load_at_version(y0, i, j)`
+    loads from `y[i, j]` **at the specific version marked by `y0 = mark_version(y)`**, saved from **the same
+    iteration in the forward pass**. (If directly writing staged code, it is `MarkVersion('y0', y)`). In
+    other words, after AD, the position of `mark_version` and the dynamic loop iterator together makes up
+    the actual version number for the tape.
+    4. Build the AST with `pop_ast_and_user_grads` instead of `pop_ast`. An extra list will be returned
+    together with the AST, which you need to pass as `grad`'s `user_grads` argument. This list records
+    the forward-to-backward relation of the nodes.
+
+    If you are directly writing staged code, use `UserGradStaged` instead.
+
+    Parameters
+    ----------
+    *args: Sequence[VarRef]
+        (Positional variadic) Mapping from original variables to gradient variables
+    stmt_range: Optional[StmtRange]
+        The range in the original program that we are setting custom gradient for
+    '''
+
+    def __init__(self, *args: Sequence[VarRef], stmt_range: StmtRange = None):
+        super(UserGrad, self).__init__(*args, stmt_range=stmt_range)
+        self.lifetime_scope = LifetimeScope()
+
+    def __enter__(self):
+        ret = super(UserGrad, self).__enter__()
+        self.lifetime_scope.__enter__()
+        return ret
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.lifetime_scope.__exit__(exc_type, exc_value, traceback)
+        return super(UserGrad, self).__exit__(exc_type, exc_value, traceback)
 
 
 class dynamic_range(StagedIterable):
@@ -395,7 +531,7 @@ class dynamic_range(StagedIterable):
     def foreach(self, name, body: Callable[[Any], None]) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
         if not isinstance(name, str):
-            raise _overload.error(
+            raise lang_overload.error(
                 'dynamic_range only supports exactly one target variable')
 
         # Early optimizations
@@ -408,172 +544,11 @@ class dynamic_range(StagedIterable):
                     body(self.start)
                 return
 
-        with _overload.allow_shortcut_scope(False):
-            with For(_overload.fullname(name), self.start, self.stop,
+        with lang_overload.allow_shortcut_scope(False):
+            with For(lang_overload.fullname(name), self.start, self.stop,
                      self.step) as iter_var:
                 with LifetimeScope():
                     body(iter_var)
 
 
 static_range = range
-
-
-def _prepare_extra_locals(default_dynamic_range):
-    extra_locals = {'__ft__': sys.modules['freetensor']}
-    if default_dynamic_range:
-        extra_locals['range'] = dynamic_range
-    return extra_locals
-
-
-def transform(func=None, default_dynamic_range=True, verbose: int = 0):
-    '''
-    Transform a user function to an AST
-
-    Parameters
-    ----------
-    func : Python function
-        The user function to transform. If not specified, a partial function will
-        be returend, which can be used as a decorator
-    default_dynamic_range : bool
-        If True, the built-in range is replaced with freetensor.dynamic_range.
-        Defaults to True
-    verbose : int
-        0 = print nothing. 1 = print the resulting AST. 2 = 1 + print the generated
-        Python code that is used for transforming
-    '''
-
-    if func is None:
-        return functools.partial(transform,
-                                 default_dynamic_range=default_dynamic_range,
-                                 verbose=verbose)
-
-    if verbose is None:
-        verbose = 0
-
-    extra_locals = _prepare_extra_locals(default_dynamic_range)
-
-    params = list(inspect.signature(func).parameters)
-
-    staging_func = _overload.into_staging(func,
-                                          extra_locals,
-                                          verbose=verbose >= 2)
-
-    try:
-        # Initialize _overload to prepare for staging.
-        _overload.__init__()
-        # Create a new scope for the function
-        with LifetimeScope():
-            # Run staging function with the tensor program arguments' names as parameters
-            returns = staging_func(*params,
-                                   __freetensor_transform_outermost__=True)
-            # Check returned vardefs (if any)
-            if isinstance(returns, VarRef):
-                returns = [returns]
-            elif isinstance(returns, tuple):
-                for ret in returns:
-                    if not isinstance(ret, VarRef):
-                        raise _overload.error(
-                            'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                        )
-                returns = list(returns)
-            elif returns is None:
-                returns = []
-            else:
-                raise _overload.error(
-                    'Illegal return at top level, need to be a `VarRef` or a tuple of `VarRef`s'
-                )
-            # Set returned vardefs' access type to inout/output according to whether it was an input
-            for ret in returns:
-                if ret.vardef.atype == 'input' or ret.vardef.atype == 'inout':
-                    ret.vardef.set_atype('inout')
-                else:
-                    ret.vardef.set_atype('output')
-            returns = [(ret.vardef.name, ret.vardef.dtype) for ret in returns]
-
-            # Set closure; they are from captured Arrays.
-            closure = _overload.closure
-    except StagingError:
-        raise
-    except TransformError:
-        raise
-    except Exception as e:
-        raise _overload.error('Exception occurred in staging') from e
-    finally:
-        # Despite whether the exception is raised, we need to clean up the ctx_stack
-        staged_ast = pop_ast()
-
-    staged = None
-
-    # Enable invoking a transformed AST in another function being transformed,
-    # via `inlined_invoke`
-    def prepare_inlined_invoke(*args, **kvs):
-        nonlocal staged
-        if _overload.in_staging():
-            if len(returns) == 1:
-                names = (func.__name__,)
-            else:
-                names = tuple(
-                    f"{func.__name__}.{i}" for i in range(len(returns)))
-            return _overload.register_inlined_invoke(names, staged, args, kvs)
-        else:
-            raise _overload.error(
-                'Unexpected call on a transformed AST. A transformed AST can only '
-                'be called in the following two ways: 1) called with actual data '
-                'after `@optimize`, and 2) called from another function to be '
-                '`@transform`ed')
-
-    staged = Func(func.__name__,
-                  params + list(closure.keys()),
-                  returns,
-                  staged_ast,
-                  closure,
-                  custom_callback=prepare_inlined_invoke)
-
-    if verbose >= 1:
-        print("The transformed AST is:", file=sys.stderr)
-        print(staged, file=sys.stderr)
-        print(file=sys.stderr)
-
-    return staged
-
-
-def inline(func=None,
-           src=None,
-           fallback=None,
-           default_dynamic_range=True,
-           verbose=False):
-    '''
-    Enable a user function to be called by a transformed function at run time
-
-    Parameters
-    ----------
-    func : Python function
-        The user function
-    src : str (Optional)
-        The source code of `func`. This parameter is only required if the source
-        code cannot be get automatically, e.g., if `func` is generated from a `exec`
-    default_dynamic_range : bool
-        If True, the built-in range is replaced with freetensor.dynamic_range.
-        Defaults to True
-    verbose : bool
-        True to print the generated Python code that is used for transforming
-    '''
-
-    if func is None:
-        return functools.partial(inline,
-                                 src=src,
-                                 fallback=fallback,
-                                 default_dynamic_range=default_dynamic_range,
-                                 verbose=verbose)
-
-    extra_locals = _prepare_extra_locals(default_dynamic_range)
-
-    # Do not initialize _overload here, since `into_staging` does not use the context.
-    # Keep the context as-is to support adding new inline functions during transforming.
-    # Such a case occurs when a transformed function dynamically imports a new inline.
-    transformed = _overload.into_staging(func,
-                                         extra_locals,
-                                         src,
-                                         verbose=verbose)
-
-    return functools.wraps(func)(staged_callable(transformed, fallback or func))

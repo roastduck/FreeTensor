@@ -16,7 +16,7 @@ def test_reuse_over_loop():
                     y[i, k] = t[k] * 2
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.output_intermediates(ast, set(["V_t"]))
+    ast = ft.output_all_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -57,7 +57,7 @@ def test_multiple_assignments():
                     y[i, k, 1] = t[k, 1] * 2
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.output_intermediates(ast, set(["V_t"]))
+    ast = ft.output_all_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -99,7 +99,7 @@ def test_reuse_over_loop_with_offset():
                     y[i - 2, k] = t[k] * 2
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.output_intermediates(ast, set(["V_t"]))
+    ast = ft.output_all_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -137,7 +137,7 @@ def test_reuse_over_stmt_seq():
                 y[k] *= t[k]
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.output_intermediates(ast, set(["V_t"]))
+    ast = ft.output_all_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -186,7 +186,7 @@ def test_reuse_different_lengths():
                     y2[i, k] = t[k] * 2
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.output_intermediates(ast, set(["V_t"]))
+    ast = ft.output_all_intermediates(ast, set(["V_t"]))
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -220,41 +220,6 @@ def test_reuse_different_lengths():
     assert std.match(ast)
 
 
-def test_no_need_to_copy():
-    with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
-                    ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4, label="Li") as i:
-            ft.MarkLabel("V_t")
-            with ft.VarDef("t", (4, 6), "float32", "cache", "cpu") as t:
-                with ft.For("k", 0, 6, label="Lk0") as k:
-                    t[i, k] = 0
-                with ft.For("j", 0, 5, label="Lj") as j:
-                    with ft.For("k", 0, 6, label="Lk1") as k:
-                        t[i, k] += x[i, j, k]
-                with ft.For("k", 0, 6, label="Lk2"):
-                    y[i, k] = t[i, k] * 2
-    ast = ft.pop_ast()
-    print(ast)
-    ast = ft.output_intermediates(ast, set(["V_t"]))
-    print(ast)
-    ast = ft.lower(ast, verbose=1)
-
-    with ft.VarDef([("x", (4, 5, 6), "float32", "input", "cpu"),
-                    ("y", (4, 6), "float32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 4) as i:
-            with ft.VarDef("t", (4, 6), "float32", "output", "cpu") as t:
-                with ft.For("k", 0, 6) as k:
-                    t[i, k] = 0
-                with ft.For("j", 0, 5) as j:
-                    with ft.For("k", 0, 6) as k:
-                        t[i, k] += x[i, j, k]
-                with ft.For("k", 0, 6):
-                    y[i, k] = t[i, k] * 2
-    std = ft.pop_ast()
-
-    assert std.match(ast)
-
-
 def test_circular_reuse():
     with ft.VarDef("y", (128,), "float32", "output", "cpu") as y:
         ft.MarkLabel("V_c")
@@ -272,7 +237,7 @@ def test_circular_reuse():
                     y[i] = h[i]
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.output_intermediates(ast, set(["V_c", "V_h"]))
+    ast = ft.output_all_intermediates(ast, set(["V_c", "V_h"]))
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
@@ -286,13 +251,14 @@ def test_circular_reuse():
                     with ft.For("i", 0, 128, label='Li0') as i:
                         h[i] = 0
                     ft.MarkLabel("V_c")
-                    with ft.VarDef("c", (128,), "float32", "cache", "cpu") as c:
-                        with ft.For("p", 0, 100, label='Lp') as p:
-                            with ft.For("i", 0, 128, label='Li1') as i:
-                                h_tape[p, i] = h[i]
-                                c[i] = h[i] / 2 - 1
-                                c_tape[p, i] = c[i]
-                                h[i] = c[i] * 2 + 1
+                    with ft.For("p", 0, 100, label='Lp') as p:
+                        with ft.For("i", 0, 128, label='Li1') as i:
+                            h_tape[p, i] = h[i]
+                            with ft.VarDef("c", (1,), "float32", "cache",
+                                           "cpu") as c:
+                                c[0] = h[i] / 2 - 1
+                                c_tape[p, i] = c[0]
+                                h[i] = c[0] * 2 + 1
                     with ft.For("i", 0, 128, label='Li2') as i:
                         h_tape[100, i] = h[i]
                         y[i] = h[i]
@@ -315,7 +281,7 @@ def test_dynamic_loop_range():
                 z[()] = x[bn, pn] + 1
                 y[pn % n] += z[()] * z[()]
 
-    ast = ft.output_intermediates(func.body, set(["V_z"]))
+    ast = ft.output_all_intermediates(func.body, set(["V_z"]))
     print(ast)
     ast = ft.lower(ast, skip_passes=['float_simplify'], verbose=1)
 
@@ -330,12 +296,44 @@ def test_dynamic_loop_range():
                 #! label: V_z
                 z = ft.empty((), "float32")
                 z[()] = x[bn, pn] + 1
-                # FIXME: Apparently there 3 assignments are the same, but pass/remove_writes can't
-                # eliminate 2 of them, because `bn * (n * n)` and `n * n` are recoginized two
-                # different free variables for isl. Consider directly match the expressions
-                z_tape[bn * (n * n) + pn] = z[()]
-                z_tape[bn * (n * n) + pn + 1 - 1] = z[()]
                 z_tape[bn * (n * n) + pn + 1 - 1] = z[()]
                 y[pn % n] += z[()] * z[()]
+
+    assert expected.body.match(ast)
+
+
+def test_dynamic_loop_range_relaxed():
+
+    @ft.transform(verbose=1)
+    def func(l, x, y):
+        l: ft.Var[(100,), "int32"]
+        x: ft.Var[(100, 100), "float32"]
+        y: ft.Var[(100,), "float32", "output"]
+        for i in range(100):
+            assert l[i] <= 100
+            for j in range(l[i]):
+                #! label: V_z
+                z = ft.empty((), "float32")
+                z[()] = x[i, j] + 1
+                y[i] += z[()] * z[()]
+
+    ast = ft.output_all_intermediates(func.body, set(["V_z"]))
+    print(ast)
+    ast = ft.lower(ast, skip_passes=['float_simplify'], verbose=1)
+
+    @ft.transform
+    def expected(l, x, y, z_tape):
+        l: ft.Var[(100,), "int32"]
+        x: ft.Var[(100, 100), "float32"]
+        y: ft.Var[(100,), "float32", "output"]
+        for i in range(100):
+            assert l[i] <= 100
+            for j in range(l[i]):
+                z_tape: ft.Var[(10000,), "float32", "output"]
+                #! label: V_z
+                z = ft.empty((), "float32")
+                z[()] = x[i, j] + 1
+                z_tape[i * 100 + j] = z[()]
+                y[i] += z[()] * z[()]
 
     assert expected.body.match(ast)

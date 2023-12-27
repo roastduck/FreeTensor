@@ -1,16 +1,26 @@
 #include <cmath>
 
+#include <config.h>
 #include <hash.h>
+#include <math/utils.h>
 #include <pass/float_simplify.h>
+#include <pass/refine_sign_data_type.h>
 
 namespace freetensor {
 
-inline static Expr reduceMul(const std::vector<Expr> &list) {
+inline static std::pair<double, Expr> reduceMul(const std::vector<Expr> &list) {
+    double c = 1;
     Expr ret;
     for (auto &&item : list) {
-        ret = ret.isValid() ? makeMul(ret, item) : item;
+        if (item->nodeType() == ASTNodeType::IntConst) {
+            c *= item.as<IntConstNode>()->val_;
+        } else if (item->nodeType() == ASTNodeType::FloatConst) {
+            c *= item.as<FloatConstNode>()->val_;
+        } else {
+            ret = ret.isValid() ? makeMul(ret, item) : item;
+        }
     }
-    return ret;
+    return {c, ret};
 }
 
 inline static bool hasSqrt(const Expr &op) {
@@ -25,38 +35,14 @@ inline static bool hasSqrt(const Expr &op) {
     }
 }
 
-bool FloatSimplify::nonNeg(const Expr &op) const {
-    if (op->nodeType() == ASTNodeType::IntConst &&
-        op.as<IntConstNode>()->val_ >= 0) {
-        return true;
-    }
-    if (op->nodeType() == ASTNodeType::FloatConst &&
-        op.as<FloatConstNode>()->val_ >= 0) {
-        return true;
-    }
-    return nonNeg_.count(op);
-}
-
-bool FloatSimplify::nonPosi(const Expr &op) const {
-    if (op->nodeType() == ASTNodeType::IntConst &&
-        op.as<IntConstNode>()->val_ <= 0) {
-        return true;
-    }
-    if (op->nodeType() == ASTNodeType::FloatConst &&
-        op.as<FloatConstNode>()->val_ <= 0) {
-        return true;
-    }
-    return nonPosi_.count(op);
-}
-
 Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
-    int sqrtCnt = 0, divCnt = 0, squareCnt = 0;
+    int sqrtCnt = 0, divCnt = 0, squareCnt = 0, constCnt = 0;
     std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
                        std::vector<Expr> &, std::vector<Expr> &)>
-        recur = [&recur, &sqrtCnt,
-                 &divCnt](const Expr &expr, std::vector<Expr> &num,
-                          std::vector<Expr> &den, std::vector<Expr> &sqrtNum,
-                          std::vector<Expr> &sqrtDen) {
+        recur = [&recur, &sqrtCnt, &divCnt,
+                 &constCnt](const Expr &expr, std::vector<Expr> &num,
+                            std::vector<Expr> &den, std::vector<Expr> &sqrtNum,
+                            std::vector<Expr> &sqrtDen) {
             if (expr->nodeType() == ASTNodeType::Mul) {
                 recur(expr.as<MulNode>()->lhs_, num, den, sqrtNum, sqrtDen);
                 recur(expr.as<MulNode>()->rhs_, num, den, sqrtNum, sqrtDen);
@@ -69,6 +55,9 @@ Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
                 sqrtCnt++;
             } else {
                 num.emplace_back(expr);
+                if (expr->isConst()) {
+                    constCnt++;
+                }
             }
         };
     std::vector<Expr> num, den, sqrtNum, sqrtDen;
@@ -90,30 +79,90 @@ Expr FloatSimplify::normalizeRealMulDiv(const Expr &op) {
     trySquare(den);
     trySquare(sqrtNum);
     trySquare(sqrtDen);
-    if (sqrtCnt <= 1 && divCnt <= 1 && squareCnt == 0) {
+    if (sqrtCnt <= 1 && divCnt <= 1 && squareCnt == 0 && constCnt <= 1) {
         return op;
     }
 
-    if (auto x = reduceMul(sqrtNum); x.isValid()) {
-        if (auto y = reduceMul(sqrtDen); y.isValid()) {
-            num.emplace_back(makeSqrt(makeRealDiv(x, y)));
-        } else {
-            num.emplace_back(makeSqrt(x));
+    {
+        auto &&[cx, x] = reduceMul(sqrtNum);
+        auto &&[cy, y] = reduceMul(sqrtDen);
+        if (cx / cy != 1) {
+            num.emplace_back(makeFloatConst(sqrt(cx / cy)));
         }
-    } else {
-        if (auto y = reduceMul(sqrtDen); y.isValid()) {
-            den.emplace_back(makeSqrt(y));
+        if (x.isValid()) {
+            if (y.isValid()) {
+                num.emplace_back(makeSqrt(makeRealDiv(x, y)));
+            } else {
+                num.emplace_back(makeSqrt(x));
+            }
+        } else {
+            if (y.isValid()) {
+                den.emplace_back(makeSqrt(y));
+            }
         }
     }
-    if (auto x = reduceMul(num); x.isValid()) {
-        if (auto y = reduceMul(den); y.isValid()) {
-            return makeRealDiv(x, y);
+    {
+        auto &&[cx, x] = reduceMul(num);
+        auto &&[cy, y] = reduceMul(den);
+        if (x.isValid()) {
+            if (y.isValid()) {
+                if (cx / cy != 1) {
+                    return makeMul(makeFloatConst(cx / cy), makeRealDiv(x, y));
+                } else {
+                    return makeRealDiv(x, y);
+                }
+            } else {
+                if (cx / cy != 1) {
+                    return makeMul(makeFloatConst(cx / cy), x);
+                } else {
+                    return x;
+                }
+            }
         } else {
-            return x;
+            if (y.isValid()) {
+                return makeRealDiv(makeFloatConst(cx / cy), y);
+            } else {
+                return makeFloatConst(cx / cy);
+            }
         }
-    } else {
-        ASSERT(false); // Impossible
     }
+}
+
+Expr FloatSimplify::visitExpr(const Expr &_expr) {
+    auto expr = BaseClass::visitExpr(_expr);
+
+    if (expr->isBinary()) {
+        auto &&lhs = expr.as<BinaryExprNode>()->lhs_;
+        auto &&rhs = expr.as<BinaryExprNode>()->rhs_;
+
+        // Fold operands into `IfExpr` to enble further foldings or other
+        // simplifications. This only happens if either or both sides are
+        // constants, to avoid combination explosion
+        if (lhs->nodeType() == ASTNodeType::IfExpr) {
+            auto &&branch = lhs.as<IfExprNode>();
+            if ((branch->thenCase_->isConst() &&
+                 branch->elseCase_->isConst()) ||
+                rhs->isConst()) {
+                return makeIfExpr(
+                    branch->cond_,
+                    makeBinary(expr->nodeType(), branch->thenCase_, rhs),
+                    makeBinary(expr->nodeType(), branch->elseCase_, rhs));
+            }
+        }
+        if (rhs->nodeType() == ASTNodeType::IfExpr) {
+            auto &&branch = rhs.as<IfExprNode>();
+            if ((branch->thenCase_->isConst() &&
+                 branch->elseCase_->isConst()) ||
+                lhs->isConst()) {
+                return makeIfExpr(
+                    branch->cond_,
+                    makeBinary(expr->nodeType(), lhs, branch->thenCase_),
+                    makeBinary(expr->nodeType(), lhs, branch->elseCase_));
+            }
+        }
+    }
+
+    return expr;
 }
 
 Expr FloatSimplify::visit(const Add &_op) {
@@ -123,12 +172,6 @@ Expr FloatSimplify::visit(const Add &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.as<AddNode>();
-    if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
-        setNonNeg(op);
-    }
-    if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
-        setNonPosi(op);
-    }
 
     if (!isFloat(op->dtype())) {
         return op;
@@ -151,12 +194,6 @@ Expr FloatSimplify::visit(const Sub &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
-    if (nonNeg(op->lhs_) && nonPosi(op->rhs_)) {
-        setNonNeg(op);
-    }
-    if (nonPosi(op->lhs_) && nonNeg(op->rhs_)) {
-        setNonPosi(op);
-    }
 
     if (!isFloat(op->dtype())) {
         return op;
@@ -180,18 +217,6 @@ Expr FloatSimplify::visit(const Mul &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
-    if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
-        setNonNeg(op);
-    }
-    if (nonNeg(op->lhs_) && nonPosi(op->rhs_)) {
-        setNonPosi(op);
-    }
-    if (nonPosi(op->lhs_) && nonNeg(op->rhs_)) {
-        setNonPosi(op);
-    }
-    if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
-        setNonNeg(op);
-    }
 
     if (!isFloat(op->dtype())) {
         return op;
@@ -220,18 +245,6 @@ Expr FloatSimplify::visit(const RealDiv &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::RealDiv);
     auto op = __op.as<RealDivNode>();
-    if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
-        setNonNeg(op);
-    }
-    if (nonNeg(op->lhs_) && nonPosi(op->rhs_)) {
-        setNonPosi(op);
-    }
-    if (nonPosi(op->lhs_) && nonNeg(op->rhs_)) {
-        setNonPosi(op);
-    }
-    if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
-        setNonNeg(op);
-    }
 
     if (equals(op->rhs_, 1)) {
         return op->lhs_;
@@ -250,23 +263,17 @@ Expr FloatSimplify::visit(const Min &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Min);
     auto op = __op.as<MinNode>();
-    if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
-        setNonNeg(op);
-    }
-    if (nonPosi(op->lhs_) || nonPosi(op->rhs_)) {
-        setNonPosi(op);
-    }
 
     if (!isFloat(op->dtype())) {
         return op;
     }
 
     if (hasSqrt(op->lhs_) && hasSqrt(op->rhs_)) {
-        if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
+        if (isGE0(op->lhs_->dtype()) && isGE0(op->rhs_->dtype())) {
             return makeSqrt(
                 makeMin(makeSquare(op->lhs_), makeSquare(op->rhs_)));
         }
-        if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
+        if (isLE0(op->lhs_->dtype()) && isLE0(op->rhs_->dtype())) {
             return makeMul(
                 makeIntConst(-1),
                 makeSqrt(makeMax(makeSquare(op->lhs_), makeSquare(op->rhs_))));
@@ -283,23 +290,17 @@ Expr FloatSimplify::visit(const Max &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Max);
     auto op = __op.as<MaxNode>();
-    if (nonNeg(op->lhs_) || nonNeg(op->rhs_)) {
-        setNonNeg(op);
-    }
-    if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
-        setNonPosi(op);
-    }
 
     if (!isFloat(op->dtype())) {
         return op;
     }
 
     if (hasSqrt(op->lhs_) && hasSqrt(op->rhs_)) {
-        if (nonNeg(op->lhs_) && nonNeg(op->rhs_)) {
+        if (isGE0(op->lhs_->dtype()) && isGE0(op->rhs_->dtype())) {
             return makeSqrt(
                 makeMax(makeSquare(op->lhs_), makeSquare(op->rhs_)));
         }
-        if (nonPosi(op->lhs_) && nonPosi(op->rhs_)) {
+        if (isLE0(op->lhs_->dtype()) && isLE0(op->rhs_->dtype())) {
             return makeMul(
                 makeIntConst(-1),
                 makeSqrt(makeMin(makeSquare(op->lhs_), makeSquare(op->rhs_))));
@@ -316,7 +317,6 @@ Expr FloatSimplify::visit(const Sqrt &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Sqrt);
     auto op = __op.as<SqrtNode>();
-    setNonNeg(op);
 
     std::function<void(const Expr &, std::vector<Expr> &, std::vector<Expr> &,
                        std::vector<Expr> &, std::vector<Expr> &)>
@@ -341,37 +341,49 @@ Expr FloatSimplify::visit(const Sqrt &_op) {
         return op;
     }
 
-    if (auto x = reduceMul(sqrtNum); x.isValid()) {
-        if (auto y = reduceMul(sqrtDen); y.isValid()) {
-            num.emplace_back(makeSqrt(makeRealDiv(x, y)));
+    {
+        auto &&[cx, x] = reduceMul(sqrtNum);
+        auto &&[cy, y] = reduceMul(sqrtDen);
+        if (cx / cy != 1) {
+            num.emplace_back(makeFloatConst(sqrt(cx / cy)));
+        }
+        if (x.isValid()) {
+            if (y.isValid()) {
+                num.emplace_back(makeSqrt(makeRealDiv(x, y)));
+            } else {
+                num.emplace_back(makeSqrt(x));
+            }
         } else {
-            num.emplace_back(makeSqrt(x));
-        }
-    } else {
-        if (auto y = reduceMul(sqrtDen); y.isValid()) {
-            den.emplace_back(makeSqrt(y));
+            if (y.isValid()) {
+                den.emplace_back(makeSqrt(y));
+            }
         }
     }
-    if (auto x = reduceMul(num); x.isValid()) {
-        if (auto y = reduceMul(den); y.isValid()) {
-            return makeRealDiv(x, y);
+    {
+        auto &&[cx, x] = reduceMul(num);
+        auto &&[cy, y] = reduceMul(den);
+        if (x.isValid()) {
+            if (y.isValid()) {
+                if (cx / cy != 1) {
+                    return makeMul(makeFloatConst(cx / cy), makeRealDiv(x, y));
+                } else {
+                    return makeRealDiv(x, y);
+                }
+            } else {
+                if (cx / cy != 1) {
+                    return makeMul(makeFloatConst(cx / cy), x);
+                } else {
+                    return x;
+                }
+            }
         } else {
-            return x;
+            if (y.isValid()) {
+                return makeRealDiv(makeFloatConst(cx / cy), y);
+            } else {
+                return makeFloatConst(cx / cy);
+            }
         }
-    } else {
-        ASSERT(false); // Impossible
     }
-}
-
-Expr FloatSimplify::visit(const Exp &_op) {
-    auto __op = BaseClass::visit(_op);
-    if (__op->isConst()) {
-        return __op;
-    }
-    ASSERT(__op->nodeType() == ASTNodeType::Exp);
-    auto op = __op.as<ExpNode>();
-    setNonNeg(op);
-    return op;
 }
 
 Expr FloatSimplify::visit(const Square &_op) {
@@ -381,7 +393,6 @@ Expr FloatSimplify::visit(const Square &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Square);
     auto op = __op.as<SquareNode>();
-    setNonNeg(op);
 
     if (!isFloat(op->dtype())) {
         return op;
@@ -414,25 +425,48 @@ Expr FloatSimplify::visit(const Square &_op) {
         return op;
     }
 
-    if (auto x = reduceMul(num); x.isValid()) {
-        if (auto y = reduceMul(den); y.isValid()) {
-            sqrtNum.emplace_back(makeSquare(makeRealDiv(x, y)));
-        } else {
-            sqrtNum.emplace_back(makeSquare(x));
+    {
+        auto &&[cx, x] = reduceMul(num);
+        auto &&[cy, y] = reduceMul(den);
+        if (cx / cy != 1) {
+            sqrtNum.emplace_back(makeFloatConst(square(cx / cy)));
         }
-    } else {
-        if (auto y = reduceMul(den); y.isValid()) {
-            sqrtDen.emplace_back(makeSquare(y));
+        if (x.isValid()) {
+            if (y.isValid()) {
+                sqrtNum.emplace_back(makeSquare(makeRealDiv(x, y)));
+            } else {
+                sqrtNum.emplace_back(makeSquare(x));
+            }
+        } else {
+            if (y.isValid()) {
+                sqrtDen.emplace_back(makeSquare(y));
+            }
         }
     }
-    if (auto x = reduceMul(sqrtNum); x.isValid()) {
-        if (auto y = reduceMul(sqrtDen); y.isValid()) {
-            return makeRealDiv(x, y);
+    {
+        auto &&[cx, x] = reduceMul(sqrtNum);
+        auto &&[cy, y] = reduceMul(sqrtDen);
+        if (x.isValid()) {
+            if (y.isValid()) {
+                if (cx / cy != 1) {
+                    return makeMul(makeFloatConst(cx / cy), makeRealDiv(x, y));
+                } else {
+                    return makeRealDiv(x, y);
+                }
+            } else {
+                if (cx / cy != 1) {
+                    return makeMul(makeFloatConst(cx / cy), x);
+                } else {
+                    return x;
+                }
+            }
         } else {
-            return x;
+            if (y.isValid()) {
+                return makeRealDiv(makeFloatConst(cx / cy), y);
+            } else {
+                return makeFloatConst(cx / cy);
+            }
         }
-    } else {
-        ASSERT(false); // Impossible
     }
 }
 
@@ -443,13 +477,12 @@ Expr FloatSimplify::visit(const Abs &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::Abs);
     auto op = __op.as<AbsNode>();
-    setNonNeg(op);
 
     if (!isFloat(op->dtype())) {
         return op;
     }
 
-    if (nonNeg(op->expr_)) {
+    if (isGE0(op->expr_->dtype())) {
         return op->expr_;
     }
 
@@ -457,9 +490,14 @@ Expr FloatSimplify::visit(const Abs &_op) {
 }
 
 Stmt floatSimplify(const Stmt &_op) {
+    if (!Config::fastMath()) {
+        return _op;
+    }
+
     auto op = _op;
 
     for (int i = 0;; i++) {
+        op = refineSignDataType(op); // Do this every iterations
         FloatSimplify mutator;
         auto newOp = mutator(op);
         if (HashComparator()(newOp, op) || i > 100) {

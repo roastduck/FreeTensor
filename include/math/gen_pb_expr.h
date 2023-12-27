@@ -19,8 +19,8 @@ namespace freetensor {
  * non-Presburger, because `b` is multiplied by a non-constant. This expression
  * will be converted to `a + free_var`. Since `b * (b + 1)` is already been
  * converted to `free_var`, the sub-expressions `b` and `b + 1` will be dropped,
- * although their are Presburger themselves. The free variable `free_var` will
- * be named by the expression itself, with an optional suffix.
+ * although they are Presburger themselves. The free variable `free_var` will be
+ * named by the expression itself, with an optional suffix.
  *
  * Sometimes there will be too many free varaibles if directly converted from a
  * user program. For example, if the program accesses an index `x + 2 * y`,
@@ -79,6 +79,7 @@ class GenPBExpr : public Visitor {
     void visit(const Min &op) override;
     void visit(const Max &op) override;
     void visit(const IfExpr &op) override;
+    void visit(const Unbound &op) override;
 };
 
 } // namespace freetensor

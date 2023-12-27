@@ -13,17 +13,21 @@
 
 namespace freetensor {
 
-InvalidSchedule::InvalidSchedule(const Stmt &ast, const std::string &msg)
+InvalidSchedule::InvalidSchedule(const Stmt &ast, const std::string &msg,
+                                 std::source_location loc)
     : InvalidSchedule("Apply schedule on this AST is invalid: \n\n" +
-                      toString(ast, Config::prettyPrint(), true) +
-                      "\nThe reason is: " + msg) {}
+                          toString(ast, Config::prettyPrint(), true) +
+                          "\nThe reason is: " + msg,
+                      loc) {}
 
 InvalidSchedule::InvalidSchedule(const Ref<ScheduleLogItem> &log,
-                                 const Stmt &ast, const std::string &msg)
+                                 const Stmt &ast, const std::string &msg,
+                                 std::source_location loc)
     : InvalidSchedule("Apply schedule " + toString(*log) +
-                      " on this AST is invalid: \n\n" +
-                      toString(ast, Config::prettyPrint(), true) +
-                      "\nThe reason is: " + msg) {}
+                          " on this AST is invalid: \n\n" +
+                          toString(ast, Config::prettyPrint(), true) +
+                          "\nThe reason is: " + msg,
+                      loc) {}
 
 InterruptExcept::InterruptExcept() : Error("Interrupted (Ctrl+C)") {
     // Raise SIGINT as normal. But if called from Python, nothing will happen,
@@ -45,7 +49,7 @@ void reportWarning(const std::string &msg) {
         std::cerr << msg << std::endl;
     }
     if (cnt == 2) {
-        std::cerr << "[INFO] Further identical warnings will be supressed"
+        std::cerr << "[INFO] Further identical warnings will be suppressed"
                   << std::endl;
     }
 }

@@ -2,6 +2,7 @@
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/blend.h>
+#include <schedule/check_not_in_lib.h>
 
 namespace freetensor {
 
@@ -50,7 +51,7 @@ Stmt BlendPass::visit(const For &op) {
                 envStack_.pop_back();
             } else {
                 ASSERT(!offset_.count(op->iter_));
-                offset_[op->iter_] = std::make_pair(op->begin_, op->step_);
+                offset_[op->iter_] = {op->begin_, op->step_};
                 ret = (*this)(op->body_);
                 offset_.erase(op->iter_);
                 auto len = (*this)(op->len_);
@@ -163,6 +164,8 @@ Expr BlendPass::visit(const Load &_op) {
 }
 
 Stmt blend(const Stmt &_ast, const ID &loop) {
+    checkNotInLib(_ast, loop);
+
     auto ast =
         simplify(_ast); // Make things like range(n, n + 4) constant ranges
 

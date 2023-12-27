@@ -1,5 +1,6 @@
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <hash.h>
 #include <math/parse_pb_expr.h>
@@ -17,10 +18,11 @@ Expr MakeInline::visit(const Load &op) {
         if (replace_.count(op)) {
             return (*this)(replace_.at(op));
         } else {
-            throw InvalidSchedule("Unable to inline into " + toString(op));
+            throw InvalidSchedule("Unable to inline into " + toString(op) +
+                                  " in " + toString(curStmt()));
         }
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
@@ -28,7 +30,7 @@ Stmt MakeInline::visit(const Store &op) {
     if (op->var_ == var_) {
         return makeStmtSeq({});
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
@@ -36,23 +38,24 @@ Stmt MakeInline::visit(const ReduceTo &op) {
     if (op->var_ == var_) {
         return makeStmtSeq({});
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 
 Stmt MakeInline::visit(const VarDef &_op) {
     if (_op->id() == def_) {
-        if (_op->buffer_->atype() != AccessType::Cache) {
+        if (isInputting(_op->buffer_->atype()) ||
+            isOutputting(_op->buffer_->atype())) {
             throw InvalidSchedule("Cannot remove an I/O variable");
         }
         var_ = _op->name_;
-        auto __op = Mutator::visit(_op);
+        auto __op = BaseClass::visit(_op);
         ASSERT(__op->nodeType() == ASTNodeType::VarDef);
         auto op = __op.as<VarDefNode>();
         var_.clear();
         return op->body_;
     } else {
-        return Mutator::visit(_op);
+        return BaseClass::visit(_op);
     }
 }
 
@@ -97,16 +100,16 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                     for (auto &&[newIter, arg] :
                          views::zip(dep.later_.iter_, args)) {
                         islVarToNewIter[arg] =
-                            newIter.realIter_ == newIter.iter_
+                            !newIter.negStep_
                                 ? newIter.iter_
-                                : makeMul(makeIntConst(-1), newIter.realIter_);
+                                : makeMul(makeIntConst(-1), newIter.iter_);
                     }
                     for (auto &&[oldIter, value] :
                          views::zip(dep.earlier_.iter_, values)) {
-                        if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToNewIter[oldIter.realIter_.as<VarNode>()
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
                                                  ->name_] =
-                                oldIter.realIter_ == oldIter.iter_
+                                !oldIter.negStep_
                                     ? ReplaceIter(islVarToNewIter)(value)
                                     : makeMul(
                                           makeIntConst(-1),
@@ -166,9 +169,12 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_RAW)
-        .filterAccess(
-            [&](const AccessPoint &acc) { return acc.def_->id() == def; })
-        .filterLater([&](const AccessPoint &later) {
+        .filterAccess([&](const auto &acc) { return acc.def_->id() == def; })
+        .filterLater([&](const auto &later) {
+            if (!findAllStmt(ast, "<MatMul>->>" + toString(later.stmt_->id()))
+                     .empty()) {
+                return false;
+            }
             return later.op_->nodeType() == ASTNodeType::Load;
         })
         .noProjectOutPrivateAxis(true)(ast, unsyncFunc(found));

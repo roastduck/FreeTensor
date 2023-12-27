@@ -1,6 +1,6 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
-#include <analyze/find_all_loops.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <pass/sink_var.h>
 
@@ -26,7 +26,8 @@ Stmt SinkVar::visit(const VarDef &_op) {
         return op;
     }
 
-    if (op->buffer_->atype() != AccessType::Cache || op->pinned_) {
+    if (isInputting(op->buffer_->atype()) ||
+        isOutputting(op->buffer_->atype()) || op->pinned_) {
         return op;
     }
 
@@ -46,6 +47,10 @@ Stmt SinkVar::visit(const VarDef &_op) {
         }
         inners.emplace_back(def);
         op = def;
+    }
+
+    if (scopeFilter_ != nullptr && !scopeFilter_(op->body_)) {
+        return ret;
     }
 
     switch (op->body_->nodeType()) {
@@ -123,14 +128,21 @@ Stmt SinkVar::visit(const VarDef &_op) {
             throw InvalidProgram(_op->name_ + " is used before defining");
         }
         Stmt thenCase, elseCase;
-        thenCase =
-            makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
-                       branch->thenCase_, false, makeMetadata("sink.1", _op));
         if (branch->elseCase_.isValid()) {
+            // Can't preserve ID. Create new metadata
+            thenCase = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
+                                  branch->thenCase_, false,
+                                  makeMetadata("sink.1", _op));
             elseCase = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                                   branch->elseCase_, false,
                                   makeMetadata("sink.0", _op));
+        } else {
+            // Preserve metadata and ID
+            thenCase = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
+                                  branch->thenCase_, false, _op->metadata(),
+                                  _op->id());
         }
+        isFixPoint_ = false;
         ret = makeIf(branch->cond_, std::move(thenCase), std::move(elseCase),
                      branch->metadata(), branch->id());
         for (auto &&def : views::reverse(inners)) {
@@ -150,6 +162,7 @@ Stmt SinkVar::visit(const VarDef &_op) {
         }
         auto body = makeVarDef(_op->name_, _op->buffer_, _op->viewOf_,
                                ass->body_, false, _op->metadata(), _op->id());
+        isFixPoint_ = false;
         ret =
             makeAssert(ass->cond_, std::move(body), ass->metadata(), ass->id());
         for (auto &&def : views::reverse(inners)) {
@@ -167,16 +180,17 @@ Stmt SinkVar::visit(const VarDef &_op) {
 }
 
 Stmt sinkVar(const Stmt &_op,
-             const std::optional<std::unordered_set<ID>> &toSink) {
+             const std::optional<std::unordered_set<ID>> &toSink,
+             const std::function<bool(const Stmt &)> &scopeFilter) {
     auto op = _op;
 
     auto variantMap = Lazy([op]() { return findLoopVariance(op).second; });
 
-    auto allLoops = findAllLoops(op);
+    auto allLoops = findAllStmt(op, "<For>");
     std::vector<FindDepsDir> direction;
     direction.reserve(allLoops.size());
     for (auto &&loop : allLoops) {
-        direction.push_back({{loop, DepDirection::Normal}});
+        direction.push_back({{loop->id(), DepDirection::Normal}});
     }
 
     std::unordered_set<ID> needDepAnalysis, analyzedDeps;
@@ -189,8 +203,10 @@ Stmt sinkVar(const Stmt &_op,
 
         if (!needDepAnalysis.empty()) {
             FindDeps()
+                .type(DEP_RAW) // Only RAW stops sinking. Exiting and
+                               // re-entering a VarDef will not break WAR or WAW
                 .direction(direction)
-                .filterAccess([&](const AccessPoint &acc) {
+                .filterAccess([&](const auto &acc) {
                     return needDepAnalysis.count(acc.def_->id());
                 })
                 .ignoreReductionWAW(false)(op, [&](const Dependence &d) {
@@ -203,8 +219,8 @@ Stmt sinkVar(const Stmt &_op,
             needDepAnalysis.clear();
         }
 
-        SinkVar mutator(toSink, deps, analyzedDeps, needDepAnalysis,
-                        variantMap);
+        SinkVar mutator(toSink, deps, analyzedDeps, needDepAnalysis, variantMap,
+                        scopeFilter);
         op = mutator(op);
         if (mutator.isFixPoint()) {
             break;

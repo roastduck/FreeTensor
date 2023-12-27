@@ -1,11 +1,23 @@
+__all__ = [
+    'FissionSide', 'MoveToSide', 'VarSplitMode', 'ReorderMode', 'AsMatMulMode',
+    'ID', 'IDMap', 'Schedule', 'schedule'
+]
+
 import functools
 from collections.abc import Sequence
-from typing import Optional, Callable, Union, List, Dict
+from typing import Callable, Union, List, Dict
 
-import freetensor_ffi as ffi
-from freetensor_ffi import (MemType, ParallelScope, ID, Selector, FissionSide,
-                            MoveToSide)
+from .. import ffi
+from ..ffi import (ParallelScope, ID, Selector, FissionSide, MoveToSide,
+                   VarSplitMode, ReorderMode, AsMatMulMode)
+
+from .func import Func
 from .analyze import find_stmt
+from .jit import JITTemplate
+from .meta import MemType
+from .utils import as_decorator
+from .driver import TargetType
+from . import config
 
 
 class IDMap:
@@ -150,11 +162,11 @@ class Schedule(ffi.Schedule):
             (outer loop ID, inner loop ID), either ID can be None if the loop is
             proved to have only a single iteration
         """
-        return (
+        return tuple(
             i if i else None
             for i in super().split(self._lookup(node), factor, nparts, shift))
 
-    def reorder(self, order):
+    def reorder(self, order, mode: ReorderMode = ReorderMode.PerfectOnly):
         """
         Reorder directly nested loops
 
@@ -164,13 +176,19 @@ class Schedule(ffi.Schedule):
         ----------
         order : array like of str, ID or Stmt
             Vector of loops. The requested order of the loops
+        mode : ReorderMode
+            How to deal with imperfectly nested loops. `PerfectOnly` => raise an
+            exception. `MoveOutImperfect` => do `fission` in advance to move out
+            statements between the loops, which may enlarge intermediate tensors.
+            `MoveInImperfect` => move statements between the loops inwards after
+            adding gurads them them, which may hurt parallelism
 
         Raises
         ------
         InvalidSchedule
             if the input is invalid or there are breaking dependences
         """
-        super().reorder(list(map(self._lookup, order)))
+        super().reorder(list(map(self._lookup, order)), mode)
 
     def merge(self, loop1, loop2):
         """
@@ -223,7 +241,7 @@ class Schedule(ffi.Schedule):
         """
         return super().permute([self._lookup(l) for l in loops], transform_func)
 
-    def fission(self, loop, side, splitter):
+    def fission(self, loop, side, splitter, allow_enlarge=True):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
@@ -246,6 +264,9 @@ class Schedule(ffi.Schedule):
         splitter : str (Selector string), ID, Stmt, or list of them
             Where to fission the loop. If multiple statement are selected, fission the
             look before or after all of them
+        allow_enlarge : bool
+            If True, try to avoid dependence by enlarging some `VarDef` nodes. If False,
+            raise `InvalidSchedule` in such cases.
 
         Raises
         ------
@@ -265,7 +286,8 @@ class Schedule(ffi.Schedule):
             splitter = splitter_list[0]
         else:
             splitter = splitter_list[-1]
-        map1, map2 = super().fission(self._lookup(loop), side, splitter)
+        map1, map2 = super().fission(self._lookup(loop), side, splitter,
+                                     allow_enlarge)
         return IDMap(old_ast, map1), IDMap(old_ast, map2)
 
     def fuse(self, loop0, loop1=None, strict=False):
@@ -467,11 +489,20 @@ class Schedule(ffi.Schedule):
             ID of the VarDef statement of the specific variable
         mtype : MemType
             Where the variable should be stored
+        rejectIndirectAccess : bool
+            Registers usually do not support indirect access. If a variable is
+            accessed indirectly, setting it to use registers is meaningless even
+            successful. If this parameter is set to true, throw an exception if
+            the variable being set is accessed indirectly. Specifically, two types
+            of access are considered indirect: 1) The index is a load from another
+            variable, or 2) The index is a loop iterator and the loop has a
+            dynamic length (which can not be unrolled by a backend compiler). By
+            default, this parameter is determined automatically by `mtype`.
 
         Raises
         ------
         InvalidSchedule
-            if the variable is not found
+            if the variable is not found, or if rejecting an indirect access
         """
         super().set_mem_type(self._lookup(vardef), MemType(mtype))
 
@@ -650,6 +681,14 @@ class Schedule(ffi.Schedule):
             The loop
         parallel : ParallelScope
             Parallel scope
+        allow_reduction : bool
+            If false, raise InvalidSchedule if this schedule would introduce a
+            parallel reduction
+
+        Raises
+        ------
+        InvalidSchedule
+            if the loop is not found or unable to be parallelized
         """
         super().parallelize(self._lookup(loop), ParallelScope(parallel))
 
@@ -742,7 +781,11 @@ class Schedule(ffi.Schedule):
         """
         super().separate_tail(noDuplicateVarDefs)
 
-    def as_matmul(self, loop):
+    def as_matmul(self,
+                  loop,
+                  mode: AsMatMulMode = AsMatMulMode.KeepMemLayout,
+                  target=None,
+                  backend: Union[str, ffi.MatMulBackend] = None):
         """
         Transform nested loops to be a external call to a matrix multiplication
 
@@ -750,19 +793,46 @@ class Schedule(ffi.Schedule):
         ----------
         loop : str, ID or Stmt
             ID of the loop
+        allow_var_reorder : bool
+            If true, automatically try calling `var_reorder` to eanble `as_matmul`
+        mode : AsMatMulMode
+            What to do if the memory layout does not meet the requirement from the
+            external library. `KeepMemLayout` => Raise an exception. `TryVarReorder`
+            => try `var_reorder` on some variables, but may affect performance of
+            other use of these variable. `TryTranspose` => try `cache` and then
+            `var_reorder` on some variables, but will incur extra overhead.
+        target : Target
+            Hardware target. If omitted, use the default target in config, or the
+            target set by `with` scopes.
+        backend : str, ffi.MatMulBackend
+            Backend library. Defaults to "mkl" for CPU targets, "cublas" for GPU
+            targets.
 
         Raises
         ------
         InvalidSchedule
             if the loop cannot be transformed to be a matrix multiplication
         """
-        super().as_matmul(self._lookup(loop))
+        if target is None:
+            target = config.default_target()
+        if backend is None:
+            if target.type() == TargetType.CPU:
+                backend = "mkl"
+            elif target.type() == TargetType.GPU:
+                backend = "cublas"
+            else:
+                raise ffi.InvalidSchedule(
+                    "No default MatMul backend for target " + target)
+        super().as_matmul(self._lookup(loop), mode, target,
+                          ffi.MatMulBackend(backend))
 
     def pluto_fuse(self,
                    loop0,
                    loop1,
                    nest_level_0=0,
                    nest_level_1=0,
+                   fusable_overlap_threshold=1,
+                   fusable_nonoverlap_tolerance=4,
                    do_simplify=True):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
@@ -783,6 +853,12 @@ class Schedule(ffi.Schedule):
         nest_level_1 : int
             The number of nesting levels of loop 1 to be considered, defaults to maximum
             possible
+        fusable_overlap_threshold : int
+            The minimum overlapping size of two loops to be regarded fusable. Defaults
+            to 1
+        fusable_nonoverlap_tolerance : int
+            The maximum non-overlapping size at either side of two loops to be regarded
+            fusable. Defaults to 4
         do_simplify : bool
             Whether the result is simplified by the way, defaults to true
 
@@ -797,7 +873,9 @@ class Schedule(ffi.Schedule):
             if the loops are not consequent
         """
         return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
-                                  nest_level_0, nest_level_1, do_simplify)
+                                  nest_level_0, nest_level_1,
+                                  fusable_overlap_threshold,
+                                  fusable_nonoverlap_tolerance, do_simplify)
 
     def pluto_permute(self, loop, nest_level=0, do_simplify=True):
         """
@@ -833,6 +911,17 @@ class Schedule(ffi.Schedule):
         """
         super().auto_schedule(target)
 
+    def auto_inline(self, target):
+        """
+        (Experimental) Automatically inline very-small VarDef nodes
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_inline(target)
+
     def auto_use_lib(self, target):
         """
         (Experimental) Automatically use external libs using some heuristics
@@ -844,16 +933,51 @@ class Schedule(ffi.Schedule):
         """
         super().auto_use_lib(target)
 
-    def auto_fuse(self, target):
+    def auto_swap(self, target):
         """
-        (Experimental) Automatically fuse consecutive loops using some heuristics
+        (Experimental) Automatically swap statements to enable more fission or
+        fusion
 
         Parameters
         ----------
         target : Target
             Target architecture
         """
-        super().auto_fuse(target)
+        super().auto_swap(target)
+
+    def auto_pluto(self, target):
+        """
+        (Experimental) Automatically apply pluto-based schedules
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_pluto(target)
+
+    def auto_fission_fuse(self, target):
+        """
+        (Experimental) Automatically fuse consecutive loops or vice versa using
+        some heuristics
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_fission_fuse(target)
+
+    def auto_mem_layout(self, target):
+        """
+        (Experimental) Automatically adjust memory layout of variables
+
+        Parameters
+        ----------
+        target : Target
+            Target architecture
+        """
+        super().auto_mem_layout(target)
 
     def auto_parallelize(self, target):
         """
@@ -889,9 +1013,12 @@ class Schedule(ffi.Schedule):
         super().auto_unroll(target)
 
 
+@as_decorator
 def schedule(ast=None,
              callback: Callable[[Schedule], None] = None,
-             verbose: Optional[int] = None):
+             backward_callback: Callable[[Schedule], None] = None,
+             jit_cache: Callable[Callable, Callable] = functools.cache,
+             verbose: int = 0):
     '''
     Apply any schedule on an AST through a user callback
 
@@ -902,25 +1029,49 @@ def schedule(ast=None,
         returned that cna be used as a decorator
     callback : Callable
         Specify what schedule(s) to do in this callback
+    backward_callback : Callable
+        Specify what schedule(s) to do for the backward function, if `ast` is returned
+        from AD with `attach_backward=True`. Defaults to be the same with `callback`
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     verbose : int (Optional)
         0 = print nothing. 1 = print the final AST. 2 = print an AST after
         each schedule
+
+    Returns
+    -------
+    Func or JITTemplate
+        Return a Func for an AST if there is no JIT parameters. Return a JITTemplate
+        that generates a Func if there is at least one
     '''
-    if ast is not None:
-        if callback is None:
-            return ast
-        if verbose is None:
-            verbose = 0
-        s = Schedule(ast, verbose=verbose)
-        callback(s)
-        if ast.type() == ffi.ASTNodeType.Func:
-            return s.func()
-        else:
-            return s.ast()
-    else:
-        f = schedule
-        if callback is not None:
-            f = functools.partial(f, callback=callback)
-        if verbose is not None:
-            f = functools.partial(f, verbose=verbose)
-        return f
+
+    if isinstance(ast, JITTemplate):
+
+        class ScheduleTemplate(JITTemplate):
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return schedule(ast.instantiate_by_only_jit_args(*jit_args),
+                                callback=callback,
+                                backward_callback=backward_callback,
+                                verbose=verbose)
+
+        return ScheduleTemplate(ast.params, ast.jit_param_names)
+
+    if callback is None:
+        return ast
+    s = Schedule(ast, verbose=verbose)
+    callback(s)
+    ret = s.func() if ast.type() == ffi.ASTNodeType.Func else s.ast()
+    if isinstance(ast, Func):
+        ret = Func(ret.name, ret.params, ret.returns, ret.body)
+        if ast.has_backward():
+            if backward_callback is None:
+                backward_callback = callback
+            ret.attach_backward(
+                schedule(ast.backward,
+                         callback=backward_callback,
+                         jit_cache=jit_cache,
+                         verbose=verbose), ast.input_name_to_gradient_name,
+                ast.output_name_to_gradient_name)
+    return ret

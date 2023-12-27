@@ -1,22 +1,72 @@
-import freetensor_ffi as ffi
+__all__ = [
+    'Array', 'array', 'move', 'TargetType', 'Target', 'Device', 'CPU', 'GPU',
+    'Driver', 'build_binary'
+]
+
+from typing import Optional, Callable, Sequence
 import functools
 import numpy as np
 
-from typing import Optional, Sequence
-from freetensor_ffi import Target, Array
+from .. import ffi
+from ..ffi import TargetType, Target, Device, Array
 
 from . import config
 from .codegen import NativeCode
+from .enable_attach_backward import EnableAttachBackward
+from .return_values_pack import ReturnValuesPack
+from .jit import JITTemplate
+from .meta import DataType, to_numpy_dtype, to_torch_dtype
+from .utils import as_decorator
 
 
-def array(data):
+def array(data,
+          dtype=None,
+          dont_drop_borrow: bool = False,
+          moved: bool = False):
     '''
     Factory function for Array
 
-    It converts more data format to Array
+    This function is preferred over directly calling `Array`'s constructor, because
+    it accepts more data format.
+
+    - If `data` is another FreeTensor `Array`, the original object will be returned,
+    with `dont_drop_borrow` and `moved` set to new values. If `dtype` is set and
+    different from the original data type, the `Array` will be copied first to convert
+    the data type.
+    - If `data` is Numpy `Array` or PyTorch `Tensor`, it will be converted to FreeTensor
+    `Array`. Memory copy will be avoided in most cases, but it is inevitable if the
+    data is strided. If `dtype` is set and different from the original data type, the
+    `Array` or `Tensor` will be copied first to convert the data type.
+    - Otherwise, the data will be treated as an n-dimensional array-like object, and
+    will be parsed according the rules in NumPy. The data type is also set accordingly,
+    unless `dtype` is set.
+
+    Parameters
+    ----------
+    data : FreeTensor Array, Numpy Array, PyTorch Tensor, or other array-like objects
+        Data to be copied to or borrowed by the new Array object
+    dtype : ft.DataType or str
+        If `data` is not in `dtype`, convert it to `dtype` first before constructing
+        the `Array`
+    dont_drop_borrow : bool
+        If true, report an error if we have to drop a borrwed data. This flag is set
+        to true when the Array is cunstructed IMPLICITLY (not by this function) from
+        a user object by borrowing from it, where users may expect they are acutually
+        manipulating the their user object, instead of this Array
+    moved : bool
+        If true, it means we do not care about data in this Array any more after the
+        program runs. Variables with "input-mutable" access type may modify the Array
     '''
 
+    if dtype is not None:
+        dtype = DataType(dtype)
+
     if type(data) is Array:
+        if dtype is not None and dtype != data.dtype:
+            # Must be contiguous
+            data = Array(data.numpy().astype(to_numpy_dtype(dtype)))
+        data.set_dont_drop_borrow(dont_drop_borrow)
+        data.set_moved(moved)
         return data
 
     # For NumPy, Although Pybind11's `array_t` type provides a flag `forcecast` to
@@ -26,22 +76,37 @@ def array(data):
     # function can only be called from Python side (not from PyBind11's `py::array`
     # type).
     if type(data) is np.ndarray:
-        if not data.flags['C_CONTIGUOUS']:
+        if dtype is not None and to_numpy_dtype(dtype) != data.dtype:
+            data = data.astype(to_numpy_dtype(dtype), order='C')
+        elif not data.flags['C_CONTIGUOUS']:
             data = data.copy(order='C')
-        return Array(data)
+        return Array(data, dont_drop_borrow, moved)
 
     if data.__class__.__module__ == 'torch':
         import torch
         if type(data) is torch.Tensor:
             if not config.with_pytorch():
-                raise ffi.DriverError(
+                raise ffi.InvalidIO(
                     "FreeTensor should be built with WITH_PYTORCH to accept a PyTorch tensor"
                 )
-            if not data.is_contiguous():
+            if dtype is not None and to_torch_dtype(dtype) != data.dtype:
+                data = data.to(to_torch_dtype(dtype),
+                               memory_format=torch.contiguous_format)
+            elif not data.is_contiguous():
                 data = data.contiguous()
-            return Array(data)
+            return Array(data, dont_drop_borrow, moved)
 
-    raise ffi.DriverError(f"Unsupported data type {type(data)} for Array")
+    return array(np.array(
+        data, dtype=None if dtype is None else to_numpy_dtype(dtype)),
+                 dtype=dtype,
+                 dont_drop_borrow=dont_drop_borrow,
+                 moved=moved)
+
+
+def move(data):
+    ''' Alias for array(data, dont_drop_borrow=False, moved=True) '''
+
+    return array(data, dont_drop_borrow=False, moved=True)
 
 
 _old_target_device_stack = []
@@ -82,103 +147,57 @@ if config.with_cuda():
     _register_target(ffi.GPUTarget)
 
 
-class Device(ffi.Device):
-    '''
+def _register_device(cls):
 
-    A computing device can be constructed from
-         1. (TargetType, DeviceNumber)
-         2. (TargetType, getDeviceByName): cuda uses best matches criteria.
-         3. (TargetType, FullName, nth): get nth(from 0) device named `Fullname`.
+    def __enter__(self: cls):
+        '''
+        A Device can be used as a "with" scope, then all the `Array`s and `Driver`s
+        will use it by default. In this style, it also sets the default Target. E.g:
 
-    E.g. Device(TargetType::GPU, 0) means the 0-th GPU (device)
-         Device(TargetType::GPU, "V100") means a GPU which best matches "V100"
-         Device(TargetType::GPU, "NVIDIA GeForce RTX 3060 Laptop GPU", 0)
-
-    A Device can be used as a "with" scope, then all the `Array`s and `Driver`s
-    will use it by default. In this style, it also sets the default Target. E.g:
-
-    ```
-    with Device(...):
-        ast = lower(ast)  # Use the Target of the Device above by default
-        a = Array(...)  # Use the Device above by default
-    ```
-    '''
-
-    def __enter__(self):
+        ```
+        with Device(...):
+            ast = lower(ast)  # Use the Target of the Device above by default
+            a = Array(...)  # Use the Device above by default
+        ```
+        '''
         _old_target_device_stack.append(
             (config.default_target(), config.default_device()))
         config.set_default_target(self.target())
         config.set_default_device(self)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self: cls, exc_type, exc_value, traceback):
         old_target, old_device = _old_target_device_stack.pop()
         config.set_default_target(old_target)
         config.set_default_device(old_device)
+
+    cls.__enter__ = __enter__
+    cls.__exit__ = __exit__
+
+
+_register_device(Device)
 
 
 class CPU(Device):
 
     def __init__(self, *args):
-        super().__init__(ffi.TargetType.CPU, *args)
+        super().__init__(TargetType.CPU, *args)
 
 
 class GPU(Device):
 
     def __init__(self, *args):
-        super().__init__(ffi.TargetType.GPU, *args)
+        super().__init__(TargetType.GPU, *args)
 
 
-class ReturnValuesPack:
-    '''
-    Hold return values from a Driver invocation
-
-    Return values can be retrieved in an anonymous manner: `x, y, z = pack`,
-    or in a named manner: `pack['x']`
-
-    Please note that a ReturnValuesPack is different from a OrderedDict, as
-    OrderedDict unpacks to keys rather than values
-    '''
-
-    def __init__(self, keys: Sequence[str], values: Sequence[Array]):
-        keys = list(keys)
-        values = list(values)
-        assert len(keys) == len(values)
-        self.keys = keys
-        self.values = values
-
-    def __iter__(self):
-        ''' Get all return values in the order declared in Func '''
-        yield from self.values
-
-    def __getitem__(self, key) -> Array:
-        ''' Get a return value with a name. Tuple is supported for multiple values '''
-        if type(key) is tuple or type(key) is list:
-            ret = []
-            for k in key:
-                ret.append(self[k])
-            return ret
-        for k, v in zip(self.keys, self.values):
-            if k == key:
-                return v
-        raise ffi.DriverError("No such return value named " + key)
-
-    def __contains__(self, key):
-        ''' Test if a return value exists '''
-        for k, v in zip(self.keys, self.values):
-            if k == key:
-                return True
-        return False
-
-
-class Driver(ffi.Driver):
+class Driver(EnableAttachBackward, ffi.Driver):
 
     def __init__(self,
-                 func: ffi.Func,
-                 src: str,
+                 native_code: NativeCode,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
-                 verbose: Optional[bool] = None):
+                 cxx_flags: Sequence[str] = [],
+                 verbose: bool = False):
         '''
         Compile a program using a backend compiler and load it into memory
 
@@ -186,37 +205,59 @@ class Driver(ffi.Driver):
 
         Parameters
         ----------
-        func : ffi.Func
-            AST of the function, where the function signature is needed to
-            determine the parameters and return values
-        src : str
+        native_code : NativeCode
             Native code generated from codegen
         device : Device (Optional)
             The device to run the program. If omitted, use the default device
             in config
+        cxx_flags : Sequence[str]
+            Additional C++ flags passed to the backend compiler
         verbose : bool (Optional)
             True to print extra infomation
         '''
-        src = str(src)
+        self._native_code = native_code
         if device is None:
             device = config.default_device()
-        if verbose is None:
-            verbose = False
         if host_device is None:
-            super(Driver, self).__init__(func, src, device, verbose)
-        else:
-            super(Driver, self).__init__(func, src, device, host_device,
+            super(Driver, self).__init__(native_code, device, cxx_flags,
                                          verbose)
-        self.func = func
+        else:
+            super(Driver, self).__init__(native_code, device, host_device,
+                                         cxx_flags, verbose)
+
+        # When we pass numpy or pytorch tensors to `set_args`, they are
+        # converted to `Array` objects by reference. In `Array`'s FFI, we
+        # keep these tensors alive whenever the `Array`'s PYTHON objects
+        # alive. We need to also keep the `Array`'s PYTHON objects here.
+        # Please note that we cannot hold the reference count in `Driver`'s
+        # C++ implementation, where we can only hold the `Array`'s C++
+        # objects alive.
+        self.args_ref_cnt_holder = []
+
+    def native_code(self) -> NativeCode:
+        ''' Get native code compiled by backend compiler '''
+        return self._native_code
 
     def set_args(self, *args, **kws):
         ''' Set argument for an invocation '''
+
+        # No need to hold reference of the last run any more
+        self.args_ref_cnt_holder = []
+
         args = list(args)
         kws = dict(kws)
         for i in range(len(args)):
-            args[i] = array(args[i])
+            args[i] = array(args[i],
+                            dont_drop_borrow=not isinstance(args[i], Array))
         for key in kws:
-            kws[key] = array(kws[key])
+            kws[key] = array(kws[key],
+                             dont_drop_borrow=not isinstance(kws[key], Array))
+
+        for arg in args:
+            self.args_ref_cnt_holder.append(arg)
+        for key in kws:
+            self.args_ref_cnt_holder.append(kws[key])
+
         super(Driver, self).set_args(args, kws)
 
     def collect_returns(self, always_return_pack: bool = False):
@@ -239,7 +280,7 @@ class Driver(ffi.Driver):
                 map(
                     lambda r: r.name,
                     filter(lambda r: not r.is_in_closure or r.return_closure,
-                           self.func.returns)), values)
+                           self._native_code.returns)), values)
 
     def __call__(self, *args, **kws):
         '''
@@ -253,14 +294,20 @@ class Driver(ffi.Driver):
         `self.set_args` first, then `self.time`, and finally `self.collect_returns`
         '''
         self.set_args(*args, **kws)
-        self.run()
-        return self.collect_returns()
+        try:
+            self.run()
+        finally:  # Always collect returns or there will be memory leak
+            ret = self.collect_returns()
+        return ret
 
 
+@as_decorator
 def build_binary(code: Optional[NativeCode] = None,
                  device: Optional[Device] = None,
                  host_device: Optional[Device] = None,
-                 verbose: Optional[bool] = None):
+                 jit_cache: Callable[Callable, Callable] = functools.cache,
+                 cxx_flags: Sequence[str] = [],
+                 verbose: bool = False):
     '''
     Compile a program using a backend compiler and load it into memory
 
@@ -272,22 +319,98 @@ def build_binary(code: Optional[NativeCode] = None,
     device : Device (Optional)
         The device to run the program. If omitted, use the default device
         in config
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
+    cxx_flags : Sequence[str]
+        Additional C++ flags passed to the backend compiler
+    verbose : int
+        Verbosity level
+
+    Returns
+    -------
+    Driver or JITTemplate
+        Return a Driver for the executable if there is no JIT parameters.
+        Return a JITTemplate that generates a Driver if there is at least one
     '''
 
-    if code is not None:
-        if device is None:
-            device = config.default_device()
-        if device.target() != code.target:
-            raise ffi.DriverError(
-                f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
-            )
-        return Driver(code.func, code.code, device, host_device, verbose)
-    else:
-        f = build_binary
-        if device is not None:
-            f = functools.partial(f, device=device)
-        if host_device is not None:
-            f = functools.partial(f, host_device=host_device)
-        if verbose is not None:
-            f = functools.partial(f, verbose=verbose)
-        return f
+    # Note for JIT: `build_binary` should respect the default target when it is called
+    if device is None:
+        device = config.default_device()
+
+    if isinstance(code, JITTemplate):
+
+        class BuildBinaryTemplate(JITTemplate):
+
+            def __init__(self, *args, **kvs):
+                super().__init__(*args, **kvs)
+                self.args = None
+                self.kvs = None
+
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return build_binary(
+                    code.instantiate_by_only_jit_args(*jit_args),
+                    device=device,
+                    host_device=host_device,
+                    cxx_flags=cxx_flags,
+                    verbose=verbose)
+
+            def __call__(self, *args, **kvs):
+                ''' Helper to directly run the template '''
+
+                self.args = args
+                self.kvs = kvs
+                return self.instantiate_and_call(*args, **kvs)
+
+            @property
+            def backward(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .backward")
+                # TODO: Here we re-instantiate. Change to another implementation if the overhead
+                # is too much
+                return self.instantiate(*self.args, **self.kvs).backward
+
+            @property
+            def input_name_to_gradient_name(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .input_name_to_gradient_name")
+                return self.instantiate(*self.args,
+                                        **self.kvs).input_name_to_gradient_name
+
+            @property
+            def output_name_to_gradient_name(self):
+                ''' Helper to act as an EnableAttachBackward object '''
+
+                if self.args is None or self.kvs is None:
+                    raise TypeError(
+                        "A JIT program requires first running the forward pass before getting"
+                        " .output_name_to_gradient_name")
+                return self.instantiate(*self.args,
+                                        **self.kvs).output_name_to_gradient_name
+
+        return BuildBinaryTemplate(code.params, code.jit_param_names)
+
+    if device.target() != code.target:
+        raise ffi.DriverError(
+            f"Codegen target ({code.target}) is inconsistent with device target ({device.target()})"
+        )
+    ret = Driver(code, device, host_device, cxx_flags, verbose)
+
+    if code.has_backward():
+        ret.attach_backward(
+            build_binary(code.backward,
+                         device=device,
+                         host_device=host_device,
+                         jit_cache=jit_cache,
+                         cxx_flags=cxx_flags,
+                         verbose=verbose), code.input_name_to_gradient_name,
+            code.output_name_to_gradient_name)
+    return ret

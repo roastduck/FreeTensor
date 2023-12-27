@@ -3,32 +3,27 @@
 
 #include <unordered_set>
 
-#include <visitor.h>
+#include <analyze/find_stmt.h>
 
 namespace freetensor {
-
-class AllDefs : public Visitor {
-    const std::unordered_set<AccessType> &atypes_;
-    std::vector<std::pair<ID, std::string>> results_; // (id, name)
-
-  public:
-    AllDefs(const std::unordered_set<AccessType> &atypes) : atypes_(atypes) {}
-
-    const std::vector<std::pair<ID, std::string>> &results() const {
-        return results_;
-    }
-
-  protected:
-    void visit(const VarDef &op) override;
-};
 
 /**
  * Collect IDs of all `VarDef` nodes of specific `AccessType`s
  */
-std::vector<std::pair<ID, std::string>>
-allDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes = {
-                            AccessType::Input, AccessType::Output,
-                            AccessType::InOut, AccessType::Cache});
+inline std::vector<std::pair<ID, std::string>>
+allDefs(const Stmt &op,
+        const std::unordered_set<AccessType> &atypes = {
+            AccessType::Input, AccessType::Bypass, AccessType::Output,
+            AccessType::InOut, AccessType::InputMutable, AccessType::Cache}) {
+    std::vector<std::pair<ID, std::string>> ret;
+    for (auto &&node : findAllStmt(op, [&](const Stmt &s) {
+             return s->nodeType() == ASTNodeType::VarDef &&
+                    atypes.count(s.as<VarDefNode>()->buffer_->atype());
+         })) {
+        ret.emplace_back(node->id(), node.as<VarDefNode>()->name_);
+    }
+    return ret;
+}
 
 } // namespace freetensor
 

@@ -13,7 +13,7 @@ options {
 }
 
 func returns [PBFuncAST ast]
-    : (extList=varList '->')? '{' simpleFunc
+    : (extList=varList '->')? '{' (simpleFunc
       {
         $ast = {$simpleFunc.ast};
       }
@@ -21,7 +21,7 @@ func returns [PBFuncAST ast]
       {
         $ast.emplace_back($simpleFunc.ast);
       }
-        )* '}'
+        )*)? '}'
     ;
 
 simpleFunc returns [SimplePBFuncAST ast]

@@ -66,12 +66,17 @@ class MatchVisitor : public Visitor {
     void visit(const LNot &op) override;
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
+    void visit(const Ln &op) override;
     void visit(const Square &op) override;
     void visit(const Sigmoid &op) override;
+    void visit(const Sin &op) override;
+    void visit(const Cos &op) override;
+    void visit(const Tan &op) override;
     void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;
+    void visit(const Unbound &op) override;
     void visit(const IfExpr &op) override;
     void visit(const Cast &op) override;
     void visit(const For &op) override;
@@ -80,6 +85,8 @@ class MatchVisitor : public Visitor {
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
     void visit(const MatMul &op) override;
+    void visit(const MarkVersion &op) override;
+    void visit(const LoadAtVersion &op) override;
 };
 
 } // namespace freetensor

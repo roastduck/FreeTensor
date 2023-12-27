@@ -1,7 +1,9 @@
+__all__ = ['conv', 'conv_']
+
 from typing import Sequence, Optional
 
 from .. import core
-from .conv_shape_utils import *
+from .conv_shape_utils import calc_same_upper_pad, calc_same_lower_pad, calc_out_size
 
 
 @core.inline
@@ -170,10 +172,10 @@ def conv(X,
         else:
             assert False, "auto_pad should be set if pads is not specified"
 
-    dtype = core.up_cast(X.dtype, W.dtype)
+    dtype = core.up_cast(X.dtype, W.dtype).base
     mtype = core.same_mtype(X.mtype, W.mtype)
     if B is not None:
-        dtype = core.up_cast(dtype, B.dtype)
+        dtype = core.up_cast(dtype, B.dtype).base
         mtype = core.same_mtype(mtype, B.mtype)
     #! label: V_Y
     Y = core.empty([

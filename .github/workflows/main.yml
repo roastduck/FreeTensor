@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test-cuda-mkl-pytorch-install:
+  build-and-test-gcc-cuda-mkl-pytorch-install:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
     steps:
@@ -26,18 +26,21 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.6.2 cudnn@8.4.0.27-11.6 intel-mkl@2020.4.304 java@11
-          source /home/rd/venv-freetensor-20221020/bin/activate
-          mkdir build
-          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=ON -DFT_WITH_MKL=/home/spack/spack/opt/spack/linux-debian11-zen2/gcc-10.2.1/intel-mkl-2020.4.304-py6elz2mzhdgres34nr5e2ta5isfja7k/mkl -DFT_WITH_PYTORCH=ON -DCMAKE_INSTALL_PREFIX=./install
-          cd build && ninja && ninja install
+          spack load python~debug@3.9.12%gcc@10.2.1 cuda@11.8.0/ehz25ml cudnn@8.7.0.84-11.8/uopt2y4 intel-mkl@2020.4.304 java@11 gcc@11.3.0
+          source ci-script/prepare-python-environment.sh
+          # -C requires a new enough pip
+          pip3 install --upgrade pip
+          # We may use a LD_PRELOAD-based proxy in a CI runner, but it crashes PyTorch's CMake script, thus reset LD_PRELOAD here
+          LD_PRELOAD= pip3 install . -C--local=with-cuda.toml -C--local=ci-script/with-spack-mkl.toml -C--local=with-pytorch.toml --no-build-isolation
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 cuda@11.6.2 cudnn@8.4.0.27-11.6 intel-mkl@2020.4.304 java@11
-          source /home/rd/venv-freetensor-20221020/bin/activate
-          LD_LIBRARY_PATH=./install/lib:$LD_LIBRARY_PATH PYTHONPATH=install/lib:python:$PYTHONPATH srun --exclusive -N 1 -p gpu pytest --color=yes test
-  build-and-test-minimal-run_in_tree:
+          spack load python~debug@3.9.12%gcc@10.2.1 cuda@11.8.0/ehz25ml cudnn@8.7.0.84-11.8/uopt2y4 intel-mkl@2020.4.304 java@11 gcc@11.3.0
+          source ci-script/prepare-python-environment.sh
+          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
+          # Setting OMP_NUM_THREADS=256 seems to work around the conflict of PyTorch
+          OMP_NUM_THREADS=256 OMP_PROC_BIND=true srun --exclusive -N 1 -p v100 pytest --color=yes test
+  build-and-test-gcc-minimal-run_in_tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
     steps:
@@ -51,8 +54,8 @@ jobs:
           git submodule foreach --recursive git clean -ffdx
           git submodule foreach --recursive git reset --hard
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
-          source /home/rd/venv-freetensor-20221020/bin/activate
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 gcc@12.1.0
+          source ci-script/prepare-python-environment.sh
           mkdir build
           # certain new GCC 12 warnings are not stable and triggered with false-positive right now, so suppress them here with -Wno-*
           cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF -DCMAKE_CXX_FLAGS="-Wno-restrict -Wno-array-bounds"
@@ -60,6 +63,34 @@ jobs:
       - name: Run PyTest
         run: |
           source /opt/spack/share/spack/setup-env.sh
-          spack load python~debug@3.9.2%gcc@10.2.1 java@11 gcc@12.1.0
-          source /home/rd/venv-freetensor-20221020/bin/activate
-          PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p cpu pytest --color=yes test
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 gcc@12.1.0
+          source ci-script/prepare-python-environment.sh
+          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
+          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p v100 pytest --color=yes test
+  build-and-test-clang-run-in-tree:
+    runs-on: self-hosted
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.CI }}
+          submodules: true
+          fetch-depth: 0
+      - name: Build ffi module in Release
+        run: |
+          git submodule foreach --recursive git clean -ffdx
+          git submodule foreach --recursive git reset --hard
+          source /opt/spack/share/spack/setup-env.sh
+          # Clang will find a GCC release to be "compatible" with it, so we need to load a `llvm` built with high enough `gcc`
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 llvm@16%gcc@12
+          source ci-script/prepare-python-environment.sh
+          mkdir build
+          CC=clang CXX=clang++ cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release -DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF
+          cd build && ninja
+      - name: Run PyTest
+        run: |
+          source /opt/spack/share/spack/setup-env.sh
+          spack load python~debug@3.9.12%gcc@10.2.1 java@11 llvm@16%gcc@12
+          source ci-script/prepare-python-environment.sh
+          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
+          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p v100 pytest --color=yes test

@@ -6,7 +6,8 @@ namespace freetensor {
 
 Stmt VarReorder::visit(const VarDef &_op) {
     if (_op->id() == def_) {
-        if (_op->buffer_->atype() != AccessType::Cache) {
+        if (isInputting(_op->buffer_->atype()) ||
+            isOutputting(_op->buffer_->atype())) {
             throw InvalidSchedule("Reorder on an I/O variable is not allowed");
         }
 

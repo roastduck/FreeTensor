@@ -17,7 +17,7 @@ def test_merge():
             with ft.Else():
                 y2[i] = 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -52,7 +52,7 @@ def test_no_merge_different_cond():
             with ft.Else():
                 y2[i] = 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),

@@ -1,6 +1,9 @@
+#include <mutex>
+
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <math/parse_pb_expr.h>
 #include <pass/hoist_var_over_stmt_seq.h>
@@ -24,33 +27,10 @@ static bool sameParent(const Stmt &x, const Stmt &y) {
     return x->parentCtrlFlow() == y->parentCtrlFlow();
 }
 
-static ReduceOp combineReduce(ReduceOp reduceOp) {
-    // x -= 1; x -= 2; ==> x -= 1 + 2
-    switch (reduceOp) {
-    case ReduceOp::Add:
-    case ReduceOp::Sub: // !!!
-        return ReduceOp::Add;
-    case ReduceOp::Mul:
-        return ReduceOp::Mul;
-    case ReduceOp::Min:
-        return ReduceOp::Min;
-    case ReduceOp::Max:
-        return ReduceOp::Max;
-    case ReduceOp::LAnd:
-        return ReduceOp::LAnd;
-    case ReduceOp::LOr:
-        return ReduceOp::LOr;
-    default:
-        ASSERT(false);
-    }
-}
-
 static Expr makeReduce(ReduceOp reduceOp, const Expr &lhs, const Expr &rhs) {
     switch (reduceOp) {
     case ReduceOp::Add:
         return makeAdd(lhs, rhs);
-    case ReduceOp::Sub:
-        return makeSub(lhs, rhs);
     case ReduceOp::Mul:
         return makeMul(lhs, rhs);
     case ReduceOp::Max:
@@ -252,32 +232,47 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             kill[earlier] =
                 PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
         }
+        auto extConstraint =
+            PBSet(presburger, toString(range(d.extConstraint_)));
+        std::tie(kill[earlier], extConstraint) =
+            padToSameDims(std::move(kill[earlier]), std::move(extConstraint));
+        kill[earlier] =
+            intersect(std::move(kill[earlier]), std::move(extConstraint));
         overwrites.emplace_back(
             later, earlier,
             PBSet(presburger, toString(range(d.later2EarlierIter_))),
             ReplaceInfo{});
         suspect.insert(d.def());
     };
-    auto foundOverwriteReduce = [&](const Dependence &d) {
+    std::mutex lock;
+    auto foundOverwriteReduce = unsyncFunc([&](const Dependence &d) {
         if (d.later() != d.earlier() &&
             (!selfDependentReduces.count(d.later().as<StmtNode>()) ||
              sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
             if (d.later2EarlierIter_.isSingleValued()) {
-                auto earlier = d.earlier().as<StmtNode>();
-                auto later = d.later().as<StmtNode>();
-                if (!kill.count(earlier)) {
-                    kill[earlier] =
-                        PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
+                if (auto f = pbFuncWithTimeout(
+                        d.presburger_,
+                        [](const PBMap &map) { return PBFunc(map); }, 10,
+                        d.later2EarlierIter_);
+                    f.has_value()) {
+                    std::lock_guard _(lock);
+                    auto earlier = d.earlier().as<StmtNode>();
+                    auto later = d.later().as<StmtNode>();
+                    if (!kill.count(earlier)) {
+                        kill[earlier] = PBSet(
+                            presburger, toString(domain(d.earlierIter2Idx_)));
+                    }
+                    overwrites.emplace_back(
+                        later, earlier,
+                        PBSet(presburger,
+                              toString(range(d.later2EarlierIter_))),
+                        ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
+                                    toString(*f)});
+                    suspect.insert(d.def());
                 }
-                overwrites.emplace_back(
-                    later, earlier,
-                    PBSet(presburger, toString(range(d.later2EarlierIter_))),
-                    ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                                toString(PBFunc(d.later2EarlierIter_))});
-                suspect.insert(d.def());
             }
         }
-    };
+    });
     auto foundUse = [&](const Dependence &d) {
         if (d.later()->nodeType() != ASTNodeType::Store &&
             d.earlier()->nodeType() != ASTNodeType::Load &&
@@ -305,10 +300,14 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
 
     FindDeps()
         .type(DEP_WAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
-        .filterLater([&](const AccessPoint &later) {
+        .filterLater([&](const auto &later) {
+            if (!findAllStmt(op, "<MatMul>->>" + toString(later.stmt_->id()))
+                     .empty()) {
+                return false;
+            }
             return later.op_->nodeType() == ASTNodeType::Store;
         })
         .ignoreReductionWAW(false)
@@ -316,18 +315,33 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     FindDeps()
         .mode(FindDepsMode::KillLater)
         .type(DEP_WAW)
-        .filterAccess([&](const AccessPoint &acc) {
+        .filterAccess([&](const auto &acc) {
             return !singleDefId.isValid() || acc.def_->id() == singleDefId;
         })
-        .filterLater([&](const AccessPoint &later) {
+        .filterLater([&](const auto &later) {
+            if (!findAllStmt(op, "<MatMul>->>" + toString(later.stmt_->id()))
+                     .empty()) {
+                return false;
+            }
             return later.op_->nodeType() == ASTNodeType::ReduceTo;
+        })
+        .filter([&](const auto &later, const auto &earlier) {
+            Expr expr = earlier.op_->nodeType() == ASTNodeType::Store
+                            ? earlier.op_.template as<StoreNode>()->expr_
+                            : earlier.op_.template as<ReduceToNode>()->expr_;
+            if (auto &&flag = checkNotModifiedFastPreCheck(
+                    op, expr, CheckNotModifiedSide::After, earlier.stmt_->id(),
+                    CheckNotModifiedSide::Before, later.stmt_->id());
+                flag.has_value()) {
+                return *flag;
+            }
+            return true;
         })
         .ignoreReductionWAW(false)
         .noProjectOutPrivateAxis(true)(op, foundOverwriteReduce);
     FindDeps()
-        .filterAccess([&](const AccessPoint &access) {
-            return suspect.count(access.def_);
-        })
+        .filterAccess(
+            [&](const auto &access) { return suspect.count(access.def_); })
         .ignoreReductionWAW(false)(op, foundUse);
 
     std::unordered_set<Stmt> redundant;
@@ -371,8 +385,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
     //     a = y
     //   else
     //     a = z
-    for (auto &&[later, earlier, thisKill, _] : overwrites) {
-        kill[earlier] = subtract(std::move(kill.at(earlier)), thisKill);
+    for (auto &&[later, earlier, _thisKill, _] : overwrites) {
+        auto &&[oldKill, thisKill] =
+            padToSameDims(std::move(kill.at(earlier)), _thisKill);
+        kill[earlier] = subtract(std::move(oldKill), std::move(thisKill));
     }
     for (auto i = overwrites.begin(); i != overwrites.end();) {
         auto &&[later, earlier, _1, _2] = *i;
@@ -424,16 +440,16 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                     for (auto &&[newIter, arg] :
                          views::zip(repInfo.laterIters_, args)) {
                         islVarToNewIter[arg] =
-                            newIter.realIter_ == newIter.iter_
+                            !newIter.negStep_
                                 ? newIter.iter_
-                                : makeMul(makeIntConst(-1), newIter.realIter_);
+                                : makeMul(makeIntConst(-1), newIter.iter_);
                     }
                     for (auto &&[oldIter, value] :
                          views::zip(repInfo.earlierIters_, values)) {
-                        if (oldIter.realIter_->nodeType() == ASTNodeType::Var) {
-                            oldIterToNewIter[oldIter.realIter_.as<VarNode>()
+                        if (oldIter.iter_->nodeType() == ASTNodeType::Var) {
+                            oldIterToNewIter[oldIter.iter_.as<VarNode>()
                                                  ->name_] =
-                                oldIter.realIter_ == oldIter.iter_
+                                !oldIter.negStep_
                                     ? ReplaceIter(islVarToNewIter)(value)
                                     : makeMul(
                                           makeIntConst(-1),
@@ -458,8 +474,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                         redundant.insert(_earlier);
                         replacement[_later] =
                             makeReduceTo(l->var_, l->indices_, l->op_,
-                                         makeReduce(combineReduce(l->op_),
-                                                    newExpr, l->expr_),
+                                         makeReduce(l->op_, newExpr, l->expr_),
                                          false, later->metadata(), later->id());
                     }
                 } catch (const ParserError &e) {
@@ -478,10 +493,10 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                                       later->metadata(), later->id());
                     } else if (earlier.as<ReduceToNode>()->op_ == l->op_) {
                         redundant.insert(_earlier);
-                        replacement[_later] = makeReduceTo(
-                            l->var_, l->indices_, l->op_,
-                            makeReduce(combineReduce(l->op_), expr, l->expr_),
-                            false, later->metadata(), later->id());
+                        replacement[_later] =
+                            makeReduceTo(l->var_, l->indices_, l->op_,
+                                         makeReduce(l->op_, expr, l->expr_),
+                                         false, later->metadata(), later->id());
                     }
                 }
             }

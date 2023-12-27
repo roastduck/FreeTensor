@@ -16,57 +16,45 @@ namespace freetensor {
  * Discrete random variable, can be any integer in `[0, n)`
  *
  * A random variable that can be sampled (infered) and observed (learnt)
- * using Bayesian statistics
+ * using Naive Bayes
  *
- * The more observations is observed for a value, the value will have a higher
- * probability of being sampled. Specifically, when sampled, the distribution
- * follows a Categorical (or Bernoulli for n=2) distribution, where the
- * probability of the i-th value is `P(X=i) = p_i`. `p_i` itself is another
- * random variables follows Dirichlet (or Beta for n=2) distribution `p_i ~
- * Dir(alpha)`, where `alpha` is the observations + 1
+ * In Naive Bayes, the probability of an event `C` given conditions `F_i`, can
+ * be calculated by `p(C) \Prod_i P(F_i | C)`
+ * (https://en.wikipedia.org/wiki/Naive_Bayes_classifier). Here a
+ * `DiscreteRandVar` records `P(F_i | C)` for each `C` as `prob`. When picking
+ * the most likely `C`, one only need to multiply the `obsVec` vectors from each
+ * `F_i`, and pick a `C` with highest value
  */
 class DiscreteRandVar {
     std::string name_;
-    RandCondStack conds_;
+    Ref<RandCondInterface> cond_;
+    Ref<std::vector<int>> totCnt_;
     std::vector<int> obs_;
 
-  private:
-    template <std::uniform_random_bit_generator RNG>
-    std::vector<double> dirichletSample(RNG &rng) const {
-        // Compute Dirichlet distribution via Gamma distribution
-        // (https://en.wikipedia.org/wiki/Dirichlet_distribution#Computational_methods)
-        auto n = obs_.size();
-        std::vector<double> ret(n);
-        for (size_t i = 0; i < n; i++) {
-            ret[i] = std::gamma_distribution<double>{obs_[i] + 1., 1.}(rng);
-        }
-        // std::discrete_distribution will normalize it for us
-        return ret;
-    }
-
   public:
-    DiscreteRandVar(const std::string &name, const RandCondStack &conds,
+    DiscreteRandVar(const std::string &name, const Ref<RandCondInterface> &cond,
+                    const Ref<std::vector<int>> totCnt,
                     const std::vector<int> &initObs)
-        : name_(name), conds_(conds), obs_(initObs) {}
+        : name_(name), cond_(cond), totCnt_(totCnt), obs_(initObs) {}
 
     void observe(int value, int cnt = 1) { obs_.at(value) += cnt; }
 
-    template <std::uniform_random_bit_generator RNG>
-    int sample(RNG &rng) const {
-        auto discreteProb = dirichletSample(rng);
-        return std::discrete_distribution<int>(discreteProb.begin(),
-                                               discreteProb.end())(rng);
-    }
-
-    int mostLikely() const {
-        return std::max_element(obs_.begin(), obs_.end()) - obs_.begin();
+    std::vector<double> prob() const {
+        std::vector<double> ret;
+        ret.reserve(obs_.size());
+        for (auto &&[p, q] : views::zip(obs_, *totCnt_)) {
+            ret.emplace_back((double)p / q);
+        }
+        return ret;
     }
 
     /**
      * Clone as an indenpenden variable
      */
     Ref<DiscreteRandVar> clone() const {
-        return Ref<DiscreteRandVar>::make(*this);
+        auto ret = Ref<DiscreteRandVar>::make(*this);
+        ret->totCnt_ = Ref<std::vector<int>>::make(*ret->totCnt_);
+        return ret;
     }
 
     const std::string &name() const { return name_; }
@@ -83,27 +71,34 @@ class DiscreteRandVar {
  * `DiscreteRandVar`s
  */
 struct DiscreteObservation {
-    Ref<DiscreteRandVar> var_;
-    Ref<DiscreteRandVar> varSnapshot_; // Freeze the distribution at the time of
-                                       // observation, used for debugging
+    std::vector<Ref<DiscreteRandVar>> vars_;
+    std::vector<Ref<DiscreteRandVar>>
+        varsSnapshot_; // Freeze the distribution at the time of
+                       // observation, used for debugging
+    Ref<std::vector<int>> totCnt_;
     int value_;
     std::string message_; // Debug info
 
-    DiscreteObservation(const Ref<DiscreteRandVar> &var, int value,
+    DiscreteObservation(const std::vector<Ref<DiscreteRandVar>> &vars,
+                        const Ref<std::vector<int>> &totCnt, int value,
                         const std::string &message = "")
-        : var_(var), varSnapshot_(var->clone()), value_(value),
-          message_(message) {}
+        : vars_(vars), totCnt_(totCnt), value_(value), message_(message) {
+        varsSnapshot_.reserve(vars_.size());
+        for (auto &&var : vars_) {
+            varsSnapshot_.emplace_back(var->clone());
+        }
+    }
 
     friend auto operator<=>(const DiscreteObservation &lhs,
                             const DiscreteObservation &rhs) {
-        if (auto cmp = lhs.var_ <=> rhs.var_; cmp != 0) {
+        if (auto cmp = lhs.vars_ <=> rhs.vars_; cmp != 0) {
             return cmp;
         }
         return lhs.value_ <=> rhs.value_;
     }
     friend bool operator==(const DiscreteObservation &lhs,
                            const DiscreteObservation &rhs) {
-        return lhs.var_ == rhs.var_ && lhs.value_ == rhs.value_;
+        return lhs.vars_ == rhs.vars_ && lhs.value_ == rhs.value_;
     }
 
     friend std::ostream &operator<<(std::ostream &os,

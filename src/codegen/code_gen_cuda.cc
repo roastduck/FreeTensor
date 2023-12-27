@@ -1,5 +1,9 @@
+#ifdef FT_WITH_CUDA
+
 #include <analyze/all_uses.h>
+#include <analyze/find_stmt.h>
 #include <codegen/code_gen_cuda.h>
+#include <config.h>
 #include <container_utils.h>
 #include <except.h>
 #include <math/utils.h>
@@ -11,12 +15,14 @@
 
 namespace freetensor {
 
-static std::string genCUBLASType(DataType dtype) {
-    switch (dtype) {
+static std::string genCUBLASType(const DataType &dtype) {
+    switch (dtype.base()) {
     case DataType::Float64:
         return "CUDA_R_64F";
     case DataType::Float32:
         return "CUDA_R_32F";
+    case DataType::Float16:
+        return "CUDA_R_16F";
     case DataType::Int64:
         return "CUDA_R_64I";
     case DataType::Int32:
@@ -26,22 +32,66 @@ static std::string genCUBLASType(DataType dtype) {
     }
 }
 
-void CodeGenCUDA::genMdPtrType(std::ostream &os, const VarDef &def,
-                               bool isConst) {
-    auto &&buf = def->buffer_;
+static std::string genCUTLASSType(const DataType &dtype) {
+    switch (dtype.base()) {
+    case DataType::Float64:
+        return "double";
+    case DataType::Float32:
+        return "float";
+    case DataType::Float16:
+        return "cutlass::half_t";
+    case DataType::Int64:
+        return "int64_t";
+    case DataType::Int32:
+        return "int32_t";
+    case DataType::Bool:
+        return "bool";
+    default:
+        ASSERT(false);
+    }
+}
+
+static bool canUseTensorCore(const Ref<GPUTarget> &target, DataType dtypeA,
+                             DataType dtypeB, DataType dtypeC) {
+    if (target->computeCapability().first >= 7 && dtypeA == DataType::Float16 &&
+        dtypeB == DataType::Float16 &&
+        (dtypeC == DataType::Float16 || dtypeC == DataType::Float32)) {
+        return true;
+    }
+    if (target->computeCapability().first >= 8 && dtypeA == DataType::Float64 &&
+        dtypeB == DataType::Float64 && dtypeC == DataType::Float64) {
+        return true;
+    }
+    return false;
+}
+
+std::function<std::ostream &(std::ostream &)>
+CodeGenCUDA::genMdPtrType(const VarDef &def, bool isConst) {
+    Ref<Buffer> buf = def->buffer_;
     if (buf->tensor()->shape().empty() &&
         (buf->mtype() == MemType::GPUGlobal ||
          buf->mtype() == MemType::GPUGlobalHeap)) {
         // Use pointer instead of reference for scalars, because when passing an
         // argument from host to a kernel, a reference means copy the value from
         // CPU to GPU, while a pointer means passing the address
-        if (isConst) {
-            os << "const ";
-        }
-        os << gen(buf->tensor()->dtype()) << " *";
-        return;
+
+        // NOTE: `[=]` implicitly capturing `this` is deprecated in C++20. Using
+        // `[=]` will trigger a warning in GCC (because of deprecation), but
+        // using
+        // `[=, this]` will trigger a warning in Clang<17 (because it will think
+        // `this` is duplicated).
+#if defined(__clang__) && __clang_major__ < 17
+        return [=](std::ostream &os) -> std::ostream & {
+#else
+        return [=, this](std::ostream &os) -> std::ostream & {
+#endif
+            if (isConst) {
+                os << "const ";
+            }
+            return os << gen(buf->tensor()->dtype()) << " *";
+        };
     }
-    CodeGenC<CodeGenCUDAStream>::genMdPtrType(os, def, isConst);
+    return CodeGenC<CodeGenCUDAStream>::genMdPtrType(def, isConst);
 }
 
 void CodeGenCUDA::genMdPtrDef(const VarDef &def,
@@ -54,14 +104,20 @@ void CodeGenCUDA::genMdPtrDef(const VarDef &def,
         // Use pointer instead of reference for scalars, because when passing an
         // argument from host to a kernel, a reference means copy the value from
         // CPU to GPU, while a pointer means passing the address
-        this->os() << "((";
-        genMdPtrType(def, isConst);
-        this->os() << ")(";
+        this->os() << "((" << genMdPtrType(def, isConst) << ")(";
         genRawPtr();
         this->os() << "))";
         return;
     }
     CodeGenC<CodeGenCUDAStream>::genMdPtrDef(def, genRawPtr, isConst);
+}
+
+std::string CodeGenCUDA::gen(const DataType &dtype) {
+    if (dtype == DataType::Float16) {
+        return "__half";
+    } else {
+        return CodeGenC::gen(dtype);
+    }
 }
 
 void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
@@ -72,13 +128,15 @@ void CodeGenCUDA::genAlloc(const Ref<Tensor> &tensor, const std::string &rawPtr,
     os() << shapePtr << " = " << ndim << " > 0 ? (size_t*)malloc((" << dimPtr
          << " = " << ndim << ") * sizeof(size_t)) : NULL;" << std::endl;
     makeIndent();
-    os() << "checkCudaError(cudaMalloc(&" << rawPtr << ", ";
+    // cudaNew is defined in gpu_runtime.h. This allocation is for return
+    // values, so we don't allocate from our pool
+    os() << rawPtr << " = cudaNew(";
     for (auto &&[i, dim] : views::enumerate(tensor->shape())) {
         os() << "(" << shapePtr << "[" << i << "] = ";
         (*this)(dim);
         os() << ") * ";
     }
-    os() << "sizeof(" << gen(tensor->dtype()) << ")));" << std::endl;
+    os() << "sizeof(" << gen(tensor->dtype()) << "), __stream);" << std::endl;
 }
 
 void CodeGenCUDA::genScalar(const VarDef &def,
@@ -101,9 +159,13 @@ void CodeGenCUDA::genScalar(const VarDef &def,
                                  ::freetensor::toString(mtype) +
                                  " from outside of a kernel");
         }
+    } else if (inKernel() &&
+               (mtype == MemType::CPU || mtype == MemType::CPUHeap)) {
+        throw InvalidProgram("Unable to access " +
+                             ::freetensor::toString(mtype) +
+                             " from inside a kernel");
     } else if (indices.empty() && (mtype == MemType::GPUGlobal ||
-                                   mtype == MemType::GPUGlobalHeap ||
-                                   mtype == MemType::GPUShared)) {
+                                   mtype == MemType::GPUGlobalHeap)) {
         os() << "*" << mangle(var);
     } else if (def->buffer_->mtype() == MemType::GPULocal ||
                def->buffer_->mtype() == MemType::GPUWarp) {
@@ -120,7 +182,7 @@ void CodeGenCUDA::genScalar(const VarDef &def,
 }
 
 bool CodeGenCUDA::inKernel() const {
-    return streamStack_.back().name_ != "default" || inCublas_;
+    return streamStack_.back().name_ != "default" || inMatmul_;
 }
 
 void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
@@ -133,7 +195,7 @@ void CodeGenCUDA::exprOr1(const std::unordered_map<ParallelScope, Expr> &dict,
 }
 
 void CodeGenCUDA::enterKernel(const Stmt &body) {
-    std::string kernel = "kernel" + std::to_string(nKernel_++);
+    std::string kernel = kernelPrefix_ + "_kernel" + std::to_string(nKernel_++);
     pushStream(kernel);
     sharedStackTop_ = makeIntConst(0);
     auto oldGlobalStackTop = globalStackTop_;
@@ -178,7 +240,51 @@ void CodeGenCUDA::enterKernel(const Stmt &body) {
         os() << (first ? "" : ", ") << mangle(name);
         first = false;
     }
-    os() << ", _params, __glmem);" << std::endl;
+    os() << ", params, __glmem);" << std::endl;
+
+    // While run time error inside a kernel can be checked in future
+    // synchronizations, invalid kernel launches has to be checked here
+    makeIndent();
+    os() << "checkCudaError(cudaGetLastError());" << std::endl;
+
+    if (Config::debugCUDAWithUM()) {
+        makeIndent();
+        os() << "checkCudaError(cudaStreamSynchronize(__stream));" << std::endl;
+    }
+}
+
+bool CodeGenCUDA::canRunInKernel(const Stmt &stmt) {
+    if (!findAllStmt(
+             stmt,
+             "!(<For>|<If>|<Assert>|<Assume>|<StmtSeq>|<Store>|<ReduceTo>)")
+             .empty()) {
+        // No VarDef here, because memory are more likely to be wasted
+        // (allocated in a more conservative way) inside a kernel due to lack of
+        // synchronization
+        return false;
+    }
+
+    for (auto &&_loop : findAllStmt(stmt, "<For>")) {
+        auto &&loop = _loop.as<ForNode>();
+        // If some inner loops is already parallelized, we can't safely extend
+        // the kernel scope, otherwise a barrier at the end of each kernel
+        // launch is ignored. This branch also reject OpenMP scopes for (maybe
+        // future) hybrid CPU-GPU parallelization.
+        if (loop->property_->parallel_ != serialScope) {
+            return false;
+        }
+    }
+
+    for (auto &&var : allUses(stmt)) {
+        auto mtype = buffer(var)->mtype();
+        if (mtype != MemType::GPULocal && mtype != MemType::GPUWarp &&
+            mtype != MemType::GPUShared && mtype != MemType::GPUGlobal &&
+            mtype != MemType::GPUGlobalHeap) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void CodeGenCUDA::visitStmt(const Stmt &stmt) {
@@ -272,6 +378,30 @@ void CodeGenCUDA::visit(const Exp &op) {
     os() << ")";
 }
 
+void CodeGenCUDA::visit(const Ln &op) {
+    os() << "runtime_log("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
+void CodeGenCUDA::visit(const Sin &op) {
+    os() << "runtime_sin("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
+void CodeGenCUDA::visit(const Cos &op) {
+    os() << "runtime_cos("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
+void CodeGenCUDA::visit(const Tan &op) {
+    os() << "runtime_tan("; // Defined in runtime/gpu_runtime.h
+    (*this)(op->expr_);
+    os() << ")";
+}
+
 void CodeGenCUDA::visit(const Tanh &op) {
     os() << "runtime_tanh("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);
@@ -294,6 +424,72 @@ void CodeGenCUDA::visit(const Ceil &op) {
     os() << "runtime_ceil("; // Defined in runtime/gpu_runtime.h
     (*this)(op->expr_);
     os() << ")";
+}
+
+void CodeGenCUDA::visit(const Cast &op) {
+    if (op->destType_.base() == DataType::Float16) {
+        switch (op->expr_->dtype().base()) {
+        case DataType::Int32:
+            os() << "__int2half_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Int64:
+            os() << "__ll2half_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float16:
+            (*this)(op->expr_);
+            break;
+        case DataType::Float32:
+            os() << "__float2half_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float64:
+            os() << "__double2half("; // Always `_rn` (round to nearest even)
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        default:
+            throw InvalidProgram("Converting from " +
+                                 freetensor::toString(op->dtype()) +
+                                 " to float16 is not supported");
+        }
+    } else if (op->expr_->dtype().base() == DataType::Float16) {
+        switch (op->destType_.base()) {
+        case DataType::Int32:
+            os() << "__half2int_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Int64:
+            os() << "__half2ll_rn(";
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float16:
+            (*this)(op->expr_);
+            break;
+        case DataType::Float32:
+            os() << "__half2float("; // Short to long, no rounding is needed
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        case DataType::Float64:
+            os() << "__half2double("; // Short to long, no rounding is needed
+            (*this)(op->expr_);
+            os() << ")";
+            break;
+        default:
+            throw InvalidProgram("Converting from float16 to " +
+                                 freetensor::toString(op->dtype()) +
+                                 " is not supported");
+        }
+    } else {
+        CodeGenC::visit(op);
+    }
 }
 
 void CodeGenCUDA::visit(const Store &op) {
@@ -346,16 +542,18 @@ void CodeGenCUDA::visit(const Alloc &op) {
     ASSERT(buf->mtype() == MemType::GPUGlobalHeap);
 
     // e.g.
-    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNew(5 * 5 * sizeof(int)));
+    // x_opt = mdspan_r<int, extents<5, 5>>(cudaNewFromPool(5 * 5 * sizeof(int),
+    // __stream, ctx->gpuGlobalDyanmicPool()));
     makeIndent();
     os() << mangle(op->var_) << "_opt = ";
     genMdPtrDef(vardef, [&]() {
-        os() << "cudaNew(";
+        os() << "cudaNewFromPool(";
         for (auto &&dim : shape) {
             (*this)(dim);
             os() << " * ";
         }
-        os() << "sizeof(" << gen(dtype) << "))";
+        os() << "sizeof(" << gen(dtype)
+             << "), __stream, ctx->gpuGlobalDynamicPool())";
     });
     os() << ";" << std::endl;
 }
@@ -366,7 +564,7 @@ void CodeGenCUDA::visit(const Free &op) {
     // e.g. auto x_ptr = x.data_handle();
     //      x_opt.drop();
     //      x_opt = std::nullopt;
-    //      cudaFree(x_ptr);
+    //      cudaFreeAsync(x_ptr, __stream);
     auto &&name = mangle(op->var_);
     makeIndent();
     os() << "auto " << name << "_ptr = " << name << ".data_handle();"
@@ -376,7 +574,7 @@ void CodeGenCUDA::visit(const Free &op) {
     makeIndent();
     os() << name << "_opt = std::nullopt;" << std::endl;
     makeIndent();
-    os() << "cudaFree(" << name << "_ptr);" << std::endl;
+    os() << "cudaFreeAsync(" << name << "_ptr, __stream);" << std::endl;
 }
 
 void CodeGenCUDA::visit(const ReduceTo &op) {
@@ -398,22 +596,20 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
     };
     auto genExpr = [&]() { (*this)(op->expr_); };
 
-    if (op->atomic_) {
+    if (op->sync_) {
         switch (op->op_) {
         case ReduceOp::Add:
             os() << "atomicAdd(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
-        case ReduceOp::Sub:
-            os() << "atomicSub(&", genAddr(), os() << ", ", genExpr();
-            os() << ");" << std::endl;
-            break;
         case ReduceOp::Min:
-            os() << "atomicMin(&", genAddr(), os() << ", ", genExpr();
+            // Defined in `runtime/gpu_runtime.h`
+            os() << "runtimeAtomicMin(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
         case ReduceOp::Max:
-            os() << "atomicMax(&", genAddr(), os() << ", ", genExpr();
+            // Defined in `runtime/gpu_runtime.h`
+            os() << "runtimeAtomicMax(&", genAddr(), os() << ", ", genExpr();
             os() << ");" << std::endl;
             break;
         case ReduceOp::LAnd:
@@ -424,6 +620,21 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
             os() << "atomicOr(&", genAddr(), os() << ", (bool)(", genExpr();
             os() << "));" << std::endl;
             break;
+
+        // The followings are not supported by CUDA's atomic functions, do
+        // atomic CAS by ourselves. `atomicUpdate` is defined in
+        // `runtime/gpu_runtime.h`
+        case ReduceOp::Mul:
+            makeIndent();
+            os() << "atomicUpdate(";
+            genScalar(op);
+            // User names are prefixed by an `_`, so we are safe with `x` here
+            os() << ", [&](" << gen(buffer(op->var_)->tensor()->dtype())
+                 << " x) { return x * (";
+            (*this)(op->expr_);
+            os() << "); });" << std::endl;
+            break;
+
         default:
             ASSERT(false);
         }
@@ -431,9 +642,6 @@ void CodeGenCUDA::visit(const ReduceTo &op) {
         switch (op->op_) {
         case ReduceOp::Add:
             genAddr(), os() << " += ", genExpr();
-            break;
-        case ReduceOp::Sub:
-            genAddr(), os() << " -= ", genExpr();
             break;
         case ReduceOp::Mul:
             genAddr(), os() << " *= ", genExpr();
@@ -483,8 +691,16 @@ void CodeGenCUDA::visit(const For &op) {
     if (op->property_->parallel_ == serialScope) {
         if (op->property_->unroll_) {
             os() << "#pragma unroll " << op->len_ << std::endl;
+            CodeGenC::visit(op);
+        } else if (!inKernel()) {
+            if (canRunInKernel(op)) {
+                enterKernel(op);
+            } else {
+                CodeGenC::visit(op);
+            }
+        } else {
+            CodeGenC::visit(op);
         }
-        CodeGenC::visit(op);
     } else if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
         if (!inKernel()) {
             enterKernel(op);
@@ -503,7 +719,8 @@ void CodeGenCUDA::visit(const For &op) {
 }
 
 void CodeGenCUDA::visit(const VarDef &op) {
-    if (op->buffer_->atype() != AccessType::Cache || op->viewOf_.has_value()) {
+    if (isInputting(op->buffer_->atype()) ||
+        isOutputting(op->buffer_->atype()) || op->viewOf_.has_value()) {
         CodeGenC::visit(op);
 
     } else {
@@ -557,9 +774,8 @@ void CodeGenCUDA::visit(const VarDef &op) {
                 //      auto &x = *x_opt;
                 auto &&name = mangle(op->name_);
                 makeIndent();
-                os() << "UncheckedOpt<";
-                genMdPtrType(op);
-                os() << "> " << name << "_opt;" << std::endl;
+                os() << "UncheckedOpt<" << genMdPtrType(op) << "> " << name
+                     << "_opt;" << std::endl;
                 makeIndent();
                 os() << "auto &" << name << " = *" << name << "_opt;"
                      << std::endl;
@@ -656,76 +872,162 @@ void CodeGenCUDA::visit(const VarDef &op) {
 }
 
 void CodeGenCUDA::visit(const MatMul &op) {
-    if (inKernel()) {
-        throw InvalidProgram("External call to a matrix multiplication from "
-                             "inside a CUDA kernel is not supported");
-    }
+    bool thisOpInKernel = inKernel();
+    inMatmul_ = true;
 
-    inCublas_ = true;
-
-    bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_;
+    bool transA = !op->aIsRowMajor_, transB = !op->bIsRowMajor_,
+         transC = !op->cIsRowMajor_;
     Expr a = op->a_, b = op->b_, c = op->c_;
     Expr m = op->m_, k = op->k_, n = op->n_;
     Expr lda = op->lda_, ldb = op->ldb_, ldc = op->ldc_;
     Expr stridea = op->stridea_, strideb = op->strideb_, stridec = op->stridec_;
-    if (op->cIsRowMajor_) {
-        transA = !transA;
-        transB = !transB;
-        std::swap(transA, transB);
-        std::swap(a, b);
-        std::swap(lda, ldb);
-        std::swap(stridea, strideb);
-        std::swap(n, m);
+
+    switch (op->backend_) {
+    case MatMulBackend::Cublas: {
+        if (thisOpInKernel) {
+            throw InvalidProgram("External call to a matrix multiplication "
+                                 "implemented by cuBLAS from inside a CUDA "
+                                 "kernel is not supported");
+        }
+
+        if (op->cIsRowMajor_) {
+            transA = !transA;
+            transB = !transB;
+            transC = false;
+            std::swap(transA, transB);
+            std::swap(a, b);
+            std::swap(lda, ldb);
+            std::swap(stridea, strideb);
+            std::swap(n, m);
+        }
+
+        makeIndent();
+        beginBlock();
+        makeIndent();
+        os() << gen(op->c_->dtype()) << " cublasAlpha = ";
+        (*this)(op->alpha_);
+        os() << ", cublasBeta = ";
+        (*this)(op->beta_);
+        os() << ";" << std::endl;
+        makeIndent();
+        os() << "cublasGemmStridedBatchedEx(ctx->cublas(), "
+             << (transA ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", "
+             << (transB ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", ";
+        (*this)(m);
+        os() << ", ";
+        (*this)(n);
+        os() << ", ";
+        (*this)(k);
+        os() << ", &cublasAlpha, &";
+        (*this)(a);
+        os() << ", " << genCUBLASType(a->dtype()) << ", ";
+        (*this)(lda);
+        os() << ", ";
+        (*this)(stridea);
+        os() << ", &";
+        (*this)(b);
+        os() << ", " << genCUBLASType(b->dtype()) << ", ";
+        (*this)(ldb);
+        os() << ", ";
+        (*this)(strideb);
+        os() << ", &cublasBeta, &";
+        (*this)(c);
+        os() << ", " << genCUBLASType(c->dtype()) << ", ";
+        (*this)(ldc);
+        os() << ", ";
+        (*this)(stridec);
+        os() << ", ";
+        (*this)(op->batchSize_);
+        os() << ", " << genCUBLASType(c->dtype()) << ", CUBLAS_GEMM_DEFAULT);"
+             << std::endl;
+        endBlock();
+        break;
     }
 
-    makeIndent();
-    beginBlock();
-    makeIndent();
-    os() << gen(op->c_->dtype()) << " _cublasAlpha = ";
-    (*this)(op->alpha_);
-    os() << ", _cublasBeta = ";
-    (*this)(op->beta_);
-    os() << ";" << std::endl;
-    makeIndent();
-    os() << "cublasGemmStridedBatchedEx(_ctx->cublas(), "
-         << (transA ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", "
-         << (transB ? "CUBLAS_OP_N" : "CUBLAS_OP_T") << ", ";
-    (*this)(m);
-    os() << ", ";
-    (*this)(n);
-    os() << ", ";
-    (*this)(k);
-    os() << ", &_cublasAlpha, &";
-    (*this)(a);
-    os() << ", " << genCUBLASType(op->a_->dtype()) << ", ";
-    (*this)(lda);
-    os() << ", ";
-    (*this)(stridea);
-    os() << ", &";
-    (*this)(b);
-    os() << ", " << genCUBLASType(op->b_->dtype()) << ", ";
-    (*this)(ldb);
-    os() << ", ";
-    (*this)(strideb);
-    os() << ", &_cublasBeta, &";
-    (*this)(c);
-    os() << ", " << genCUBLASType(op->c_->dtype()) << ", ";
-    (*this)(ldc);
-    os() << ", ";
-    (*this)(stridec);
-    os() << ", ";
-    (*this)(op->batchSize_);
-    os() << ", " << genCUBLASType(op->c_->dtype()) << ", CUBLAS_GEMM_DEFAULT);"
-         << std::endl;
-    endBlock();
+    case MatMulBackend::Cutlass: {
+        if (thisOpInKernel) {
+            throw InvalidProgram("External call to a matrix multiplication "
+                                 "implemented by CUTLASS from inside a CUDA "
+                                 "kernel is not supported");
+        }
 
-    inCublas_ = false;
+        makeIndent();
+        beginBlock();
+        makeIndent();
+        os() << "using Gemm = cutlass::gemm::device::Gemm<"
+             << genCUTLASSType(a->dtype()) << ", "
+             << (transA ? "cutlass::layout::ColumnMajor"
+                        : "cutlass::layout::RowMajor")
+             << ", " << genCUTLASSType(b->dtype()) << ", "
+             << (transB ? "cutlass::layout::ColumnMajor"
+                        : "cutlass::layout::RowMajor")
+             << ", " << genCUTLASSType(c->dtype()) << ", "
+             << (transC ? "cutlass::layout::ColumnMajor"
+                        : "cutlass::layout::RowMajor")
+             << ", " << genCUTLASSType(c->dtype()) // TODO: accumulator type
+             << ", "
+             << (canUseTensorCore(target_, a->dtype(), b->dtype(), c->dtype())
+                     ? "cutlass::arch::OpClassTensorOp"
+                     : "cutlass::arch::OpClassSimt")
+             << ", FT_CUTLASS_ARCH>;" << std::endl;
+        makeIndent();
+        os() << "Gemm gemm;" << std::endl;
+        // In order for clearer error message, please keep the explicit argument
+        // types in the following statement.
+        makeIndent();
+        os() << "checkCutlassError(gemm(Gemm::Arguments{{";
+        (*this)(m);
+        os() << ", ";
+        (*this)(n);
+        os() << ", ";
+        (*this)(k);
+        os() << "}, Gemm::TensorRefA{(const " << genCUTLASSType(a->dtype())
+             << "*)&";
+        (*this)(a);
+        os() << ", ";
+        (*this)(lda);
+        os() << "}, Gemm::TensorRefB{(const " << genCUTLASSType(b->dtype())
+             << "*)&";
+        (*this)(b);
+        os() << ", ";
+        (*this)(ldb);
+        os() << "}, Gemm::TensorRefC{(const " << genCUTLASSType(c->dtype())
+             << "*)&";
+        (*this)(c);
+        os() << ", ";
+        (*this)(ldc);
+        os() << "}, Gemm::TensorRefD{(" << genCUTLASSType(c->dtype()) << "*)&";
+        (*this)(c);
+        os() << ", ";
+        (*this)(ldc);
+        os() << "}, Gemm::EpilogueOutputOp::Params{("
+             << genCUTLASSType(c->dtype()) << ")(";
+        (*this)(op->alpha_);
+        os() << "), (" << genCUTLASSType(c->dtype()) << ")(";
+        (*this)(op->beta_);
+        os() << ")}}, nullptr, __stream));" << std::endl;
+        endBlock();
+        break;
+    }
+
+    default:
+        inMatmul_ = false;
+        throw InvalidProgram("MatMul backend " +
+                             freetensor::toString(op->backend_) +
+                             " is not supported for GPU");
+    }
+
+    inMatmul_ = false;
 }
 
-std::string codeGenCUDA(const Func &func) {
+NativeCode codeGenCUDA(const Func &func, const Ref<Target> &_target) {
+    ASSERT(_target->type() == TargetType::GPU);
+    auto target = _target.as<GPUTarget>();
+
+    auto prefix = mangle(func->name_);
     auto nParams = func->params_.size();
 
-    CodeGenCUDA visitor(func->params_, func->returns_);
+    CodeGenCUDA visitor(func->params_, func->returns_, target, prefix);
     auto &&op = func->body_;
     visitor.beginBlock();
     visitor(op);
@@ -745,14 +1047,15 @@ extern "C" {
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
             std::string s =
-                "void run(void **__params, void **_returns, size_t "
-                "**_retShapes, size_t *_retDims, GPUContext_t _ctx) {\n";
-            // We copy __params to _params, in order to pass the parameter pack
-            // into a kernel
+                "void " + prefix +
+                "_run(void **__params, void **returns, size_t **retShapes, "
+                "size_t *retDims, GPUContext_t ctx) {\n";
+            // We copy `__params` to `params`, in order to pass the parameter
+            // pack into a kernel
             s += "__ByValArray<void *, " + std::to_string(nParams) +
-                 "> _params;\n";
+                 "> params;\n";
             for (size_t i = 0; i < nParams; i++) {
-                s += "_params[" + std::to_string(i) + "] = __params[" +
+                s += "params[" + std::to_string(i) + "] = __params[" +
                      std::to_string(i) + "];\n";
             }
             s += "\n";
@@ -762,20 +1065,9 @@ extern "C" {
             s += "cudaStream_t __stream = 0;\n";
             s += "\n";
 
-            // Allocate stack for gpu/global
-            auto globalSize = visitor.globalSize();
-            // FIXME: Support non-constant
-            ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
-            s += "uint8_t *__glmem = (uint8_t*)cudaNew(" +
-                 std::to_string(globalSize.as<IntConstNode>()->val_) + ");\n";
-            s += "\n";
+            s += "uint8_t *__glmem = (uint8_t*)ctx->gpuGlobalStaticPool();\n";
 
             s += stream.os_.str();
-            s += "\n";
-
-            // Free stack for gpu/global
-            s += "cudaFree(__glmem);\n";
-
             s += "}\n";
             return s;
         } else {
@@ -816,7 +1108,7 @@ extern "C" {
                     for (size_t i = 0, iEnd = shape.size(); i < iEnd; i++) {
                         os << "__ByValArray<";
                     }
-                    os << CodeGenCUDA::gen(tensor->dtype());
+                    os << visitor.gen(tensor->dtype());
                     for (auto it = shape.rbegin(); it != shape.rend(); it++) {
                         ASSERT((*it)->nodeType() == ASTNodeType::IntConst);
                         os << ", " << (*it).as<IntConstNode>()->val_ << ">";
@@ -826,9 +1118,8 @@ extern "C" {
 
                 default:
                     // e.g. mdspan<float, extents<5, 5>> x
-                    visitor.genMdPtrType(os, d,
-                                         buffer->atype() == AccessType::Input);
-                    os << " " << mangle(name);
+                    os << visitor.genMdPtrType(d, !isWritable(buffer->atype()))
+                       << " " << mangle(name);
                 }
                 first = false;
             }
@@ -837,12 +1128,23 @@ extern "C" {
                 first = false;
             }
             os << ", __ByValArray<void *, " + std::to_string(nParams) +
-                      "> _params, uint8_t *__glmem) ";
+                      "> params, uint8_t *__glmem) ";
             os << stream.os_.str() << std::endl;
             return os.str();
         }
     });
-    return header + body + tailer;
+
+    // Pre-allocate static gpu/global memory pool
+    // TODO: Support dynamic size and allocate the dynamic part at run time
+    auto globalSize = visitor.globalSize();
+    ASSERT(globalSize->nodeType() == ASTNodeType::IntConst);
+    StaticInfo staticInfo;
+    staticInfo.gpuGlobalStaticPoolSize_ = globalSize.as<IntConstNode>()->val_;
+
+    return NativeCode::fromFunc(func, header + body + tailer, prefix + "_run",
+                                target, staticInfo);
 }
 
 } // namespace freetensor
+
+#endif // FT_WITH_CUDA

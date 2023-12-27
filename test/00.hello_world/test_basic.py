@@ -260,6 +260,23 @@ def test_var_as_index():
     assert np.array_equal(y_np, y_std)
 
 
+def test_intrinsic_escape():
+    with ft.VarDef([("x1", (), "int32", "input"), ("x2", (), "int32", "input"),
+                    ("y", (), "int32", "output")]) as (x1, x2, y):
+        y[...] = ft.intrinsic("% %% %", x1[...], x2[...], ret_type="int32")
+
+    func = ft.lower(ft.Func("main", ["x1", "x2", "y"], [], ft.pop_ast()),
+                    verbose=1)
+    code = ft.codegen(func, verbose=True)
+    x1 = ft.array(5, dtype="int32")
+    x2 = ft.array(2, dtype="int32")
+    y = ft.array(0, dtype="int32")
+    ft.build_binary(code)(x1, x2, y)
+    y_np = y.numpy()
+
+    assert y_np[...] == 1
+
+
 def test_error_missing_parameters():
     with ft.VarDef("x", (4, 4), "float32", "output") as x:
         x[2, 3] = 2.0
@@ -269,7 +286,7 @@ def test_error_missing_parameters():
     code = ft.codegen(func)
 
     driver = ft.build_binary(code)
-    with pytest.raises(ft.DriverError):
+    with pytest.raises(ft.InvalidIO):
         driver()
 
 
@@ -281,7 +298,7 @@ def test_error_wrong_positional_parameter_data_type():
     func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
     code = ft.codegen(func, verbose=True)
 
-    with pytest.raises(ft.DriverError):
+    with pytest.raises(ft.InvalidIO):
         x_np = np.zeros((4, 4), dtype="float64")
         x_arr = ft.Array(x_np)
         ft.build_binary(code)(x_arr)
@@ -296,7 +313,7 @@ def test_error_wrong_keyword_parameter_data_type():
     func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()), verbose=1)
     code = ft.codegen(func, verbose=True)
 
-    with pytest.raises(ft.DriverError):
+    with pytest.raises(ft.InvalidIO):
         x_np = np.zeros((4, 4), dtype="float64")
         x_arr = ft.Array(x_np)
         ft.build_binary(code)(x=x_arr)
@@ -316,7 +333,7 @@ def test_inlined_invoke():
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(f, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -330,7 +347,7 @@ def test_inlined_invoke_with_returns():
         y[1] = 3.0
         y[2] = 2.0
         y[3] = 4.0
-    g = ft.lower(ft.Func("g", [], [("y", "float32")], ft.pop_ast()))
+    g = ft.lower(ft.Func("g", [], [ft.FuncRet("y", "float32")], ft.pop_ast()))
 
     with ft.VarDef("x", (4, 4), "float32", "inout") as x:
         with ft.Invoke(["y"], g) as y:
@@ -341,7 +358,7 @@ def test_inlined_invoke_with_returns():
 
     x_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
-    ft.Driver(f, code)(x=x_arr)
+    ft.build_binary(code)(x=x_arr)
     x_np = x_arr.numpy()
 
     x_std = np.zeros((4, 4), dtype="float32")
@@ -355,6 +372,52 @@ def test_error_modifying_input_tensor():
             x[2, 3] = 2.0
             x[1, 0] = 3.0
         func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
+
+
+def test_error_modifying_input_tensor_by_iadd():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef("x", (4, 4), "float32", "input") as x:
+            x[2, 3] += 2.0
+        func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
+
+
+def test_error_modifying_input_tensor_by_iadd_scalar():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef("x", (), "float32", "input") as x:
+            x += 2.0
+        func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
+
+
+def test_input_mutable():
+    with ft.VarDef([("x", (), "int32", "input-mutable"),
+                    ("y", (), "int32", "output")]) as (x, y):
+        x[...] += 1
+        y[...] = x[...] * x[...]
+
+    f = ft.optimize(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    # Suppose modification on x is not optimized out
+    assert "_x += 1" in f.native_code().code
+    x_np = np.array(2, dtype="int32")
+    y_np = np.array(0, dtype="int32")
+    f(x_np, y_np)
+    assert x_np[...] == 2  # Unchanged
+    assert y_np[...] == 9
+
+
+def test_input_mutable_moved():
+    with ft.VarDef([("x", (), "int32", "input-mutable"),
+                    ("y", (), "int32", "output")]) as (x, y):
+        x[...] += 1
+        y[...] = x[...] * x[...]
+
+    f = ft.optimize(ft.Func("main", ["x", "y"], [], ft.pop_ast()), verbose=1)
+    # Suppose modification on x is not optimized out
+    assert "_x += 1" in f.native_code().code
+    x_np = np.array(2, dtype="int32")
+    y_np = np.array(0, dtype="int32")
+    f(ft.move(x_np), y_np)
+    # x_np can be of any value
+    assert y_np[...] == 9
 
 
 def test_error_modifying_shape_of_a_var_when_using_it_in_store():
@@ -434,3 +497,25 @@ def test_default_device():
     with ft.GPU() as dev:
         assert ft.config.default_device() == dev
         assert ft.config.default_target() == dev.target()
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_the_initial_default_cpu_target_can_be_used_as_a_scope():
+    init_tgt = ft.config.default_target()
+    try:
+        ft.config.set_default_target(ft.GPU().target())
+        with init_tgt:
+            assert ft.config.default_target() == init_tgt
+    finally:
+        ft.config.set_default_target(init_tgt)  # Reset for other tests
+
+
+@pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
+def test_the_initial_default_cpu_device_can_be_used_as_a_scope():
+    init_dev = ft.config.default_device()
+    try:
+        ft.config.set_default_device(ft.GPU())
+        with init_dev:
+            assert ft.config.default_device() == init_dev
+    finally:
+        ft.config.set_default_device(init_dev)  # Reset for other tests

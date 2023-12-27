@@ -13,6 +13,8 @@ namespace freetensor {
 class SymbolTableInterface {
   public:
     virtual const std::unordered_set<std::string> &names() const = 0;
+    virtual const std::unordered_map<std::string, VarDef> &defs() const = 0;
+    virtual const std::unordered_map<std::string, For> &loops() const = 0;
 
     virtual bool hasDef(const std::string &name) const = 0;
     virtual const VarDef &def(const std::string &name) const = 0;
@@ -37,13 +39,24 @@ class SymbolTableData : public SymbolTableInterface {
     const std::unordered_set<std::string> &names() const override {
         return names_;
     }
+    const std::unordered_map<std::string, VarDef> &defs() const override {
+        return defs_;
+    }
+    const std::unordered_map<std::string, For> &loops() const override {
+        return loops_;
+    }
 
     bool hasDef(const std::string &name) const override {
         return defs_.count(name);
     }
 
     const VarDef &def(const std::string &name) const override {
-        return defs_.at(name);
+        if (auto it = defs_.find(name); it != defs_.end()) {
+            return it->second;
+        } else {
+            throw SymbolNotFound("There is no VarDef with name `" + name +
+                                 "` in the current scope");
+        }
     }
 
     Ref<Buffer> buffer(const std::string &name) const override {
@@ -55,7 +68,12 @@ class SymbolTableData : public SymbolTableInterface {
     }
 
     virtual const For &loop(const std::string &name) const override {
-        return loops_.at(name);
+        if (auto it = loops_.find(name); it != loops_.end()) {
+            return it->second;
+        } else {
+            throw SymbolNotFound("There is no For with iterator named `" +
+                                 name + "` in the current scope");
+        }
     }
 
     void pushDef(const VarDef &op) override {
@@ -111,6 +129,12 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
     const std::unordered_set<std::string> &names() const override {
         return impl_.names();
     }
+    const std::unordered_map<std::string, VarDef> &defs() const override {
+        return impl_.defs();
+    }
+    const std::unordered_map<std::string, For> &loops() const override {
+        return impl_.loops();
+    }
 
     bool hasDef(const std::string &name) const override {
         return impl_.hasDef(name);
@@ -164,11 +188,9 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
             auto body = (*this)(op->body_);
             popDef(op);
 
-            return COPY_DEBUG_INFO(makeVarDef(op->name_, std::move(b),
-                                              op->viewOf_, std::move(body),
-                                              op->pinned_, op->metadata(),
-                                              op->id()),
-                                   op);
+            return makeVarDef(op->name_, std::move(b), op->viewOf_,
+                              std::move(body), op->pinned_, op->metadata(),
+                              op->id(), op->debugBlame());
         }
     }
 
@@ -197,8 +219,9 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
                 for (auto &&item : r->ends_) {
                     ends.emplace_back((*this)(item));
                 }
-                property->reductions_.emplace_back(makeReductionItem(
-                    r->op_, r->var_, std::move(begins), std::move(ends)));
+                property->reductions_.emplace_back(
+                    makeReductionItem(r->op_, r->var_, std::move(begins),
+                                      std::move(ends), r->syncFlush_));
             }
         }
 
@@ -207,11 +230,10 @@ class SymbolTable : public BaseClass, public SymbolTableInterface {
         popFor(op);
 
         if constexpr (!std::is_same_v<typename BaseClass::StmtRetType, void>) {
-            auto ret =
-                makeFor(op->iter_, std::move(begin), std::move(end),
-                        std::move(step), std::move(len), std::move(property),
-                        std::move(body), op->metadata(), op->id());
-            return COPY_DEBUG_INFO(ret, op);
+            return makeFor(op->iter_, std::move(begin), std::move(end),
+                           std::move(step), std::move(len), std::move(property),
+                           std::move(body), op->metadata(), op->id(),
+                           op->debugBlame());
         }
     }
 };

@@ -5,13 +5,15 @@
 #include <unordered_map>
 
 #include <analyze/find_stmt.h>
-#include <auto_schedule/structs.h>
+#include <codegen/native_code.h>
 #include <driver/target.h>
 #include <func.h>
 #include <probability/rand_ctx.h>
 #include <random.h>
+#include <schedule/as_matmul.h>
 #include <schedule/fission.h>
 #include <schedule/memoized_schedules.h>
+#include <schedule/reorder.h>
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
@@ -23,7 +25,7 @@ enum class MoveToSide : int { Before, After };
 struct AutoScheduleTuneTrial {
     Ref<RandTrace> trace_;
     Func lowered_;
-    std::string code_;
+    NativeCode code_;
     double time_, stddev_;
 };
 
@@ -187,6 +189,8 @@ class Schedule {
      *
      * @param filter : A callback that returns true for acceptance, or a
      * `Selector`, or an `ID`
+     *
+     * @return : All statements satisfying the given condition, in DFS pre order
      */
     template <class T> std::vector<Stmt> findAll(const T &filter) const {
         return findAllStmt(ast(), filter);
@@ -271,10 +275,16 @@ class Schedule {
      * To swap consecutive loops, use `swap` instead
      *
      * @param order : Vector of loop IDs. The requested order of the loops
+     * @param mode : How to deal with imperfectly nested loops.
+     * `PerfectOnly` => throw an exception. `MoveOutImperfect` => do `fission`
+     * in advance to move out statements between the loops, which may enlarge
+     * intermediate tensors. `MoveInImperfect` => move statements between the
+     * loops inwards after adding gurads them them, which may hurt parallelism
      * @throw InvalidSchedule if the input is invalid or there are breaking
      * dependences
      */
-    void reorder(const std::vector<ID> &order);
+    void reorder(const std::vector<ID> &order,
+                 ReorderMode mode = ReorderMode::PerfectOnly);
 
     /**
      * Merge two directly nested loops into one
@@ -331,6 +341,8 @@ class Schedule {
      * @param side : If `After`, `splitter` is the last statement of the first
      * loop. If `Before`, `splitter` is the first statement of the second loop
      * @param splitter : Where to fission the loop
+     * @param allowEnlarge : If true, try to avoid dependence by enlarging some
+     * `VarDef` nodes. If false, throw `InvalidSchedule` in such cases.
      * @param suffix0 : The suffix in the `op` of metadata of result part 0. If
      * empty, the fissioned part 0 preserves original ID and metadata. Cannot be
      * empty together with `suffix1`.
@@ -344,6 +356,7 @@ class Schedule {
      */
     std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
                                     const ID &splitter,
+                                    bool allowEnlarge = true,
                                     const std::string &suffix0 = ".0",
                                     const std::string &suffix1 = ".1");
 
@@ -487,9 +500,23 @@ class Schedule {
      *
      * @param def : ID of the VarDef statement of the specific variable
      * @param mtype : Where the variable should be stored
-     * @throw InvalidSchedule if the variable is not found
+     * @param rejectIndirectAccess : Registers usually do not support indirect
+     * access. If a variable is accessed indirectly, setting it to use registers
+     * is meaningless even successful. If this parameter is set to true, throw
+     * an exception if the variable being set is accessed indirectly.
+     * Specifically, two types of access are considered indirect: 1) The index
+     * is a load from another variable, or 2) The index is a loop iterator and
+     * the loop has a dynamic length (which can not be unrolled by a backend
+     * compiler). By default, this parameter is determined automatically by
+     * `mtype`.
+     * @throw InvalidSchedule if the variable is not found, or if rejecting an
+     * indirect access
+     *
+     * @{
      */
     void setMemType(const ID &def, MemType mtype);
+    void setMemType(const ID &def, MemType mtype, bool rejectIndirectAccess);
+    /** @} */
 
     /**
      * Split a dimension of a variable into two
@@ -610,8 +637,13 @@ class Schedule {
      *
      * @param loop : ID of the loop
      * @param parallel : Parallel scope
+     * @param allowReduction : If false, throw InvalidSchedule if this schedule
+     * would introduce a parallel reduction
+     * @throw InvalidSchedule if the loop is not found or unable to be
+     * parallelized
      */
-    void parallelize(const ID &loop, const ParallelScope &parallel);
+    void parallelize(const ID &loop, const ParallelScope &parallel,
+                     bool allowReduction = true);
 
     /**
      * Unroll a loop
@@ -687,10 +719,24 @@ class Schedule {
      * Transform nested loops to be a external call to a matrix multiplication
      *
      * @param loop: ID of the loop
+     * @param mode : What to do if the memory layout does not meet the
+     * requirement from the external library. `KeepMemLayout` => Raise an
+     * exception. `TryVarReorder` => try `var_reorder` on some variables, but
+     * may affect performance of other use of these variable. `TryTranspose` =>
+     * try `cache` and then `var_reorder` on some variables, but will incur
+     * extra overhead.
+     * @param target : Hardware target. If omitted, use the default target in
+     * Config, or the target set by `with` scopes.
+     * @param backend : Backend library. Defaults to `Mkl` for CPU targets,
+     * `Cublas` for GPU targets.
      * @throw InvalidSchedule if the loop cannot be transformed to be a matrix
      * multiplication
      */
-    void asMatMul(const ID &loop);
+    void asMatMul(const ID &loop, AsMatMulMode mode, const Ref<Target> &target,
+                  MatMulBackend backend);
+    void asMatMul(const ID &loop, AsMatMulMode mode, const Ref<Target> &target);
+    void asMatMul(const ID &loop,
+                  AsMatMulMode mode = AsMatMulMode::KeepMemLayout);
 
     /**
      * Use Pluto+ algorithm to permute and fuse two loops, with as most
@@ -705,6 +751,10 @@ class Schedule {
      * considered, defaults to maximum possible
      * @param nestLevel1 : The number of nesting levels of loop 1 to be
      * considered, defaults to maximum possible
+     * @param fusableOverlapThreshold : The minimum overlapping size of two
+     * loops to be regarded fusable. Defaults to 1
+     * @param fusableNonOverlapTolerance : The maximum non-overlapping size at
+     * either side of two loops to be regarded fusable. Defaults to 4
      * @param doSimplify : Whether the result is simplified by the way, defaults
      * to true
      * @return std::pair<ID, int> : The ID of fused loop and level of
@@ -712,6 +762,8 @@ class Schedule {
      */
     std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1,
                                  int nestLevel0 = 0, int nestLevel1 = 0,
+                                 int fusableOverlapThreshold = 1,
+                                 int fusableNonOverlapTolerance = 4,
                                  bool doSimplify = true);
 
     /**
@@ -739,6 +791,13 @@ class Schedule {
                       const Ref<RandTrace> &trace = nullptr);
 
     /**
+     * (Experimental) Automatically inline very-small VarDef nodes
+     *
+     * @param target : Target architecture
+     */
+    void autoInline(const Ref<Target> &target);
+
+    /**
      * (Experimental) Automatically use external libs using some heuristics
      *
      * @param target : Target architecture
@@ -753,6 +812,21 @@ class Schedule {
     void autoReorder(const Ref<Target> &target);
 
     /**
+     * (Experimental) Automatically swap statements to enable more fission or
+     * fusion
+     *
+     * @param target : Target architecture
+     */
+    void autoSwap(const Ref<Target> &target);
+
+    /**
+     * (Experimental) Automatically apply pluto-based schedules
+     *
+     * @param target : Target architecture
+     */
+    void autoPluto(const Ref<Target> &target);
+
+    /**
      * (Experimental) Automatically fuse consecutive loops or vice versa using
      * some heuristics
      *
@@ -761,6 +835,13 @@ class Schedule {
      */
     void autoFissionFuse(const Ref<Target> &target,
                          const Ref<RandTrace> &trace = nullptr);
+
+    /**
+     * (Experimental) Automatically adjust memory layout of variables
+     *
+     * @param target : Target architecture
+     */
+    void autoMemLayout(const Ref<Target> &target);
 
     /**
      * (Experimental) Automatically parallelize some loops using some heuristics
@@ -788,18 +869,6 @@ class Schedule {
         const std::vector<Ref<Array>> &args,
         const std::unordered_map<std::string, Ref<Array>> &kws = {},
         const std::regex &toLearn = std::regex{".*"});
-
-    std::vector<std::pair<ID, int>>
-    multiLevelTiling(const ForsWithDataReuse &target,
-                     const MultiLevelTilingAnnotation &annotation,
-                     const std::string &pat, int level);
-
-    std::vector<std::pair<ID, int>>
-    multiLevelTilingWithFusion(const ForsWithDataReuse &target,
-                               const MultiLevelTilingAnnotation &annotation,
-                               const std::string &pat,
-                               const ElementWiseInfo &toFuse, int level,
-                               TargetType targetType, bool doCacheRead);
 };
 
 } // namespace freetensor

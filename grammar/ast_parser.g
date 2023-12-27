@@ -46,9 +46,9 @@ atype returns [AccessType type]
     ;
 
 dtype returns [DataType type]
-    : SimpleVar
+    : var
       {
-        $type = parseDType($SimpleVar.text);
+        $type = parseDType($var.name);
       }
     ;
 
@@ -103,7 +103,7 @@ metadata returns [Metadata md]
     | { std::vector<std::string> labels{$LABEL_META.text}; }
       (newLabel=LABEL_META { labels.push_back($newLabel.text); })*
       { Metadata callerMeta; }
-      LARROW_META caller=metadata { callerMeta = $caller.md; }
+      LARROW_META (caller=metadata { callerMeta = $caller.md; })?
       {
         // With caller arrow, but maybe without labels
         $md = makeMetadata(std::move(labels), std::nullopt, callerMeta);
@@ -143,11 +143,11 @@ stmts returns [Stmt node]
         stmts.emplace_back($stmt.node);
     } (newStmt=stmt {
         stmts.emplace_back($newStmt.node);
-    })+ {
-        $node = makeStmtSeq(std::move(stmts));
-    }
-    | stmt {
-        $node = $stmt.node;
+    })* {
+        if (stmts.size() > 1)
+            $node = makeStmtSeq(std::move(stmts));
+        else
+            $node = stmts[0];
     };
 
 stmt returns [Stmt node]
@@ -164,13 +164,9 @@ stmt returns [Stmt node]
     ;
 
 stmtWithoutID returns [Stmt node]
-    : store
+    : storeOrReduceTo
       {
-        $node = $store.node;
-      }
-    | reduceTo
-      {
-        $node = $reduceTo.node;
+        $node = $storeOrReduceTo.node;
       }
     | varDef
       {
@@ -204,6 +200,10 @@ stmtWithoutID returns [Stmt node]
       {
         $node = makeEval($expr.node);
       }
+    | MARK_VERSION '(' tapeName=var COMMA varName=var ')'
+      {
+        $node = makeMarkVersion($tapeName.name, $varName.name);
+      }
     | LBRACE RBRACE
       {
         $node = makeStmtSeq({});
@@ -214,19 +214,10 @@ stmtWithoutID returns [Stmt node]
       }
     ;
 
-store returns [Stmt node]
-    : var indices '=' expr {
-        $node = makeStore($var.name, $indices.exprs, $expr.node);
-    };
-
 reduceOp returns [ReduceOp op]
     : PLUSEQ
       {
         $op = ReduceOp::Add;
-      }
-    | SUBEQ
-      {
-        $op = ReduceOp::Sub;
       }
     | STAREQ
       {
@@ -250,25 +241,38 @@ reduceOp returns [ReduceOp op]
       }
     ;
 
-reduceTo returns [Stmt node]
-    @init {
-        bool atomic = false;
-    }
-    : (ATOMIC { atomic = true; })?
-        var indices reduceOp expr
+storeOrReduceTo returns [Stmt node]
+    : SYNC var indices reduceOp expr
       {
-        $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, atomic);
+        $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, true);
       }
+    | var indices
+      (
+        '=' expr
+        {
+            $node = makeStore($var.name, $indices.exprs, $expr.node);
+        }
+      | reduceOp expr
+        {
+            $node = makeReduceTo($var.name, $indices.exprs, $reduceOp.op, $expr.node, false);
+        }
+      )
     ;
 
 load returns [Expr node]
-    : var indices ':' dtype
+    : var indices
+      { std::optional<DataType> optDType; }
+      (':' dtype { optDType = $dtype.type; })?
       {
-        $node = makeLoad($var.name, $indices.exprs, $dtype.type);
-      }
-    | var indices
-      {
-        $node = makeLoad($var.name, $indices.exprs, name2dtype_.at($var.name));
+        if (!optDType.has_value()) {
+            if (auto &&it = name2dtype_.find($var.name); it != name2dtype_.end()) {
+                optDType = name2dtype_.at($var.name);
+            } else {
+                throw ParserError("Symbol " + $var.name + " not found when parsing. If you intend "
+                    "to parse a sub-tree of an AST, plase set `dtype_in_load=True` when serializing it");
+            }
+        }
+        $node = makeLoad($var.name, $indices.exprs, optDType.value());
       }
     ;
 
@@ -333,11 +337,11 @@ forProperty returns [Ref<ForProperty> property]
       {
         $property = $prev.property->withParallel($parallelScope.type);
       }
-    | prev=forProperty REDUCTION reduceOp ':' varSlice
+    | prev=forProperty REDUCTION reduceOp ':' varSlice { bool sync = false; } (SYNC { sync = true; })?
       {
         $property = Ref<ForProperty>::make(*$prev.property);
         $property->reductions_.emplace_back(
-            makeReductionItem($reduceOp.op, $varSlice.name, $varSlice.begins, $varSlice.ends));
+            makeReductionItem($reduceOp.op, $varSlice.name, $varSlice.begins, $varSlice.ends, sync));
       }
     ;
 
@@ -352,13 +356,15 @@ for returns [Stmt node]
     ;
 
 if returns [Stmt node]
-    : IF cond=expr LBRACE thenCase=stmts RBRACE
+    : IF cond=expr
+      LBRACE thenCase=stmts RBRACE
+      { Stmt elseCase; }
+      (ELSE LBRACE elseCase=stmts { elseCase = $elseCase.node; } RBRACE)?
       {
-        $node = makeIf($cond.node, $thenCase.node);
-      }
-    | IF cond=expr LBRACE thenCase=stmts RBRACE ELSE LBRACE elseCase=stmts RBRACE
-      {
-        $node = makeIf($cond.node, $thenCase.node, $elseCase.node);
+        if (elseCase.isValid())
+            $node = makeIf($cond.node, $thenCase.node, elseCase);
+        else
+            $node = makeIf($cond.node, $thenCase.node);
       }
     ;
 
@@ -414,6 +420,10 @@ expr returns [Expr node]
       {
         $node = makeExp($expr.node);
       }
+    | LN '(' expr ')'
+      {
+        $node = makeLn($expr.node);
+      }
     | ABS '(' expr ')'
       {
         $node = makeAbs($expr.node);
@@ -421,6 +431,18 @@ expr returns [Expr node]
     | SIGMOID '(' expr ')'
       {
         $node = makeSigmoid($expr.node);
+      }
+    | SIN '(' expr ')'
+      {
+        $node = makeSin($expr.node);
+      }
+    | COS '(' expr ')'
+      {
+        $node = makeCos($expr.node);
+      }
+    | TAN '(' expr ')'
+      {
+        $node = makeTan($expr.node);
       }
     | TANH '(' expr ')'
       {
@@ -430,25 +452,29 @@ expr returns [Expr node]
       {
         $node = makeSquare($expr.node);
       }
-    | FLOOR '(' expr0=expr '/' expr1=expr ')'
-      {
-        $node = makeFloorDiv($expr0.node, $expr1.node);
-      }
-    | CEIL '(' expr0=expr '/' expr1=expr ')'
-      {
-        $node = makeCeilDiv($expr0.node, $expr1.node);
-      }
     | ROUNDTO0 '(' expr0=expr '/' expr1=expr ')'
       {
         $node = makeRoundTowards0Div($expr0.node, $expr1.node);
       }
     | FLOOR '(' expr ')'
       {
-        $node = makeFloor($expr.node);
+        if ($expr.node->nodeType() == ASTNodeType::RealDiv) {
+            auto div = $expr.node.as<RealDivNode>();
+            $node = makeFloorDiv(div->lhs_, div->rhs_);
+        } else
+            $node = makeFloor($expr.node);
       }
     | CEIL '(' expr ')'
       {
-        $node = makeCeil($expr.node);
+        if ($expr.node->nodeType() == ASTNodeType::RealDiv) {
+            auto div = $expr.node.as<RealDivNode>();
+            $node = makeCeilDiv(div->lhs_, div->rhs_);
+        } else
+            $node = makeCeil($expr.node);
+      }
+    | UNBOUND '(' expr ')'
+      {
+        $node = makeUnbound($expr.node);
       }
     | expr0=expr
       {int ty;} (
@@ -530,6 +556,10 @@ expr returns [Expr node]
         ')'
       {
         $node = makeIntrinsic(slice($String.text, 1, -1), std::move(params), $dtype.type, hasSideEffect);
+      }
+    | LOAD_AT_VERSION '(' tapeName=var COMMA indices COMMA dtype ')'
+      {
+        $node = makeLoadAtVersion($tapeName.name, $indices.exprs, $dtype.type);
       }
     ;
 

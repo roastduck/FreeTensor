@@ -1,5 +1,6 @@
 #include <unordered_map>
 
+#include <analyze/all_side_effect_intrinsics.h>
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
 #include <analyze/deps.h>
@@ -29,6 +30,49 @@ void CheckNameToDefMapping::visitStmt(const Stmt &stmt) {
     }
 }
 
+static std::unordered_map<std::string, ID>
+usedScopesAt(const Stmt &ast, const ID &pos,
+             const std::unordered_set<std::string> &reads) {
+    CheckReadToParallelScopeMapping checker(pos, reads);
+    checker(ast);
+    return checker.read2scope();
+}
+
+void CheckReadToParallelScopeMapping::visitStmt(const Stmt &stmt) {
+    BaseClass::visitStmt(stmt);
+    if (stmt->id() == pos_) {
+        for (auto &&read : reads_) {
+            switch (buffer(read)->mtype()) {
+            case MemType::GPULocal:
+            case MemType::GPUWarp:
+                if (auto &&scope = stmt->parentStmtByFilter([](const Stmt &p) {
+                        return p->nodeType() == ASTNodeType::For &&
+                               std::holds_alternative<CUDAScope>(
+                                   p.as<ForNode>()->property_->parallel_);
+                    });
+                    scope.isValid()) {
+                    read2scope_[read] = scope->id();
+                }
+                break;
+            case MemType::GPUShared:
+                if (auto &&scope = stmt->parentStmtByFilter([](const Stmt &p) {
+                        return p->nodeType() == ASTNodeType::For &&
+                               std::holds_alternative<CUDAScope>(
+                                   p.as<ForNode>()->property_->parallel_) &&
+                               std::get<CUDAScope>(
+                                   p.as<ForNode>()->property_->parallel_)
+                                       .level_ == CUDAScope::Block;
+                    });
+                    scope.isValid()) {
+                    read2scope_[read] = scope->id();
+                }
+                break;
+            default:; // do nothing
+            }
+        }
+    }
+}
+
 Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     auto op = Mutator::visitStmt(_op);
     auto ret = op;
@@ -49,11 +93,11 @@ Stmt InsertTmpEval::visitStmt(const Stmt &_op) {
     return ret;
 }
 
-struct ModifiedException {};
-
-bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
-                      CheckNotModifiedSide s0Side, const ID &s0,
-                      CheckNotModifiedSide s1Side, const ID &s1) {
+std::optional<bool>
+checkNotModifiedFastPreCheck(const Stmt &op, const Expr &s0Expr,
+                             const Expr &s1Expr, CheckNotModifiedSide s0Side,
+                             const ID &s0, CheckNotModifiedSide s1Side,
+                             const ID &s1) {
     auto names = allUses(s0Expr); // uses of s1 should be the same
     if (names.empty()) {
         return true;
@@ -65,6 +109,34 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
     auto reads = allReads(s0Expr); // uses of s1 should be the same
     if (reads.empty()) {
         return true; // early exit: impossible to be written
+    }
+    if (usedScopesAt(op, s0, reads) != usedScopesAt(op, s1, reads)) {
+        return false;
+    }
+
+    if (!allSideEffectIntrinsics(s0Expr).empty()) {
+        return false;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<bool>
+checkNotModifiedFastPreCheck(const Stmt &op, const Expr &expr,
+                             CheckNotModifiedSide s0Side, const ID &s0,
+                             CheckNotModifiedSide s1Side, const ID &s1) {
+    return checkNotModifiedFastPreCheck(op, expr, expr, s0Side, s0, s1Side, s1);
+}
+
+struct ModifiedException {};
+
+bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
+                      CheckNotModifiedSide s0Side, const ID &s0,
+                      CheckNotModifiedSide s1Side, const ID &s1) {
+    if (auto &&flag = checkNotModifiedFastPreCheck(op, s0Expr, s1Expr, s0Side,
+                                                   s0, s1Side, s1);
+        flag.has_value()) {
+        return *flag;
     }
 
     // First insert temporarily Eval node to the AST, then perform dependence

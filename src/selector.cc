@@ -1,3 +1,5 @@
+#include <functional>
+
 #include <selector.h>
 
 #include <selector_lexer.h>
@@ -5,26 +7,26 @@
 
 namespace freetensor {
 
-bool NotSelector::match(const Stmt &stmt) const { return !sub_->match(stmt); }
+bool NotSelector::matchImpl(const Stmt &stmt) { return !sub_->match(stmt); }
 
-bool BothSelector::match(const Stmt &stmt) const {
+bool BothSelector::matchImpl(const Stmt &stmt) {
     return lhs_->match(stmt) && rhs_->match(stmt);
 }
 
-bool EitherSelector::match(const Stmt &stmt) const {
+bool EitherSelector::matchImpl(const Stmt &stmt) {
     return lhs_->match(stmt) || rhs_->match(stmt);
 }
 
-bool NodeTypeSelector::match(const Stmt &stmt) const {
+bool NodeTypeSelector::matchImpl(const Stmt &stmt) {
     return stmt->nodeType() == nodeType_;
 }
 
-bool ChildSelector::match(const Stmt &stmt) const {
+bool ChildSelector::matchImpl(const Stmt &stmt) {
     auto p = stmt->parentStmt();
     return p.isValid() && parent_->match(p);
 }
 
-bool DescendantSelector::match(const Stmt &_stmt) const {
+bool DescendantSelector::matchImpl(const Stmt &_stmt) {
     for (auto stmt = _stmt->parentStmt(); stmt.isValid();
          stmt = stmt->parentStmt()) {
         if (ancestor_->match(stmt))
@@ -36,35 +38,117 @@ bool DescendantSelector::match(const Stmt &_stmt) const {
     return false;
 }
 
-bool RootNodeSelector::match(const Stmt &stmt) const {
+bool ParentSelector::matchImpl(const Stmt &stmt) {
+    for (auto &&c : stmt->children()) {
+        if (child_->match(c)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool AncestorSelector::matchImpl(const Stmt &stmt) {
+    std::function<bool(const Stmt &s)> recur = [&](const Stmt &s) {
+        if (descendant_->match(s)) {
+            return true;
+        }
+        if (middle_.isValid() && !middle_->match(s)) {
+            return false;
+        }
+        for (auto &&c : s->children()) {
+            if (recur(c)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    for (auto &&c : stmt->children()) {
+        if (recur(c)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DirectBeforeSelector::matchImpl(const Stmt &stmt) {
+    if (auto next = stmt->nextLeafStmtInDFSOrder(); next.isValid()) {
+        for (auto p = next; p.isValid() && !p->isAncestorOf(stmt);
+             p = p->parentStmt()) {
+            if (following_->match(p)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool BeforeSelector::matchImpl(const Stmt &stmt) {
+    for (auto next = stmt->nextStmtInDFSPreOrder(); next.isValid();
+         next = next->nextStmtInDFSPreOrder()) {
+        if (!stmt->isAncestorOf(next) && !next->isAncestorOf(stmt) &&
+            following_->match(next)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DirectAfterSelector::matchImpl(const Stmt &stmt) {
+    if (auto next = stmt->prevLeafStmtInDFSOrder(); next.isValid()) {
+        for (auto p = next; p.isValid() && !p->isAncestorOf(stmt);
+             p = p->parentStmt()) {
+            if (leading_->match(p)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool AfterSelector::matchImpl(const Stmt &stmt) {
+    for (auto prev = stmt->prevStmtInDFSPostOrder(); prev.isValid();
+         prev = prev->prevStmtInDFSPostOrder()) {
+        if (!stmt->isAncestorOf(prev) && !prev->isAncestorOf(stmt) &&
+            leading_->match(prev)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool RootNodeSelector::matchImpl(const Stmt &stmt) {
     return !stmt->parentStmt().isValid();
 }
 
-bool NotLeafSelector::match(const Metadata &md) const {
+bool LeafNodeSelector::matchImpl(const Stmt &stmt) {
+    return stmt->children().empty();
+}
+
+bool NotMetadataSelector::matchImpl(const Metadata &md) {
     return !sub_->match(md);
 }
 
-bool BothLeafSelector::match(const Metadata &md) const {
+bool BothMetadataSelector::matchImpl(const Metadata &md) {
     return lhs_->match(md) && rhs_->match(md);
 }
 
-bool EitherLeafSelector::match(const Metadata &md) const {
+bool EitherMetadataSelector::matchImpl(const Metadata &md) {
     return lhs_->match(md) || rhs_->match(md);
 }
 
-bool IDSelector::match(const Stmt &stmt) const { return stmt->id() == id_; }
-bool IDSelector::match(const Metadata &md) const {
+bool IDSelector::matchImpl(const Stmt &stmt) { return stmt->id() == id_; }
+bool IDSelector::matchImpl(const Metadata &md) {
     return md->getType() == MetadataType::Anonymous &&
            md.as<AnonymousMetadataContent>()->id() == id_;
 }
 
-bool LabelSelector::match(const Metadata &md) const {
+bool LabelSelector::matchImpl(const Metadata &md) {
     if (md->getType() != MetadataType::Source)
         return false;
     return md.as<SourceMetadataContent>()->labelsSet().count(label_);
 }
 
-bool TransformedSelector::match(const Metadata &_md) const {
+bool TransformedSelector::matchImpl(const Metadata &_md) {
     if (_md->getType() != MetadataType::Transformed)
         return false;
     auto md = _md.as<TransformedMetadataContent>();
@@ -76,7 +160,7 @@ bool TransformedSelector::match(const Metadata &_md) const {
     return true;
 }
 
-bool DirectCallerSelector::match(const Metadata &_md) const {
+bool DirectCallerSelector::matchImpl(const Metadata &_md) {
     if (_md->getType() != MetadataType::Source)
         return false;
     auto md = _md.as<SourceMetadataContent>();
@@ -85,7 +169,7 @@ bool DirectCallerSelector::match(const Metadata &_md) const {
     return caller_->match(md->caller());
 }
 
-bool CallerSelector::match(const Metadata &_md) const {
+bool CallerSelector::matchImpl(const Metadata &_md) {
     if (_md->getType() != MetadataType::Source)
         return false;
     for (auto md = _md.as<SourceMetadataContent>()->caller(); md.isValid();) {
@@ -102,7 +186,7 @@ bool CallerSelector::match(const Metadata &_md) const {
     return false;
 }
 
-bool RootCallSelector::match(const Metadata &md) const {
+bool RootCallSelector::matchImpl(const Metadata &md) {
     if (md->getType() != MetadataType::Source)
         return false;
     return !md.as<SourceMetadataContent>()->caller().isValid();
@@ -115,7 +199,7 @@ Ref<Selector> parseSelector(const std::string &str) {
         antlr4::CommonTokenStream tokens(&lexer);
         selector_parser parser(&tokens);
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
-        return parser.selector()->s;
+        return parser.all()->s;
     } catch (const antlr4::ParseCancellationException &e) {
         throw ParserError((std::string) "Parser error: " + e.what());
     }

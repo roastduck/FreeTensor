@@ -1,5 +1,10 @@
+#ifndef FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL_H
+#define FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL_H
+
+#include <unordered_map>
+#include <unordered_set>
+
 #include <analyze/comp_transient_bounds.h>
-#include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <memory>
@@ -15,15 +20,9 @@ class NormalizeVarInKernel : public CompTransientBounds<SymbolTable<Mutator>> {
     std::unordered_set<std::string> legalNames_;
 
     std::vector<VarDef> varsToHoist_;
+    std::unordered_set<std::string> usedNamesInKernel_;
+    std::unordered_map<std::string, int> nameCntInKernel_;
     bool inKernel_ = false;
-
-    std::unique_ptr<CompUniqueBounds> uniqueOwn_;
-    CompUniqueBounds &unique_;
-
-  public:
-    NormalizeVarInKernel()
-        : uniqueOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
-          unique_(*uniqueOwn_) {}
 
   protected:
     using BaseClass::visit;
@@ -42,3 +41,5 @@ DEFINE_PASS_FOR_FUNC(normalizeVarInKernel)
 } // namespace gpu
 
 } // namespace freetensor
+
+#endif // FREE_TENSOR_GPU_NORMALIZE_VAR_IN_KERNEL_H

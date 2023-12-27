@@ -8,6 +8,7 @@
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/cache.h>
+#include <schedule/check_not_in_lib.h>
 #include <schedule/check_var_cross_parallel.h>
 
 namespace freetensor {
@@ -23,7 +24,7 @@ Stmt MakeCacheVar::visitStmt(const Stmt &op) {
         Ref<Buffer> newBuffer =
             makeBuffer(def_->buffer_->tensor(), AccessType::Cache, mtype_);
         ret = makeVarDef(newVar_, std::move(newBuffer), std::nullopt,
-                         std::move(ret), false);
+                         std::move(ret), false, makeMetadata("cache", def_));
         oldDef_ = def_->id();
         newDef_ = ret->id();
         return ret;
@@ -261,6 +262,8 @@ Expr MakeInitAndReduce::visit(const Load &op) {
 
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
 cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
+    checkNotInLib(_ast, stmt);
+
     MakeCacheVar makeCacheVar(stmt, var, mtype, false);
     auto ast = makeCacheVar(_ast);
     auto newVar = makeCacheVar.newVar();
@@ -291,6 +294,8 @@ cache(const Stmt &_ast, const ID &stmt, const std::string &var, MemType mtype) {
 std::pair<Stmt, std::tuple<ID, ID, std::string, ID>>
 cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
                MemType mtype) {
+    checkNotInLib(_ast, stmt);
+
     MakeCacheVar makeCacheVar(stmt, var, mtype, true);
     auto ast = makeCacheVar(_ast);
     auto newVar = makeCacheVar.newVar();

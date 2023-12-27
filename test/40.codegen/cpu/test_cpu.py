@@ -84,7 +84,7 @@ def test_omp_for_collapse_nested():
     s.parallelize("L2", "openmp")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "collapse(2)" in str(code)
+    assert "collapse(2)" in code.code
     x_np = np.random.rand(4, 4).astype("float32")
     y_np = np.zeros((4, 4), dtype="float32")
     x_arr = ft.Array(x_np)
@@ -113,8 +113,8 @@ def test_parallelize_parametric_access_1():
 
     # idx[i] + j for different i may be the same, so we need atomic
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp atomic" in str(code)
-    assert "+=" in str(code)
+    assert "#pragma omp atomic" in code.code
+    assert "+=" in code.code
 
 
 def test_parallelize_parametric_access_2():
@@ -135,8 +135,8 @@ def test_parallelize_parametric_access_2():
 
     # idx[i] + j for the same i but different j must be different, so we do not need atomic
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp atomic" not in str(code)
-    assert "+=" in str(code)
+    assert "#pragma omp atomic" not in code.code
+    assert "+=" in code.code
 
 
 def test_unroll_for():
@@ -159,12 +159,12 @@ def test_unroll_for():
     s.unroll("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma GCC unroll" in str(code)
+    assert "#pragma GCC unroll" in code.code
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
+    ft.build_binary(code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")
@@ -191,12 +191,12 @@ def test_vectorize_for():
     s.vectorize("L1")
     func = ft.lower(s.func(), target, verbose=1)
     code = ft.codegen(func, target, verbose=True)
-    assert "#pragma omp simd" in str(code)
+    assert "#pragma omp simd" in code.code
     x_np = np.array([1, 2, 3, 4], dtype="int32")
     y_np = np.zeros((4,), dtype="int32")
     x_arr = ft.Array(x_np)
     y_arr = ft.Array(y_np)
-    ft.Driver(func, code, ft.CPU())(x=x_arr, y=y_arr)
+    ft.build_binary(code, ft.CPU())(x=x_arr, y=y_arr)
     y_np = y_arr.numpy()
 
     y_std = np.array([2, 3, 4, 5], dtype="int32")

@@ -19,9 +19,11 @@
 #include <isl/space_type.h>
 #include <isl/val.h>
 
+#include <debug.h>
 #include <debug/profile.h>
 #include <except.h>
 #include <serialize/to_string.h>
+#include <timeout.h>
 
 namespace freetensor {
 
@@ -47,15 +49,24 @@ template <class T> T *MOVE_ISL_PTR(T *&ptr) {
 
 class PBCtx {
     isl_ctx *ctx_ = nullptr;
+    bool dontFree_ = false; // Tolerate memory leak
 
   public:
     PBCtx() : ctx_(isl_ctx_alloc()) {
         isl_options_set_on_error(ctx_, ISL_ON_ERROR_ABORT);
     }
-    ~PBCtx() { isl_ctx_free(ctx_); }
+    ~PBCtx() {
+        if (!dontFree_) {
+            isl_ctx_free(ctx_);
+        }
+    }
 
     PBCtx(const PBCtx &other) = delete;
     PBCtx &operator=(const PBCtx &other) = delete;
+    PBCtx(PBCtx &&other) = delete;
+    PBCtx &operator=(PBCtx &&other) = delete;
+
+    void setDontFree(bool flag = true) { dontFree_ = flag; }
 
     isl_ctx *get() const { return GET_ISL_PTR(ctx_); }
 };
@@ -253,6 +264,7 @@ class PBSpace {
     PBSpace() {}
     PBSpace(isl_space *space) : space_(space) {}
     PBSpace(const PBSet &set) : space_(isl_set_get_space(set.get())) {}
+    PBSpace(const PBMap &map) : space_(isl_map_get_space(map.get())) {}
     ~PBSpace() {
         if (space_ != nullptr) {
             isl_space_free(space_);
@@ -596,7 +608,6 @@ PBMap moveDimsOutputToInput(T &&map, unsigned first, unsigned n,
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target, isl_dim_out,
                              first, n);
 }
-
 template <PBMapRef T>
 PBMap moveDimsInputToParam(T &&map, unsigned first, unsigned n,
                            unsigned target) {
@@ -604,17 +615,16 @@ PBMap moveDimsInputToParam(T &&map, unsigned first, unsigned n,
                              isl_dim_in, first, n);
 }
 template <PBMapRef T>
-PBMap moveDimsParamToInput(T &&map, unsigned first, unsigned n,
-                           unsigned target) {
-    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target,
-                             isl_dim_param, first, n);
-}
-
-template <PBMapRef T>
 PBMap moveDimsOutputToParam(T &&map, unsigned first, unsigned n,
                             unsigned target) {
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
                              isl_dim_out, first, n);
+}
+template <PBMapRef T>
+PBMap moveDimsParamToInput(T &&map, unsigned first, unsigned n,
+                           unsigned target) {
+    return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target,
+                             isl_dim_param, first, n);
 }
 template <PBMapRef T>
 PBMap moveDimsParamToOutput(T &&map, unsigned first, unsigned n,
@@ -632,6 +642,14 @@ template <PBSetRef T>
 PBSet moveDimsParamToSet(T &&set, unsigned first, unsigned n, unsigned target) {
     return isl_set_move_dims(PBRefTake<T>(set), isl_dim_set, target,
                              isl_dim_param, first, n);
+}
+
+template <PBSetRef T, PBSetRef U>
+std::pair<PBSet, PBSet> padToSameDims(T &&lhs, U &&rhs) {
+    auto n = std::max(lhs.nDims(), rhs.nDims());
+    return std::make_pair(
+        insertDims(std::forward<T>(lhs), lhs.nDims(), n - lhs.nDims()),
+        insertDims(std::forward<T>(rhs), rhs.nDims(), n - rhs.nDims()));
 }
 
 template <PBSetRef T> PBSet complement(T &&set) {
@@ -694,6 +712,13 @@ template <PBFuncRef T, PBSetRef U> PBFunc intersectDomain(T &&lhs, U &&rhs) {
                                              PBRefTake<U>(rhs));
 }
 
+template <PBSetRef T, PBSetRef U> PBSet intersectParams(T &&lhs, U &&rhs) {
+    return isl_set_intersect_params(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBMapRef T, PBSetRef U> PBMap intersectParams(T &&lhs, U &&rhs) {
+    return isl_map_intersect_params(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
 template <PBMapRef T, PBMapRef U> PBMap uni(T &&lhs, U &&rhs) {
     DEBUG_PROFILE_VERBOSE("uni", "nBasic=" + std::to_string(lhs.nBasic()) +
                                      "," + std::to_string(rhs.nBasic()));
@@ -719,6 +744,24 @@ template <PBMapRef T, PBMapRef U> PBMap applyDomain(T &&lhs, U &&rhs) {
 template <PBMapRef T, PBMapRef U> PBMap applyRange(T &&lhs, U &&rhs) {
     DEBUG_PROFILE("applyRange");
     return isl_map_apply_range(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBMapRef T, PBMapRef U> PBMap sum(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE("sum");
+    return isl_map_sum(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+template <PBSetRef T, PBSetRef U> PBSet sum(T &&lhs, U &&rhs) {
+    DEBUG_PROFILE("sum");
+    return isl_set_sum(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
+template <PBMapRef T> PBMap neg(T &&lhs) {
+    DEBUG_PROFILE("neg");
+    return isl_map_neg(PBRefTake<T>(lhs));
+}
+template <PBSetRef T> PBSet neg(T &&lhs) {
+    DEBUG_PROFILE("neg");
+    return isl_set_neg(PBRefTake<T>(lhs));
 }
 
 template <PBMapRef T> PBMap lexmax(T &&map) {
@@ -806,6 +849,13 @@ template <PBFuncRef T> PBSet domain(T &&func) {
     return isl_multi_pw_aff_domain(PBRefTake<T>(func));
 }
 
+template <PBSetRef T> PBSet params(T &&set) {
+    return isl_set_params(PBRefTake<T>(set));
+}
+template <PBMapRef T> PBSet params(T &&map) {
+    return isl_map_params(PBRefTake<T>(map));
+}
+
 template <PBSetRef T> PBSet coalesce(T &&set) {
     DEBUG_PROFILE("coalesce");
     return isl_set_coalesce(PBRefTake<T>(set));
@@ -864,8 +914,12 @@ PBSingleFunc max(T &&lhs, U &&rhs) {
  * @return PBSet set of valid coefficients for the input set
  */
 template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
-    auto coefficientsMap = isl_map_from_basic_map(
-        isl_basic_set_unwrap(isl_set_coefficients(PBRefTake<T>(set))));
+    // ISL coefficients applies Farkas lemma which disallows intermediate
+    // variables introduced by division/modulo constraints. The best we can do
+    // is to remove such constraints and provide a slightly relaxed bound for
+    // the coefficients, so remove_divs first.
+    auto coefficientsMap = isl_map_from_basic_map(isl_basic_set_unwrap(
+        isl_set_coefficients(isl_set_remove_divs(PBRefTake<T>(set)))));
     auto ctx = isl_map_get_ctx(coefficientsMap);
     auto paramsSpace = isl_space_domain(isl_map_get_space(coefficientsMap));
     auto nParams = isl_space_dim(paramsSpace, isl_dim_set);
@@ -873,6 +927,13 @@ template <PBSetRef T> PBSet coefficients(T &&set, int64_t c = 0) {
     isl_point_set_coordinate_val(cPoint, isl_dim_set, nParams - 1,
                                  isl_val_int_from_si(ctx, -c));
     return apply(PBSet(isl_set_from_point(cPoint)), PBMap(coefficientsMap));
+}
+
+inline bool isSubset(const PBSet &small, const PBSet &big) {
+    return isl_set_is_subset(small.get(), big.get());
+}
+inline bool isSubset(const PBMap &small, const PBMap &big) {
+    return isl_map_is_subset(small.get(), big.get());
 }
 
 inline bool operator==(const PBSet &lhs, const PBSet &rhs) {
@@ -901,6 +962,7 @@ class PBBuildExpr {
     friend class PBBuilder;
 
   public:
+    PBBuildExpr() = default;
     PBBuildExpr(const PBBuildExpr &) = default;
     PBBuildExpr(PBBuildExpr &&) = default;
     PBBuildExpr &operator=(const PBBuildExpr &) = default;
@@ -940,6 +1002,9 @@ class PBBuildExpr {
 
     friend PBBuildExpr ceilDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
         return PBBuildExpr("ceil(" + a.expr_ + " / " + b.expr_ + ")");
+    }
+    friend PBBuildExpr floorDiv(const PBBuildExpr &a, const PBBuildExpr &b) {
+        return PBBuildExpr("floor(" + a.expr_ + " / " + b.expr_ + ")");
     }
 
     friend PBBuildExpr operator%(const PBBuildExpr &a, const PBBuildExpr &b) {
@@ -1034,7 +1099,7 @@ class PBMapBuilder : public PBBuilder {
     PBMapBuilder &operator=(PBMapBuilder &&) = default;
 
     void addInput(const PBBuildExpr &expr);
-    void addInputs(auto exprs) {
+    void addInputs(auto &&exprs) {
         for (auto &&e : exprs)
             addInput(e);
     }
@@ -1044,7 +1109,7 @@ class PBMapBuilder : public PBBuilder {
     void clearInputs() { inputs_.clear(); }
 
     void addOutput(const PBBuildExpr &expr);
-    void addOutputs(auto exprs) {
+    void addOutputs(auto &&exprs) {
         for (auto &&e : exprs)
             addOutput(e);
     }
@@ -1067,7 +1132,7 @@ class PBSetBuilder : public PBBuilder {
     PBSetBuilder &operator=(PBSetBuilder &&) = default;
 
     void addVar(const PBBuildExpr &expr);
-    void addVars(auto exprs) {
+    void addVars(auto &&exprs) {
         for (auto &&e : exprs)
             addVar(e);
     }
@@ -1078,6 +1143,18 @@ class PBSetBuilder : public PBBuilder {
 
     PBSet build(const PBCtx &ctx) const;
 };
+
+auto pbFuncWithTimeout(PBCtx &ctx, const auto &func, int seconds,
+                       const auto &...args)
+    -> std::optional<decltype(func(args...))> {
+    decltype(func(args...)) ret;
+    if (timeout([&]() { ret = func(args...); }, seconds)) {
+        return ret;
+    } else {
+        ctx.setDontFree();
+        return std::nullopt;
+    }
+}
 
 } // namespace freetensor
 

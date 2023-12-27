@@ -37,16 +37,22 @@ Expr Mutator::visitExpr(const Expr &op) {
         DISPATCH_EXPR_CASE(LNot);
         DISPATCH_EXPR_CASE(Sqrt);
         DISPATCH_EXPR_CASE(Exp);
+        DISPATCH_EXPR_CASE(Ln);
         DISPATCH_EXPR_CASE(Square);
         DISPATCH_EXPR_CASE(Sigmoid);
+        DISPATCH_EXPR_CASE(Sin);
+        DISPATCH_EXPR_CASE(Cos);
+        DISPATCH_EXPR_CASE(Tan);
         DISPATCH_EXPR_CASE(Tanh);
         DISPATCH_EXPR_CASE(Abs);
         DISPATCH_EXPR_CASE(Floor);
         DISPATCH_EXPR_CASE(Ceil);
+        DISPATCH_EXPR_CASE(Unbound);
         DISPATCH_EXPR_CASE(IfExpr);
         DISPATCH_EXPR_CASE(Cast);
         DISPATCH_EXPR_CASE(Intrinsic);
         DISPATCH_EXPR_CASE(AnyExpr);
+        DISPATCH_EXPR_CASE(LoadAtVersion);
 
     default:
         ERROR("Unexpected Expr node type");
@@ -75,6 +81,7 @@ Stmt Mutator::visitStmt(const Stmt &op) {
         DISPATCH_STMT_CASE(Eval);
         DISPATCH_STMT_CASE(MatMul);
         DISPATCH_STMT_CASE(Any);
+        DISPATCH_STMT_CASE(MarkVersion);
 
     default:
         ERROR("Unexpected Stmt node type");

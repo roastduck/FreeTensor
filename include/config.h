@@ -17,13 +17,21 @@ class Device;
  * All writable options with simple types can be set by environment variables
  */
 class Config {
-    static bool prettyPrint_; /// Env FT_PRETTY_PRINT
-    static bool printAllId_;  /// Env FT_PRINT_ALL_ID
-    static bool werror_;      /// Treat warnings as errors. Env FT_WERROR
+    static bool prettyPrint_;         /// Env FT_PRETTY_PRINT
+    static bool printAllId_;          /// Env FT_PRINT_ALL_ID
+    static bool printSourceLocation_; /// Env FT_PRINT_SOURCE_LOCATION
+    static bool fastMath_;            /// Env FT_FAST_MATH
+    static bool werror_; /// Treat warnings as errors. Env FT_WERROR
     static bool
         debugBinary_; /// Compile with `-g` at backend. Do not delete the binary
                       /// file after loaded. Env FT_DEBUG_BINARY
     static bool debugRuntimeCheck_; /// Enable runtime checks in generated code
+    static bool
+        debugCUDAWithUM_; /// Allocate CUDA buffers on Unified Memory, for
+                          /// faster (debugging) access of GPU `Array` from CPU,
+                          /// but with slower `Array` allocations and more
+                          /// synchronizations. No performance effect on normal
+                          /// in-kernel computations. Env FT_DEBUG_CUDA_WITH_UM
     static std::vector<std::filesystem::path>
         backendCompilerCXX_; /// Env and macro FT_BACKEND_COMPILER_CXX.
                              /// Colon-separated paths, searched from left to
@@ -32,10 +40,13 @@ class Config {
         backendCompilerNVCC_; /// Env and macro FT_BACKEND_COMPILER_NVCC.
                               /// Colon-separated paths, searched from left to
                               /// right
+    static std::vector<std::filesystem::path>
+        backendOpenMP_; // Env and macro FT_BACKEND_OPENMP. Colon-separated
+                        // paths, linked from left to right
 
     static Ref<Target>
-        defaultTarget_; /// Used for lower and codegen when
-                        /// target is omitted. Initialized to CPUTarget
+        defaultTarget_; /// Used for lower and codegen when target is omitted.
+                        /// Initialized to CPUTarget
     static Ref<Device> defaultDevice_; /// Used to create Driver when device is
                                        /// omitted. Initialized to a CPU Device
     static std::vector<std::filesystem::path>
@@ -54,7 +65,7 @@ class Config {
   public:
     static void init(); /// Called in src/ffi/config.cc
 
-    static std::string withMKL();
+    static bool withMKL();
     static bool withCUDA();
     static bool withPyTorch();
 
@@ -63,6 +74,14 @@ class Config {
 
     static void setPrintAllId(bool flag = true) { printAllId_ = flag; }
     static bool printAllId() { return printAllId_; }
+
+    static void setPrintSourceLocation(bool flag = true) {
+        printSourceLocation_ = flag;
+    }
+    static bool printSourceLocation() { return printSourceLocation_; }
+
+    static void setFastMath(bool flag = true) { fastMath_ = flag; }
+    static bool fastMath() { return fastMath_; }
 
     static void setWerror(bool flag = true) { werror_ = flag; }
     static bool werror() { return werror_; }
@@ -74,6 +93,11 @@ class Config {
         debugRuntimeCheck_ = flag;
     }
     static bool debugRuntimeCheck() { return debugRuntimeCheck_; }
+
+    static void setDebugCUDAWithUM(bool flag = true) {
+        debugCUDAWithUM_ = flag;
+    }
+    static bool debugCUDAWithUM() { return debugCUDAWithUM_; }
 
     /**
      * @brief Set the C++ compiler for CPU backend.
@@ -99,6 +123,20 @@ class Config {
     }
     static const std::vector<std::filesystem::path> &backendCompilerNVCC() {
         return backendCompilerNVCC_;
+    }
+
+    /**
+     * @brief Set the OpenMP library linked to the compiled executable
+     *
+     * @param path : Path to the OpenMP library. Should be a raw path
+     * (unescaped).
+     */
+    static void
+    setBackendOpenMP(const std::vector<std::filesystem::path> &path) {
+        backendOpenMP_ = path;
+    }
+    static const std::vector<std::filesystem::path> &backendOpenMP() {
+        return backendOpenMP_;
     }
 
     static void setDefaultTarget(const Ref<Target> &target) {

@@ -1,0 +1,56 @@
+[project]
+name = "freetensor"
+version = "0.0.0"
+description = "A language and compiler for irregular tensor programs."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { "file" = "LICENSE" }
+urls = { "Homepage" = "https://roastduck.github.io/FreeTensor/" }
+dependencies = [
+    "numpy",
+    "sourceinspect",
+    "astor",
+    "Pygments",
+    "z3-solver",
+    "setuptools", # Required by z3: https://github.com/Z3Prover/z3/issues/2374
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+doc = [
+    "mkdocs",
+    "mkdocstrings==0.18.1",
+    "pytkdocs[numpy-style]",
+]
+
+[build-system]
+requires = [
+    "py-build-cmake~=0.1.8",
+    # We can't use pybind11-stubgen here. It will break CMake's incremental compilation
+    "z3-solver",
+    "setuptools", # Required by z3: https://github.com/Z3Prover/z3/issues/2374
+]
+build-backend = "py_build_cmake.build"
+
+[tool.py-build-cmake.module] # Where to find the Python module to package
+directory = "python"
+
+[tool.py-build-cmake.sdist] # What to include in source distributions
+include = ["CMakeLists.txt", "3rd-party/*", "ffi/*", "grammar/*", "include/*", "runtime/*", "src/*"]
+exclude = ["*.swp"]
+
+[tool.py-build-cmake.cmake] # How to build the CMake project
+minimum_version = "3.15"
+generator = "Ninja"
+build_type = "RelWithDebInfo"
+install_components = ["python_module"]
+build_path = "build"
+
+[tool.py-build-cmake.cmake.options] # Config for minimal build.
+                                    # Add other options by `python -m build . -C--local=<other-config.toml>`
+FT_WITH_CUDA = "OFF"
+FT_WITH_MKL = "OFF"
+FT_WITH_PYTORCH = "OFF"
+FT_COMPILER_PORTABLE = "ON"

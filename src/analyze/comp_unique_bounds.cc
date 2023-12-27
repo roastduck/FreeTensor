@@ -235,6 +235,24 @@ std::pair<Expr, Expr> CompUniqueBoundsCombination::unionBounds(
     return {makeMinMax(lowers), makeMaxMin(uppers)};
 }
 
+void CompUniqueBoundsCombination::insertSignDataTypeInfo(const Expr &op) {
+    switch (op->dtype().sign()) {
+    case SignDataType::GT0:
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 1}});
+        break;
+    case SignDataType::GE0:
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        break;
+    case SignDataType::LT0:
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, -1}});
+        break;
+    case SignDataType::LE0:
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        break;
+    default:; // do nothing
+    }
+}
+
 void CompUniqueBoundsCombination::visitExpr(const Expr &op) {
     if (lower_.count(op) || upper_.count(op)) {
         return;
@@ -280,6 +298,19 @@ void CompUniqueBoundsCombination::visit(const Load &op) {
     BaseClass::visit(op);
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
+    insertSignDataTypeInfo(op);
+}
+
+void CompUniqueBoundsCombination::visit(const Cast &op) {
+    BaseClass::visit(op);
+    // TODO: Use the expression itself as a bound just like Load?
+    insertSignDataTypeInfo(op);
+}
+
+void CompUniqueBoundsCombination::visit(const Intrinsic &op) {
+    BaseClass::visit(op);
+    // TODO: Use the expression itself as a bound just like Load?
+    insertSignDataTypeInfo(op);
 }
 
 void CompUniqueBoundsCombination::visit(const IntConst &op) {
@@ -459,9 +490,18 @@ void CompUniqueBoundsCombination::visit(const Mod &op) {
     }
     updLower(lower_[op], LowerBound{op});
     updUpper(upper_[op], UpperBound{op});
-    updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
-    for (auto &&item : getUpper(op->rhs_)) {
-        updUpper(upper_[op], sub(item, LinearExpr<Rational<int64_t>>{{}, 1}));
+    if (getIntLower(op->rhs_) >= 0) {
+        updLower(lower_[op], LowerBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        for (auto &&item : getUpper(op->rhs_)) {
+            updUpper(upper_[op],
+                     sub(item, LinearExpr<Rational<int64_t>>{{}, 1}));
+        }
+    } else if (getIntUpper(op->rhs_) <= 0) {
+        updUpper(upper_[op], UpperBound{LinearExpr<Rational<int64_t>>{{}, 0}});
+        for (auto &&item : getLower(op->rhs_)) {
+            updLower(lower_[op],
+                     add(item, LinearExpr<Rational<int64_t>>{{}, 1}));
+        }
     }
 }
 

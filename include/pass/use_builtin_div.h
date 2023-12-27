@@ -13,16 +13,11 @@ namespace freetensor {
 class UseBuiltinDiv : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    std::unique_ptr<CompUniqueBounds> boundOwn_;
-    CompUniqueBounds &bound_;
-
-  public:
-    UseBuiltinDiv()
-        : boundOwn_(std::make_unique<CompUniqueBoundsCombination>(*this)),
-          bound_(*boundOwn_) {}
+    Ref<CompUniqueBounds> bound_;
 
   protected:
     using BaseClass::visit;
+    Stmt visitStmt(const Stmt &op) override;
     Expr visit(const FloorDiv &op) override;
     Expr visit(const CeilDiv &op) override;
     Expr visit(const Mod &op) override;

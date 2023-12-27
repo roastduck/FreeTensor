@@ -1,4 +1,5 @@
 #include <analyze/all_uses.h>
+#include <container_utils.h>
 #include <pass/annotate_conds.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/replace_iter.h>
@@ -24,19 +25,32 @@ int Z3Simplify::getVarId(const Expr &op) {
     return varId_.at(op);
 }
 
-void Z3Simplify::put(const Expr &key, const z3::expr &expr) {
-    z3Exprs_[key] = std::make_optional<z3::expr>(expr);
+void Z3Simplify::put(const Expr &key, const z3::expr &expr,
+                     const std::vector<std::optional<z3::expr>> &conds) {
+    z3Exprs_[key] = ExprInfo{expr, conds};
 }
 
 bool Z3Simplify::exists(const Expr &key) { return z3Exprs_.count(key); }
 
-const z3::expr &Z3Simplify::get(const Expr &key) { return *z3Exprs_.at(key); }
+const z3::expr &Z3Simplify::get(const Expr &key) {
+    return *z3Exprs_.at(key).self_;
+}
+
+const std::vector<std::optional<z3::expr>> &Z3Simplify::conds(const Expr &key) {
+    return z3Exprs_.at(key).conds_;
+}
 
 bool Z3Simplify::prove(const Expr &op) {
     // expr can be proved <==> !expr can not be satisfied
     if (exists(op)) {
+        solver_.push();
+        for (auto &&cond : conds(op)) {
+            solver_.add(*cond);
+        }
         auto toCheck = !get(op);
-        return solver_.check(1, &toCheck) == z3::unsat;
+        auto ret = solver_.check(1, &toCheck) == z3::unsat;
+        solver_.pop();
+        return ret;
     }
     return false;
 }
@@ -63,12 +77,38 @@ Expr Z3Simplify::visit(const Load &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Load);
     auto op = __op.as<LoadNode>();
     auto dtype = op->dtype();
+    std::optional<z3::expr> expr;
     if (isInt(dtype)) {
-        put(op, ctx_.int_const(("x" + std::to_string(getVarId(op))).c_str()));
+        expr = ctx_.int_const(("x" + std::to_string(getVarId(op))).c_str());
     } else if (isBool(dtype)) {
-        put(op, ctx_.bool_const(("x" + std::to_string(getVarId(op))).c_str()));
+        expr = ctx_.bool_const(("x" + std::to_string(getVarId(op))).c_str());
+    } else {
+        return op;
+        // We don't simplify float in Z3Simplify
     }
-    // We don't simplify float in Z3Simplify
+    std::vector<std::optional<z3::expr>> conds;
+    switch (dtype.sign()) {
+    case SignDataType::GT0:
+        conds.emplace_back(*expr > 0);
+        break;
+    case SignDataType::GE0:
+        conds.emplace_back(*expr >= 0);
+        break;
+    case SignDataType::LT0:
+        conds.emplace_back(*expr < 0);
+        break;
+    case SignDataType::LE0:
+        conds.emplace_back(*expr <= 0);
+        break;
+    case SignDataType::NE0:
+        conds.emplace_back(*expr != 0);
+        break;
+    case SignDataType::EQ0:
+        conds.emplace_back(*expr == 0);
+        break;
+    default:; // do nothing
+    }
+    put(op, *expr, conds);
     return op;
 }
 
@@ -93,7 +133,8 @@ Expr Z3Simplify::visit(const Add &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Add);
     auto op = __op.as<AddNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) + get(op->rhs_));
+        put(op, get(op->lhs_) + get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -103,7 +144,8 @@ Expr Z3Simplify::visit(const Sub &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) - get(op->rhs_));
+        put(op, get(op->lhs_) - get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -113,7 +155,8 @@ Expr Z3Simplify::visit(const Mul &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mul);
     auto op = __op.as<MulNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) * get(op->rhs_));
+        put(op, get(op->lhs_) * get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -125,7 +168,8 @@ Expr Z3Simplify::visit(const FloorDiv &_op) {
     if (exists(op->lhs_) && exists(op->rhs_)) {
         // "/" in z3 means floor div. To verify, run the following in PyZ3
         // z3.prove(z3.Implies(z3.And(a == -3, b == 2), a / b == -2))
-        put(op, get(op->lhs_) / get(op->rhs_));
+        put(op, get(op->lhs_) / get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -135,7 +179,8 @@ Expr Z3Simplify::visit(const CeilDiv &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::CeilDiv);
     auto op = __op.as<CeilDivNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, (get(op->lhs_) - 1) / get(op->rhs_) + 1);
+        put(op, (get(op->lhs_) - 1) / get(op->rhs_) + 1,
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -145,7 +190,8 @@ Expr Z3Simplify::visit(const Mod &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, z3::mod(get(op->lhs_), get(op->rhs_)));
+        put(op, z3::mod(get(op->lhs_), get(op->rhs_)),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -156,7 +202,8 @@ Expr Z3Simplify::visit(const Min &_op) {
     auto op = __op.as<MinNode>();
 
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, z3::min(get(op->lhs_), get(op->rhs_)));
+        put(op, z3::min(get(op->lhs_), get(op->rhs_)),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
@@ -170,7 +217,7 @@ Expr Z3Simplify::visit(const Min &_op) {
                 // be lost, so deepCopy here
                 auto newExpr = deepCopy(expr);
                 if (exists(expr)) {
-                    put(newExpr, get(expr));
+                    put(newExpr, get(expr), conds(expr));
                 }
                 list.insert(std::move(newExpr));
             }
@@ -198,7 +245,7 @@ Expr Z3Simplify::visit(const Min &_op) {
             ret = ret.isValid() ? makeMin(ret, item) : item;
         }
         if (exists(op)) {
-            put(ret, get(op));
+            put(ret, get(op), conds(op));
         }
         return ret;
     }
@@ -212,7 +259,8 @@ Expr Z3Simplify::visit(const Max &_op) {
     auto op = __op.as<MaxNode>();
 
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, z3::max(get(op->lhs_), get(op->rhs_)));
+        put(op, z3::max(get(op->lhs_), get(op->rhs_)),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
 
     std::function<void(const Expr &, std::unordered_set<Expr> &)> recur =
@@ -226,7 +274,7 @@ Expr Z3Simplify::visit(const Max &_op) {
                 // be lost, so deepCopy here
                 auto newExpr = deepCopy(expr);
                 if (exists(expr)) {
-                    put(newExpr, get(expr));
+                    put(newExpr, get(expr), conds(expr));
                 }
                 list.insert(std::move(newExpr));
             }
@@ -254,7 +302,7 @@ Expr Z3Simplify::visit(const Max &_op) {
             ret = ret.isValid() ? makeMax(ret, item) : item;
         }
         if (exists(op)) {
-            put(ret, get(op));
+            put(ret, get(op), conds(op));
         }
         return ret;
     }
@@ -267,7 +315,8 @@ Expr Z3Simplify::visit(const LT &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LT);
     auto op = __op.as<LTNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) < get(op->rhs_));
+        put(op, get(op->lhs_) < get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -277,7 +326,8 @@ Expr Z3Simplify::visit(const LE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LE);
     auto op = __op.as<LENode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) <= get(op->rhs_));
+        put(op, get(op->lhs_) <= get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -287,7 +337,8 @@ Expr Z3Simplify::visit(const GT &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::GT);
     auto op = __op.as<GTNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) > get(op->rhs_));
+        put(op, get(op->lhs_) > get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -297,7 +348,8 @@ Expr Z3Simplify::visit(const GE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::GE);
     auto op = __op.as<GENode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) >= get(op->rhs_));
+        put(op, get(op->lhs_) >= get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -307,7 +359,8 @@ Expr Z3Simplify::visit(const EQ &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::EQ);
     auto op = __op.as<EQNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) == get(op->rhs_));
+        put(op, get(op->lhs_) == get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -317,7 +370,8 @@ Expr Z3Simplify::visit(const NE &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::NE);
     auto op = __op.as<NENode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) != get(op->rhs_));
+        put(op, get(op->lhs_) != get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -334,7 +388,8 @@ Expr Z3Simplify::visit(const LAnd &_op) {
     }
     // If one of the operands is always false, visit(If) will deal with it
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) && get(op->rhs_));
+        put(op, get(op->lhs_) && get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -351,7 +406,8 @@ Expr Z3Simplify::visit(const LOr &_op) {
     }
     // If one of the operands is always true, visit(If) will deal with it
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, get(op->lhs_) || get(op->rhs_));
+        put(op, get(op->lhs_) || get(op->rhs_),
+            cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
 }
@@ -361,7 +417,7 @@ Expr Z3Simplify::visit(const LNot &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::LNot);
     auto op = __op.as<LNotNode>();
     if (exists(op->expr_)) {
-        put(op, !get(op->expr_));
+        put(op, !get(op->expr_), conds(op->expr_));
     }
     return op;
 }
@@ -377,9 +433,8 @@ Expr Z3Simplify::visit(const IfExpr &op) {
     }
     auto thenCase = (*this)(op->thenCase_);
     auto elseCase = (*this)(op->elseCase_);
-    auto ret =
-        makeIfExpr(std::move(cond), std::move(thenCase), std::move(elseCase));
-    return COPY_DEBUG_INFO(ret, op);
+    return makeIfExpr(std::move(cond), std::move(thenCase), std::move(elseCase),
+                      op->debugBlame());
 }
 
 Stmt Z3Simplify::visit(const If &op) {
@@ -413,9 +468,8 @@ Stmt Z3Simplify::visit(const If &op) {
         }
     }
 
-    auto ret = makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
-                      op->metadata(), op->id());
-    return COPY_DEBUG_INFO(ret, op);
+    return makeIf(std::move(cond), std::move(thenCase), std::move(elseCase),
+                  op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt Z3Simplify::visit(const Assert &op) {
@@ -499,10 +553,9 @@ Stmt Z3Simplify::visit(const For &op) {
         body = (*this)(op->body_);
     }
 
-    auto ret = makeFor(op->iter_, std::move(begin), std::move(end),
-                       std::move(step), std::move(len), op->property_,
-                       std::move(body), op->metadata(), op->id());
-    return COPY_DEBUG_INFO(ret, op);
+    return makeFor(op->iter_, std::move(begin), std::move(end), std::move(step),
+                   std::move(len), op->property_, std::move(body),
+                   op->metadata(), op->id(), op->debugBlame());
 }
 
 Stmt Z3SimplifyWithSymbolTable::visit(const VarDef &op) {

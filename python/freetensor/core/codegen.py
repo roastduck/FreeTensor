@@ -1,55 +1,105 @@
-import freetensor_ffi as ffi
+from typing import Optional, Callable
 import sys
 import functools
+from pygments import highlight
+from pygments.lexers import CppLexer, CudaLexer
+from pygments.formatters import TerminalFormatter
+
+from .. import ffi
 
 from . import config
-from .. import debug
+from .func import Func
+from .enable_attach_backward import EnableAttachBackward
+from .jit import JITTemplate
+from .utils import as_decorator
 
-from typing import Optional
 
+class NativeCode(EnableAttachBackward, ffi.NativeCode):
+    '''
+    Generated native code with metadata
 
-class NativeCode:
+    NOTE: This class does not support serialization yet. If you need serialization,
+    serialize the Func, and re-run codegen.
+    '''
 
-    def __init__(self, func, code, target):
-        self.func = func
-        self.code = code
-        self.target = target
+    def __init__(self, *args, **kvs):
+        super().__init__(*args, **kvs)
 
     def __str__(self):
-        return self.code
+        params = "[" + ", ".join(map(str, self.params)) + "]"
+        returns = "[" + ", ".join(map(str, self.returns)) + "]"
+        code = self.code
+        if config.pretty_print():
+            if self.target.type == ffi.TargetType.GPU:
+                lexer = CudaLexer()
+            else:
+                lexer = CppLexer()
+            code = highlight(code, lexer,
+                             TerminalFormatter(bg='dark', linenos=True))
+        return (f'NativeCode(params={params}, returns={returns}):\n'
+                f'---- BEGIN NATIVE CODE ----\n'
+                f'{code}'
+                f'---- END NATIVE CODE ----\n')
+
+    def __contains__(self, item):
+        ''' Legacy interface for testing if a string is in the code '''
+        return item in self.code
 
 
-def codegen(ast=None,
+@as_decorator
+def codegen(ast: Func = None,
             target: Optional[ffi.Target] = None,
-            verbose: Optional[bool] = None) -> NativeCode:
+            jit_cache: Callable[Callable, Callable] = functools.cache,
+            verbose: bool = False) -> NativeCode:
     '''
     Generate native code
 
     Parameters
     ----------
-    ast : AST
+    ast : Func
         The AST to be lowered. It must includes function signature to determine
         parameters and return values. If not specified, a partial function is
         returned, which can be used as a decorator
+    jit_cache : Callable[Callable, Callable]
+        Function decorator used to cache JIT instances
     target : Target (Optional)
         The target architecture. If omitted, use the default one in config
+
+    Returns
+    -------
+    NativeCode or JITTemplate
+        Return a NativeCode for the generated code if there is no JIT parameters.
+        Return a JITTemplate that generates a NativeCode if there is at least one
     '''
 
-    if ast is not None:
+    # Note for JIT: `codegen` should respect the default target when it is called
+    if target is None:
+        target = config.default_target()
 
-        if target is None:
-            target = config.default_target()
-        raw_code = ffi.code_gen(ast, target)
-        if verbose:
-            print(debug.with_line_no(raw_code), file=sys.stderr)
+    if isinstance(ast, JITTemplate):
 
-        return NativeCode(ast, raw_code, target)
+        class CodeGenTemplate(JITTemplate):
 
-    else:
+            @jit_cache
+            def instantiate_by_only_jit_args(self, *jit_args):
+                return codegen(ast.instantiate_by_only_jit_args(*jit_args),
+                               target=target,
+                               verbose=verbose)
 
-        f = codegen
-        if target is not None:
-            f = functools.partial(f, target=target)
-        if verbose is not None:
-            f = functools.partial(f, verbose=verbose)
-        return f
+        return CodeGenTemplate(ast.params, ast.jit_param_names)
+
+    ret = ffi.code_gen(ast, target)
+    ret = NativeCode(ret.name, ret.params, ret.returns, ret.code, ret.entry,
+                     ret.target,
+                     ret.static_info)  # ffi.NativeCode -> ft.NativeCode
+    if verbose:
+        print(ret, file=sys.stderr)
+
+    if isinstance(ast, Func) and ast.has_backward():
+        ret.attach_backward(
+            codegen(ast.backward,
+                    target=target,
+                    jit_cache=jit_cache,
+                    verbose=verbose), ast.input_name_to_gradient_name,
+            ast.output_name_to_gradient_name)
+    return ret

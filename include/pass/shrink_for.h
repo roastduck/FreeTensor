@@ -9,7 +9,6 @@
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
-#include <pass/pb_simplify.h>
 
 namespace freetensor {
 
@@ -28,15 +27,7 @@ class CheckSideEffect : public Visitor {
 class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    // We need linear programming from PBCompBounds, because the minimum/maximum
-    // value of a linear function does not always appear at the minimum/maximum
-    // points of its parameters.
-    // See 2.pass/test_shrink_for.py::test_linear_bounds
-    CompUniqueBoundsPB bound_;
-
-    ASTHashMap<
-        Var, std::vector<Ref<CompUniqueBounds::Bound>>>
-        newRange_;
+    ASTHashMap<Var, std::vector<Ref<CompUniqueBounds::Bound>>> newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;
 
@@ -45,8 +36,6 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     bool inSubAST_ = false;
 
   public:
-    ShrinkFor() : bound_(*this) {}
-
     void setSubAST(const Stmt &subAST);
 
   protected:

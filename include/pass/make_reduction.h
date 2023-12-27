@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_MAKE_REDUCTION_H
 #define FREE_TENSOR_MAKE_REDUCTION_H
 
+#include <optional>
 #include <unordered_set>
 
 #include <func.h>
@@ -19,7 +20,8 @@ class MakeReduction : public Mutator {
   private:
     bool isSameElem(const Store &s, const Load &l);
 
-    Stmt doMake(Store op, ReduceOp reduceOp);
+    Stmt doMake(Store op, ASTNodeType binOp, ReduceOp reduceOp,
+                std::optional<ASTNodeType> invBinOp = std::nullopt);
 
   protected:
     Stmt visit(const Store &op) override;
@@ -40,9 +42,8 @@ inline Stmt makeReduction(const Stmt &op,
 }
 
 inline Stmt makeReduction(const Stmt &op) {
-    return makeReduction(op, {ReduceOp::Add, ReduceOp::Sub, ReduceOp::Mul,
-                              ReduceOp::Min, ReduceOp::Max, ReduceOp::LAnd,
-                              ReduceOp::LOr});
+    return makeReduction(op, {ReduceOp::Add, ReduceOp::Mul, ReduceOp::Min,
+                              ReduceOp::Max, ReduceOp::LAnd, ReduceOp::LOr});
 }
 
 DEFINE_PASS_FOR_FUNC(makeReduction)

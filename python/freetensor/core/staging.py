@@ -9,12 +9,15 @@ import sys
 import ast
 import functools
 import inspect
-import traceback
 import sourceinspect as ins
-from typing import Callable, Dict, List, Sequence, Optional, Any, TypeVar, Union
+import astor
+from pygments import highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import TerminalFormatter
+from typing import Callable, Dict, List, Sequence, Optional, Any, Set
 from dataclasses import dataclass
 
-import freetensor_ffi as ffi
+from . import config
 
 assert sys.version_info >= (3,
                             8), "Python version lower than 3.8 is not supported"
@@ -33,11 +36,8 @@ class TransformError(Exception):
 class StagingError(Exception):
     '''Error occurred during staging function execution (i.e. IR tree generation).'''
 
-    def __init__(self, overload: StagingOverload, message: str) -> None:
-        # TODO: add output of StagingContext.call_stack
-        super().__init__(
-            f'{message}:\n{"".join(traceback.format_list(overload.debug_call_stack))}'
-            .lstrip())
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
 
 
 @dataclass
@@ -82,8 +82,8 @@ def process_annotating_comments(src: str):
     for line in src.splitlines():
         indent = re.match('\\s*', line)[0]
         rest_line = line[len(indent):]
-        if rest_line.startswith('#! '):
-            arg = rest_line[3:].replace('"', '\\"')
+        if rest_line.startswith('#!'):
+            arg = rest_line[2:].strip().replace('"', '\\"')
             new_src.append(f'{indent}__staging_overload__.metadata("{arg}")')
         else:
             new_src.append(line)
@@ -114,7 +114,6 @@ class StagingOverload:
 
     def __init__(self) -> None:
         self.is_shortcut_allowed: bool = True
-        self.debug_call_stack: List[traceback.FrameSummary] = []
 
     def custom_attr(self, obj: Any, attr: str) -> Any:
         '''
@@ -162,24 +161,8 @@ class StagingOverload:
         '''
         pass
 
-    def at_position(self, filename: str, lineno: int) -> None:
-        '''
-        Code position handler.
-
-        Defaults to a no-op.
-        Can be overridden by subclasses.
-
-        Parameters
-        ----------
-        filename : str
-            Name of the file containing code for the next statement.
-        lineno : int
-            Line number of the next statement.
-        '''
-        pass
-
     def error(self, content: str):
-        return StagingError(self, content)
+        return StagingError(content)
 
     def allow_shortcut_scope(self, allow: bool):
         '''Opens a scope that allows shortcut control flows in a statically deterministic
@@ -368,19 +351,12 @@ class StagingOverload:
         else:
             return not arg
 
-    def functiondef_decorator(self, filename):
-        return functools.partial(self.functiondef_wrapper, filename)
-
     def functiondef_wrapper(self, filename, func):
         '''Function definition wrapper.
         This wrapper performs extra initialization and cleanup for function definition.
         '''
 
         def wrapped(*args, **kwargs):
-            # Push debug call stack with some random line number.
-            # It will be updated by `mark_position` calls in the function.
-            self.debug_call_stack.append(
-                traceback.FrameSummary(filename, 1, func.__name__))
             # The called function can now return from itself, despite what the outer
             # control flow is.
             with self.allow_shortcut_scope(True):
@@ -391,8 +367,6 @@ class StagingOverload:
                 else:
                     # No return_stmt was called, naturally returns None
                     result = None
-            # Pop debug call stack.
-            self.debug_call_stack.pop()
             return result
 
         return wrapped
@@ -403,13 +377,50 @@ class StagingOverload:
         return None
 
     def mark_position(self, lineno: int):
-        # FrameSummary is immutable, so we have to initialize a new one with updated
-        # line number.
-        self.debug_call_stack[-1] = traceback.FrameSummary(
-            self.debug_call_stack[-1].filename, lineno,
-            self.debug_call_stack[-1].name)
-        self.at_position(self.debug_call_stack[-1].filename,
-                         self.debug_call_stack[-1].lineno)
+        '''
+        Code position handler.
+
+        Defaults to a no-op. Can be overridden by subclasses.
+
+        Parameters
+        ----------
+        lineno : int
+            Line number of the next statement.
+        '''
+
+        pass
+
+
+class StagingOverloadStack:
+
+    def __init__(self, overload_type: type):
+        self.overload_type = overload_type
+        self.overload_stack = []
+
+    def in_staging(self):
+        return len(self.overload_stack) > 0
+
+    def __enter__(self):
+        self.overload_stack.append(self.overload_type())
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.overload_stack.pop()
+
+    def top(self):
+        return self.overload_stack[-1]
+
+    def __getattr__(self, name):
+        return getattr(self.top(), name)
+
+    def functiondef_decorator(self, filename, func=None):
+        if func is None:
+            return functools.partial(self.functiondef_decorator, filename)
+
+        def f(*args, **kvs):
+            # Always use the current top, instead of enclosuring the old top
+            return self.top().functiondef_wrapper(filename, func)(*args, **kvs)
+
+        return f
 
     def into_staging(self,
                      func,
@@ -466,6 +477,11 @@ class StagingOverload:
             lineno -= 1
         else:
             tree = ast.parse(src)
+        # Replace the annotations with __staging_annotations__
+        assert isinstance(tree, ast.Module) and isinstance(
+            tree.body[-1], ast.FunctionDef)
+        tree.body[-1].args = ReplaceAnnotations(
+            func.__annotations__.keys()).visit(tree.body[0].args)
         tree = Transformer(file, lineno).visit(tree)
 
         # Instead of passing the `func_local` directly to `exec`, we instead wrap the
@@ -495,12 +511,12 @@ class StagingOverload:
         # The `LocalsDictWrapper` is a helper class to reduce code generation complexity.
 
         WRAPPER_NAME = '__freetensor_staging_wrapper__'
-        assert isinstance(tree, ast.Module)
-        assert len(tree.body) == 1 and isinstance(tree.body[0], ast.FunctionDef)
+        assert isinstance(tree, ast.Module) and isinstance(
+            tree.body[-1], ast.FunctionDef)
 
         # Modify function body.
         if len(func_locals) > 0:
-            tree.body[0].body = ([
+            tree.body[-1].body = ([
                 # Declare them as nonlocals to assign to outer scope.
                 ast.Nonlocal(list(func_locals.keys())),
             ] + [
@@ -512,7 +528,7 @@ class StagingOverload:
                 for name in func_locals.keys()
             ] + [
                 # Use a try-finally to ensure closure write back.
-                ast.Try(body=tree.body[0].body,
+                ast.Try(body=tree.body[-1].body,
                         handlers=[],
                         orelse=[],
                         finalbody=[
@@ -532,7 +548,8 @@ class StagingOverload:
                                        ast.arg('__freetensor_extra_locals__',
                                                None),
                                        ast.arg('__freetensor_local_cells__',
-                                               None)
+                                               None),
+                                       ast.arg('__staging_annotations__', None),
                                    ],
                                    vararg=None,
                                    kwonlyargs=[],
@@ -560,15 +577,14 @@ class StagingOverload:
         tree = ast.fix_missing_locations(tree)
 
         if verbose:
-            import astor
             source = astor.to_source(tree)
 
-            from pygments import highlight
-            from pygments.lexers import PythonLexer
-            from pygments.formatters import TerminalFormatter
-            print(highlight(source, PythonLexer(),
-                            TerminalFormatter(bg='dark', linenos=True)),
-                  file=sys.stderr)
+            if config.pretty_print():
+                print(highlight(source, PythonLexer(),
+                                TerminalFormatter(bg='dark', linenos=True)),
+                      file=sys.stderr)
+            else:
+                print(source)
 
             tree = source  # make debug info match dumped source
 
@@ -579,7 +595,8 @@ class StagingOverload:
         f_wrapper = empty_locals[WRAPPER_NAME]
         # Pass the closure to the wrapper and retrieve the staging function with
         # correct captured variables.
-        f_staging = f_wrapper(extra_locals, LocalsDictWrapper(func_locals))
+        f_staging = f_wrapper(extra_locals, LocalsDictWrapper(func_locals),
+                              func.__annotations__)
 
         return f_staging
 
@@ -606,8 +623,8 @@ class StagedAssignable(abc.ABC):
 
 class StagedTypeAnnotationMeta(abc.ABCMeta):
 
-    def __getitem__(self, args):
-        return self(*args)
+    def __getitem__(cls, args):
+        return cls(*args)
 
 
 class StagedTypeAnnotation(metaclass=StagedTypeAnnotationMeta):
@@ -954,25 +971,41 @@ class Transformer(ast.NodeTransformer):
 
             # Transform the function body
             node: ast.FunctionDef = self.generic_visit(old_node)
+
             # Cleanup the decorators
             node.decorator_list = [
-                call_helper(StagingOverload.functiondef_decorator,
+                call_helper(StagingOverloadStack.functiondef_decorator,
                             ast.Constant(self.filename))
             ]
+
+            annotations_dict_name = f'__staging_annotations__{node.name}__'
             # Handle the type annotations
             node.body = [
                 stmt for arg in node.args.posonlyargs + node.args.args
                 if arg.annotation for stmt in self.handleType_AnnAssign(
-                    ast.AnnAssign(ast.Name(arg.arg, ast.Store()),
-                                  arg.annotation, None, 1))
+                    ast.AnnAssign(
+                        ast.Name(arg.arg, ast.Store()),
+                        ast.Subscript(
+                            ast.Name(annotations_dict_name, ast.Load()),
+                            ast.Constant(arg.arg), ast.Load()), None, 1))
             ] + node.body
 
-            # Cleanup annotations; we don't need them anymore
+            annotations_dict = {}
+            # Cleanup annotations; we don't need them any more
             for arg in [
                     node.args.vararg, node.args.kwarg
             ] + node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
-                if arg is not None:
+                if arg is not None and arg.annotation is not None:
+                    annotations_dict[arg.arg] = arg.annotation
                     arg.annotation = None
+
+            # Write the annotations_dict
+            node = [
+                ast.Assign(
+                    [ast.Name(annotations_dict_name, ast.Store())],
+                    ast.Dict([ast.Constant(k) for k in annotations_dict.keys()],
+                             list(annotations_dict.values()))), node
+            ]
 
         self.curr_func = prev_func
         self.nonlocals = prev_nonlocals
@@ -1063,3 +1096,34 @@ class Transformer(ast.NodeTransformer):
 
     def visit_Continue(self, node: ast.Continue) -> Any:
         return ast.Expr(call_helper(StagingOverload.continue_stmt))
+
+    def visit_With(self, node: ast.With) -> Any:
+
+        def recursive_get_names(target):
+            if isinstance(target, ast.Name):
+                self.nonlocals[-1].append(target.id)
+            elif isinstance(target, ast.Tuple) or isinstance(target, ast.List):
+                for t in target.elts:
+                    recursive_get_names(t)
+            else:
+                assert False
+
+        for item in node.items:
+            if item.optional_vars is not None:
+                recursive_get_names(item.optional_vars)
+        return self.generic_visit(node)
+
+
+class ReplaceAnnotations(ast.NodeTransformer):
+
+    def __init__(self, annotated: Set[str]):
+        self.annotated = annotated
+
+    def visit_arg(self, node: ast.arg) -> Any:
+        if node.arg in self.annotated:
+            return ast.arg(
+                node.arg,
+                ast.Subscript(ast.Name('__staging_annotations__', ast.Load()),
+                              ast.Constant(node.arg), ast.Load()))
+        else:
+            return node

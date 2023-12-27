@@ -6,7 +6,7 @@
 
 namespace freetensor {
 
-inline CodeGenStream::CodeGenStream() { os_.iword(OSTREAM_NO_PRETTY) = true; }
+inline CodeGenStream::CodeGenStream() { os_ << manipNoPrettyAST(true); }
 
 template <class Stream>
 CodeGen<Stream>::CodeGen(bool compact, int indentSize)

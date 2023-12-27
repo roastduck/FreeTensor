@@ -1,22 +1,26 @@
+# Use relative path for GitHub repos, so it
+# automatically pick HTTPS or SSH according
+# to how you clone FreeTensor.
+# See https://stackoverflow.com/questions/32482199/git-submodules-it-is-possible-to-provide-both-https-and-ssh-access-to-submodule
 [submodule "3rd-party/pybind11"]
     path = 3rd-party/pybind11
-    url = git@github.com:roastduck/pybind11.git
+    url = ../../roastduck/pybind11.git
     branch = fix-typing
 [submodule "3rd-party/isl"]
     path = 3rd-party/isl
     url = git://repo.or.cz/isl.git
-[submodule "3rd-party/z3"]
-    path = 3rd-party/z3
-    url = git@github.com:Z3Prover/z3.git
 [submodule "3rd-party/cuda-samples"]
     path = 3rd-party/cuda-samples
-    url = git@github.com:NVIDIA/cuda-samples.git
+    url = ../../NVIDIA/cuda-samples.git
 [submodule "3rd-party/antlr/antlr4"]
-	path = 3rd-party/antlr/antlr4
-	url = git@github.com:antlr/antlr4.git
+    path = 3rd-party/antlr/antlr4
+    url = ../../antlr/antlr4.git
 [submodule "3rd-party/mdspan"]
-	path = 3rd-party/mdspan
-	url = git@github.com:kokkos/mdspan.git
+    path = 3rd-party/mdspan
+    url = ../../kokkos/mdspan.git
 [submodule "3rd-party/range-v3"]
-	path = 3rd-party/range-v3
-	url = git@github.com:ericniebler/range-v3.git
+    path = 3rd-party/range-v3
+    url = ../../ericniebler/range-v3.git
+[submodule "3rd-party/cutlass"]
+	path = 3rd-party/cutlass
+	url = ../../NVIDIA/cutlass.git

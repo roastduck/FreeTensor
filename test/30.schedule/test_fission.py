@@ -307,7 +307,9 @@ def test_correct_dependence_branch():
 
     s = ft.Schedule(test, verbose=1)
     s.fission("L", ft.FissionSide.Before, "S")
-    test = ft.lower(s.func(), verbose=1, skip_passes=['prop_one_time_use'])
+    test = ft.lower(s.func(),
+                    verbose=1,
+                    skip_passes=['prop_one_time_use', 'float_simplify'])
 
     @ft.transform
     def expect(x: ft.Var[(3,), "float32"]):
@@ -344,7 +346,9 @@ def test_correct_dependence_branch_with_else():
 
     s = ft.Schedule(test, verbose=1)
     s.fission("L", ft.FissionSide.Before, "S2")
-    test = ft.lower(s.func(), verbose=1, skip_passes=['prop_one_time_use'])
+    test = ft.lower(s.func(),
+                    verbose=1,
+                    skip_passes=['prop_one_time_use', 'float_simplify'])
 
     @ft.transform(verbose=1)
     def expected(x: ft.Var[(4,), "float32"]):
@@ -526,6 +530,45 @@ def test_correct_dependence_unable_resolve():
         s.fission("L2", ft.FissionSide.After, "S0")
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
+
+
+def test_legal_dependence():
+    with ft.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("buf", (4, 8), "int32", "inout", "cpu"),
+    ]) as (x0, x1, y, b):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                ft.MarkLabel("S0")
+                with ft.If(i > 0):
+                    # Always writes to `b` of the previous `i`. Always happens
+                    # before the next statement no matter fission or not
+                    b[i - 1, 8 - j] = x0[i, j] + x1[i, j]
+                y[i, j] = b[i, j] * b[i, j]
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fission("L2", ft.FissionSide.After, "S0")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([
+        ("x0", (4, 8), "int32", "input", "cpu"),
+        ("x1", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("buf", (4, 8), "int32", "inout", "cpu"),
+    ]) as (x0, x1, y, b):
+        with ft.For("i", 0, 4) as i:
+            with ft.If(i > 0):
+                with ft.For("j", 0, 8) as j:
+                    b[i - 1, -1 * j + 8] = x0[i, j] + x1[i, j]
+            with ft.For("j", 0, 8) as j:
+                y[i, j] = b[i, j] * b[i, j]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
 
 
 def test_correct_dependence_no_need_to_modify_no_dep():

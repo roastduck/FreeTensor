@@ -1,3 +1,8 @@
+#include <algorithm>
+#include <optional>
+
+#include <config.h>
+#include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
 
@@ -15,6 +20,30 @@ static bool isConst0(const Expr &op) {
             op.as<FloatConstNode>()->val_ == 0);
 }
 
+template <class T>
+static std::optional<std::vector<int>> permutationB2A(const std::vector<T> &A,
+                                                      const std::vector<T> &B) {
+    ASSERT(A.size() == B.size());
+    std::vector<int> permutation(A.size(), 0);
+    auto idxAndA = ranges::to<std::vector>(views::enumerate(A));
+    auto idxAndB = ranges::to<std::vector>(views::enumerate(B));
+    std::ranges::stable_sort(idxAndA, [](auto &&lhs, auto &&rhs) {
+        return std::get<1>(lhs) < std::get<1>(rhs);
+    });
+    std::ranges::stable_sort(idxAndB, [](auto &&lhs, auto &&rhs) {
+        return std::get<1>(lhs) < std::get<1>(rhs);
+    });
+    for (auto &&[itemA, itemB] : views::zip(idxAndA, idxAndB)) {
+        auto &&[idxA, valA] = itemA;
+        auto &&[idxB, valB] = itemB;
+        if (valA != valB) {
+            return std::nullopt;
+        }
+        permutation[idxB] = idxA;
+    }
+    return permutation;
+}
+
 static std::vector<int> filter(const std::vector<int> &order,
                                const std::vector<bool> &flag) {
     std::vector<int> ret;
@@ -25,6 +54,106 @@ static std::vector<int> filter(const std::vector<int> &order,
         }
     }
     return ret;
+}
+
+static std::pair<std::vector<int>, std::vector<int>>
+filterAndGetIdx(const std::vector<int> &order, const std::vector<bool> &flag) {
+    std::vector<int> sub, idx;
+    sub.reserve(order.size());
+    idx.reserve(order.size());
+    for (auto &&[i, item] : views::enumerate(order)) {
+        if (flag.at(item)) {
+            sub.emplace_back(item);
+            idx.emplace_back(i);
+        }
+    }
+    return {sub, idx};
+}
+
+static bool inOrder(const std::vector<bool> &before,
+                    const std::vector<bool> &after) {
+    bool metAfter = false;
+    for (auto &&[isBefore, isAfter] : views::zip(before, after)) {
+        if (isAfter) {
+            metAfter = true;
+        }
+        if (isBefore && metAfter) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void AsMatMul::checkSameOrderOrRetry(const ID &idA,
+                                     const std::vector<int> &orderA,
+                                     const std::vector<bool> &filterA,
+                                     const ID &idB,
+                                     const std::vector<int> &orderB,
+                                     const std::vector<bool> &filterB,
+                                     const std::string &message) {
+    auto &&[subA, idxA] = filterAndGetIdx(orderA, filterA);
+    auto &&[subB, idxB] = filterAndGetIdx(orderB, filterB);
+    if (subA == subB) {
+        return; // OK
+    }
+    if (auto &&subPermu = permutationB2A(subB, subA); subPermu.has_value()) {
+        auto fullPermu =
+            ranges::to<std::vector>(views::ints(0, (int)orderB.size()));
+        for (auto &&[i, p] : views::enumerate(*subPermu)) {
+            fullPermu[idxB[i]] = idxB[p];
+        }
+        throw NeedVarReorder(idB, fullPermu, message); // Retry
+    } else {
+        throw InvalidSchedule(message); // Impossible
+    }
+}
+
+void AsMatMul::checkSameOrderNoRetry(const ID &idA,
+                                     const std::vector<int> &orderA,
+                                     const std::vector<bool> &filterA,
+                                     const ID &idB,
+                                     const std::vector<int> &orderB,
+                                     const std::vector<bool> &filterB,
+                                     const std::string &message) {
+    if (filter(orderA, filterA) != filter(orderB, filterB)) {
+        throw InvalidSchedule(message);
+    }
+}
+
+void AsMatMul::retryReorderingBack(const ID &id,
+                                   const std::vector<bool> &filter,
+                                   const std::string &message) {
+    std::vector<int> permu;
+    permu.reserve(filter.size());
+    for (int i = 0, n = filter.size(); i < n; i++) {
+        if (!filter[i]) {
+            permu.emplace_back(i);
+        }
+    }
+    for (int i = 0, n = filter.size(); i < n; i++) {
+        if (filter[i]) {
+            permu.emplace_back(i);
+        }
+    }
+    throw NeedVarReorder{id, permu, message};
+}
+
+void AsMatMul::retryReorderingFront(const ID &id,
+                                    const std::vector<bool> &filter,
+                                    const std::string &message) {
+    std::vector<int> permu;
+    permu.reserve(filter.size());
+    for (int i = 0, n = filter.size(); i < n; i++) {
+        if (filter[i]) {
+            permu.emplace_back(i);
+        }
+    }
+    for (int i = 0, n = filter.size(); i < n; i++) {
+        if (!filter[i]) {
+            permu.emplace_back(i);
+        }
+    }
+    throw NeedVarReorder{id, permu, message};
 }
 
 const LinearExpr<int64_t> &AsMatMul::analyzeLinear(const Expr &expr) {
@@ -73,13 +202,14 @@ Stmt AsMatMul::visit(const For &op) {
         } else {
             beta = makeIntConst(1);
         }
-        ret = makeMatMul(a_, b_, c_, alpha, beta, m_, k_, n_, lda_, ldb_, ldc_,
-                         stridea_, strideb_, stridec_, batchSize_, aIsRowMajor_,
-                         bIsRowMajor_, cIsRowMajor_, ret);
+        ret = makeMatMul(backend_, a_, b_, c_, alpha, beta, m_, k_, n_, lda_,
+                         ldb_, ldc_, stridea_, strideb_, stridec_, batchSize_,
+                         aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
         for (auto &&def : innerDefs_) {
             ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, ret,
                              def->pinned_, def->metadata(), def->id());
         }
+        done_ = true;
         return ret;
     } else {
         ASSERT(!outerDefs_.count(op->iter_));
@@ -144,6 +274,7 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
         }
         Load loadB = mul->rhs_.as<LoadNode>();
 
+        // Find out which LOOPS are used
         std::vector<bool> usedByA, usedByB, usedByC;
         std::vector<int> orderA, orderB, orderC;
         std::tie(usedByA, orderA, a_) = findIterUsedAndBaseAddr(loadA);
@@ -160,51 +291,61 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             nAxes[i] = !usedByA[i] && usedByB[i] && usedByC[i];
         }
 
-        if (filter(orderA, batchAxes) != filter(orderB, batchAxes) ||
-            filter(orderA, batchAxes) != filter(orderC, batchAxes)) {
-            throw InvalidSchedule("Order of each indices in the batch axis "
-                                  "should be the same in each matrices");
-        }
-        if (filter(orderA, mAxes) != filter(orderC, mAxes)) {
-            throw InvalidSchedule("Order of each indices in the m axis "
-                                  "should be the same in each matrices");
-        }
-        if (filter(orderA, kAxes) != filter(orderB, kAxes)) {
-            throw InvalidSchedule("Order of each indices in the k axis "
-                                  "should be the same in each matrices");
-        }
-        if (filter(orderB, nAxes) != filter(orderC, nAxes)) {
-            throw InvalidSchedule("Order of each indices in the n axis "
-                                  "should be the same in each matrices");
-        }
+        ID idA = def(loadA->var_)->id();
+        ID idB = def(loadB->var_)->id();
+        ID idC = def(op->var_)->id();
+
+        checkSameOrderOrRetry(idA, orderA, batchAxes, idB, orderB, batchAxes,
+                              "Order of each indices in the batch axis should "
+                              "be the same in each matrices");
+        checkSameOrderOrRetry(idA, orderA, batchAxes, idC, orderC, batchAxes,
+                              "Order of each indices in the batch axis should "
+                              "be the same in each matrices");
+        checkSameOrderOrRetry(idA, orderA, mAxes, idC, orderC, mAxes,
+                              "Order of each indices in the m axis should be "
+                              "the same in each matrices");
+        checkSameOrderOrRetry(idA, orderA, kAxes, idB, orderB, kAxes,
+                              "Order of each indices in the k axis should be "
+                              "the same in each matrices");
+        checkSameOrderOrRetry(idB, orderB, nAxes, idC, orderC, nAxes,
+                              "Order of each indices in the n axis should be "
+                              "the same in each matrices");
         if (foundInit_) {
-            if (filter(orderInit_, batchAxes) != filter(orderC, batchAxes)) {
-                throw InvalidSchedule(
-                    "Order of each indices in the batch axis "
-                    "should be the same in initialization and reduction");
-            }
-            if (filter(orderInit_, mAxes) != filter(orderC, mAxes)) {
-                throw InvalidSchedule(
-                    "Order of each indices in the m axis "
-                    "should be the same in initialization and reduction");
-            }
-            if (filter(orderInit_, nAxes) != filter(orderC, nAxes)) {
-                throw InvalidSchedule(
-                    "Order of each indices in the n axis "
-                    "should be the same in initialization and reduction");
-            }
+            checkSameOrderNoRetry(
+                idC, orderInit_, batchAxes, idC, orderC, batchAxes,
+                "Order of each indices in the batch axis should be the same in "
+                "initialization and reduction");
+            checkSameOrderNoRetry(
+                idC, orderInit_, mAxes, idC, orderC, mAxes,
+                "Order of each indices in the m axis should be the same in "
+                "initialization and reduction");
+            checkSameOrderNoRetry(
+                idC, orderInit_, nAxes, idC, orderC, nAxes,
+                "Order of each indices in the n axis should be the same in "
+                "initialization and reduction");
         }
 
+        // Find out which TENSOR DIMENSIONS are used
+        std::vector<bool> dimsABatch = findDimsUsed(loadA, batchAxes);
+        std::vector<bool> dimsBBatch = findDimsUsed(loadB, batchAxes);
+        std::vector<bool> dimsCBatch = findDimsUsed(op, batchAxes);
+        std::vector<bool> dimsAM = findDimsUsed(loadA, mAxes);
+        std::vector<bool> dimsAK = findDimsUsed(loadA, kAxes);
+        std::vector<bool> dimsBK = findDimsUsed(loadB, kAxes);
+        std::vector<bool> dimsBN = findDimsUsed(loadB, nAxes);
+        std::vector<bool> dimsCM = findDimsUsed(op, mAxes);
+        std::vector<bool> dimsCN = findDimsUsed(op, nAxes);
+
         Expr strideAM, strideAK, strideBK, strideBN, strideCM, strideCN;
-        std::tie(batchSize_, stridea_) = findLenAndStride(loadA, batchAxes);
-        std::tie(batchSize_, strideb_) = findLenAndStride(loadB, batchAxes);
-        std::tie(batchSize_, stridec_) = findLenAndStride(op, batchAxes);
-        std::tie(m_, strideAM) = findLenAndStride(loadA, mAxes);
-        std::tie(k_, strideAK) = findLenAndStride(loadA, kAxes);
-        std::tie(k_, strideBK) = findLenAndStride(loadB, kAxes);
-        std::tie(n_, strideBN) = findLenAndStride(loadB, nAxes);
-        std::tie(m_, strideCM) = findLenAndStride(op, mAxes);
-        std::tie(n_, strideCN) = findLenAndStride(op, nAxes);
+        std::tie(batchSize_, stridea_) = findLenAndStride(loadA, dimsABatch);
+        std::tie(batchSize_, strideb_) = findLenAndStride(loadB, dimsBBatch);
+        std::tie(batchSize_, stridec_) = findLenAndStride(op, dimsCBatch);
+        std::tie(m_, strideAM) = findLenAndStride(loadA, dimsAM);
+        std::tie(k_, strideAK) = findLenAndStride(loadA, dimsAK);
+        std::tie(k_, strideBK) = findLenAndStride(loadB, dimsBK);
+        std::tie(n_, strideBN) = findLenAndStride(loadB, dimsBN);
+        std::tie(m_, strideCM) = findLenAndStride(op, dimsCM);
+        std::tie(n_, strideCN) = findLenAndStride(op, dimsCN);
         if (isIntConst1(strideAK)) {
             aIsRowMajor_ = true;
             lda_ = strideAM;
@@ -212,8 +353,9 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             aIsRowMajor_ = false;
             lda_ = strideAK;
         } else {
-            throw InvalidSchedule(
-                "Eiter m or k dimension of a should be 1-strided");
+            retryReorderingBack(
+                idA, dimsAK,
+                "Either m or k dimension of a should be 1-strided");
         }
         if (isIntConst1(strideBN)) {
             bIsRowMajor_ = true;
@@ -222,8 +364,9 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             bIsRowMajor_ = false;
             ldb_ = strideBN;
         } else {
-            throw InvalidSchedule(
-                "Eiter k or n dimension of b should be 1-strided");
+            retryReorderingBack(
+                idB, dimsBN,
+                "Either k or n dimension of b should be 1-strided");
         }
         if (isIntConst1(strideCN)) {
             cIsRowMajor_ = true;
@@ -232,8 +375,9 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             cIsRowMajor_ = false;
             ldc_ = strideCN;
         } else {
-            throw InvalidSchedule(
-                "Eiter m or n dimension of c should be 1-strided");
+            retryReorderingBack(
+                idC, dimsCN,
+                "Either m or n dimension of c should be 1-strided");
         }
 
         // Fix the strides of singleton dimensions to satisfy the API
@@ -251,10 +395,26 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             ldc_ = cIsRowMajor_ ? n_ : m_;
         }
         if (std::find(batchAxes.begin(), batchAxes.end(), true) ==
-            batchAxes.end()) {
+            batchAxes.end()) { // There is no batch axes
             stridea_ = makeMul(lda_, aIsRowMajor_ ? m_ : k_);
             strideb_ = makeMul(ldb_, bIsRowMajor_ ? k_ : n_);
             stridec_ = makeMul(ldc_, cIsRowMajor_ ? m_ : n_);
+        } else {
+            if (!inOrder(dimsABatch, dimsAM) || !inOrder(dimsABatch, dimsAK)) {
+                retryReorderingFront(idA, dimsABatch,
+                                     "BLAS requires batch dimensions to be out "
+                                     "of matrix dimensions in A");
+            }
+            if (!inOrder(dimsBBatch, dimsBK) || !inOrder(dimsABatch, dimsBN)) {
+                retryReorderingFront(idB, dimsBBatch,
+                                     "BLAS requires batch dimensions to be out "
+                                     "of matrix dimensions in B");
+            }
+            if (!inOrder(dimsCBatch, dimsCM) || !inOrder(dimsABatch, dimsCN)) {
+                retryReorderingFront(idC, dimsCBatch,
+                                     "BLAS requires batch dimensions to be out "
+                                     "of matrix dimensions in C");
+            }
         }
     }
 
@@ -274,19 +434,74 @@ Stmt AsMatMul::visit(const VarDef &op) {
     }
 }
 
-Stmt asMatMul(const Stmt &ast, const ID &loop) { return AsMatMul(loop)(ast); }
-
-void Schedule::asMatMul(const ID &loop) {
-    beginTransaction();
-    auto log =
-        appendLog(MAKE_SCHEDULE_LOG(AsMatMul, freetensor::asMatMul, loop));
-    try {
-        applyLog(log);
-        commitTransaction();
-    } catch (const InvalidSchedule &e) {
-        abortTransaction();
-        throw InvalidSchedule(log, ast(), e.what());
+Stmt asMatMul(const Stmt &_ast, const ID &loop, MatMulBackend backend) {
+    AsMatMul mutator(loop, backend);
+    auto ast = simplify(_ast); // Simplify confusing loop range and indexing
+                               // from libop. TODO: simplify only needed region
+    ast = mutator(ast);
+    if (!mutator.done()) {
+        throw InvalidSchedule(toString(loop) + " not found");
     }
+    return ast;
+}
+
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
+                        const Ref<Target> &target, MatMulBackend backend) {
+    beginTransaction();
+    while (true) {
+        auto log = appendLog(
+            MAKE_SCHEDULE_LOG(AsMatMul, freetensor::asMatMul, loop, backend));
+        try {
+            applyLog(log);
+            break;
+        } catch (const NeedVarReorder &e) {
+            if (mode != AsMatMulMode::KeepMemLayout) {
+                try {
+                    ID defId = e.vardef_;
+                    if (mode == AsMatMulMode::TryTranspose) {
+                        auto def = find(defId).as<VarDefNode>();
+                        defId = std::get<3>(
+                            cache(loop, def->name_, def->buffer_->mtype()));
+                    }
+                    varReorder(defId, e.order_);
+                } catch (const InvalidSchedule &e2) {
+                    abortTransaction();
+                    throw InvalidSchedule(
+                        log, ast(),
+                        std::string(e.what()) +
+                            ". Tried var_reorder, but resulting in another "
+                            "exception: " +
+                            e2.what());
+                }
+            } else {
+                abortTransaction();
+                throw InvalidSchedule(log, ast(), e.what());
+            }
+        } catch (const InvalidSchedule &e) {
+            abortTransaction();
+            throw InvalidSchedule(log, ast(), e.what());
+        }
+    }
+    commitTransaction();
+}
+
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
+                        const Ref<Target> &target) {
+    switch (target->type()) {
+    case TargetType::CPU:
+        asMatMul(loop, mode, target, MatMulBackend::Mkl);
+        break;
+    case TargetType::GPU:
+        asMatMul(loop, mode, target, MatMulBackend::Cutlass);
+        break;
+    default:
+        throw InvalidSchedule(ast(), "No default MatMul backend for target " +
+                                         toString(target));
+    }
+}
+
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
+    asMatMul(loop, mode, Config::defaultTarget());
 }
 
 } // namespace freetensor

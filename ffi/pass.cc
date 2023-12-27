@@ -17,6 +17,7 @@
 #include <pass/move_out_first_or_last_iter.h>
 #include <pass/pb_simplify.h>
 #include <pass/prop_one_time_use.h>
+#include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>
 #include <pass/remove_writes.h>
 #include <pass/scalar_prop_const.h>
@@ -69,15 +70,15 @@ void init_ffi_pass(py::module_ &m) {
           static_cast<Stmt (*)(const Stmt &)>(&scalarPropConst), "stmt"_a);
 
     m.def("sink_var",
-          static_cast<Func (*)(const Func &,
-                               const std::optional<std::unordered_set<ID>> &)>(
-              &sinkVar),
-          "func"_a, "to_sink"_a = std::nullopt);
+          static_cast<Func (*)(
+              const Func &, const std::optional<std::unordered_set<ID>> &,
+              const std::function<bool(const Stmt &)> &)>(&sinkVar),
+          "func"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr);
     m.def("sink_var",
-          static_cast<Stmt (*)(const Stmt &,
-                               const std::optional<std::unordered_set<ID>> &)>(
-              &sinkVar),
-          "stmt"_a, "to_sink"_a = std::nullopt);
+          static_cast<Stmt (*)(
+              const Stmt &, const std::optional<std::unordered_set<ID>> &,
+              const std::function<bool(const Stmt &)> &)>(&sinkVar),
+          "stmt"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr);
 
     m.def("shrink_var", static_cast<Func (*)(const Func &)>(&shrinkVar),
           "func"_a);
@@ -103,21 +104,31 @@ void init_ffi_pass(py::module_ &m) {
           "stmt"_a);
 
     m.def("make_parallel_reduction",
-          static_cast<Func (*)(const Func &)>(&makeParallelReduction),
-          "func"_a);
+          static_cast<Func (*)(const Func &, const Ref<Target> &)>(
+              &makeParallelReduction),
+          "func"_a, "target"_a);
     m.def("make_parallel_reduction",
-          static_cast<Stmt (*)(const Stmt &)>(&makeParallelReduction),
-          "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(
+              &makeParallelReduction),
+          "stmt"_a, "target"_a);
 
     m.def("tensor_prop_const",
-          static_cast<Func (*)(const Func &)>(&tensorPropConst), "func"_a);
+          static_cast<Func (*)(const Func &, const ID &, const ID &)>(
+              &tensorPropConst),
+          "func"_a, py::arg_v("both_in_sub_ast", ID(), "ID()"),
+          py::arg_v("either_in_sub_ast", ID(), "ID()"));
     m.def("tensor_prop_const",
-          static_cast<Stmt (*)(const Stmt &)>(&tensorPropConst), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const ID &, const ID &)>(
+              &tensorPropConst),
+          "stmt"_a, py::arg_v("both_in_sub_ast", ID(), "ID()"),
+          py::arg_v("either_in_sub_ast", ID(), "ID()"));
 
     m.def("prop_one_time_use",
-          static_cast<Func (*)(const Func &)>(&propOneTimeUse), "func"_a);
+          static_cast<Func (*)(const Func &, const ID &)>(&propOneTimeUse),
+          "func"_a, py::arg_v("sub_ast", ID(), "ID()"));
     m.def("prop_one_time_use",
-          static_cast<Stmt (*)(const Stmt &)>(&propOneTimeUse), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const ID &)>(&propOneTimeUse),
+          "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"));
 
     m.def("remove_writes",
           static_cast<Func (*)(const Func &, const ID &)>(&removeWrites),
@@ -125,6 +136,11 @@ void init_ffi_pass(py::module_ &m) {
     m.def("remove_writes",
           static_cast<Stmt (*)(const Stmt &, const ID &)>(&removeWrites),
           "stmt"_a, py::arg_v("single_def_id", ID(), "ID()"));
+
+    m.def("remove_cyclic_assign",
+          static_cast<Func (*)(const Func &)>(&removeCyclicAssign), "func"_a);
+    m.def("remove_cyclic_assign",
+          static_cast<Stmt (*)(const Stmt &)>(&removeCyclicAssign), "stmt"_a);
 
     m.def("remove_dead_var",
           static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
@@ -160,57 +176,75 @@ void init_ffi_pass(py::module_ &m) {
 
     // GPU
 #ifdef FT_WITH_CUDA
-    m.def("gpu_lower_parallel_reduction",
-          static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction));
-    m.def("gpu_lower_parallel_reduction",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerParallelReduction));
+#define GPU_ONLY(name, ...) name, __VA_ARGS__
+#else
+#define GPU_ONLY(name, ...)                                                    \
+    name, [](const py::args &, const py::kwargs &) {                           \
+        ERROR((std::string)name + " is unavailable because FT_WITH_CUDA is "   \
+                                  "disabled when building FreeTensor");        \
+    }
+#endif
 
-    m.def("gpu_normalize_threads",
-          static_cast<Func (*)(const Func &)>(&gpu::normalizeThreads),
-          "func"_a);
-    m.def("gpu_normalize_threads",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
-          "stmt"_a);
+    m.def(GPU_ONLY(
+        "gpu_lower_parallel_reduction",
+        static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction)));
+    m.def(GPU_ONLY(
+        "gpu_lower_parallel_reduction",
+        static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerParallelReduction)));
 
-    m.def("gpu_normalize_var_in_kernel",
-          static_cast<Func (*)(const Func &)>(&gpu::normalizeVarInKernel),
-          "func"_a);
-    m.def("gpu_normalize_var_in_kernel",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeVarInKernel),
-          "stmt"_a);
+    m.def(GPU_ONLY("gpu_normalize_threads",
+                   static_cast<Func (*)(const Func &)>(&gpu::normalizeThreads),
+                   "func"_a));
+    m.def(GPU_ONLY("gpu_normalize_threads",
+                   static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
+                   "stmt"_a));
 
-    m.def("gpu_make_sync",
-          static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
-              &gpu::makeSync),
-          "func"_a, "target"_a);
-    m.def("gpu_make_sync",
-          static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
-              &gpu::makeSync),
-          "stmt"_a, "target"_a);
+    m.def(GPU_ONLY(
+        "gpu_normalize_var_in_kernel",
+        static_cast<Func (*)(const Func &)>(&gpu::normalizeVarInKernel),
+        "func"_a));
+    m.def(GPU_ONLY(
+        "gpu_normalize_var_in_kernel",
+        static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeVarInKernel),
+        "stmt"_a));
 
-    m.def(
+    m.def(GPU_ONLY("gpu_make_sync",
+                   static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
+                       &gpu::makeSync),
+                   "func"_a, "target"_a));
+    m.def(GPU_ONLY("gpu_make_sync",
+                   static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
+                       &gpu::makeSync),
+                   "stmt"_a, "target"_a));
+
+    m.def(GPU_ONLY(
         "gpu_multiplex_buffers",
         static_cast<Func (*)(const Func &, const Ref<GPUTarget> &, const ID &)>(
             &gpu::multiplexBuffers),
-        "func"_a, "target"_a, "def_id"_a = std::nullopt);
-    m.def(
+        "func"_a, "target"_a, "def_id"_a = std::nullopt));
+    m.def(GPU_ONLY(
         "gpu_multiplex_buffers",
         static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &, const ID &)>(
             &gpu::multiplexBuffers),
-        "stmt"_a, "target"_a, "def_id"_a = std::nullopt);
+        "stmt"_a, "target"_a, "def_id"_a = std::nullopt));
 
-    m.def("gpu_simplex_buffers",
-          static_cast<Func (*)(const Func &, const ID &)>(&gpu::simplexBuffers),
-          "func"_a, "def_id"_a = std::nullopt);
-    m.def("gpu_simplex_buffers",
-          static_cast<Stmt (*)(const Stmt &, const ID &)>(&gpu::simplexBuffers),
-          "stmt"_a, "def_id"_a = std::nullopt);
+    m.def(GPU_ONLY(
+        "gpu_simplex_buffers",
+        static_cast<Func (*)(const Func &, const ID &)>(&gpu::simplexBuffers),
+        "func"_a, "def_id"_a = std::nullopt));
+    m.def(GPU_ONLY(
+        "gpu_simplex_buffers",
+        static_cast<Stmt (*)(const Stmt &, const ID &)>(&gpu::simplexBuffers),
+        "stmt"_a, "def_id"_a = std::nullopt));
 
-    m.def("gpu_lower_vector",
-          static_cast<Func (*)(const Func &)>(&gpu::lowerVector), "func"_a);
-    m.def("gpu_lower_vector",
-          static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector), "stmt"_a);
-#endif // FT_WITH_CUDA
+    m.def(GPU_ONLY("gpu_lower_vector",
+                   static_cast<Func (*)(const Func &)>(&gpu::lowerVector),
+                   "func"_a));
+    m.def(GPU_ONLY("gpu_lower_vector",
+                   static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector),
+                   "stmt"_a));
+
+#undef GPU_ONLY
 
     m.def("lower",
           static_cast<Func (*)(const Func &, const Ref<Target> &,

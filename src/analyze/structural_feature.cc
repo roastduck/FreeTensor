@@ -119,7 +119,7 @@ int64_t StructuralFeature::calcArea(
     for (size_t i = 0; i < n; i++) {
         // union the bounds of all accesses and get the lower and upper
         // expression
-        auto [l, u] = bound_.unionBounds(
+        auto [l, u] = bound_->unionBounds(
             // get bounds of the i-th dimension
             accesses | views::transform([&](auto &&a) {
                 return a.bounds_[i]->restrictScope(names());
@@ -130,7 +130,7 @@ int64_t StructuralFeature::calcArea(
         u = makeMin(
             u, makeSub(buffer(var)->tensor()->shape()[i], makeIntConst(1)));
         auto len = makeAdd(makeSub(u, l), makeIntConst(1));
-        if (auto constLen = bound_.getInt(len); constLen.has_value()) {
+        if (auto constLen = bound_->getInt(len); constLen.has_value()) {
             area *= *constLen;
         }
     }
@@ -173,18 +173,22 @@ void StructuralFeature::visitBinOp(const BinaryExpr &op) {
     BaseClass::visitExpr(op);
     updInfo(op, op->lhs_);
     updInfo(op, op->rhs_);
-    info_[op].opCnt_[upCast(op->lhs_->dtype(), op->rhs_->dtype())]++;
+    info_[op]
+        .opCnt_[upCast(op->lhs_->dtype().base(), op->rhs_->dtype().base())]++;
 }
 
 void StructuralFeature::visitUnaryOp(const UnaryExpr &op) {
     BaseClass::visitExpr(op);
     updInfo(op, op->expr_);
-    info_[op].opCnt_[op->expr_->dtype()]++;
+    info_[op].opCnt_[op->expr_->dtype().base()]++;
 }
 
 void StructuralFeature::visitStmt(const Stmt &op) {
+    auto boundOfOuterStmt = bound_;
+    bound_ = Ref<CompUniqueBoundsCombination>::make(*this);
     BaseClass::visitStmt(op);
     calcFeatures(op);
+    bound_ = boundOfOuterStmt;
 }
 
 void StructuralFeature::visitExpr(const Expr &op) {
@@ -203,7 +207,7 @@ void StructuralFeature::visit(const Load &op) {
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
     info_[op].loads_[op->var_] = info_[op].accesses_[op->var_] = {
-        CompAccessBound::Access(bound_, op->indices_, conds())};
+        CompAccessBound::Access(*bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -216,7 +220,7 @@ void StructuralFeature::visit(const Store &op) {
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
     info_[op].stores_[op->var_] = info_[op].accesses_[op->var_] = {
-        CompAccessBound::Access(bound_, op->indices_, conds())};
+        CompAccessBound::Access(*bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -227,14 +231,14 @@ void StructuralFeature::visit(const Store &op) {
 void StructuralFeature::visit(const ReduceTo &op) {
     BaseClass::visit(op);
 
-    info_[op].opCnt_[upCast(buffer(op->var_)->tensor()->dtype(),
-                            op->expr_->dtype())]++;
+    info_[op].opCnt_[upCast(buffer(op->var_)->tensor()->dtype().base(),
+                            op->expr_->dtype().base())]++;
     info_[op].loadCnt_[buffer(op->var_)->mtype()]++;
     info_[op].storeCnt_[buffer(op->var_)->mtype()]++;
     info_[op].accessCnt_[buffer(op->var_)->mtype()]++;
     info_[op].loads_[op->var_] = info_[op].stores_[op->var_] =
         info_[op].accesses_[op->var_] = {
-            CompAccessBound::Access(bound_, op->indices_, conds())};
+            CompAccessBound::Access(*bound_, op->indices_, conds())};
 
     for (auto &&idx : op->indices_) {
         updInfo(op, idx);
@@ -247,13 +251,13 @@ void StructuralFeature::visit(const IfExpr &op) {
     updInfo(op, op->cond_);
     updInfo(op, op->thenCase_);
     updInfo(op, op->elseCase_);
-    info_[op].opCnt_[op->cond_->dtype()]++;
+    info_[op].opCnt_[op->cond_->dtype().base()]++;
 }
 
 void StructuralFeature::visit(const Cast &op) {
     BaseClass::visit(op);
     updInfo(op, op->expr_);
-    info_[op].opCnt_[op->expr_->dtype()]++;
+    info_[op].opCnt_[op->expr_->dtype().base()]++;
 }
 
 void StructuralFeature::visit(const StmtSeq &op) {
@@ -283,7 +287,7 @@ void StructuralFeature::visit(const For &op) {
 
     updInfo(op, op->begin_);
     updInfo(op, op->end_);
-    if (auto intLen = bound_.getInt(op->len_); intLen.has_value()) {
+    if (auto intLen = bound_->getInt(op->len_); intLen.has_value()) {
         updInfo(op, op->body_, *intLen);
     } else {
         updInfo(op, op->body_, -1);

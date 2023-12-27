@@ -52,6 +52,8 @@ static DataType dtypeFromPyTorch(torch::ScalarType t) {
         return DataType::Int32;
     case torch::ScalarType::Long:
         return DataType::Int64;
+    case torch::ScalarType::Half:
+        return DataType::Float16;
     case torch::ScalarType::Float:
         return DataType::Float32;
     case torch::ScalarType::Double:
@@ -64,11 +66,13 @@ static DataType dtypeFromPyTorch(torch::ScalarType t) {
 }
 
 static torch::ScalarType dtypeToPyTorch(DataType dtype) {
-    switch (dtype) {
+    switch (dtype.base()) {
     case DataType::Int32:
         return torch::ScalarType::Int;
     case DataType::Int64:
         return torch::ScalarType::Long;
+    case DataType::Float16:
+        return torch::ScalarType::Half;
     case DataType::Float32:
         return torch::ScalarType::Float;
     case DataType::Float64:
@@ -83,14 +87,17 @@ static torch::ScalarType dtypeToPyTorch(DataType dtype) {
 
 void init_ffi_array(py::module_ &m) {
 #define SHARE_FROM_NUMPY(nativeType, dtype)                                    \
-    py::init([](py::array_t<nativeType, py::array::c_style> &np) {             \
+    py::init([](py::array_t<nativeType, py::array::c_style> &np,               \
+                bool dontDropBorrow, bool moved) {                             \
         std::vector<size_t> shape(np.shape(), np.shape() + np.ndim());         \
         return Array::borrowFromRaw((void *)np.unchecked().data(), shape,      \
-                                    dtype,                                     \
-                                    Ref<Device>::make(TargetType::CPU));       \
+                                    dtype, Ref<Device>::make(TargetType::CPU), \
+                                    dontDropBorrow, moved);                    \
     }),                                                                        \
         "data"_a.noconvert(),                                                  \
-        py::keep_alive<1, 2>() /* Keep `np` alive whenever `self` alives */
+        "dont_drop_borrow"_a = false, "moved"_a = false,                       \
+        py::keep_alive<1, 2>() /* Keep `np` alive whenever                     \
+                                 `self` alives */
 
 #define SHARE_TO_NUMPY(nativeType, dtype)                                      \
     case dtype: {                                                              \
@@ -108,14 +115,17 @@ void init_ffi_array(py::module_ &m) {
         .def(SHARE_FROM_NUMPY(int64_t, DataType::Int64))
         .def(SHARE_FROM_NUMPY(int32_t, DataType::Int32))
         .def(SHARE_FROM_NUMPY(bool, DataType::Bool))
-        .def(py::init([](const py::array &np) -> Ref<Array> {
-            // Fallback holder. Don't let PyBind11 cast it automatically, or it
-            // will all end up in float64 (the first initializer)
-            throw DriverError(
-                "Unsupported data type or strides from a NumPy Array. Please "
-                "use freetensor.array factory function, instead of "
-                "freetensor.Array, for strided arrays");
-        }))
+        .def(py::init([](const py::array &np, bool, bool) -> Ref<Array> {
+                 // Fallback holder. Don't let PyBind11 cast it automatically,
+                 // or it will all end up in float64 (the first initializer)
+                 throw DriverError(
+                     "Unsupported data type or strides from a NumPy Array. "
+                     "If you are using strided arrays, please use "
+                     "freetensor.array factory function, instead of "
+                     "freetensor.Array. If you are using float16, please use "
+                     "the PyTorch interface instead.");
+             }),
+             "data"_a, "dont_drop_borrow"_a = false, "moved"_a = false)
         .def("__eq__", [](const Ref<Array> &lhs, const Ref<Array> &rhs) {
             /**
              * The feature is for testing serialization
@@ -139,33 +149,42 @@ void init_ffi_array(py::module_ &m) {
         });
 #ifdef FT_WITH_PYTORCH
     pyArray.def(
-        py::init([](const torch::Tensor &tensor) {
+        py::init([](const torch::Tensor &tensor, bool dontDropBorrow,
+                    bool moved) {
             if (tensor.is_contiguous()) {
                 std::vector<size_t> shape(tensor.sizes().begin(),
                                           tensor.sizes().end());
                 return Array::borrowFromRaw(
                     tensor.data_ptr(), shape,
                     dtypeFromPyTorch(tensor.scalar_type()),
-                    deviceFromPyTorch(tensor.device()));
+                    deviceFromPyTorch(tensor.device()), dontDropBorrow, moved);
             } else {
                 throw DriverError(
                     "Plese use freetensor.array factory function, instead of "
                     "freetensor.Array, for strided PyTorch tensors");
             }
         }),
-        "data"_a.noconvert(),
+        "data"_a.noconvert(), "dont_drop_borrow"_a = false, "moved"_a = false,
         py::keep_alive<1,
                        2>() /* Keep `tensor` alive whenever `self` alives */);
 #endif // FT_WITH_PYTORCH
     pyArray.def(
         "numpy",
         [](Array &arr) -> py::object {
-            switch (arr.dtype()) {
+            switch (arr.dtype().base()) {
                 SHARE_TO_NUMPY(double, DataType::Float64)
                 SHARE_TO_NUMPY(float, DataType::Float32)
                 SHARE_TO_NUMPY(int64_t, DataType::Int64)
                 SHARE_TO_NUMPY(int32_t, DataType::Int32)
                 SHARE_TO_NUMPY(bool, DataType::Bool)
+            case DataType::Float16:
+                // TODO: Support fp16 after PyBind11 for NumPy fp16 is
+                // available. Status:
+                // https://github.com/pybind/pybind11/issues/1776,
+                // https://github.com/pybind/pybind11/issues/4061
+                throw DriverError(
+                    "NumPy interface for float16 is not supported yet. Please "
+                    "use the PyTorch interface instead.");
             default:
                 ASSERT(false);
             }
@@ -202,7 +221,11 @@ void init_ffi_array(py::module_ &m) {
         });
 #endif // FT_WITH_PYTORCH
     pyArray.def_property_readonly("shape", &Array::shape)
-        .def_property_readonly("dtype", &Array::dtype);
+        .def_property_readonly("dtype", &Array::dtype)
+        .def_property_readonly("dont_drop_borrow", &Array::dontDropBorrow)
+        .def("set_dont_drop_borrow", &Array::setDontDropBorrow)
+        .def_property_readonly("moved", &Array::moved)
+        .def("set_moved", &Array::setMoved);
 }
 
 } // namespace freetensor

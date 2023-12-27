@@ -5,15 +5,26 @@ Classes and functions in this module are not only used internally for constructi
 and also exposed to users via multi-stage programming
 '''
 
+__all__ = [
+    'VarRef', 'VarRefFromVarDef', 'VarVersionRef', 'add', 'sub', 'mul',
+    'truediv', 'floordiv', 'ceildiv', 'round_towards_0_div', 'mod', 'remainder',
+    'min', 'max', 'l_and', 'l_or', 'lt', 'le', 'gt', 'ge', 'eq', 'ne', 'l_not',
+    'abs', 'sqrt', 'exp', 'ln', 'square', 'sigmoid', 'sin', 'cos', 'tan',
+    'tanh', 'floor', 'ceil', 'unbound', 'if_then_else', 'cast', 'intrinsic',
+    'any', 'load_at_version', 'ndim', 'shape', 'dtype', 'mtype'
+]
+
 import collections
 import builtins
 import math
 from numbers import Number
-from typing import Sequence
+from typing import Sequence, Union
+from dataclasses import dataclass
 
-import freetensor_ffi as ffi
+from .. import ffi
 
 from .context import ctx_stack
+from .meta import is_writable
 
 
 class AlreadyMadeReduceTo:
@@ -39,13 +50,13 @@ class VarRef(ffi.FrontendVar):
 
     def __init__(self,
                  name: str,
-                 vardef,
                  full_shape: Sequence,
                  dtype: ffi.DataType,
                  mtype: ffi.MemType,
-                 indices: Sequence = []):
-        super(VarRef, self).__init__(name, full_shape, dtype, mtype, indices)
-        self.vardef = vardef
+                 indices: Sequence = [],
+                 is_load_at_version: bool = False):
+        super(VarRef, self).__init__(name, full_shape, dtype, mtype, indices,
+                                     is_load_at_version)
 
         from .stmt import find_borrowed_vardefs
         self.borrowed_vardefs = find_borrowed_vardefs(indices)
@@ -57,53 +68,53 @@ class VarRef(ffi.FrontendVar):
             item.reclaim()
 
     def __getitem__(self, key):
-        return VarRef(self.name, self.vardef, self.full_shape, self.dtype,
-                      self.mtype, self.chain_indices(self._parse_key(key)))
+        return self.__class__(self.name, self.full_shape, self.dtype,
+                              self.mtype,
+                              self.chain_indices(self._parse_key(key)))
 
     def __setitem__(self, key, value):
-        var = VarRef(self.name, self.vardef, self.full_shape, self.dtype,
-                     self.mtype, self.chain_indices(self._parse_key(key)))
+        var = self.__class__(self.name, self.full_shape, self.dtype, self.mtype,
+                             self.chain_indices(self._parse_key(key)))
         if var.ndim > 0:
             if value is AlreadyMadeReduceTo:
                 return
             from .. import libop
             libop.assign(var, value)
             return
-        if var.vardef.atype == ffi.AccessType("input"):
-            raise ffi.InvalidProgram("Cannot modify an \"input\" tensor `" +
-                                     self.name + "`")
-        if var.vardef.borrower_cnt > 0:
-            raise ffi.InvalidProgram(
-                "Cannot modify tensor `" + self.name +
-                "` becuase it has been borrowed in another tensor's shape, "
-                "a tensor slice, or a range of a loop")
-        if value is AlreadyMadeReduceTo:  # Following the checks above
+        if value is AlreadyMadeReduceTo:
             return
         top = ctx_stack.top()
         top.append_stmt(var.as_store(top.get_metadata(), value))
 
     def as_store(self, metadata, value):
-        if (not isinstance(value, ffi.AnyExpr) and ffi.up_cast(
-                dtype(value), self.vardef.dtype) != self.vardef.dtype):
+        self._check_write_permission()
+        if (not isinstance(value, ffi.AnyExpr) and
+                ffi.up_cast(dtype(value), self.dtype).base != self.dtype.base):
             # Add explicit cast node, to avoid confusion after propagation
-            value = cast(value, self.vardef.dtype)
+            value = cast(value, self.dtype)
         return super(VarRef, self).as_store(metadata, value)
 
     def as_reduce_to(self, reduce_op, metadata, value, atomic=False):
-        if (not isinstance(value, ffi.AnyExpr) and ffi.up_cast(
-                dtype(value), self.vardef.dtype) != self.vardef.dtype):
+        self._check_write_permission()
+        if (not isinstance(value, ffi.AnyExpr) and
+                ffi.up_cast(dtype(value), self.dtype).base != self.dtype.base):
             # Add explicit cast node, to avoid confusion after propagation
-            value = cast(value, self.vardef.dtype)
+            value = cast(value, self.dtype)
         return super(VarRef, self).as_reduce_to(reduce_op, metadata, value,
                                                 atomic)
 
-    def select(self, idx, dim):
+    def select(self, idx: Union[int, ffi.Expr, slice], dim: int):
+        ''' Alias for `self[..., idx, ...]`, where `idx` is at the `dim`-th dimension '''
         assert isinstance(dim, int)
         assert dim >= 0 and dim < self.ndim
         indices = [
             slice(None, None) if d != dim else idx for d in range(self.ndim)
         ]
         return self[indices]
+
+    def select_slice(self, begin, end, *, dim: int):
+        ''' Alias for `self[..., begin:end, ...]`, where `begin:end` is at the `dim`-th dimension '''
+        return self.select(slice(begin, end), dim=dim)
 
     def shape(self, dim=None):
         '''
@@ -122,6 +133,17 @@ class VarRef(ffi.FrontendVar):
             return [intOrExpr(d) for d in super(VarRef, self).shape()]
         else:
             return intOrExpr(super(VarRef, self).shape(dim))
+
+    def _check_write_permission(self):
+        if not is_writable(self.vardef.atype):
+            raise ffi.InvalidProgram(
+                f"Cannot modify an \"{self.vardef.atype}\" tensor `{self.name}`"
+            )
+        if self.vardef.borrower_cnt > 0:
+            raise ffi.InvalidProgram(
+                "Cannot modify tensor `" + self.name +
+                "` becuase it has been borrowed in another tensor's shape, "
+                "a tensor slice, or a range of a loop")
 
     def _parse_key(self, key):
         if key is None or key is ...:
@@ -195,7 +217,7 @@ class VarRef(ffi.FrontendVar):
             return AlreadyMadeReduceTo
         top = ctx_stack.top()
         top.append_stmt(
-            self.as_reduce_to(ffi.ReduceOp.Sub, top.get_metadata(), other))
+            self.as_reduce_to(ffi.ReduceOp.Add, top.get_metadata(), -other))
         return AlreadyMadeReduceTo
 
     def __mul__(self, other):
@@ -237,7 +259,10 @@ class VarRef(ffi.FrontendVar):
             from .. import libop
             libop.truediv_to(self, other)
             return AlreadyMadeReduceTo
-        return NotImplemented  # Fallback to x = x / y
+        top = ctx_stack.top()
+        top.append_stmt(
+            self.as_reduce_to(ffi.ReduceOp.Mul, top.get_metadata(), 1. / other))
+        return AlreadyMadeReduceTo
 
     def __floordiv__(self, other):
         if self.ndim > 0:
@@ -328,8 +353,65 @@ class VarRef(ffi.FrontendVar):
         return libop.matmul(other, self)
 
 
+class VarRefFromVarDef(VarRef):
+    '''
+    VarRef with extra checks
+    '''
+
+    def __init__(self,
+                 name: str,
+                 vardef,
+                 full_shape: Sequence,
+                 dtype: ffi.DataType,
+                 mtype: ffi.MemType,
+                 indices: Sequence = []):
+        super(VarRefFromVarDef, self).__init__(name, full_shape, dtype, mtype,
+                                               indices)
+        self.vardef = vardef
+
+    def __getitem__(self, key):
+        return VarRefFromVarDef(self.name, self.vardef, self.full_shape,
+                                self.dtype, self.mtype,
+                                self.chain_indices(self._parse_key(key)))
+
+    def __setitem__(self, key, value):
+        var = VarRefFromVarDef(self.name, self.vardef, self.full_shape,
+                               self.dtype, self.mtype,
+                               self.chain_indices(self._parse_key(key)))
+        if var.ndim > 0:
+            if value is AlreadyMadeReduceTo:
+                return
+            from .. import libop
+            libop.assign(var, value)
+            return
+        if value is AlreadyMadeReduceTo:
+            return
+        top = ctx_stack.top()
+        top.append_stmt(var.as_store(top.get_metadata(), value))
+
+
+class VarVersionRef(VarRef):
+    '''
+    Special VarRef used for custom gradient, generated from `mark_version`
+    '''
+
+    def __init__(self,
+                 name: str,
+                 full_shape: Sequence,
+                 dtype: ffi.DataType,
+                 mtype: ffi.MemType,
+                 indices: Sequence = []):
+        for dim in full_shape:
+            if not isinstance(dim, int) and not isinstance(dim, ffi.IntConst):
+                raise ffi.InvalidAutoGrad(
+                    "`mark_version` on dynamic-shaped variables is not supported"
+                    " yet")
+        super(VarVersionRef, self).__init__(name, full_shape, dtype, mtype,
+                                            indices, True)
+
+
 def _istensor(x):
-    return type(x) is VarRef and x.ndim > 0
+    return isinstance(x, VarRef) and x.ndim > 0
 
 
 ######################################
@@ -912,6 +994,31 @@ def exp(expr):
     return ffi.makeExp(expr)
 
 
+def ln(expr):
+    '''
+    Natural logarithm
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.ln
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The exponent
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.ln(expr)
+    if isinstance(expr, Number):
+        return math.log(expr)  # Defaults to ln without the base
+    return ffi.makeLn(expr)
+
+
 def square(expr):
     '''
     Square
@@ -958,6 +1065,81 @@ def sigmoid(expr):
         from .. import libop
         return libop.sigmoid(expr)
     return ffi.makeSigmoid(expr)
+
+
+def sin(expr):
+    '''
+    Sine
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.tanh
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.sin(expr)
+    if isinstance(expr, Number):
+        return math.sin(expr)
+    return ffi.makeSin(expr)
+
+
+def cos(expr):
+    '''
+    Cosine
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.tanh
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.cos(expr)
+    if isinstance(expr, Number):
+        return math.cos(expr)
+    return ffi.makeCos(expr)
+
+
+def tan(expr):
+    '''
+    Tangent
+
+    For scalar operands, it emit an expression node in AST. For non-scalar operands,
+    it calls libop.tanh
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The operand
+
+    Returns
+    -------
+    VarRef or Number
+        The result
+    '''
+    if _istensor(expr):
+        from .. import libop
+        return libop.tan(expr)
+    if isinstance(expr, Number):
+        return math.tan(expr)
+    return ffi.makeTan(expr)
 
 
 def tanh(expr):
@@ -1031,6 +1213,35 @@ def ceil(expr):
     return ffi.makeCeil(expr)
 
 
+def unbound(expr):
+    '''
+    Explicitly mark a bool expression not to used for boundary analysis and thus
+    not used for shrinking loops or variables
+
+    This is useful when we want to leave a loop length constatnt or regular, and
+    guard it with a branch, e.g.:
+
+    ```
+    for i = 0 to 100
+      if unbound(i < x)
+        ...
+    ```
+
+    Parameters
+    ----------
+    expr : VarRef or Number
+        The bool expression to mark
+
+    Returns
+    -------
+    VarRef or Number
+        The marked expression
+    '''
+    if isinstance(expr, bool):
+        return expr
+    return ffi.makeUnbound(expr)
+
+
 def if_then_else(cond, then_case, else_case):
     '''
     Similar to `then_case if cond else else_case`
@@ -1043,9 +1254,9 @@ def if_then_else(cond, then_case, else_case):
     ----------
     cond : VarRef of Number
         Condition
-    lhs : VarRef or Number
+    then_case : VarRef or Number
         Then-case experssion
-    rhs : VarRef or Number
+    else_case : VarRef or Number
         Else-case expression
 
     Returns
@@ -1077,40 +1288,43 @@ def cast(expr, dtype):
     return ffi.makeCast(expr, ffi.DataType(dtype))
 
 
-def intrinsic(fmt, *params, **kws):
+def intrinsic(fmt, *params, ret_type="void", has_side_effect: bool = False):
     """
     Invoke whatever target code
 
     Parameters
     ----------
     fmt : str
-        What to run. "%" is filled by parameters one by one. E.g. sinf(%)
-    The following variadic arguments : Expr
-        Parameters to `fmt`
+        What to run. "%" is filled by parameters one by one. E.g. sinf(%). Use "%%" to
+        escape for "%". If you need two adjacent parameters, type "(%)(%)" or "% %".
+    *params : Sequence[Expr]
+        (Positional variadic) Parameters to `fmt`
     ret_type : DataType or str
         (Keyword argument only) The return type. Void for no return type. Defaults to Void
     has_side_effect: bool
-        (Keyword argument only) True to indicate the intrinsic modifes something other than the return value. Defaults to false
+        (Keyword argument only) True to indicate the intrinsic modifes something other
+        than the return value. Defaults to false
     """
-    ret_type = ffi.DataType("void")
-    has_side_effect = False
-    if "ret_type" in kws:
-        ret_type = ffi.DataType(kws["ret_type"])
-        del kws["ret_type"]
-    if "has_side_effect" in kws:
-        has_side_effect = kws["has_side_effect"]
-        del kws["has_side_effect"]
-    assert len(kws) == 0, "Unrecognized keyword arguments: %s" % kws
+    ret_type = ffi.DataType(ret_type)
     return ffi.makeIntrinsic(fmt, params, ret_type, has_side_effect)
 
 
 def any():
     '''
-    Create an AnyExpr node (only for testing)
+    Create an AnyExpr node (only for testing and type inference)
 
     Any nodes matches any expression nodes in `ast.match`
     '''
     return ffi.makeAnyExpr()
+
+
+def load_at_version(tape_name: str, dtype, *indices):
+    '''
+    Create an LoadAtVersion node (only for custom gradient)
+
+    This node is only used for custom gradient. See `UserGradForPrevStmt`.
+    '''
+    return ffi.makeLoadAtVersion(tape_name, indices, ffi.DataType(dtype))
 
 
 def ndim(var):
@@ -1133,6 +1347,13 @@ def shape(var, i=None):
             raise Exception(f'Getting size of dimension {i} of scalar {var}')
 
 
+@dataclass
+class UndeclaredParam:
+    ''' Error type. For error reporting only. '''
+
+    name: str
+
+
 def dtype(var):
     ''' Get element data type of a variable '''
     if isinstance(var, VarRef):
@@ -1148,8 +1369,12 @@ def dtype(var):
             return ffi.DataType("float32")
         elif isinstance(var, int):
             return ffi.DataType("int32")
+        elif isinstance(var, UndeclaredParam):
+            raise TypeError(
+                f"Parameter '{var.name}' should be declared to be either a `freetensor.Var`"
+                f" or a `freetensor.JIT`")
         else:
-            raise Exception('Unknown scalar type: ' + str(type(var)))
+            raise TypeError(f"Unknown scalar type: {type(var)}")
 
 
 def mtype(var):

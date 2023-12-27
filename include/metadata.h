@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <func_utils.h>
 #include <id.h>
 #include <ref.h>
 
@@ -25,10 +26,19 @@ class MetadataContent {
 
     virtual MetadataType getType() const = 0;
     virtual bool printByDefault() const = 0;
-    virtual void print(std::ostream &os, bool skipLocation,
+    virtual void print(std::ostream &os, bool printLocation,
                        int nIndent) const = 0;
+
+    virtual size_t hash() const = 0;
+    virtual bool sameAs(const MetadataContent &other) const = 0;
+    friend bool operator==(const MetadataContent &lhs,
+                           const MetadataContent &rhs) {
+        return lhs.sameAs(rhs);
+    }
 };
 using Metadata = Ref<MetadataContent>;
+using MetadataHasher = PtrInvocable<std::hash<MetadataContent>>;
+using MetadataComparator = PtrInvocable<std::equal_to<MetadataContent>>;
 
 std::ostream &manipMetadataSkipLocation(std::ostream &);
 std::ostream &manipMetadataWithLocation(std::ostream &);
@@ -53,7 +63,11 @@ class TransformedMetadataContent : public MetadataContent {
 
     MetadataType getType() const override { return MetadataType::Transformed; }
     bool printByDefault() const override { return true; }
-    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+    void print(std::ostream &os, bool printLocation,
+               int nIndent) const override;
+
+    size_t hash() const override;
+    bool sameAs(const MetadataContent &other) const override;
 
     const std::string &op() const { return op_; }
     const std::vector<Metadata> &sources() const { return sources_; }
@@ -64,7 +78,7 @@ TransformedMetadata makeMetadata(const std::string &op,
                                  const std::vector<Metadata> &sources);
 
 class SourceMetadataContent : public MetadataContent {
-    std::vector<std::string> labels_;
+    std::vector<std::string> labels_; // sorted
     std::unordered_set<std::string> labelsSet_;
     std::optional<std::pair<std::string, int>> location_;
     Metadata callerMetadata_;
@@ -85,7 +99,11 @@ class SourceMetadataContent : public MetadataContent {
 
     MetadataType getType() const override { return MetadataType::Source; }
     bool printByDefault() const override { return !labels_.empty(); }
-    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+    void print(std::ostream &os, bool printLocation,
+               int nIndent) const override;
+
+    size_t hash() const override;
+    bool sameAs(const MetadataContent &other) const override;
 };
 using SourceMetadata = Ref<SourceMetadataContent>;
 
@@ -102,7 +120,11 @@ class AnonymousMetadataContent : public MetadataContent {
     ~AnonymousMetadataContent() override = default;
     MetadataType getType() const override { return MetadataType::Anonymous; }
     bool printByDefault() const override { return false; }
-    void print(std::ostream &os, bool skipLocation, int nIndent) const override;
+    void print(std::ostream &os, bool printLocation,
+               int nIndent) const override;
+
+    size_t hash() const override;
+    bool sameAs(const MetadataContent &other) const override;
 
     ID id() const { return id_; }
 };
@@ -113,5 +135,15 @@ AnonymousMetadata makeMetadata(const ID &id = {});
 std::string toString(const Metadata &md, bool shouldSkipLocation = false);
 
 } // namespace freetensor
+
+namespace std {
+
+template <> struct hash<freetensor::MetadataContent> {
+    size_t operator()(const freetensor::MetadataContent &md) const {
+        return md.hash();
+    }
+};
+
+} // namespace std
 
 #endif // FREE_TENSOR_METADATA_H

@@ -17,7 +17,7 @@ void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
             {{NodeIDOrParallelScope(threadIdxY), DepDirection::Different}});
         direction.push_back(
             {{NodeIDOrParallelScope(threadIdxZ), DepDirection::Different}});
-        // fall through
+        [[fallthrough]];
     case MemType::GPUWarp:
     case MemType::GPUShared:
         direction.push_back(
@@ -29,9 +29,8 @@ void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
         break;
     default:; // do nothing
     }
-    FindDeps().direction(direction).filterAccess([&](const AccessPoint &acc) {
-        return acc.def_->id() == def;
-    })(ast, found);
+    FindDeps().direction(direction).filterAccess(
+        [&](const auto &acc) { return acc.def_->id() == def; })(ast, found);
 }
 
 } // namespace freetensor

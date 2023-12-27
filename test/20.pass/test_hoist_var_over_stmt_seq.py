@@ -86,7 +86,7 @@ def test_rename_nested_2():
 
 
 def test_no_hoisting_affected_shape_front():
-    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+    with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:
         n[...] += 1
         with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
                         ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
@@ -96,7 +96,7 @@ def test_no_hoisting_affected_shape_front():
     ast = ft.hoist_var_over_stmt_seq(ast)
     print(ast)
 
-    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+    with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:
         n[...] += 1
         with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
                         ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
@@ -108,7 +108,7 @@ def test_no_hoisting_affected_shape_front():
 
 
 def test_no_hoisting_affected_shape_back():
-    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+    with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:
         with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
                         ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
             with ft.For("i", 0, n[...]) as i:
@@ -120,7 +120,7 @@ def test_no_hoisting_affected_shape_back():
     ast = ft.hoist_var_over_stmt_seq(ast)
     print(ast)
 
-    with ft.VarDef("n", (), "int32", "inout", "cpu") as n:
+    with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:
         with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
                         ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
             with ft.For("i", 0, n[...]) as i:

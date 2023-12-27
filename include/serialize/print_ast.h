@@ -1,16 +1,19 @@
 #ifndef FREE_TENSOR_PRINT_AST_H
 #define FREE_TENSOR_PRINT_AST_H
 
+#include <functional>
 #include <iostream>
 #include <unordered_set>
 
 #include <codegen/code_gen.h>
+#include <serialize/stream_utils.h>
 
 namespace freetensor {
 
 class PrintVisitor : public CodeGen<CodeGenStream> {
     bool printAllId_ = false, pretty_ = false, dtypeInLoad_ = false,
-         hexFloat_ = false, parenDespitePriority_ = false;
+         hexFloat_ = false, parenDespitePriority_ = false,
+         printSourceLocation_ = false;
     const std::unordered_set<std::string> keywords = {
         "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
     };
@@ -80,10 +83,16 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
   public:
     PrintVisitor(bool printAllId = false, bool pretty = false,
                  bool dtypeInLoad = false, bool hexFloat = false,
-                 bool compact = false, bool parenDespitePriority = false)
+                 bool compact = false, bool parenDespitePriority = false,
+                 bool printSourceLocation = false)
         : CodeGen(compact), printAllId_(printAllId), pretty_(pretty),
           dtypeInLoad_(dtypeInLoad), hexFloat_(hexFloat),
-          parenDespitePriority_(parenDespitePriority) {}
+          parenDespitePriority_(parenDespitePriority),
+          printSourceLocation_(printSourceLocation) {
+        os() << manipNoIdSign(true)
+             << (printSourceLocation ? manipMetadataWithLocation
+                                     : manipMetadataSkipLocation);
+    }
 
   private:
     void recur(const Expr &op);
@@ -94,9 +103,10 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     std::string prettyIterName(const std::string &name);
     std::string prettyVarDefName(const std::string &name);
     std::string prettyFuncName(const std::string &name);
-    std::string prettyId(const ID &id);
+    std::function<std::ostream &(std::ostream &)> prettyId(const ID &id);
     std::string prettyLiteral(const std::string &lit);
     std::string prettyKeyword(const std::string &kw);
+    std::string prettyDType(const DataType &dtype);
 
   protected:
     void visitStmt(const Stmt &op) override;
@@ -137,12 +147,17 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const LNot &op) override;
     void visit(const Sqrt &op) override;
     void visit(const Exp &op) override;
+    void visit(const Ln &op) override;
     void visit(const Square &op) override;
     void visit(const Sigmoid &op) override;
+    void visit(const Sin &op) override;
+    void visit(const Cos &op) override;
+    void visit(const Tan &op) override;
     void visit(const Tanh &op) override;
     void visit(const Abs &op) override;
     void visit(const Floor &op) override;
     void visit(const Ceil &op) override;
+    void visit(const Unbound &op) override;
     void visit(const IfExpr &op) override;
     void visit(const Cast &op) override;
     void visit(const For &op) override;
@@ -152,6 +167,8 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
     void visit(const Intrinsic &op) override;
     void visit(const Eval &op) override;
     void visit(const MatMul &op) override;
+    void visit(const MarkVersion &op) override;
+    void visit(const LoadAtVersion &op) override;
 };
 
 /**
@@ -165,6 +182,9 @@ std::string toString(const AST &op, bool pretty, bool printAllId);
 std::string toString(const AST &op, bool pretty, bool printAllId,
                      bool dtypeInLoad, bool hexFloat = false,
                      bool compact = false, bool parenDespitePriority = false);
+std::string toString(const AST &op, bool pretty, bool printAllId,
+                     bool dtypeInLoad, bool hexFloat, bool compact,
+                     bool parenDespitePriority, bool printSourceLocation);
 /** @} */
 
 /**
@@ -172,21 +192,29 @@ std::string toString(const AST &op, bool pretty, bool printAllId,
  */
 inline std::string dumpAST(const AST &op, bool dtypeInLoad = false,
                            bool hexFloat = true) {
-    return toString(op, false, true, dtypeInLoad, hexFloat, true, true);
+    return toString(op, false, true, dtypeInLoad, hexFloat, true, true, false);
 }
 
 /**
  * Control over whether to allow pretty print in a stream
  *
- * This option overrides `Config::prettyPrint()`
+ * Get or set the option via `std::ostream::iword()`, or set it via outputting
+ * `manipNoPrettyAST` to the stream
+ *
+ * If set, this option overrides `Config::prettyPrint()` and force no pretty
+ * print. Defaults to unset
+ *
+ * @{
  */
 extern int OSTREAM_NO_PRETTY;
+std::function<std::ostream &(std::ostream &)> manipNoPrettyAST(bool flag);
+/** @} */
 
 /**
  * Print an AST
  *
- * `OSTREAM_NO_PRETTY` can be set via `std::ostream::iword()` to disable pretty
- * print for a specific stream
+ * `OSTREAM_NO_PRETTY` can be set via `manipNoPrettyAST` to enable or disable
+ * pretty print for a specific stream
  */
 std::ostream &operator<<(std::ostream &os, const AST &op);
 

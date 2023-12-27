@@ -38,7 +38,12 @@ Expr FrontendVar::shape(const Expr &idx) const {
         }
         k++;
     }
-    ASSERT(ret.isValid());
+    if (!ret.isValid()) {
+        ASSERT(idx->nodeType() == ASTNodeType::IntConst);
+        throw InvalidProgram(toString(*this) + ".shape(" + toString(idx) +
+                             ") is out of range. Must be in [0, " +
+                             std::to_string(ndim()) + ")");
+    }
     return ret;
 }
 
@@ -72,7 +77,11 @@ Expr FrontendVar::asLoad() const {
         ASSERT(idx.type() == FrontendVarIdxType::Single);
         indices.emplace_back(idx.single());
     }
-    return makeLoad(name_, std::move(indices), dtype_);
+    if (!isLoadAtVersion_) {
+        return makeLoad(name_, std::move(indices), dtype_);
+    } else {
+        return makeLoadAtVersion(name_, std::move(indices), dtype_);
+    }
 }
 
 Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
@@ -81,6 +90,11 @@ Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
             name_ + " is of a " + std::to_string(fullShape_.size()) +
             "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
             "-D indices are given");
+    }
+    if (isLoadAtVersion_) {
+        throw InvalidAutoGrad(
+            "Unable to assign to a forward variable (a `mark_version` "
+            "variable) from a `UserGrad` scope");
     }
     std::vector<Expr> indices;
     indices.reserve(indices_.size());
@@ -123,7 +137,7 @@ FrontendVar::chainIndices(const std::vector<FrontendVarIdx> &next) const {
                 } else {
                     indices.emplace_back(FrontendVarIdx::fromSlice(
                         makeAdd(idx.start(), it->start()),
-                        makeAdd(idx.stop(), it->start())));
+                        makeAdd(idx.start(), it->stop())));
                 }
                 it++;
             } else {

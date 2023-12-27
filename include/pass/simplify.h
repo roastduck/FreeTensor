@@ -49,10 +49,15 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
     std::unordered_map<std::string, int> varScope_;
     int curScope_ = 0;
 
-    CompUniqueBounds &unique_;
+    Ref<CompUniqueBounds> unique_;
+    std::function<Ref<CompUniqueBounds>(const CompTransientBoundsInterface &)>
+        compUniqueBoundsFactory_;
 
   public:
-    SimplifyPass(CompUniqueBounds &unique) : unique_(unique) {}
+    SimplifyPass(std::function<
+                 Ref<CompUniqueBounds>(const CompTransientBoundsInterface &)>
+                     compUniqueBoundsFactory)
+        : compUniqueBoundsFactory_(compUniqueBoundsFactory) {}
 
   private:
     template <class T> bool equals(const Expr &op, T &&val) const {
@@ -70,6 +75,7 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
   protected:
     using BaseClass::visit;
 
+    Stmt visitStmt(const Stmt &op) override;
     Expr visitExpr(const Expr &op) override;
 
     Expr visit(const Add &op) override;
@@ -98,10 +104,11 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
 };
 
 class BuiltinSimplify : public SimplifyPass {
-    CompUniqueBoundsCombination unique_;
-
   public:
-    BuiltinSimplify() : SimplifyPass(unique_), unique_(*this) {}
+    BuiltinSimplify()
+        : SimplifyPass([](const CompTransientBoundsInterface &tr) {
+              return Ref<CompUniqueBoundsCombination>::make(tr);
+          }) {}
 };
 
 /**
@@ -116,13 +123,13 @@ template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
     auto op = _op;
 
     for (int i = 0;; i++) {
-        op = annotateConds(op);
-        auto newOp = Simplifier()(op);
+        auto newOp = annotateConds(op);
+        newOp = Simplifier()(newOp);
         newOp = flattenStmtSeq(newOp);
         if (HashComparator()(newOp, op) || i > 100) {
             if (i > 100) {
-                WARNING("SimplifyPass iterates over 100 rounds. Maybe there is "
-                        "a bug");
+                WARNING("pass/simplify iterates over 100 rounds. Maybe there "
+                        "is a bug");
             }
             return newOp;
         }

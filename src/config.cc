@@ -80,11 +80,15 @@ static std::optional<bool> getBoolEnv(const char *name) {
 
 bool Config::prettyPrint_ = false;
 bool Config::printAllId_ = false;
+bool Config::printSourceLocation_ = false;
+bool Config::fastMath_ = true;
 bool Config::werror_ = false;
 bool Config::debugBinary_ = false;
 bool Config::debugRuntimeCheck_ = false;
+bool Config::debugCUDAWithUM_ = false;
 std::vector<fs::path> Config::backendCompilerCXX_;
 std::vector<fs::path> Config::backendCompilerNVCC_;
+std::vector<fs::path> Config::backendOpenMP_;
 Ref<Target> Config::defaultTarget_;
 Ref<Device> Config::defaultDevice_;
 std::vector<fs::path> Config::runtimeDir_;
@@ -119,12 +123,21 @@ void Config::init() {
         fileInDirs("nvcc", makePaths(getStrEnvRequired("PATH"))));
 #endif // FT_BACKEND_COMPILER_NVCC
 #endif // FT_WITH_CUDA
+#ifdef FT_BACKEND_OPENMP
+    Config::setBackendOpenMP(makePaths(FT_BACKEND_OPENMP));
+#endif
 
     if (auto flag = getBoolEnv("FT_PRETTY_PRINT"); flag.has_value()) {
         Config::setPrettyPrint(*flag);
     }
     if (auto flag = getBoolEnv("FT_PRINT_ALL_ID"); flag.has_value()) {
         Config::setPrintAllId(*flag);
+    }
+    if (auto flag = getBoolEnv("FT_PRINT_SOURCE_LOCATION"); flag.has_value()) {
+        Config::setPrintSourceLocation(*flag);
+    }
+    if (auto flag = getBoolEnv("FT_FAST_MATH"); flag.has_value()) {
+        Config::setFastMath(*flag);
     }
     if (auto flag = getBoolEnv("FT_WERROR"); flag.has_value()) {
         Config::setWerror(*flag);
@@ -135,6 +148,9 @@ void Config::init() {
     if (auto flag = getBoolEnv("FT_DEBUG_RUNTIME_CHECK"); flag.has_value()) {
         Config::setDebugRuntimeCheck(*flag);
     }
+    if (auto flag = getBoolEnv("FT_DEBUG_CUDA_WITH_UM"); flag.has_value()) {
+        Config::setDebugCUDAWithUM(*flag);
+    }
     if (auto path = getStrEnv("FT_BACKEND_COMPILER_CXX"); path.has_value()) {
         Config::setBackendCompilerCXX(makePaths(*path));
     }
@@ -143,6 +159,9 @@ void Config::init() {
         Config::setBackendCompilerNVCC(makePaths(*path));
     }
 #endif // FT_WITH_CUDA
+    if (auto &&path = getStrEnv("FT_BACKEND_OPENMP"); path.has_value()) {
+        Config::setBackendOpenMP(makePaths(*path));
+    }
     auto device = Ref<Device>::make(TargetType::CPU);
     Config::setDefaultDevice(device);
     Config::setDefaultTarget(device->target());
@@ -154,11 +173,11 @@ void Config::init() {
 #endif
 }
 
-std::string Config::withMKL() {
+bool Config::withMKL() {
 #ifdef FT_WITH_MKL
-    return FT_WITH_MKL;
+    return true;
 #else
-    return "";
+    return false;
 #endif
 }
 

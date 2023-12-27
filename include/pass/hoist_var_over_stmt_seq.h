@@ -1,17 +1,18 @@
-#ifndef FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
-#define FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
+#ifndef FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ_H
+#define FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ_H
 
 #include <optional>
 #include <unordered_map>
 
 #include <func.h>
 #include <mutator.h>
+#include <pass/rename_var.h>
 
 namespace freetensor {
 
-class HoistVarOverStmtSeq : public Mutator {
-    std::unordered_map<std::string, std::string>
-        rename_; // old name -> new name
+class HoistVarOverStmtSeq : public RenameVar {
+    typedef RenameVar BaseClass;
+
     std::optional<std::vector<ID>> togetherIds_;
     bool isFixPoint_ = true;
 
@@ -23,10 +24,7 @@ class HoistVarOverStmtSeq : public Mutator {
     bool isFixPoint() const { return isFixPoint_; }
 
   protected:
-    Stmt visit(const VarDef &op) override;
-    Expr visit(const Load &op) override;
-    Stmt visit(const Store &op) override;
-    Stmt visit(const ReduceTo &op) override;
+    using BaseClass::visit;
     Stmt visit(const StmtSeq &op) override;
 };
 
@@ -51,4 +49,4 @@ DEFINE_PASS_FOR_FUNC(hoistVarOverStmtSeq)
 
 } // namespace freetensor
 
-#endif // FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ
+#endif // FREE_TENSOR_HOIST_VAR_OVER_STMT_SEQ_H

@@ -10,7 +10,7 @@ def test_type1_write_then_write():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -127,7 +127,7 @@ def test_type1_many_then_ones():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -153,7 +153,7 @@ def test_type1_many_then_ones_reduce():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -198,7 +198,7 @@ def test_type1_repeated_then_one():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
@@ -217,7 +217,7 @@ def test_type1_write_then_reduce():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -236,7 +236,7 @@ def test_type1_write_then_reduce_sub():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -406,7 +406,7 @@ def test_type1_write_then_multiple_reduces():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
@@ -477,11 +477,10 @@ def test_type1_not_kill_later_store():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
-    with ft.VarDef([("x", (), "int32", "input", "cpu"),
-                    ("y", (), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
     std = ft.pop_ast()
 
@@ -608,13 +607,13 @@ def test_type2_outer_loop():
 
 def test_type2_used_no_remove():
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (1,), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu"),
-                    ("w", (4,), "int32", "output", "cpu")]) as (x, z, w):
-        with ft.VarDef("y", (1,), "int32", "cache", "cpu") as y:
-            with ft.For("i", 0, 4) as i:
-                y[0] = x[i] * 2
-                z[i] = y[0] + 1
-                w[i] = y[0] + 2
+                    ("w", (4,), "int32", "output", "cpu")]) as (x, y, z, w):
+        with ft.For("i", 0, 4) as i:
+            y[0] = x[i] * 2
+            z[i] = y[0] + 1
+            w[i] = y[0] + 2
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
@@ -624,13 +623,13 @@ def test_type2_used_no_remove():
                    ])
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (1,), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu"),
-                    ("w", (4,), "int32", "output", "cpu")]) as (x, z, w):
-        with ft.VarDef("y", (1,), "int32", "cache", "cpu") as y:
-            with ft.For("i", 0, 4) as i:
-                y[0] = x[i] * 2
-                z[i] = y[0] + 1
-                w[i] = y[0] + 2
+                    ("w", (4,), "int32", "output", "cpu")]) as (x, y, z, w):
+        with ft.For("i", 0, 4) as i:
+            y[0] = x[i] * 2
+            z[i] = y[0] + 1
+            w[i] = y[0] + 2
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -720,7 +719,7 @@ def test_same_parent_but_dep_and_circular_dependence_on_init():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use'
+                       'prop_one_time_use', 'float_simplify'
                    ])
 
     with ft.VarDef([("f", (10,), "float32", "output", "cpu"),
@@ -805,7 +804,7 @@ def test_one_loop_depends_on_multiple_statements_no_remove():
                    verbose=1,
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
-                       'prop_one_time_use', 'make_heap_alloc'
+                       'prop_one_time_use', 'make_heap_alloc', 'float_simplify'
                    ])
 
     with ft.VarDef("u", (64,), "float64", "input", "cpu") as u:

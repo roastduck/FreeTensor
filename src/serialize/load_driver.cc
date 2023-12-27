@@ -87,8 +87,8 @@ Ref<Array> loadArray(const std::string &txt, const std::string &data) {
 
     Ref<Array> ret;
 
-    std::string type;
-    size_t dtype, len;
+    std::string type, dtype;
+    size_t len;
     std::vector<size_t> shape;
 
     // `ARR <dtype> <shape.size>`
@@ -103,7 +103,7 @@ Ref<Array> loadArray(const std::string &txt, const std::string &data) {
             ASSERT(iss >> shape[i]);
         }
 
-        ret = newArray(shape, dataTypeNames[dtype], data);
+        ret = newArray(shape, dtype, data);
 
         break;
     }

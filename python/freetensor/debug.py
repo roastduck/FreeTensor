@@ -1,16 +1,6 @@
+__all__ = ['logger', 'check_conflict_id']
+
 import itertools
 
-from freetensor_ffi import logger
-
-
-def with_line_no(s):
-    s = str(s)
-    lines = list(s.splitlines())
-    maxNuLen = len(str(len(lines)))
-    fmt = "{:%dd}" % maxNuLen
-    return "\n".join(
-        map(
-            lambda arg: "\033[33m" + fmt.format(arg[1] + 1) + "\033[0m" + " " +
-            arg[0],
-            zip(lines, itertools.count()),
-        ))
+from .ffi import logger
+from .ffi import check_conflict_id

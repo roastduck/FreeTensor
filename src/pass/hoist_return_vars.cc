@@ -19,8 +19,7 @@ Stmt HoistReturnVars::visit(const VarDef &_op) {
                 throw InvalidProgram(
                     "A `Func`'s returning values are allocated during run "
                     "time, and the allocation cannot be parallelized. "
-                    "Furthermore, "
-                    "it is unable to hoist " +
+                    "Furthermore, it is unable to hoist " +
                     op->name_ + " out of " + toString(outMostLoop_) +
                     " or the dimension size " + toString(dim) +
                     " will be modified");
@@ -43,6 +42,7 @@ Stmt HoistReturnVars::visit(const For &op) {
                              std::move(ret), def->pinned_, def->metadata(),
                              def->id());
         }
+        toHoist_.clear();
         return ret;
     } else {
         return Mutator::visit(op);

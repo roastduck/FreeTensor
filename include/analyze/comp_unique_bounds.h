@@ -7,6 +7,7 @@
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
+#include <hash.h>
 #include <math/bounds.h>
 #include <visitor.h>
 
@@ -69,6 +70,10 @@ class CompUniqueBounds {
  *
  * Two UNIQUE expressions `x` have different upper bounds
  *
+ * For each statements in the AST, a corresponding instance of this class should
+ * be created to deal with all (sub)expressions in the statement, so as to
+ * distinguish different `x` sites in the example above
+ *
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
@@ -77,8 +82,8 @@ class CompUniqueBoundsCombination : public CompUniqueBounds, public Visitor {
 
     typedef std::vector<LowerBound> LowerBoundsList;
     typedef std::vector<UpperBound> UpperBoundsList;
-    typedef std::unordered_map<Expr, LowerBoundsList> LowerBoundsMap;
-    typedef std::unordered_map<Expr, UpperBoundsList> UpperBoundsMap;
+    typedef ASTHashMap<Expr, LowerBoundsList> LowerBoundsMap;
+    typedef ASTHashMap<Expr, UpperBoundsList> UpperBoundsMap;
 
     LowerBoundsMap lower_;
     UpperBoundsMap upper_;
@@ -148,8 +153,15 @@ class CompUniqueBoundsCombination : public CompUniqueBounds, public Visitor {
         upper_[op] = std::forward<T>(list);
     }
 
+    /**
+     * Insert a new bound to a list of bounds. But if the new bound is a trivial
+     * deduction of existing bounds in the list, it will not be inserted
+     *
+     * @{
+     */
     void updLower(LowerBoundsList &list, const LowerBound &bound) const;
     void updUpper(UpperBoundsList &list, const UpperBound &bound) const;
+    /** @} */
 
   private:
     /**
@@ -160,11 +172,15 @@ class CompUniqueBoundsCombination : public CompUniqueBounds, public Visitor {
      */
     void visitLinear(const Expr &op);
 
+    void insertSignDataTypeInfo(const Expr &op);
+
   protected:
     void visitExpr(const Expr &op) override;
 
     void visit(const Var &op) override;
     void visit(const Load &op) override;
+    void visit(const Cast &op) override;
+    void visit(const Intrinsic &op) override;
     void visit(const IntConst &op) override;
     void visit(const Add &op) override;
     void visit(const Sub &op) override;

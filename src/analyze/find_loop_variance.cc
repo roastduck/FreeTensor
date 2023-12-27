@@ -108,11 +108,11 @@ void FindLoopVariance::visit(const For &op) {
 
     loopStack_.emplace_back(op->id());
     condStack_.emplace_back(op->len_, op); // May make a ReduceTo variant
-    loops_[op->iter_] = op;
+    pushFor(op);
 
     (*this)(op->body_);
 
-    loops_.erase(op->iter_);
+    popFor(op);
     condStack_.pop_back();
     loopStack_.pop_back();
 }
@@ -165,7 +165,7 @@ void FindLoopVariance::visitExpr(const Expr &op) {
 void FindLoopVariance::visit(const Var &op) {
     BaseClass::visit(op);
     exprInfo_.erase({op, curStmt()});
-    exprInfo_[{op, curStmt()}][loops_.at(op->name_)->id()] =
+    exprInfo_[{op, curStmt()}][loop(op->name_)->id()] =
         LoopVariability::Variant;
 }
 
@@ -174,8 +174,9 @@ void FindLoopVariance::visit(const Load &op) {
 
     ::freetensor::copyInfo(varInfo_, op->var_, exprInfo_, {op, curStmt()});
 
-    // varInfo_[op->var_] may contain info of non-surrounding loops, set them to
-    // Invariant
+    // NOTE: We currently treat expressions invariant to all their
+    // non-surrounding loops for minimize analyzing overhead. Make the following
+    // code optional if you need to analyze such expression out of some loops
     if (auto i = exprInfo_.find({op, curStmt()}); i != exprInfo_.end()) {
         for (auto j = i->second.begin(); j != i->second.end();) {
             if (std::find(loopStack_.begin(), loopStack_.end(), j->first) ==

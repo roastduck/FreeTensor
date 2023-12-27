@@ -230,6 +230,42 @@ def test_dependence_unable_resolve():
     assert ast_.match(ast)
 
 
+def test_legal_dependence():
+    with ft.VarDef([
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("b", (4, 8), "int32", "inout", "cpu"),
+    ]) as (x, y, b):
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2a") as j:
+                b[i, j] = x[i, j] * 2
+            with ft.For("j", 0, 8, label="L2b") as j:
+                with ft.If(i < 3):
+                    # Always read from `b` of the next `i`. Always happens
+                    # before the previous statement no matter fusing or not.
+                    y[i, j] = b[i + 1, 8 - j]
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fuse("L2a", "L2b")
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([
+        ("x", (4, 8), "int32", "input", "cpu"),
+        ("y", (4, 8), "int32", "output", "cpu"),
+        ("b", (4, 8), "int32", "inout", "cpu"),
+    ]) as (x, y, b):
+        with ft.For("i", 0, 4) as i:
+            with ft.For("j", 0, 8) as j:
+                b[i, j] = x[i, j] * 2
+                with ft.If(i < 3):
+                    y[i, j] = b[i + 1, -1 * j + 8]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_buffer_fuse():
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
@@ -535,6 +571,36 @@ def test_fuse_with_if_find_following_loop():
                 with ft.If(c[()] > 0):
                     y[i, j] = i + j
                 z[i, j] = i * j
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_potential_name_conflict():
+    with ft.VarDef([("x1", (5,), "int32", "input", "cpu"),
+                    ("x2", (5, 10), "int32", "input", "cpu"),
+                    ("y1", (5,), "int32", "output", "cpu"),
+                    ("y2", (5, 10), "int32", "output")]) as (x1, x2, y1, y2):
+        with ft.For("i", 0, 5, label="L1") as i:
+            y1[i] = x1[i]
+        with ft.For("j", 0, 5, label="L2") as j:
+            with ft.For("i", 0, 10) as i:  # Same name with L1
+                y2[i, j] = x2[i, j]
+
+    ast = ft.pop_ast()
+    s = ft.Schedule(ast)
+    s.fuse("L1", "L2")
+    ast = s.ast()
+    print(ast)
+
+    with ft.VarDef([("x1", (5,), "int32", "input", "cpu"),
+                    ("x2", (5, 10), "int32", "input", "cpu"),
+                    ("y1", (5,), "int32", "output", "cpu"),
+                    ("y2", (5, 10), "int32", "output")]) as (x1, x2, y1, y2):
+        with ft.For("new_i", 0, 5) as new_i:
+            y1[new_i] = x1[new_i]
+            with ft.For("i", 0, 10) as i:
+                y2[i, new_i] = x2[i, new_i]
     std = ft.pop_ast()
 
     assert std.match(ast)

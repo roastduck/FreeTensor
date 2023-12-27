@@ -1,5 +1,7 @@
 # Your First Program with FreeTenor
 
+[TOC]
+
 In this page, we introduce some basic concepts of FreeTensor.
 
 ## Example: Vector addition
@@ -89,9 +91,40 @@ for i in range(10):  # Dynamic
     lst.append(i)  # Static. Appends only once
 ```
 
+## Just-in-Time (JIT) Compilation
+
+In the example of vector addition above, we support *any* vector length, but only in a *static* way. This means each time you change the vector length `n`, you need to recompile (run `optimize` again) the function. You may find it inconvenient because you need to write your own code to control whether or when to do the re-compilation, and the compilation code is entangled with the computation code.
+
+Therefore, FreeTensor supports automating this recompilation procedure, which can be considered as Just-in-Time (JIT) compilation. To enable this feature, just declare `n` as an additional parameter, with the type `ft.JIT`:
+
+```python
+import freetensor as ft
+import numpy as np
+
+@ft.optimize
+def test(n: ft.JIT, a, b):
+    # Or `n: ft.JIT[int]` if you like, but it is only for documentation
+    a: ft.Var[(n,), "int32"]  # After the function signature to use `n`
+    b: ft.Var[(n,), "int32"]
+    y = ft.empty((n,), "int32")
+    for i in range(n):
+        y[i] = a[i] + b[i]
+    return y
+
+y = test(4, np.array([1, 2, 3, 4], dtype="int32"),
+         np.array([2, 3, 4, 5], dtype="int32")).numpy()
+print(y)
+```
+
+For each different `n` you pass, `test` will be automatically recompiled. The compiled `test` for the same `n` will be memoized, so the same instance will not be repelated compiled. You can also custom the memoization by setting the `jit_cache` parameter of `ft.optimize`.
+
+!!! note "Note on parameter declaration"
+
+    You may have note that it is non-trivial to include a parameter `n` in other parameters `a` and `b`'s type annotation. Python actually forbids such a declaration if `a` and `b`'s type annotation is inside the function signature. To cope with this restriction, FreeTensor allows declaring `a` and `b`'s type AFTER the function sigature as statements. But this off-sigature annoation is only supported for `ft.Var` types, NOT `ft.JIT`.
+
 ## Dynamic Tensor Shapes
 
-In the example of vector addition above, we support *any* vector length, but only in a *static* way. This means each time you change the vector length `n`, you need to recompile (run `optimize` again) the function. FreeTensor supports defining tensors with *dynamic* shapes, just by setting their shapes to a dynamic values. The following code shows an example:
+Frequent recompilation does not meet many requirements, so FreeTensor also supports defining tensors with *dynamic* shapes, just by setting their shapes to a dynamic values. The following code shows an example:
 
 ```python
 import freetensor as ft
@@ -99,7 +132,7 @@ import numpy as np
 
 @ft.optimize
 def test(n: ft.Var[(), "int32"], a, b):
-    a: ft.Var[(n,), "int32"]
+    a: ft.Var[(n,), "int32"]  # After the function signature to use `n`
     b: ft.Var[(n,), "int32"]
     y = ft.empty((n,), "int32")
     for i in range(n):
@@ -113,7 +146,7 @@ print(y)
 assert np.array_equal(y, [3, 5, 7, 9])
 ```
 
-In this way, in only have to compile your program once. But you will expect a longer compiling time, and some optimizations are not possible with dynamic shapes.
+In this way, in only have to compile your program once. You will expect a single but longer compiling time, and some optimizations are not possible with dynamic shapes.
 
 ## Copy-free interface from/to PyTorch
 

@@ -4,7 +4,21 @@ namespace freetensor {
 
 std::atomic_uint64_t ID::globalIdCnt_ = 1;
 
+int OSTREAM_NO_ID_SIGN = std::ostream::xalloc();
+std::function<std::ostream &(std::ostream &)> manipNoIdSign(bool flag) {
+    return [flag](std::ostream &os) -> std::ostream & {
+        os.iword(OSTREAM_NO_ID_SIGN) = flag;
+        return os;
+    };
+}
+
 std::ostream &operator<<(std::ostream &os, const ID &id) {
+    if (!id.isValid()) {
+        return os << "#None";
+    }
+    if (!os.iword(OSTREAM_NO_ID_SIGN)) {
+        os << '#';
+    }
     return os << id.id_;
 }
 

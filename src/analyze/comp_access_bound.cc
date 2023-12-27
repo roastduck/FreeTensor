@@ -11,6 +11,7 @@ static bool isSharedAmong(MemType mtype, const ParallelScope &parallel) {
         if (std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread) {
             switch (mtype) {
             case MemType::GPUGlobal:
+            case MemType::GPUGlobalHeap:
             case MemType::GPUShared:
             case MemType::GPUWarp:
                 return true;
@@ -21,6 +22,7 @@ static bool isSharedAmong(MemType mtype, const ParallelScope &parallel) {
         if (std::get<CUDAScope>(parallel).level_ == CUDAScope::Block) {
             switch (mtype) {
             case MemType::GPUGlobal:
+            case MemType::GPUGlobalHeap:
                 return true;
             default:
                 return false;
@@ -43,6 +45,10 @@ void FindMemType::visit(const VarDef &op) {
 }
 
 void CompAccessBound::visitStmt(const Stmt &stmt) {
+    // CompUniqueBounds requires one instance per Stmt
+    auto uniqueOfOuterStmt = unique_;
+    unique_ = Ref<CompUniqueBoundsCombination>::make(*this);
+
     if (stmt->id() == filterSubTree_) {
         filtered_ = true;
         BaseClass::visitStmt(stmt);
@@ -50,6 +56,8 @@ void CompAccessBound::visitStmt(const Stmt &stmt) {
     } else {
         BaseClass::visitStmt(stmt);
     }
+
+    unique_ = uniqueOfOuterStmt;
 }
 
 void CompAccessBound::visit(const VarDef &op) {
@@ -84,7 +92,7 @@ void CompAccessBound::visit(const VarDef &op) {
     for (size_t i = 0; i < n; i++) {
         // union the bounds of all accesses and get the lower and upper
         // expression
-        auto [l, u] = unique_.unionBounds(
+        auto [l, u] = unique_->unionBounds(
             // get bounds of the i-th dimension
             access_ | views::transform([&](auto &&a) { return a.bounds_[i]; }) |
             // ... and pack into vector
@@ -145,7 +153,7 @@ void CompAccessBound::visit(const VarDef &op) {
 void CompAccessBound::visit(const Load &op) {
     BaseClass::visit(op);
     if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_READ) {
-        access_.emplace_back(unique_, op->indices_, conds(),
+        access_.emplace_back(*unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
 }
@@ -153,7 +161,7 @@ void CompAccessBound::visit(const Load &op) {
 void CompAccessBound::visit(const Store &op) {
     BaseClass::visit(op);
     if (filtered_ && op->var_ == var_ && mode_ & COMP_ACCESS_BOUND_WRITE) {
-        access_.emplace_back(unique_, op->indices_, conds(),
+        access_.emplace_back(*unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
 }
@@ -161,13 +169,18 @@ void CompAccessBound::visit(const Store &op) {
 void CompAccessBound::visit(const ReduceTo &op) {
     BaseClass::visit(op);
     if (filtered_ && op->var_ == var_) {
-        access_.emplace_back(unique_, op->indices_, conds(),
+        access_.emplace_back(*unique_, op->indices_, conds(),
                              defsAtVarDef_.at(op->var_));
     }
 }
 
 void CompAccessBound::visit(const For &op) {
     if (isSharedAmong(mtype_, op->property_->parallel_)) {
+        // Suppose the only access to tensor `t` is `t[i, ...]`, where `i` is a
+        // parallel index (e.g. CUDA thread), we cannot shrink `t[i, ...]` to
+        // `t[...]` too early before all schedules are done, or we are not able
+        // to schedule a collaborative fetch. This does not apply to OpenMP
+        // threads, because we cannot do a collaborative fetch anyway in OpenMP.
         BaseClass::visit(op);
     } else {
         defs_.insert(op->iter_);

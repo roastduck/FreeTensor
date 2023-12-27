@@ -184,9 +184,17 @@ class Visitor {
 
     virtual void visit(const Exp &op) { (*this)(op->expr_); }
 
+    virtual void visit(const Ln &op) { (*this)(op->expr_); }
+
     virtual void visit(const Square &op) { (*this)(op->expr_); }
 
     virtual void visit(const Sigmoid &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Sin &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Cos &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Tan &op) { (*this)(op->expr_); }
 
     virtual void visit(const Tanh &op) { (*this)(op->expr_); }
 
@@ -195,6 +203,8 @@ class Visitor {
     virtual void visit(const Floor &op) { (*this)(op->expr_); }
 
     virtual void visit(const Ceil &op) { (*this)(op->expr_); }
+
+    virtual void visit(const Unbound &op) { (*this)(op->expr_); }
 
     virtual void visit(const For &op) {
         (*this)(op->begin_);
@@ -262,6 +272,14 @@ class Visitor {
         (*this)(op->stridec_);
         (*this)(op->batchSize_);
         (*this)(op->equivalent_);
+    }
+
+    virtual void visit(const MarkVersion &op) {}
+
+    virtual void visit(const LoadAtVersion &op) {
+        for (auto &&idx : op->indices_) {
+            (*this)(idx);
+        }
     }
 };
 

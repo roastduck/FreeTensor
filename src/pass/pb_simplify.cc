@@ -4,7 +4,6 @@
 
 #include <analyze/all_uses.h>
 #include <container_utils.h>
-#include <data_type.h>
 #include <expr.h>
 #include <math/parse_pb_expr.h>
 #include <math/presburger.h>
@@ -12,6 +11,7 @@
 #include <pass/pb_simplify.h>
 #include <pass/replace_iter.h>
 #include <serialize/mangle.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 

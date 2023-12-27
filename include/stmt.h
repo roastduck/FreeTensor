@@ -22,8 +22,12 @@ class AnyNode : public StmtNode {
     DEFINE_NODE_TRAIT(Any);
 };
 typedef Ref<AnyNode> Any;
-#define makeAny(...) makeNode(Any, __VA_ARGS__)
-inline Stmt _makeAny() { return Any::make(); }
+inline Stmt
+makeAny(std::source_location loc = std::source_location::current()) {
+    Any a = Any::make();
+    a->setDebugBlame(loc);
+    return a;
+}
 
 /**
  * A sequence of any number of statements, or a so-called statement block in
@@ -40,23 +44,26 @@ class StmtSeqNode : public StmtNode {
     DEFINE_NODE_TRAIT(StmtSeq);
 };
 typedef Ref<StmtSeqNode> StmtSeq;
-#define makeStmtSeq(...) makeNode(StmtSeq, __VA_ARGS__)
 template <class Tstmts>
-Stmt _makeStmtSeq(Tstmts &&stmts, const Metadata &metadata = nullptr,
-                  const ID &id = {}) {
+Stmt makeStmtSeq(Tstmts &&stmts, const Metadata &metadata = nullptr,
+                 const ID &id = {},
+                 std::source_location loc = std::source_location::current()) {
     StmtSeq s = StmtSeq::make();
     s->metadata() = metadata;
     s->setId(id);
     s->stmts_ = std::forward<Tstmts>(stmts);
+    s->setDebugBlame(loc);
     return s;
 }
-inline Stmt _makeStmtSeq(std::initializer_list<Stmt> stmts,
-                         const Metadata &metadata = nullptr,
-                         const ID &id = {}) {
+inline Stmt
+makeStmtSeq(std::initializer_list<Stmt> stmts,
+            const Metadata &metadata = nullptr, const ID &id = {},
+            std::source_location loc = std::source_location::current()) {
     StmtSeq s = StmtSeq::make();
     s->metadata() = metadata;
     s->setId(id);
     s->stmts_ = stmts;
+    s->setDebugBlame(loc);
     return s;
 }
 
@@ -95,21 +102,22 @@ class VarDefNode : public StmtNode {
     DEFINE_NODE_TRAIT(VarDef);
 };
 typedef Ref<VarDefNode> VarDef;
-#define makeVarDef(...) makeNode(VarDef, __VA_ARGS__)
 template <class Tbuffer, class Tbody>
-Stmt _makeVarDef(const std::string &name, Tbuffer &&buffer,
-                 const std::optional<std::string> &viewOf, Tbody &&body,
-                 bool pinned, const Metadata &metadata = nullptr,
-                 const ID &id = {}) {
+Stmt makeVarDef(const std::string &name, Tbuffer &&buffer,
+                const std::optional<std::string> &viewOf, Tbody &&body,
+                bool pinned, const Metadata &metadata = nullptr,
+                const ID &id = {},
+                std::source_location loc = std::source_location::current()) {
     ASSERT(!name.empty());
     VarDef d = VarDef::make();
     d->metadata() = metadata;
     d->setId(id);
     d->name_ = name;
-    d->buffer_ = SubTree<Buffer>(buffer);
+    d->buffer_ = std::forward<Tbuffer>(buffer);
     d->viewOf_ = viewOf;
     d->body_ = std::forward<Tbody>(body);
     d->pinned_ = pinned;
+    d->setDebugBlame(loc);
     return d;
 }
 
@@ -127,10 +135,10 @@ class StoreNode : public StmtNode {
     DEFINE_NODE_TRAIT(Store);
 };
 typedef Ref<StoreNode> Store;
-#define makeStore(...) makeNode(Store, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt _makeStore(const std::string &var, Tindices &&indices, Texpr &&expr,
-                const Metadata &metadata = nullptr, const ID &id = {}) {
+Stmt makeStore(const std::string &var, Tindices &&indices, Texpr &&expr,
+               const Metadata &metadata = nullptr, const ID &id = {},
+               std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     Store s = Store::make();
     s->metadata() = metadata;
@@ -138,12 +146,14 @@ Stmt _makeStore(const std::string &var, Tindices &&indices, Texpr &&expr,
     s->var_ = var;
     s->indices_ = std::forward<Tindices>(indices);
     s->expr_ = std::forward<Texpr>(expr);
+    s->setDebugBlame(loc);
     return s;
 }
 template <class Texpr>
-Stmt _makeStore(const std::string &var, const std::vector<Expr> &indices,
-                Texpr &&expr, const Metadata &metadata = nullptr,
-                const ID &id = {}) {
+Stmt makeStore(const std::string &var, const std::vector<Expr> &indices,
+               Texpr &&expr, const Metadata &metadata = nullptr,
+               const ID &id = {},
+               std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     Store s = Store::make();
     s->metadata() = metadata;
@@ -151,6 +161,7 @@ Stmt _makeStore(const std::string &var, const std::vector<Expr> &indices,
     s->var_ = var;
     s->indices_ = indices;
     s->expr_ = std::forward<Texpr>(expr);
+    s->setDebugBlame(loc);
     return s;
 }
 
@@ -166,14 +177,16 @@ class AllocNode : public StmtNode {
     DEFINE_NODE_TRAIT(Alloc);
 };
 typedef Ref<AllocNode> Alloc;
-#define makeAlloc(...) makeNode(Alloc, __VA_ARGS__)
-inline Stmt _makeAlloc(const std::string &var,
-                       const Metadata &metadata = nullptr, const ID &id = {}) {
+inline Stmt
+makeAlloc(const std::string &var, const Metadata &metadata = nullptr,
+          const ID &id = {},
+          std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     Alloc a = Alloc::make();
     a->metadata() = metadata;
     a->setId(id);
     a->var_ = var;
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -189,14 +202,16 @@ class FreeNode : public StmtNode {
     DEFINE_NODE_TRAIT(Free);
 };
 typedef Ref<FreeNode> Free;
-#define makeFree(...) makeNode(Free, __VA_ARGS__)
-inline Stmt _makeFree(const std::string &var,
-                      const Metadata &metadata = nullptr, const ID &id = {}) {
+inline Stmt
+makeFree(const std::string &var, const Metadata &metadata = nullptr,
+         const ID &id = {},
+         std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     Free f = Free::make();
     f->metadata() = metadata;
     f->setId(id);
     f->var_ = var;
+    f->setDebugBlame(loc);
     return f;
 }
 
@@ -214,16 +229,25 @@ class ReduceToNode : public StmtNode {
     SubTreeList<ExprNode> indices_ = ChildOf{this};
     ReduceOp op_;
     SubTree<ExprNode> expr_ = ChildOf{this};
-    bool atomic_;
+
+    /// If true, can safely reduce from multiple threads to one location. Prefer
+    /// atomic over other synchronizations
+    ///
+    /// NOTE: Synchronizations only have to be done among `ReduceTo` nodes. No
+    /// need to synchronize between a `ReduceTo` and a `Load`, or a `ReduceTo`
+    /// and a `Store`, since our schedules prohibits simultaneous `ReduceTo` and
+    /// `Load`, or `ReduceTo` and `Store`.
+    bool sync_;
+
     void compHash() override;
     DEFINE_NODE_TRAIT(ReduceTo)
 };
 typedef Ref<ReduceToNode> ReduceTo;
-#define makeReduceTo(...) makeNode(ReduceTo, __VA_ARGS__)
 template <class Tindices, class Texpr>
-Stmt _makeReduceTo(const std::string &var, Tindices &&indices, ReduceOp op,
-                   Texpr &&expr, bool atomic,
-                   const Metadata &metadata = nullptr, const ID &id = {}) {
+Stmt makeReduceTo(const std::string &var, Tindices &&indices, ReduceOp op,
+                  Texpr &&expr, bool sync, const Metadata &metadata = nullptr,
+                  const ID &id = {},
+                  std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     ReduceTo a = ReduceTo::make();
     a->metadata() = metadata;
@@ -232,13 +256,15 @@ Stmt _makeReduceTo(const std::string &var, Tindices &&indices, ReduceOp op,
     a->indices_ = std::forward<Tindices>(indices);
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
-    a->atomic_ = atomic;
+    a->sync_ = sync;
+    a->setDebugBlame(loc);
     return a;
 }
 template <class Texpr>
-Stmt _makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
-                   ReduceOp op, Texpr &&expr, bool atomic,
-                   const Metadata &metadata = nullptr, const ID &id = {}) {
+Stmt makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
+                  ReduceOp op, Texpr &&expr, bool sync,
+                  const Metadata &metadata = nullptr, const ID &id = {},
+                  std::source_location loc = std::source_location::current()) {
     ASSERT(!var.empty());
     ReduceTo a = ReduceTo::make();
     a->metadata() = metadata;
@@ -247,7 +273,8 @@ Stmt _makeReduceTo(const std::string &var, const std::vector<Expr> &indices,
     a->indices_ = indices;
     a->op_ = op;
     a->expr_ = std::forward<Texpr>(expr);
-    a->atomic_ = atomic;
+    a->sync_ = sync;
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -276,12 +303,12 @@ class ForNode : public StmtNode {
     DEFINE_NODE_TRAIT(For);
 };
 typedef Ref<ForNode> For;
-#define makeFor(...) makeNode(For, __VA_ARGS__)
 template <class Tbegin, class Tend, class Tstep, class Tlen, class Tbody,
           class Tproperty>
-Stmt _makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tstep &&step,
-              Tlen &&len, Tproperty &&property, Tbody &&body,
-              const Metadata &metadata = nullptr, const ID &id = {}) {
+Stmt makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tstep &&step,
+             Tlen &&len, Tproperty &&property, Tbody &&body,
+             const Metadata &metadata = nullptr, const ID &id = {},
+             std::source_location loc = std::source_location::current()) {
     ASSERT(!iter.empty());
     For f = For::make();
     f->metadata() = metadata;
@@ -293,6 +320,7 @@ Stmt _makeFor(const std::string &iter, Tbegin &&begin, Tend &&end, Tstep &&step,
     f->len_ = std::forward<Tlen>(len);
     f->property_ = std::forward<Tproperty>(property);
     f->body_ = std::forward<Tbody>(body);
+    f->setDebugBlame(loc);
     return f;
 }
 
@@ -319,22 +347,24 @@ class IfNode : public StmtNode {
     DEFINE_NODE_TRAIT(If);
 };
 typedef Ref<IfNode> If;
-#define makeIf(...) makeNode(If, __VA_ARGS__)
 template <class Tcond, class Tthen, class Telse = std::nullptr_t>
-Stmt _makeIf(Tcond &&cond, Tthen &&thenCase, Telse &&elseCase,
-             const Metadata &metadata = nullptr, const ID &id = {}) {
+Stmt makeIf(Tcond &&cond, Tthen &&thenCase, Telse &&elseCase,
+            const Metadata &metadata = nullptr, const ID &id = {},
+            std::source_location loc = std::source_location::current()) {
     If i = If::make();
     i->metadata() = metadata;
     i->setId(id);
     i->cond_ = std::forward<Tcond>(cond);
     i->thenCase_ = std::forward<Tthen>(thenCase);
     i->elseCase_ = std::forward<Telse>(elseCase);
+    i->setDebugBlame(loc);
     return i;
 }
 template <class Tcond, class Tthen, class Telse = std::nullptr_t>
-Stmt _makeIf(Tcond &&cond, Tthen &&thenCase, const Metadata &metadata = nullptr,
-             const ID &id = {}) {
-    return _makeIf(cond, thenCase, nullptr, metadata, id);
+Stmt makeIf(Tcond &&cond, Tthen &&thenCase, const Metadata &metadata = nullptr,
+            const ID &id = {},
+            std::source_location loc = std::source_location::current()) {
+    return makeIf(cond, thenCase, nullptr, metadata, id, loc);
 }
 
 /**
@@ -357,15 +387,16 @@ class AssertNode : public StmtNode {
     DEFINE_NODE_TRAIT(Assert);
 };
 typedef Ref<AssertNode> Assert;
-#define makeAssert(...) makeNode(Assert, __VA_ARGS__)
 template <class Tcond, class Tbody>
-Stmt _makeAssert(Tcond &&cond, Tbody &&body, const Metadata &metadata = nullptr,
-                 const ID &id = {}) {
+Stmt makeAssert(Tcond &&cond, Tbody &&body, const Metadata &metadata = nullptr,
+                const ID &id = {},
+                std::source_location loc = std::source_location::current()) {
     Assert a = Assert::make();
     a->metadata() = metadata;
     a->setId(id);
     a->cond_ = std::forward<Tcond>(cond);
     a->body_ = std::forward<Tbody>(body);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -389,15 +420,16 @@ class AssumeNode : public StmtNode {
     DEFINE_NODE_TRAIT(Assume);
 };
 typedef Ref<AssumeNode> Assume;
-#define makeAssume(...) makeNode(Assume, __VA_ARGS__)
 template <class Tcond, class Tbody>
-Stmt _makeAssume(Tcond &&cond, Tbody &&body, const Metadata &metadata = nullptr,
-                 const ID &id = {}) {
+Stmt makeAssume(Tcond &&cond, Tbody &&body, const Metadata &metadata = nullptr,
+                const ID &id = {},
+                std::source_location loc = std::source_location::current()) {
     Assume a = Assume::make();
     a->metadata() = metadata;
     a->setId(id);
     a->cond_ = std::forward<Tcond>(cond);
     a->body_ = std::forward<Tbody>(body);
+    a->setDebugBlame(loc);
     return a;
 }
 
@@ -413,15 +445,53 @@ class EvalNode : public StmtNode {
     DEFINE_NODE_TRAIT(Eval);
 };
 typedef Ref<EvalNode> Eval;
-#define makeEval(...) makeNode(Eval, __VA_ARGS__)
 template <class T>
-Stmt _makeEval(T &&expr, const Metadata &metadata = nullptr,
-               const ID &id = {}) {
+Stmt makeEval(T &&expr, const Metadata &metadata = nullptr, const ID &id = {},
+              std::source_location loc = std::source_location::current()) {
     Eval e = Eval::make();
     e->metadata() = metadata;
     e->setId(id);
     e->expr_ = std::forward<T>(expr);
+    e->setDebugBlame(loc);
     return e;
+}
+
+/**
+ * Backend library of MatMul nodes
+ */
+enum class MatMulBackend : size_t {
+    Mkl = 0,
+    Cublas,
+    Cutlass,
+    // ----------------------------
+    NumBackends
+};
+
+constexpr std::array matMulBackendNames = {
+    "mkl",
+    "cublas",
+    "cutlass",
+};
+static_assert(baseDataTypeNames.size() == (size_t)BaseDataType::NumTypes);
+
+inline std::ostream &operator<<(std::ostream &os, MatMulBackend backend) {
+    return os << matMulBackendNames.at((size_t)backend);
+}
+
+inline MatMulBackend parseMatMulBackend(const std::string &_str) {
+    auto &&str = tolower(_str);
+    for (auto &&[i, s] : views::enumerate(matMulBackendNames)) {
+        if (s == str) {
+            return (MatMulBackend)i;
+        }
+    }
+    std::string msg = "Unrecognized MatMul backend \"" + _str +
+                      "\". Candidates are (case-insensitive): ";
+    for (auto &&[i, s] : views::enumerate(matMulBackendNames)) {
+        msg += (i > 0 ? ", " : "");
+        msg += s;
+    }
+    ERROR(msg);
 }
 
 /**
@@ -429,6 +499,8 @@ Stmt _makeEval(T &&expr, const Metadata &metadata = nullptr,
  */
 class MatMulNode : public StmtNode {
   public:
+    MatMulBackend backend_;
+
     // c_ = alpha_ * a_ * b_ + beta_ * c_
     // a_ is an m_ * k_ matrix
     // b_ is a k_ * n_ matrix
@@ -456,19 +528,19 @@ class MatMulNode : public StmtNode {
     DEFINE_NODE_TRAIT(MatMul);
 };
 typedef Ref<MatMulNode> MatMul;
-#define makeMatMul(...) makeNode(MatMul, __VA_ARGS__)
-inline Stmt _makeMatMul(const Expr &a, const Expr &b, const Expr &c,
-                        const Expr &alpha, const Expr &beta, const Expr &m,
-                        const Expr &k, const Expr &n, const Expr &lda,
-                        const Expr &ldb, const Expr &ldc, const Expr &stridea,
-                        const Expr &strideb, const Expr &stridec,
-                        const Expr &batchSize, bool aIsRowMajor,
-                        bool bIsRowMajor, bool cIsRowMajor,
-                        const Stmt &equivalent,
-                        const Metadata &metadata = nullptr, const ID &id = {}) {
+inline Stmt
+makeMatMul(MatMulBackend backend, const Expr &a, const Expr &b, const Expr &c,
+           const Expr &alpha, const Expr &beta, const Expr &m, const Expr &k,
+           const Expr &n, const Expr &lda, const Expr &ldb, const Expr &ldc,
+           const Expr &stridea, const Expr &strideb, const Expr &stridec,
+           const Expr &batchSize, bool aIsRowMajor, bool bIsRowMajor,
+           bool cIsRowMajor, const Stmt &equivalent,
+           const Metadata &metadata = nullptr, const ID &id = {},
+           std::source_location loc = std::source_location::current()) {
     MatMul s = MatMul::make();
     s->metadata() = metadata;
     s->setId(id);
+    s->backend_ = backend;
     s->a_ = a;
     s->b_ = b;
     s->c_ = c;
@@ -488,6 +560,27 @@ inline Stmt _makeMatMul(const Expr &a, const Expr &b, const Expr &c,
     s->bIsRowMajor_ = bIsRowMajor;
     s->cIsRowMajor_ = cIsRowMajor;
     s->equivalent_ = equivalent;
+    s->setDebugBlame(loc);
+    return s;
+}
+
+class MarkVersionNode : public StmtNode {
+  public:
+    std::string tapeName_, var_;
+    void compHash() override;
+    DEFINE_NODE_TRAIT(MarkVersion);
+};
+typedef Ref<MarkVersionNode> MarkVersion;
+inline Stmt
+makeMarkVersion(const std::string &tapeName, const std::string &var,
+                const Metadata &metadata = nullptr, const ID &id = {},
+                std::source_location loc = std::source_location::current()) {
+    MarkVersion s = MarkVersion::make();
+    s->metadata() = metadata;
+    s->setId(id);
+    s->tapeName_ = tapeName;
+    s->var_ = var;
+    s->setDebugBlame(loc);
     return s;
 }
 

@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <container_utils.h>
 #include <func_utils.h>
 #include <probability/rand_cond.h>
 #include <probability/rand_var.h>
@@ -32,9 +33,14 @@ typedef std::vector<DiscreteObservation> RandTrace;
  */
 class RandCtxImpl {
   protected:
-    std::unordered_map<ProgramPosition,
-                       std::unordered_map<RandCondStack, Ref<DiscreteRandVar>>>
-        randVars_;
+    std::unordered_map<
+        ProgramPosition,
+        std::unordered_map<Ref<RandCondInterface>, Ref<DiscreteRandVar>,
+                           PtrInvocable<std::hash<RandCondInterface>>,
+                           PtrInvocable<std::equal_to<RandCondInterface>>>>
+        randVars_; // {pos -> {conds -> var}}
+
+    std::unordered_map<ProgramPosition, Ref<std::vector<int>>> totCnt_;
 
     std::multimap<Ref<RandTrace>, std::pair<double, double>,
                   PtrInvocable<std::less<RandTrace>>>
@@ -109,20 +115,55 @@ class RandCtx : public RandCtxImpl {
      * This function is thread-safe
      */
     int decide(ProgramPosition pos, const std::string &name,
-               const RandCondStack &condStack, const std::vector<int> &initObs,
-               const Ref<RandTrace> &trace, const std::string &message = "") {
+               const RandCondStack &condStack,
+               const std::vector<double> &priori, const Ref<RandTrace> &trace,
+               const std::string &message = "") {
         std::lock_guard<std::mutex> guard(lock_);
-        if (!randVars_.count(pos) || !randVars_.at(pos).count(condStack)) {
-            randVars_[pos][condStack] =
-                Ref<DiscreteRandVar>::make(name, condStack, initObs);
+
+        auto INIT_OBS = 4;
+
+        if (!totCnt_.count(pos)) {
+            totCnt_[pos] = Ref<std::vector<int>>::make(priori.size(), INIT_OBS);
         }
-        auto &&var = randVars_.at(pos).at(condStack);
-        auto value = isInfer_ || !std::regex_match(var->name(), toLearn_)
-                         ? var->mostLikely()
-                         : var->sample(rng_);
+        auto &&totCnt = totCnt_.at(pos);
+
+        std::vector<double> prob{totCnt->begin(), totCnt->end()};
+        for (auto it = condStack; !it.empty(); it = it.pop()) {
+            auto &&cond = it.top();
+            if (!randVars_.count(pos) || !randVars_.at(pos).count(cond)) {
+                std::vector<int> initObs;
+                initObs.reserve(priori.size());
+                for (auto &&p : priori) {
+                    initObs.emplace_back((int)(INIT_OBS * p));
+                }
+                randVars_[pos][cond] =
+                    Ref<DiscreteRandVar>::make(name, cond, totCnt, initObs);
+            }
+            auto &&var = randVars_.at(pos).at(cond);
+            auto localProb = var->prob();
+            for (auto &&[p, q] : views::zip(prob, localProb)) {
+                p *= q;
+            }
+        }
+
+        int value;
+        if (isInfer_ || !std::regex_match(name, toLearn_)) { // Most likely
+            value = std::max_element(prob.begin(), prob.end()) - prob.begin();
+        } else { // Sample
+            value =
+                std::discrete_distribution<int>(prob.begin(), prob.end())(rng_);
+        }
+
         if (trace.isValid()) {
-            trace->emplace_back(var, value, message);
+            std::vector<Ref<DiscreteRandVar>> vars;
+            for (auto it = condStack; !it.empty(); it = it.pop()) {
+                auto &&cond = it.top();
+                auto &&var = randVars_.at(pos).at(cond);
+                vars.emplace_back(var);
+            }
+            trace->emplace_back(vars, totCnt, value, message);
         }
+
         return value;
     }
 };

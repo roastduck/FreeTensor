@@ -1,10 +1,18 @@
-import torch
 import pytest
 import operator
 import functools
 import numpy as np
 
 import freetensor as ft
+
+if not ft.with_pytorch():
+    pytest.skip(
+        "The tests requires PyTorch, and FreeTensor is expected to be built with "
+        "PyTorch to be compatible with it, even if there is no direct interaction "
+        "between FreeTensor and PyTorch",
+        allow_module_level=True)
+
+import torch
 
 
 def rand(*shape, **kvs):
@@ -70,13 +78,13 @@ def test_same_static_shape(libop_func, torch_func, dtype, ret_dtype):
         libop_func(x, y, out)
 
     x_torch = rand(4, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     out_torch = zeros(4, 4, dtype=ret_dtype)
-    out_arr = ft.Array(out_torch.numpy())
+    out_arr = ft.array(out_torch)
     f(x_arr, y_arr, out_arr)
-    out_torch = torch.tensor(out_arr.numpy())
+    out_torch = out_arr.torch()
 
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
@@ -112,13 +120,13 @@ def test_static_broadcast_shorter(libop_func, torch_func, dtype, ret_dtype):
         libop_func(x, y, out)
 
     x_torch = rand(4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     out_torch = zeros(4, 4, dtype=ret_dtype)
-    out_arr = ft.Array(out_torch.numpy())
+    out_arr = ft.array(out_torch)
     f(x_arr, y_arr, out_arr)
-    out_torch = torch.tensor(out_arr.numpy())
+    out_torch = out_arr.torch()
 
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
@@ -154,13 +162,13 @@ def test_static_broadcast_1_at_front(libop_func, torch_func, dtype, ret_dtype):
         libop_func(x, y, out)
 
     x_torch = rand(1, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     out_torch = zeros(4, 4, dtype=ret_dtype)
-    out_arr = ft.Array(out_torch.numpy())
+    out_arr = ft.array(out_torch)
     f(x_arr, y_arr, out_arr)
-    out_torch = torch.tensor(out_arr.numpy())
+    out_torch = out_arr.torch()
 
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
@@ -196,13 +204,13 @@ def test_static_broadcast_1_at_back(libop_func, torch_func, dtype, ret_dtype):
         libop_func(x, y, out)
 
     x_torch = rand(4, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = rand(4, 1, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     out_torch = zeros(4, 4, dtype=ret_dtype)
-    out_arr = ft.Array(out_torch.numpy())
+    out_arr = ft.array(out_torch)
     f(x_arr, y_arr, out_arr)
-    out_torch = torch.tensor(out_arr.numpy())
+    out_torch = out_arr.torch()
 
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
@@ -233,13 +241,13 @@ def test_different_dtype(libop_func, torch_func, dtype1, dtype2, ret_dtype):
         libop_func(x, y, out)
 
     x_torch = rand(4, 4, dtype=dtype1)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = rand(4, 4, dtype=dtype2)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     out_torch = zeros(4, 4, dtype=ret_dtype)
-    out_arr = ft.Array(out_torch.numpy())
+    out_arr = ft.array(out_torch)
     f(x_arr, y_arr, out_arr)
-    out_torch = torch.tensor(out_arr.numpy())
+    out_torch = out_arr.torch()
 
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
 
@@ -274,11 +282,11 @@ def test_out_of_place(libop_func, torch_func, dtype, ret_dtype):
         return libop_func(x, y)
 
     x_torch = rand(4, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     out_arr = f(x_arr, y_arr)
-    out_torch = torch.tensor(out_arr.numpy())
+    out_torch = out_arr.torch()
 
     assert np.array_equal(out_arr.shape, [4, 4])
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)
@@ -310,11 +318,11 @@ def test_operator_overload(libop_func, torch_func, dtype, ret_dtype):
         return libop_func(x, y)
 
     x_torch = rand(4, 4, dtype=dtype)
-    x_arr = ft.Array(x_torch.numpy())
+    x_arr = ft.array(x_torch)
     y_torch = rand(4, 4, dtype=dtype)
-    y_arr = ft.Array(y_torch.numpy())
+    y_arr = ft.array(y_torch)
     out_arr = f(x_arr, y_arr)
-    out_torch = torch.tensor(out_arr.numpy())
+    out_torch = out_arr.torch()
 
     assert np.array_equal(out_arr.shape, [4, 4])
     assert same(out_torch, torch_func(x_torch, y_torch), dtype=ret_dtype)

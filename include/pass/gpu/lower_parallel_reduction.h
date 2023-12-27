@@ -4,7 +4,9 @@
 #ifdef FT_WITH_CUDA
 
 #include <unordered_map>
+#include <unordered_set>
 
+#include <analyze/comp_transient_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
@@ -19,15 +21,19 @@ class InsertWorkspaces : public SymbolTable<Mutator> {
     std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
         ws2red_; // workspace ID -> (loop iter name, reduction info)
     std::vector<For> loopStack_;
+    std::unordered_set<std::string> handledVars_;
+    bool converged_ = true;
 
   public:
     const auto &ws2red() const { return ws2red_; }
+    bool converged() const { return converged_; }
 
   private:
     std::vector<std::pair<For, int>> reducedBy(const ReduceTo &op);
 
   protected:
     using BaseClass::visit;
+    Stmt visit(const VarDef &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const ReduceTo &op) override;
 };
@@ -70,8 +76,9 @@ class InsertBinaryReduction : public SymbolTable<Mutator> {
     Expr visit(const Load &op) override { return visitMemAcc(op); }
 };
 
-class CorrectInterThreadDependence : public SymbolTable<Mutator> {
-    typedef SymbolTable<Mutator> BaseClass;
+class CorrectInterThreadDependence
+    : public CompTransientBounds<SymbolTable<Mutator>> {
+    typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
     const std::unordered_map<ID, std::pair<std::string, Ref<ReductionItem>>>
         &ws2red_; // workspace ID -> (loop iter name, reduction info)

@@ -1,8 +1,12 @@
 #include <sstream>
 
 #include <analyze/deps.h>
+#include <analyze/find_stmt.h>
 #include <schedule.h>
 #include <schedule/check_loop_order.h>
+#include <schedule/check_not_in_lib.h>
+#include <schedule/fission.h>
+#include <schedule/hoist_selected_var.h>
 #include <schedule/reorder.h>
 
 namespace freetensor {
@@ -108,24 +112,39 @@ Stmt Reorder::visit(const StmtSeq &_op) {
             // Otherwise, some outer visit(StmtSeq) will add the guards for us
 
             if (before.isValid()) {
-                if (oldInner_->property_->parallel_ != serialScope) {
+                if (mode_ == ReorderMode::MoveInImperfect) {
+                    if (oldInner_->property_->parallel_ != serialScope) {
+                        throw InvalidSchedule(
+                            "Imperfect nesting is not allowed when "
+                            "the inner loop is parallelized");
+                    }
+                    before = makeIf(
+                        makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
+                        RenameIter{oldInner_->iter_}(before));
+                } else {
                     throw InvalidSchedule(
-                        "Imperfect nesting is not allowed when "
-                        "the inner loop is parallelized");
+                        "Imperfected nested loops detected. If this is "
+                        "intended, try setting `mode` of `reorder`");
                 }
-                before =
-                    makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                           RenameIter{oldInner_->iter_}(before));
             }
             if (after.isValid()) {
-                if (oldInner_->property_->parallel_ != serialScope) {
+                if (mode_ == ReorderMode::MoveInImperfect) {
+                    if (oldInner_->property_->parallel_ != serialScope) {
+                        throw InvalidSchedule(
+                            "Imperfect nesting is not allowed when "
+                            "the inner loop is parallelized");
+                    }
+                    auto &&end = makeAdd(
+                        oldInner_->begin_,
+                        makeMul(makeSub(oldInner_->len_, makeIntConst(1)),
+                                oldInner_->step_));
+                    after = makeIf(makeEQ(makeVar(oldInner_->iter_), end),
+                                   RenameIter{oldInner_->iter_}(after));
+                } else {
                     throw InvalidSchedule(
-                        "Imperfect nesting is not allowed when "
-                        "the inner loop is parallelized");
+                        "Imperfected nested loops detected. If this is "
+                        "intended, try setting `mode` of `reorder`");
                 }
-                after =
-                    makeIf(makeEQ(makeVar(oldInner_->iter_), oldInner_->begin_),
-                           RenameIter{oldInner_->iter_}(after));
             }
         }
 
@@ -147,12 +166,31 @@ Stmt Reorder::visit(const StmtSeq &_op) {
     }
 }
 
-Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
+Stmt reorder(const Stmt &_ast, const std::vector<ID> &_dstOrder,
+             ReorderMode mode) {
     auto ast = _ast;
+    auto dstOrder = _dstOrder;
+
+    for (auto &&item : dstOrder) {
+        checkNotInLib(ast, item);
+    }
 
     CheckLoopOrder checker(dstOrder);
     checker(ast);
     auto curOrder = checker.order();
+
+    // Trim already-in-order parts
+    while (!curOrder.empty() && curOrder.back()->id() == dstOrder.back()) {
+        curOrder.pop_back();
+        dstOrder.pop_back();
+    }
+    while (!curOrder.empty() && curOrder.front()->id() == dstOrder.front()) {
+        curOrder.erase(curOrder.begin());
+        dstOrder.erase(dstOrder.begin());
+    }
+    if (curOrder.empty()) {
+        return ast;
+    }
 
     std::vector<int> index;
     index.reserve(curOrder.size());
@@ -162,8 +200,49 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
             dstOrder.begin());
     }
 
+    if (mode == ReorderMode::MoveOutImperfect) {
+        try {
+            auto &&outerMostId = curOrder.front()->id();
+            auto &&innerMostId = curOrder.back()->id();
+            if (!findAllStmt(ast, "(<<-" + toString(outerMostId) + ")&!(->>" +
+                                      toString(innerMostId) +
+                                      ")&(<<:" + toString(innerMostId) + ")")
+                     .empty()) {
+                // There is a statement nested inside the outer-most loop, but
+                // not nesting the inner-most loop, and before the inner-most
+                // loop
+                ast = fission(ast, outerMostId, FissionSide::Before,
+                              innerMostId, true, ".imperfect.0", "")
+                          .first;
+            }
+            if (!findAllStmt(ast, "(<<-" + toString(outerMostId) + ")&!(->>" +
+                                      toString(innerMostId) + ")&(:>>" +
+                                      toString(innerMostId) + ")")
+                     .empty()) {
+                // There is a statement nested inside the outer-most loop, but
+                // not nesting the inner-most loop, and after the inner-most
+                // loop
+                ast = fission(ast, outerMostId, FissionSide::After, innerMostId,
+                              true, "", ".imperfect.1")
+                          .first;
+            }
+        } catch (const InvalidSchedule &e) {
+            throw InvalidSchedule(
+                std::string("mode == MoveOutImperfect triggers a fission, "
+                            "which throws an exception: ") +
+                e.what());
+        }
+    }
+
+    // We do not analyze dependences that exit and re-enter a VarDef
+    // (`eraseOutsideVarDef(true)`), so local variables will not stop
+    // reordering. However, we need to first ensure there is no VarDef between
+    // two reordered loops to ensure this exception is correct.
+    ast = hoistSelectedVar(ast, "<<-" + toString(curOrder.front()->id()) +
+                                    "&->>" + toString(curOrder.back()->id()));
+
     // A reorder is leagal if and only if:
-    // 1. when all the outer loops are in the same iteration,
+    // 1. when all the loops out of what reordered are in the same iteration,
     // 2. after transformation, for each dependence pair, `earlier` is still
     // earlier (lexicographically less) than `later`.
     std::vector<ID> dstLoopAndStmtSeqOrder;
@@ -185,7 +264,7 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j + 1 < n; j++) {
             if (index[j] > index[j + 1]) {
-                Reorder mutator(curOrder[j], curOrder[j + 1]);
+                Reorder mutator(curOrder[j], curOrder[j + 1], mode);
                 ast = mutator(ast);
                 std::swap(index[j], index[j + 1]);
                 std::swap(curOrder[j], curOrder[j + 1]);
@@ -196,10 +275,10 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &dstOrder) {
     return ast;
 }
 
-void Schedule::reorder(const std::vector<ID> &order) {
+void Schedule::reorder(const std::vector<ID> &order, ReorderMode mode) {
     beginTransaction();
     auto log =
-        appendLog(MAKE_SCHEDULE_LOG(Reorder, freetensor::reorder, order));
+        appendLog(MAKE_SCHEDULE_LOG(Reorder, freetensor::reorder, order, mode));
     try {
         applyLog(log);
         commitTransaction();
