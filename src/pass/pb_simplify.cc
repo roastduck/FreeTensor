@@ -49,69 +49,22 @@ Expr translateBoundFunc(
 
     // TODO: clear out those not related params
     PBSet compactedBoundSet = coalesce(boundSet);
-    int nDims = compactedBoundSet.nDims(),
-        nParamDims = compactedBoundSet.nParamDims();
-    auto compactedBoundMap = moveDimsParamToInput(
-        intersectRange(universeMap(spaceAlloc(ctx, 0, 0, nDims)),
-                       std::move(compactedBoundSet)),
-        0, nParamDims, 0);
-    PBFunc boundFunc(std::move(compactedBoundMap));
+    auto parsed = parsePBFuncReconstructMinMax(ctx, compactedBoundSet);
 
-    ReplaceIter demangler(demangleMap);
-
-    // coalesce to min/max:
-    // try min and max of all basic maps, compare against original
-    ASSERT(boundFunc.nOutDims() == 1);
-    auto piecewise = boundFunc[0];
-    auto pieces = piecewise.pieces();
-    ASSERT(pieces.size() > 0);
-
-    PBSingleFunc recoverMin = pieces[0].second;
-    PBSingleFunc recoverMax = pieces[0].second;
-    for (size_t i = 0; i < pieces.size(); ++i) {
-        recoverMin = min(recoverMin, pieces[i].second);
-        recoverMax = max(recoverMax, pieces[i].second);
-    }
-
-    recoverMin = intersectDomain(std::move(recoverMin), domain(piecewise));
-    recoverMax = intersectDomain(std::move(recoverMax), domain(piecewise));
-
-    // construct operation sequence if min or max matches
-    auto constructSequence = [&](auto fPair) {
-        Expr result;
-        for (auto &&[_, pieceRaw] : views::reverse(pieces)) {
-            PBFunc piece(pieceRaw);
-            auto pieceParsed = parseSimplePBFunc(toString(piece));
-            ASSERT(pieceParsed.values_.size() == 1);
-            for (auto &&arg : pieceParsed.args_)
-                ASSERT(demangleMap.contains(arg));
-            auto pieceExpr = demangler(pieceParsed.values_[0]);
-            if (result.isValid())
-                result = fPair(pieceExpr, result);
-            else
-                result = pieceExpr;
-        }
-        return result;
-    };
-    if (piecewise == recoverMin)
-        return constructSequence(
-            [](const Expr &a, const Expr &b) { return makeMin(a, b); });
-    if (piecewise == recoverMax)
-        return constructSequence(
-            [](const Expr &a, const Expr &b) { return makeMax(a, b); });
-
-    // both unmatched, fall back to if expression
-    auto parsed = parsePBFunc(toString(piecewise));
     Expr result;
+    ReplaceIter demangler(demangleMap);
     for (auto piece : views::reverse(parsed)) {
         for (auto &&arg : piece.args_)
             ASSERT(demangleMap.contains(arg));
-        auto condExpr = demangler(piece.cond_);
+        ASSERT(piece.values_.size() == 1);
         auto pieceExpr = demangler(piece.values_[0]);
-        if (result.isValid())
-            result = makeIfExpr(condExpr, pieceExpr, result);
-        else
+        if (piece.cond_.isValid()) {
+            auto condExpr = demangler(piece.cond_);
+            result = result.isValid() ? makeIfExpr(condExpr, pieceExpr, result)
+                                      : pieceExpr;
+        } else {
             result = pieceExpr;
+        }
     }
     return result;
 }
@@ -251,8 +204,9 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
 
     // union the bounds
     PBSet bound = bounds[0].as<Bound>()->bound_;
-    for (size_t i = 1; i < bounds.size(); ++i)
+    for (size_t i = 1; i < bounds.size(); ++i) {
         bound = uni(std::move(bound), bounds[i].as<Bound>()->bound_);
+    }
     bound = coalesce(std::move(bound));
 
     // construct the demangle map
@@ -264,10 +218,11 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
             auto &&srcDemangleMap = *srcBound.as<Bound>()->demangleMap_;
             auto it = srcDemangleMap.find(dimName);
             if (it != srcDemangleMap.end()) {
-                if (demangled.isValid())
-                    ASSERT(demangled == it->second);
-                else
+                if (demangled.isValid()) {
+                    ASSERT(HashComparator{}(demangled, it->second));
+                } else {
                     demangled = it->second;
+                }
             }
         }
         demangleMap[dimName] = demangled;

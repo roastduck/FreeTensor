@@ -124,16 +124,16 @@ Expr SimplifyPass::visit(const Add &_op) {
                        makeAdd(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
     }
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Max) {
-        return makeMax(makeAdd(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
-                       makeAdd(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+        return makeMax(makeAdd(op->lhs_, op->rhs_.as<MaxNode>()->lhs_),
+                       makeAdd(op->lhs_, op->rhs_.as<MaxNode>()->rhs_));
     }
     if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
         return makeMin(makeAdd(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
                        makeAdd(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
     }
     if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
-        return makeMax(makeAdd(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
-                       makeAdd(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        return makeMax(makeAdd(op->lhs_.as<MaxNode>()->lhs_, op->rhs_),
+                       makeAdd(op->lhs_.as<MaxNode>()->rhs_, op->rhs_));
     }
 
     return op;
