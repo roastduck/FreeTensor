@@ -197,10 +197,19 @@ bool CompUniqueBoundsPB::alwaysLT(const Expr &lhs, const Expr &rhs) {
 }
 
 std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
-    const std::vector<Ref<CompUniqueBounds::Bound>> &bounds) {
+    const std::vector<Ref<CompUniqueBounds::Bound>> &_bounds) {
     // if no bound presented, return an empty range
-    if (bounds.size() == 0)
+    if (_bounds.size() == 0)
         return {makeIntConst(0), makeIntConst(-1)};
+
+    // PBSet in _bounds may be from foreign ctx. Reconstruct them in our ctx
+    auto bounds = ranges::to<std::vector>(
+        _bounds | views::transform([&](auto &&_bound) {
+            auto &&bound = _bound.template as<CompUniqueBoundsPB::Bound>();
+            return Ref<CompUniqueBoundsPB::Bound>::make(
+                ctx_, bound->demangleMap_,
+                PBSet(*ctx_, toString(bound->bound_)));
+        }));
 
     // union the bounds
     PBSet bound = bounds[0].as<Bound>()->bound_;

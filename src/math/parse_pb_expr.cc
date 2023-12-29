@@ -200,6 +200,24 @@ Expr isl2Expr(__isl_take isl_ast_expr *e) {
                 ASSERT(args.size() == 2);
                 res = makeMul(args[0], args[1]);
                 break;
+            case isl_ast_expr_op_div: // Exact division. Any rounding is OK. By
+                                      // defaults we use FloorDiv
+            case isl_ast_expr_op_fdiv_q: // Floor division
+            case isl_ast_expr_op_pdiv_q: // Floor division on non-negative
+                                         // divisor
+                ASSERT(args.size() == 2);
+                res = makeFloorDiv(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_pdiv_r: // Remainder on non-negative divisor.
+                                         // Equivalent to Mod. We prefer Mod
+                                         // over Remainder
+                ASSERT(args.size() == 2);
+                res = makeMod(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_zdiv_r: // Divisible ? 0 : 1
+                ASSERT(args.size() == 2);
+                res = makeLT(makeMod(args[0], args[1]), makeIntConst(0));
+                break;
             case isl_ast_expr_op_select:
                 ASSERT(args.size() == 3);
                 res = makeIfExpr(args[0], args[1], args[2]);
