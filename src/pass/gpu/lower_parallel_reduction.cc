@@ -357,6 +357,14 @@ Stmt lowerParallelReduction(const Stmt &_op) {
                 op, wsId, COMP_ACCESS_BOUND_READ, true, scopeId);
             boundsWithoutShape[wsId] = compAccessBound(
                 op, wsId, COMP_ACCESS_BOUND_READ, false, scopeId);
+
+            // Don't touch the thread dimension
+            boundsWithShape[wsId].lower_[0] = nullptr;
+            boundsWithShape[wsId].upper_[0] = nullptr;
+            boundsWithShape[wsId].len_[0] = nullptr;
+            boundsWithoutShape[wsId].lower_[0] = nullptr;
+            boundsWithoutShape[wsId].upper_[0] = nullptr;
+            boundsWithoutShape[wsId].len_[0] = nullptr;
         }
         op = ShrinkVar(boundsWithShape, boundsWithoutShape, true)(op);
 

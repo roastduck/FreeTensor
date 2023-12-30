@@ -312,13 +312,14 @@ def test_cache_with_multiple_conditions():
 
 
 def test_fill_is_necessary_when_possibly_not_written():
-    with ft.VarDef([("x", (2, 4), "int32", "input", "cpu"),
-                    ("y", (2, 4), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
+                    ("y", (3, 4), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", 0, 4, label="L2") as j:
                 with ft.If(i == 0):
-                    y[0, j] = x[0, j]
-                y[1, j] = x[1, j]
+                    y[1, j] = x[0, j]
+                y[0, j] = x[1, j]
+                y[2, j] = x[1, j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     s.cache(s.find("L2").body, "y", "cpu")
@@ -326,17 +327,18 @@ def test_fill_is_necessary_when_possibly_not_written():
     print(ast)
     ast = ft.lower(ast, verbose=1)
 
-    with ft.VarDef([("x", (2, 4), "int32", "input", "cpu"),
-                    ("y", (2, 4), "int32", "output", "cpu")]) as (x, y):
+    with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
+                    ("y", (3, 4), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 2, label="L1") as i:
             with ft.For("j", 0, 4, label="L2") as j:
-                with ft.VarDef("b", (2, 1), "int32", "cache", "cpu") as b:
-                    with ft.For("k", 0, 2) as k:
+                with ft.VarDef("b", (3, 1), "int32", "cache", "cpu") as b:
+                    with ft.For("k", 0, 3) as k:
                         b[k, 0] = y[k, j]  # This statement is necessary
                     with ft.If(i == 0):
-                        b[0, 0] = x[0, j]
-                    b[1, 0] = x[1, j]
-                    with ft.For("k", 0, 2) as k:
+                        b[1, 0] = x[0, j]
+                    b[0, 0] = x[1, j]
+                    b[2, 0] = x[1, j]
+                    with ft.For("k", 0, 3) as k:
                         y[k, j] = b[k, 0]
     std = ft.pop_ast()
 

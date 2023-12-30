@@ -3,6 +3,7 @@
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_access_bound.h>
 #include <math/min_max.h>
+#include <pass/pb_simplify.h>
 
 namespace freetensor {
 
@@ -47,7 +48,7 @@ void FindMemType::visit(const VarDef &op) {
 void CompAccessBound::visitStmt(const Stmt &stmt) {
     // CompUniqueBounds requires one instance per Stmt
     auto uniqueOfOuterStmt = unique_;
-    unique_ = Ref<CompUniqueBoundsCombination>::make(*this);
+    unique_ = Ref<CompUniqueBoundsPB>::make(*this);
 
     if (stmt->id() == filterSubTree_) {
         filtered_ = true;

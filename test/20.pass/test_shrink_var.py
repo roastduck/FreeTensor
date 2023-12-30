@@ -188,68 +188,67 @@ def test_no_changing_unbounded_var():
     assert ft.pop_ast().match(ast)
 
 
-# FIXME: Fix this test
-#def test_const_in_branch_1():
-#    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
-#                    ("y1", (4,), "int32", "output", "cpu"),
-#                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
-#        with ft.For("i", 0, 4) as i:
-#            with ft.VarDef("b", (4,), "int32", "cache", "cpu") as b:
-#                with ft.If(i == 2):
-#                    b[2] = x[2]
-#                with ft.Else():
-#                    b[i] = x[i] + x[i + 1]
-#                y1[i] = b[i] * i
-#                y2[i] = b[i] + i
-#    ast = ft.pop_ast()
-#    print(ast)
-#    ast = ft.lower(ast)
-#    print(ast)
-#
-#    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
-#                    ("y1", (4,), "int32", "output", "cpu"),
-#                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
-#        with ft.For("i", 0, 4) as i:
-#            with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
-#                with ft.If(i == 2):
-#                    b[0] = x[2]
-#                with ft.Else():
-#                    b[0] = x[i] + x[i + 1]
-#                y1[i] = b[0] * i
-#                y2[i] = b[0] + i
-#    std = ft.pop_ast()
-#
-#    assert std.match(ast)
+def test_const_in_branch_1():
+    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
+                    ("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("b", (4,), "int32", "cache", "cpu") as b:
+                with ft.If(i == 2):
+                    b[2] = x[2]
+                with ft.Else():
+                    b[i] = x[i] + x[i + 1]
+                y1[i] = b[i] * i
+                y2[i] = b[i] + i
+    ast = ft.pop_ast()
+    print(ast)
+    ast = ft.lower(ast)
+    print(ast)
 
-# FIXME: Fix this test
-#def test_const_in_branch_2():
-#    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
-#                    ("y1", (4,), "int32", "output", "cpu"),
-#                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
-#        with ft.For("i", 0, 4) as i:
-#            with ft.VarDef("b", (4,), "int32", "cache", "cpu") as b:
-#                with ft.If(i < 3):
-#                    b[i] = x[i] + x[i + 1]
-#                with ft.Else():
-#                    b[3] = x[3]
-#                y1[i] = b[i] * i
-#                y2[i] = b[i] + i
-#    ast = ft.pop_ast()
-#    print(ast)
-#    ast = ft.lower(ast)
-#    print(ast)
-#
-#    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
-#                    ("y1", (4,), "int32", "output", "cpu"),
-#                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
-#        with ft.For("i", 0, 4) as i:
-#            with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
-#                with ft.If(i < 3):
-#                    b[0] = x[i] + x[i + 1]
-#                with ft.Else():
-#                    b[0] = x[3]
-#                y1[i] = b[0] * i
-#                y2[i] = b[0] + i
-#    std = ft.pop_ast()
-#
-#    assert std.match(ast)
+    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
+                    ("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
+                with ft.If(i == 2):
+                    b[0] = x[2]
+                with ft.Else():
+                    b[0] = x[i] + x[i + 1]
+                y1[i] = b[0] * i
+                y2[i] = b[0] + i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+def test_const_in_branch_2():
+    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
+                    ("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("b", (4,), "int32", "cache", "cpu") as b:
+                with ft.If(i < 3):
+                    b[i] = x[i] + x[i + 1]
+                with ft.Else():
+                    b[3] = x[3]
+                y1[i] = b[i] * i
+                y2[i] = b[i] + i
+    ast = ft.pop_ast()
+    print(ast)
+    ast = ft.lower(ast)
+    print(ast)
+
+    with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
+                    ("y1", (4,), "int32", "output", "cpu"),
+                    ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.For("i", 0, 4) as i:
+            with ft.VarDef("b", (1,), "int32", "cache", "cpu") as b:
+                with ft.If(i < 3):
+                    b[0] = x[i] + x[i + 1]
+                with ft.Else():
+                    b[0] = x[3]
+                y1[i] = b[0] * i
+                y2[i] = b[0] + i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
