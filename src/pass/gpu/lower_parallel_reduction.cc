@@ -350,12 +350,14 @@ Stmt lowerParallelReduction(const Stmt &_op) {
 
         // 4. Try to make the workspace smaller by `pass/shrink_var`. Here we
         // use custom bounds only considering the real use of the workspaces
-        std::unordered_map<ID, AccessBound> bounds;
+        std::unordered_map<ID, AccessBound> boundsWithShape, boundsWithoutShape;
         for (auto &&[wsId, scopeId] : insertBinaryReduction.ws2scope()) {
-            bounds[wsId] = compAccessBound(op, wsId, COMP_ACCESS_BOUND_READ,
-                                           false, scopeId);
+            boundsWithShape[wsId] = compAccessBound(
+                op, wsId, COMP_ACCESS_BOUND_READ, true, scopeId);
+            boundsWithShape[wsId] = compAccessBound(
+                op, wsId, COMP_ACCESS_BOUND_READ, false, scopeId);
         }
-        op = ShrinkVar(bounds, true)(op);
+        op = ShrinkVar(boundsWithShape, boundsWithoutShape, true)(op);
 
         // 5. Simplify, to flatten singleton loops, and to simplify the
         // expressions from `pass/shrink_var`

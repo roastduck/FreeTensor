@@ -11,20 +11,34 @@
 namespace freetensor {
 
 class ShrinkVar : public Mutator {
-    std::unordered_map<std::string, std::vector<Expr>> lower_, upper_;
-    const std::unordered_map<ID, AccessBound> &newRange_;
+    // Bound considering the old shape. Used for preventing make the shape even
+    // larger after shrinking
+    const std::unordered_map<ID, AccessBound> &newRangeWithShape_;
+
+    // Bound without considering the old shape. Used for preventing redundant
+    // guards for maybe-unsafe user code
+    const std::unordered_map<ID, AccessBound> &newRangeWithoutShape_;
+
     bool guardReads_;
+
+    std::unordered_map<std::string, std::vector<Expr>> lowerWithShape_,
+        upperWithShape_;
+    std::unordered_map<std::string, std::vector<Expr>> lowerWithoutShape_,
+        upperWithoutShape_;
     std::unordered_map<ID, Expr> guards_;
 
   public:
-    ShrinkVar(const std::unordered_map<ID, AccessBound> &newRange,
+    ShrinkVar(const std::unordered_map<ID, AccessBound> &newRangeWithShape,
+              const std::unordered_map<ID, AccessBound> &newRangeWithoutShape,
               bool guardReads = false)
-        : newRange_(newRange), guardReads_(guardReads) {}
+        : newRangeWithShape_(newRangeWithShape),
+          newRangeWithoutShape_(newRangeWithoutShape), guardReads_(guardReads) {
+    }
 
   private:
     template <class T> T modifyAccess(const T &op) {
-        if (lower_.count(op->var_)) {
-            auto &&offset = lower_.at(op->var_);
+        if (lowerWithoutShape_.count(op->var_)) {
+            auto &&offset = lowerWithoutShape_.at(op->var_);
             ASSERT(offset.size() == op->indices_.size());
             for (auto &&[idx, off] : views::zip(op->indices_, offset)) {
                 if (off.isValid()) {
@@ -39,8 +53,8 @@ class ShrinkVar : public Mutator {
         // We add check w.r.t oldOp because it is simplier, which brings less
         // redundancy to pass/simplify
         Expr guard;
-        if (upper_.count(op->var_)) {
-            auto &&upper = upper_.at(op->var_);
+        if (upperWithoutShape_.count(op->var_)) {
+            auto &&upper = upperWithoutShape_.at(op->var_);
             ASSERT(upper.size() == op->indices_.size());
             for (auto &&[idx, u] : views::zip(oldOp->indices_, upper)) {
                 if (u.isValid()) {
@@ -49,8 +63,8 @@ class ShrinkVar : public Mutator {
                 }
             }
         }
-        if (lower_.count(op->var_)) {
-            auto &&lower = lower_.at(op->var_);
+        if (lowerWithoutShape_.count(op->var_)) {
+            auto &&lower = lowerWithoutShape_.at(op->var_);
             ASSERT(lower.size() == op->indices_.size());
             for (auto &&[idx, l] : views::zip(oldOp->indices_, lower)) {
                 if (l.isValid()) {
