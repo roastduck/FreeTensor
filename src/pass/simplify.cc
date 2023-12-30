@@ -53,6 +53,23 @@ static Expr reduceMul(const std::vector<Expr> &factors) {
     return ret.isValid() ? ret : makeIntConst(1);
 }
 
+static Expr recursiveNegateMul(const Expr &e) {
+    if (e->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(-e.as<IntConstNode>()->val_);
+    } else if (e->nodeType() == ASTNodeType::Mul) {
+        auto &&mul = e.as<MulNode>();
+        if (auto &&nl = recursiveNegateMul(mul->lhs_); nl.isValid()) {
+            return makeMul(nl, mul->rhs_);
+        } else if (auto &&nr = recursiveNegateMul(mul->rhs_); nr.isValid()) {
+            return makeMul(mul->lhs_, nr);
+        } else {
+            return nullptr;
+        }
+    } else {
+        return nullptr;
+    }
+}
+
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
     if (!varScope_.count(op->name_)) {
@@ -147,6 +164,11 @@ Expr SimplifyPass::visit(const Sub &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
 
+    if (equals(op->lhs_, 0)) {
+        if (auto &&nr = recursiveNegateMul(op->rhs_); nr.isValid()) {
+            return nr;
+        }
+    }
     if (equals(op->rhs_, 0)) {
         return op->lhs_;
     }
@@ -190,6 +212,16 @@ Expr SimplifyPass::visit(const Mul &_op) {
     }
     if (equals(op->rhs_, 0)) {
         return makeIntConst(0);
+    }
+    if (equals(op->lhs_, -1)) {
+        if (auto &&nr = recursiveNegateMul(op->rhs_); nr.isValid()) {
+            return nr;
+        }
+    }
+    if (equals(op->rhs_, -1)) {
+        if (auto &&nl = recursiveNegateMul(op->lhs_); nl.isValid()) {
+            return nl;
+        }
     }
 
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {

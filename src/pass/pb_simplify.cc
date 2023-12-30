@@ -125,9 +125,12 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
             break;
         restrictedBound = std::move(newRestrictedBound);
     }
-    ASSERT(!restrictedBound.empty());
-    return translateBoundFunc(*ctx_, restrictedBound, *demangleMap_,
-                              0 /* any value */);
+    if (!restrictedBound.empty()) {
+        return translateBoundFunc(*ctx_, restrictedBound, *demangleMap_,
+                                  0 /* any value */);
+    } else {
+        return nullptr;
+    }
 }
 
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {

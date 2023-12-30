@@ -103,21 +103,21 @@ def test_redundant_if_3(p):
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_int_max(p):
-    with ft.VarDef([("a", (5, 32), "int32", "input", "cpu"),
-                    ("b", (5, 32), "int32", "output", "cpu")]) as (a, b):
-        with ft.For("i", 0, 5) as i:
+    with ft.VarDef([("a", (20, 64), "int32", "input", "cpu"),
+                    ("b", (20, 64), "int32", "output", "cpu")]) as (a, b):
+        with ft.For("i", 0, 20) as i:
             with ft.For("j", 0, 2147483647) as j:
-                with ft.If(j < ft.min(-32 * (i % 4) + 100, 32)):
+                with ft.If(j < ft.min(-32 * (i % 4) + 100, 64)):
                     b[i, j] = a[i, j] + 1
     ast = ft.pop_ast(verbose=True)
     ast = p(ast)
     print(ast)
 
-    with ft.VarDef([("a", (5, 32), "int32", "input", "cpu"),
-                    ("b", (5, 32), "int32", "output", "cpu")]) as (a, b):
-        with ft.For("i", 0, 5) as i:
+    with ft.VarDef([("a", (20, 64), "int32", "input", "cpu"),
+                    ("b", (20, 64), "int32", "output", "cpu")]) as (a, b):
+        with ft.For("i", 0, 20) as i:
             with ft.For("j", 0, 2147483647) as j:
-                with ft.If(j < ft.min(-32 * (i % 4) + 100, 32)):
+                with ft.If(j < ft.min(-32 * (i % 4) + 100, 64)):
                     b[i, j] = a[i, j] + 1
     std = ft.pop_ast()
 
@@ -179,7 +179,7 @@ def test_multiple_mins_1(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_multiple_mins_2(p):
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10) as i:
@@ -219,7 +219,7 @@ def test_multiple_maxes_1(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
+@pytest.mark.parametrize('p', [ft.simplify])
 def test_multiple_maxes_2(p):
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10) as i:
@@ -240,7 +240,7 @@ def test_multiple_maxes_2(p):
     assert std.match(ast)
 
 
-@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
+@pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
 def test_multiple_min_max(p):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),

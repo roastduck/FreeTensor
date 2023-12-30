@@ -194,7 +194,7 @@ Expr isl2Expr(__isl_take isl_ast_expr *e) {
                 break;
             case isl_ast_expr_op_minus:
                 ASSERT(args.size() == 1);
-                res = makeSub(makeIntConst(0), args[0]);
+                res = makeMul(makeIntConst(-1), args[0]);
                 break;
             case isl_ast_expr_op_mul:
                 ASSERT(args.size() == 2);
@@ -211,12 +211,9 @@ Expr isl2Expr(__isl_take isl_ast_expr *e) {
             case isl_ast_expr_op_pdiv_r: // Remainder on non-negative divisor.
                                          // Equivalent to Mod. We prefer Mod
                                          // over Remainder
+            case isl_ast_expr_op_zdiv_r: // Divisible ? 0 : any non-zero value
                 ASSERT(args.size() == 2);
                 res = makeMod(args[0], args[1]);
-                break;
-            case isl_ast_expr_op_zdiv_r: // Divisible ? 0 : 1
-                ASSERT(args.size() == 2);
-                res = makeLT(makeMod(args[0], args[1]), makeIntConst(0));
                 break;
             case isl_ast_expr_op_select:
                 ASSERT(args.size() == 3);
