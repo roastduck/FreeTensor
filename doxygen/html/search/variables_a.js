@@ -21,6 +21,6 @@ var searchData=
   ['loop1_5f_18',['loop1_',['../pluto_8cc.html#a1d53d7b9b15877160c2986d05b2289a1',1,'pluto.cc']]],
   ['loop1id_5f_19',['loop1Id_',['../pluto_8cc.html#a3b8232f3882219bd4c5281a699191607',1,'pluto.cc']]],
   ['loop_5f_20',['loop_',['../structfreetensor_1_1LoopInScopes.html#a03fd5feb8d280ff4a91b63861acbedd2',1,'freetensor::LoopInScopes']]],
-  ['lower_5f_21',['lower_',['../structfreetensor_1_1CompAccessBound_1_1Access.html#a1c5ced92bec002e56872b61108b53dbb',1,'freetensor::CompAccessBound::Access::lower_()'],['../structfreetensor_1_1TransientBound.html#acc63550ac42b34539663bd7237d3fc91',1,'freetensor::TransientBound::lower_()'],['../structfreetensor_1_1AccessBound.html#aa901d93b0fa45692f80b83d65fa987b9',1,'freetensor::AccessBound::lower_()']]],
+  ['lower_5f_21',['lower_',['../structfreetensor_1_1TransientBound.html#acc63550ac42b34539663bd7237d3fc91',1,'freetensor::TransientBound::lower_()'],['../structfreetensor_1_1AccessBound.html#aa901d93b0fa45692f80b83d65fa987b9',1,'freetensor::AccessBound::lower_()']]],
   ['lowered_5f_22',['lowered_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#a9144828492a816c0ab1769199f14133c',1,'freetensor::AutoScheduleTuneTrial']]]
 ];

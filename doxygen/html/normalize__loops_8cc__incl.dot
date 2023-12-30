@@ -172,9 +172,12 @@ digraph "src/pass/normalize_loops.cc"
   Node55 -> Node75 [color="steelblue1",style="solid"];
   Node75 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node75 -> Node16 [color="steelblue1",style="solid"];
+  Node75 -> Node11 [color="steelblue1",style="solid"];
+  Node75 -> Node7 [color="steelblue1",style="solid"];
   Node75 -> Node4 [color="steelblue1",style="solid"];
   Node75 -> Node56 [color="steelblue1",style="solid"];
   Node75 -> Node68 [color="steelblue1",style="solid"];
+  Node75 -> Node71 [color="steelblue1",style="solid"];
   Node75 -> Node66 [color="steelblue1",style="solid"];
   Node55 -> Node5 [color="steelblue1",style="solid"];
   Node55 -> Node59 [color="steelblue1",style="solid"];

@@ -142,8 +142,11 @@ digraph "src/codegen/code_gen_cpu.cc"
   Node69 -> Node77 [color="steelblue1",style="solid"];
   Node77 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node77 -> Node14 [color="steelblue1",style="solid"];
+  Node77 -> Node7 [color="steelblue1",style="solid"];
+  Node77 -> Node8 [color="steelblue1",style="solid"];
   Node77 -> Node3 [color="steelblue1",style="solid"];
   Node77 -> Node70 [color="steelblue1",style="solid"];
+  Node77 -> Node75 [color="steelblue1",style="solid"];
   Node77 -> Node56 [color="steelblue1",style="solid"];
   Node69 -> Node64 [color="steelblue1",style="solid"];
   Node69 -> Node5 [color="steelblue1",style="solid"];

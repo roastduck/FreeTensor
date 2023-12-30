@@ -42,6 +42,11 @@ digraph "Graphical Class Hierarchy"
   Node63 -> Node65 [dir="back",color="steelblue1",style="solid"];
   Node65 [label="freetensor::PBSimplify",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBSimplify.html",tooltip=" "];
   Node2 -> Node1 [dir="back",color="steelblue1",style="solid"];
+  Node121 [label="freetensor::CompUniqueBounds",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CompUniqueBounds.html",tooltip=" "];
+  Node121 -> Node120 [dir="back",color="steelblue1",style="solid"];
+  Node120 [label="freetensor::CompUniqueBounds\lCombination",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CompUniqueBoundsCombination.html",tooltip=" "];
+  Node121 -> Node122 [dir="back",color="steelblue1",style="solid"];
+  Node122 [label="freetensor::CompUniqueBoundsPB",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CompUniqueBoundsPB.html",tooltip=" "];
   Node53 [label="freetensor::Mutator",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Mutator.html",tooltip=" "];
   Node53 -> Node26 [dir="back",color="steelblue1",style="solid"];
   Node26 [label="freetensor::SymbolTable\l\< Mutator \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SymbolTable.html",tooltip=" "];
@@ -259,11 +264,6 @@ digraph "Graphical Class Hierarchy"
   Node113 -> Node119 [dir="back",color="steelblue1",style="solid"];
   Node119 [label="freetensor::CheckSideEffect",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CheckSideEffect.html",tooltip=" "];
   Node113 -> Node120 [dir="back",color="steelblue1",style="solid"];
-  Node120 [label="freetensor::CompUniqueBounds",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CompUniqueBounds.html",tooltip=" "];
-  Node120 -> Node121 [dir="back",color="steelblue1",style="solid"];
-  Node121 [label="freetensor::PBCompBounds",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBCompBounds.html",tooltip=" "];
-  Node113 -> Node122 [dir="back",color="steelblue1",style="solid"];
-  Node122 [label="freetensor::CountHeavyOps",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CountHeavyOps.html",tooltip=" "];
   Node113 -> Node123 [dir="back",color="steelblue1",style="solid"];
   Node123 [label="freetensor::CountNames",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1CountNames.html",tooltip=" "];
   Node113 -> Node124 [dir="back",color="steelblue1",style="solid"];

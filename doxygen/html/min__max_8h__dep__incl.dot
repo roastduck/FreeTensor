@@ -8,11 +8,13 @@ digraph "include/math/min_max.h"
   Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
   Node2 [label="src/analyze/comp_access\l_bound.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__access__bound_8cc.html",tooltip=" "];
   Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
-  Node3 [label="src/analyze/structural\l_feature.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structural__feature_8cc.html",tooltip=" "];
+  Node3 [label="src/analyze/comp_unique\l_bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8cc.html",tooltip=" "];
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
-  Node4 [label="src/math/min_max.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8cc.html",tooltip=" "];
+  Node4 [label="src/analyze/structural\l_feature.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structural__feature_8cc.html",tooltip=" "];
   Node1 -> Node5 [dir="back",color="steelblue1",style="solid"];
-  Node5 [label="src/pass/make_parallel\l_reduction.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$make__parallel__reduction_8cc.html",tooltip=" "];
+  Node5 [label="src/math/min_max.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8cc.html",tooltip=" "];
   Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
-  Node6 [label="src/pass/shrink_for.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8cc.html",tooltip=" "];
+  Node6 [label="src/pass/make_parallel\l_reduction.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$make__parallel__reduction_8cc.html",tooltip=" "];
+  Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node7 [label="src/pass/shrink_for.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8cc.html",tooltip=" "];
 }

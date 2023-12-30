@@ -101,10 +101,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:af79b2cab0ac1cf91b56c87d8a5e2d651"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a23952c2cbc658962f453b9f80861cf09"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CompAccessBound_1_1Access.html#a23952c2cbc658962f453b9f80861cf09">conds_</a></td></tr>
 <tr class="separator:a23952c2cbc658962f453b9f80861cf09"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c5ced92bec002e56872b61108b53dbb"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1LowerBound.html">LowerBound</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CompAccessBound_1_1Access.html#a1c5ced92bec002e56872b61108b53dbb">lower_</a></td></tr>
-<tr class="separator:a1c5ced92bec002e56872b61108b53dbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55814491642c6d160772af15e565fa29"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::vector&lt; <a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CompAccessBound_1_1Access.html#a55814491642c6d160772af15e565fa29">upper_</a></td></tr>
-<tr class="separator:a55814491642c6d160772af15e565fa29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ad005818aab8f5d41176b45414b1c4c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1CompUniqueBounds_1_1Bound.html">CompUniqueBounds::Bound</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CompAccessBound_1_1Access.html#a8ad005818aab8f5d41176b45414b1c4c">bounds_</a></td></tr>
+<tr class="separator:a8ad005818aab8f5d41176b45414b1c4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a715bd53399ad99b8add308c6435dba17" name="a715bd53399ad99b8add308c6435dba17"></a>
@@ -198,6 +196,20 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a8ad005818aab8f5d41176b45414b1c4c" name="a8ad005818aab8f5d41176b45414b1c4c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ad005818aab8f5d41176b45414b1c4c">&#9670;&#160;</a></span>bounds_</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;<a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1CompUniqueBounds_1_1Bound.html">CompUniqueBounds::Bound</a>&gt; &gt; freetensor::CompAccessBound::Access::bounds_</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a23952c2cbc658962f453b9f80861cf09" name="a23952c2cbc658962f453b9f80861cf09"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a23952c2cbc658962f453b9f80861cf09">&#9670;&#160;</a></span>conds_</h2>
 
@@ -220,34 +232,6 @@ Public Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::vector&lt;<a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&gt; freetensor::CompAccessBound::Access::indices_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a1c5ced92bec002e56872b61108b53dbb" name="a1c5ced92bec002e56872b61108b53dbb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1c5ced92bec002e56872b61108b53dbb">&#9670;&#160;</a></span>lower_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt;std::vector&lt;<a class="el" href="classfreetensor_1_1LowerBound.html">LowerBound</a>&gt; &gt; freetensor::CompAccessBound::Access::lower_</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a55814491642c6d160772af15e565fa29" name="a55814491642c6d160772af15e565fa29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a55814491642c6d160772af15e565fa29">&#9670;&#160;</a></span>upper_</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt;std::vector&lt;<a class="el" href="classfreetensor_1_1UpperBound.html">UpperBound</a>&gt; &gt; freetensor::CompAccessBound::Access::upper_</td>
         </tr>
       </table>
 </div><div class="memdoc">

@@ -82,17 +82,21 @@ $(function() {
   <div class="headertitle"><div class="title">presburger.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;iostream&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;iostream&gt;</code><br />
+<code>#include &lt;isl/id_type.h&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;unordered_set&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &lt;isl/aff.h&gt;</code><br />
 <code>#include &lt;isl/ctx.h&gt;</code><br />
+<code>#include &lt;isl/id.h&gt;</code><br />
 <code>#include &lt;isl/ilp.h&gt;</code><br />
 <code>#include &lt;isl/map.h&gt;</code><br />
 <code>#include &lt;isl/options.h&gt;</code><br />
 <code>#include &lt;isl/set.h&gt;</code><br />
 <code>#include &lt;isl/space.h&gt;</code><br />
+<code>#include &lt;isl/space_type.h&gt;</code><br />
 <code>#include &lt;isl/val.h&gt;</code><br />
 <code>#include &lt;<a class="el" href="debug_8h_source.html">debug.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="profile_8h_source.html">debug/profile.h</a>&gt;</code><br />
@@ -124,6 +128,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSpace.html">freetensor::PBSpace</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSingleFunc.html">freetensor::PBSingleFunc</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBFunc.html">freetensor::PBFunc</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBPoint.html">freetensor::PBPoint</a></td></tr>
@@ -154,6 +160,8 @@ Concepts</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptfreetensor_1_1PBFuncRef.html">freetensor::PBFuncRef</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">concept &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="conceptfreetensor_1_1PBSingleFuncRef.html">freetensor::PBSingleFuncRef</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
@@ -183,9 +191,21 @@ Functions</h2></td></tr>
 <tr class="memitem:a04360deda7f6a24434ed5228e848fdb6"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a04360deda7f6a24434ed5228e848fdb6"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a04360deda7f6a24434ed5228e848fdb6">freetensor::projectOutAllParams</a> (T &amp;&amp;map)</td></tr>
 <tr class="separator:a04360deda7f6a24434ed5228e848fdb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace8fed221262b51cc838d22ae0261ee0"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:ace8fed221262b51cc838d22ae0261ee0"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ace8fed221262b51cc838d22ae0261ee0">freetensor::projectOutParamById</a> (T &amp;&amp;set, const std::string &amp;name)</td></tr>
+<tr class="separator:ace8fed221262b51cc838d22ae0261ee0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f70b0fbc923fb2346b0b30abc4d7abf"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a3f70b0fbc923fb2346b0b30abc4d7abf"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3f70b0fbc923fb2346b0b30abc4d7abf">freetensor::projectOutParamDims</a> (T &amp;&amp;set, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
+<tr class="separator:a3f70b0fbc923fb2346b0b30abc4d7abf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fa6873b57da337d7d149dd7b64aa718"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:a6fa6873b57da337d7d149dd7b64aa718"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6fa6873b57da337d7d149dd7b64aa718">freetensor::projectOutDims</a> (T &amp;&amp;set, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
 <tr class="separator:a6fa6873b57da337d7d149dd7b64aa718"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a245f987881265452b8f1a89d05b10d22"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a245f987881265452b8f1a89d05b10d22"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a245f987881265452b8f1a89d05b10d22">freetensor::projectOutParamById</a> (T &amp;&amp;map, const std::string &amp;name)</td></tr>
+<tr class="separator:a245f987881265452b8f1a89d05b10d22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b57c02d6f9c568e9c5fcb828311f5aa"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a6b57c02d6f9c568e9c5fcb828311f5aa"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6b57c02d6f9c568e9c5fcb828311f5aa">freetensor::projectOutParamDims</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
+<tr class="separator:a6b57c02d6f9c568e9c5fcb828311f5aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5afcef2360c9672f6562d5b175ae02f1"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a5afcef2360c9672f6562d5b175ae02f1"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5afcef2360c9672f6562d5b175ae02f1">freetensor::projectOutInputDims</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>)</td></tr>
 <tr class="separator:a5afcef2360c9672f6562d5b175ae02f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -246,6 +266,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a352051706fe31578e3a3db1e1e9b2980"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a352051706fe31578e3a3db1e1e9b2980"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a352051706fe31578e3a3db1e1e9b2980">freetensor::moveDimsParamToOutput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
 <tr class="separator:a352051706fe31578e3a3db1e1e9b2980"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71c843feed00903f13f3ab3fe2eeed08"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a71c843feed00903f13f3ab3fe2eeed08"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a71c843feed00903f13f3ab3fe2eeed08">freetensor::moveDimsSetToParam</a> (T &amp;&amp;set, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a71c843feed00903f13f3ab3fe2eeed08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6321656fd6ed3d1e6e25923cd8d1e0af"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a6321656fd6ed3d1e6e25923cd8d1e0af"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6321656fd6ed3d1e6e25923cd8d1e0af">freetensor::moveDimsParamToSet</a> (T &amp;&amp;set, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a6321656fd6ed3d1e6e25923cd8d1e0af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0b8e5eaf4d86daeecd31a4a8256c055"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBSetRef U&gt; </td></tr>
 <tr class="memitem:ae0b8e5eaf4d86daeecd31a4a8256c055"><td class="memTemplItemLeft" align="right" valign="top">std::pair&lt; PBSet, PBSet &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae0b8e5eaf4d86daeecd31a4a8256c055">freetensor::padToSameDims</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
 <tr class="separator:ae0b8e5eaf4d86daeecd31a4a8256c055"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -276,6 +302,12 @@ Functions</h2></td></tr>
 <tr class="memitem:addbb8ccbe154347f263646ad48b6822d"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T, PBSetRef U&gt; </td></tr>
 <tr class="memitem:addbb8ccbe154347f263646ad48b6822d"><td class="memTemplItemLeft" align="right" valign="top">PBMap&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#addbb8ccbe154347f263646ad48b6822d">freetensor::intersectRange</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
 <tr class="separator:addbb8ccbe154347f263646ad48b6822d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf3c2ab315e5c13d71faabbdfb89a071"><td class="memTemplParams" colspan="2">template&lt;PBSingleFuncRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:acf3c2ab315e5c13d71faabbdfb89a071"><td class="memTemplItemLeft" align="right" valign="top">PBSingleFunc&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#acf3c2ab315e5c13d71faabbdfb89a071">freetensor::intersectDomain</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:acf3c2ab315e5c13d71faabbdfb89a071"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0d673827477335977722a208017d607"><td class="memTemplParams" colspan="2">template&lt;PBFuncRef T, PBSetRef U&gt; </td></tr>
+<tr class="memitem:ab0d673827477335977722a208017d607"><td class="memTemplItemLeft" align="right" valign="top">PBFunc&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab0d673827477335977722a208017d607">freetensor::intersectDomain</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:ab0d673827477335977722a208017d607"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae104a350d85d4b10fc4dc07505423b95"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T, PBSetRef U&gt; </td></tr>
 <tr class="memitem:ae104a350d85d4b10fc4dc07505423b95"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae104a350d85d4b10fc4dc07505423b95">freetensor::intersectParams</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
 <tr class="separator:ae104a350d85d4b10fc4dc07505423b95"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -373,6 +405,8 @@ Functions</h2></td></tr>
 <tr class="memitem:a78e962c3fc44efd68c8271e9f0614dbf"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:a78e962c3fc44efd68c8271e9f0614dbf"><td class="memTemplItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78e962c3fc44efd68c8271e9f0614dbf">freetensor::dimMinVal</a> (T &amp;&amp;set, int pos)</td></tr>
 <tr class="separator:a78e962c3fc44efd68c8271e9f0614dbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae569dc0150ae5ad040438ac9c944572d"><td class="memItemLeft" align="right" valign="top">PBVal&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae569dc0150ae5ad040438ac9c944572d">freetensor::dimFixVal</a> (const PBSet &amp;set, int pos)</td></tr>
+<tr class="separator:ae569dc0150ae5ad040438ac9c944572d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c66105c843469e658a3948466a71094"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
 <tr class="memitem:a7c66105c843469e658a3948466a71094"><td class="memTemplItemLeft" align="right" valign="top">PBSpace&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7c66105c843469e658a3948466a71094">freetensor::spaceMapFromSet</a> (T &amp;&amp;space)</td></tr>
 <tr class="separator:a7c66105c843469e658a3948466a71094"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -382,6 +416,12 @@ Functions</h2></td></tr>
 <tr class="memitem:abbf60e2dc321dc21b0c21882369ea1ed"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:abbf60e2dc321dc21b0c21882369ea1ed"><td class="memTemplItemLeft" align="right" valign="top">PBPoint&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#abbf60e2dc321dc21b0c21882369ea1ed">freetensor::sample</a> (T &amp;&amp;set)</td></tr>
 <tr class="separator:abbf60e2dc321dc21b0c21882369ea1ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:addbe7e150709bb7a4b95dd53909077e0"><td class="memTemplParams" colspan="2">template&lt;PBSingleFuncRef T, PBSingleFuncRef U&gt; </td></tr>
+<tr class="memitem:addbe7e150709bb7a4b95dd53909077e0"><td class="memTemplItemLeft" align="right" valign="top">PBSingleFunc&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#addbe7e150709bb7a4b95dd53909077e0">freetensor::min</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:addbe7e150709bb7a4b95dd53909077e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30cd3e4e8ce3c760f9016bf293cc8f3e"><td class="memTemplParams" colspan="2">template&lt;PBSingleFuncRef T, PBSingleFuncRef U&gt; </td></tr>
+<tr class="memitem:a30cd3e4e8ce3c760f9016bf293cc8f3e"><td class="memTemplItemLeft" align="right" valign="top">PBSingleFunc&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a30cd3e4e8ce3c760f9016bf293cc8f3e">freetensor::max</a> (T &amp;&amp;lhs, U &amp;&amp;rhs)</td></tr>
+<tr class="separator:a30cd3e4e8ce3c760f9016bf293cc8f3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9d8b33f83c30b0387756f69023e998df"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
 <tr class="memitem:a9d8b33f83c30b0387756f69023e998df"><td class="memTemplItemLeft" align="right" valign="top">PBSet&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9d8b33f83c30b0387756f69023e998df">freetensor::coefficients</a> (T &amp;&amp;set, int64_t c=0)</td></tr>
 <tr class="separator:a9d8b33f83c30b0387756f69023e998df"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -393,6 +433,10 @@ Functions</h2></td></tr>
 <tr class="separator:afb7116b28332c5e953fc318f2e77e48c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29a0ea44021bb36284780e36a5e4951a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a29a0ea44021bb36284780e36a5e4951a">freetensor::operator==</a> (const PBMap &amp;lhs, const PBMap &amp;rhs)</td></tr>
 <tr class="separator:a29a0ea44021bb36284780e36a5e4951a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a827db0d5af3cd3e533e71acea883b8ef"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a827db0d5af3cd3e533e71acea883b8ef">freetensor::operator==</a> (const PBSingleFunc &amp;lhs, const PBSingleFunc &amp;rhs)</td></tr>
+<tr class="separator:a827db0d5af3cd3e533e71acea883b8ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d22edc9971e5d9c49d59fa94ff3b1c0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3d22edc9971e5d9c49d59fa94ff3b1c0">freetensor::operator==</a> (const PBFunc &amp;lhs, const PBFunc &amp;rhs)</td></tr>
+<tr class="separator:a3d22edc9971e5d9c49d59fa94ff3b1c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33f7c12236cca11a99c7404f85431c87"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a33f7c12236cca11a99c7404f85431c87">freetensor::pbFuncWithTimeout</a> (PBCtx &amp;ctx, const auto &amp;func, int seconds, const auto &amp;...args) -&gt; std::optional&lt; decltype(func(args...))&gt;</td></tr>
 <tr class="separator:a33f7c12236cca11a99c7404f85431c87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>

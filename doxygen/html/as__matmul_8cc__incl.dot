@@ -110,9 +110,12 @@ digraph "src/schedule/as_matmul.cc"
   Node20 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node74 -> Node3 [color="steelblue1",style="solid"];
+  Node74 -> Node19 [color="steelblue1",style="solid"];
+  Node74 -> Node21 [color="steelblue1",style="solid"];
   Node74 -> Node22 [color="steelblue1",style="solid"];
   Node74 -> Node23 [color="steelblue1",style="solid"];
   Node74 -> Node66 [color="steelblue1",style="solid"];
+  Node74 -> Node69 [color="steelblue1",style="solid"];
   Node74 -> Node60 [color="steelblue1",style="solid"];
   Node20 -> Node75 [color="steelblue1",style="solid"];
   Node75 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];

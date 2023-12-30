@@ -102,6 +102,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a10c85930dba5429bede7a862a15f3a94 inherit pub_methods_classfreetensor_1_1CompTransientBounds"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7bcfdf920d9f3601ad91106d9729b0e6 inherit pub_methods_classfreetensor_1_1CompTransientBounds"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a7bcfdf920d9f3601ad91106d9729b0e6">conds</a> () const override</td></tr>
 <tr class="separator:a7bcfdf920d9f3601ad91106d9729b0e6 inherit pub_methods_classfreetensor_1_1CompTransientBounds"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a798816cc0c9b75b407321683545fd54f inherit pub_methods_classfreetensor_1_1CompTransientBounds"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a798816cc0c9b75b407321683545fd54f">currentStmt</a> () const override</td></tr>
+<tr class="separator:a798816cc0c9b75b407321683545fd54f inherit pub_methods_classfreetensor_1_1CompTransientBounds"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1SymbolTable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1SymbolTable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1SymbolTable.html">freetensor::SymbolTable&lt; Mutator &gt;</a></td></tr>
 <tr class="memitem:a21f40bf443a4d90af7bbdfe11fae0c3e inherit pub_methods_classfreetensor_1_1SymbolTable"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTable.html#a21f40bf443a4d90af7bbdfe11fae0c3e">SymbolTable</a> (T &amp;&amp;...args)</td></tr>
 <tr class="separator:a21f40bf443a4d90af7bbdfe11fae0c3e inherit pub_methods_classfreetensor_1_1SymbolTable"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -166,9 +168,15 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2e0408acc363efef55af6190eb7dd041"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60c19f9111cc859928018d5401a6b0f5"><td class="memItemLeft" align="right" valign="top">virtual const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html#a60c19f9111cc859928018d5401a6b0f5">conds</a> () const =0</td></tr>
 <tr class="separator:a60c19f9111cc859928018d5401a6b0f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5711a857c7dbd1bf7074e82f9964c123"><td class="memItemLeft" align="right" valign="top">virtual const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html#a5711a857c7dbd1bf7074e82f9964c123">currentStmt</a> () const =0</td></tr>
+<tr class="separator:a5711a857c7dbd1bf7074e82f9964c123"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
+<tr class="memitem:ab4230b30b7c5e8db57b54e31e06de022"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ShrinkFor.html#ab4230b30b7c5e8db57b54e31e06de022">filterLoop</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op)</td></tr>
+<tr class="separator:ab4230b30b7c5e8db57b54e31e06de022"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a997607366871e21971498ffe79cc1921"><td class="memItemLeft" align="right" valign="top">virtual std::unordered_set&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ShrinkFor.html#a997607366871e21971498ffe79cc1921">filterNames</a> (const std::unordered_set&lt; std::string &gt; &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a561988d97f4dfc67660c5db005fed564">names</a>)</td></tr>
+<tr class="separator:a997607366871e21971498ffe79cc1921"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b8c4aaa8f6f0ecb5dc7836ee234d393"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ShrinkFor.html#a1b8c4aaa8f6f0ecb5dc7836ee234d393">visitStmt</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;stmt) override</td></tr>
 <tr class="separator:a1b8c4aaa8f6f0ecb5dc7836ee234d393"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1dd468b5ef39dd9db5c3801e6a45e12"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1ShrinkFor.html#ae1dd468b5ef39dd9db5c3801e6a45e12">visit</a> (const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;op) override</td></tr>
@@ -182,6 +190,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:aea88255abb45c8b8b7dda7006966902c inherit pro_methods_classfreetensor_1_1CompTransientBounds"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0285044779bba483456e0334c45dd3bf inherit pro_methods_classfreetensor_1_1CompTransientBounds"><td class="memItemLeft" align="right" valign="top">BaseClass::StmtRetType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a0285044779bba483456e0334c45dd3bf">visit</a> (const <a class="el" href="namespacefreetensor.html#a00cd6feb1348a6c714fa85959c290f18">Assume</a> &amp;op) override</td></tr>
 <tr class="separator:a0285044779bba483456e0334c45dd3bf inherit pro_methods_classfreetensor_1_1CompTransientBounds"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24acece7096d5e1ef115a1d1ca5aefea inherit pro_methods_classfreetensor_1_1CompTransientBounds"><td class="memItemLeft" align="right" valign="top">BaseClass::StmtRetType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a24acece7096d5e1ef115a1d1ca5aefea">visitStmt</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op) override</td></tr>
+<tr class="separator:a24acece7096d5e1ef115a1d1ca5aefea inherit pro_methods_classfreetensor_1_1CompTransientBounds"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classfreetensor_1_1SymbolTable"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classfreetensor_1_1SymbolTable')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classfreetensor_1_1SymbolTable.html">freetensor::SymbolTable&lt; Mutator &gt;</a></td></tr>
 <tr class="memitem:a01f26a6ce51633a457753b0d36c852be inherit pro_methods_classfreetensor_1_1SymbolTable"><td class="memItemLeft" align="right" valign="top">BaseClass::StmtRetType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SymbolTable.html#a01f26a6ce51633a457753b0d36c852be">visit</a> (const <a class="el" href="namespacefreetensor.html#a1a1f3d1207fe6a524be60b226df39ee0">VarDef</a> &amp;op) override</td></tr>
 <tr class="separator:a01f26a6ce51633a457753b0d36c852be inherit pro_methods_classfreetensor_1_1SymbolTable"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -316,6 +326,58 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:aef5cb3c76c36da35abf1a2ea364684a0 inherit pub_types_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab4230b30b7c5e8db57b54e31e06de022" name="ab4230b30b7c5e8db57b54e31e06de022"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab4230b30b7c5e8db57b54e31e06de022">&#9670;&#160;</a></span>filterLoop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool freetensor::ShrinkFor::filterLoop </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a56a793ae2a656931c4a3bd7fe6035b9d">For</a> &amp;&#160;</td>
+          <td class="paramname"><em>op</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a997607366871e21971498ffe79cc1921" name="a997607366871e21971498ffe79cc1921"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a997607366871e21971498ffe79cc1921">&#9670;&#160;</a></span>filterNames()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::unordered_set&lt; std::string &gt; freetensor::ShrinkFor::filterNames </td>
+          <td>(</td>
+          <td class="paramtype">const std::unordered_set&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>names</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a9696c6058a15e0906403b0b39bf7e667" name="a9696c6058a15e0906403b0b39bf7e667"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9696c6058a15e0906403b0b39bf7e667">&#9670;&#160;</a></span>setSubAST()</h2>
 

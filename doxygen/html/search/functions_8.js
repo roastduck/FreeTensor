@@ -5,12 +5,14 @@ var searchData=
   ['hashcombine_2',['hashCombine',['../namespacefreetensor.html#ac56c2e034faeea7f22bbb59e4c26b2e4',1,'freetensor']]],
   ['hasidenticalcoeff_3',['hasIdenticalCoeff',['../namespacefreetensor.html#a930511aee85d7501baa25d338a98f312',1,'freetensor']]],
   ['hasintersect_4',['hasIntersect',['../namespacefreetensor.html#ab1a3dc4e23ae7dc6f08e4bfb0d359e8b',1,'freetensor']]],
-  ['hasloop_5',['hasLoop',['../classfreetensor_1_1SymbolTableInterface.html#ae9e7f338b17e2a7ae54d2bac45e9f0b6',1,'freetensor::SymbolTableInterface::hasLoop()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#ad52c60cb1adaae99ae64c8363d6449f5',1,'freetensor::Z3SimplifyWithSymbolTable::hasLoop()'],['../classfreetensor_1_1SymbolTable.html#afe803ffaa9c2db5ea90454e511ea12f3',1,'freetensor::SymbolTable::hasLoop()'],['../classfreetensor_1_1SymbolTableData.html#abcea1227e9aafc989ba125b1e77713c1',1,'freetensor::SymbolTableData::hasLoop()']]],
-  ['hassideeffect_6',['hasSideEffect',['../classfreetensor_1_1CheckSideEffect.html#ad3e86e44c6bca86f63336ffb9e0efa4e',1,'freetensor::CheckSideEffect']]],
-  ['hoistreturnvars_7',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html#a6b9b1b2dec1751e9786c6e24f96cb30a',1,'freetensor::HoistReturnVars']]],
-  ['hoistreturnvars_8',['hoistReturnVars',['../namespacefreetensor.html#a347f7684c28340f2c1710b73f1440dfe',1,'freetensor']]],
-  ['hoistselectedvar_9',['HoistSelectedVar',['../classfreetensor_1_1HoistSelectedVar.html#a2912bd594035f10ebca68b6a779262cb',1,'freetensor::HoistSelectedVar']]],
-  ['hoistselectedvar_10',['hoistSelectedVar',['../namespacefreetensor.html#a41ae05b32fc68791a6fc2db4c52e8343',1,'freetensor::hoistSelectedVar(const Stmt &amp;op, const std::string &amp;selector)'],['../namespacefreetensor.html#a6b3087c55c70d92b6b9e7c452d1db16f',1,'freetensor::hoistSelectedVar(const Stmt &amp;op, const Ref&lt; Selector &gt; &amp;selector)']]],
-  ['hoistvaroverstmtseq_11',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html#ac9a952597067498d0a3f9989906d985a',1,'freetensor::HoistVarOverStmtSeq']]],
-  ['hoistvaroverstmtseq_12',['hoistVarOverStmtSeq',['../namespacefreetensor.html#ad011792a62e69506f3d9b178a1e25a56',1,'freetensor']]]
+  ['hasloop_5',['hasLoop',['../classfreetensor_1_1SymbolTableData.html#abcea1227e9aafc989ba125b1e77713c1',1,'freetensor::SymbolTableData::hasLoop()'],['../classfreetensor_1_1Z3SimplifyWithSymbolTable.html#ad52c60cb1adaae99ae64c8363d6449f5',1,'freetensor::Z3SimplifyWithSymbolTable::hasLoop()'],['../classfreetensor_1_1SymbolTable.html#afe803ffaa9c2db5ea90454e511ea12f3',1,'freetensor::SymbolTable::hasLoop()'],['../classfreetensor_1_1SymbolTableInterface.html#ae9e7f338b17e2a7ae54d2bac45e9f0b6',1,'freetensor::SymbolTableInterface::hasLoop()']]],
+  ['haslowerbound_6',['hasLowerBound',['../classfreetensor_1_1PBSet.html#adeef7a032483c900c300fa5144eb3673',1,'freetensor::PBSet']]],
+  ['hassideeffect_7',['hasSideEffect',['../classfreetensor_1_1CheckSideEffect.html#ad3e86e44c6bca86f63336ffb9e0efa4e',1,'freetensor::CheckSideEffect']]],
+  ['hasupperbound_8',['hasUpperBound',['../classfreetensor_1_1PBSet.html#a739b4752145b3ed330a447977699cc7e',1,'freetensor::PBSet']]],
+  ['hoistreturnvars_9',['HoistReturnVars',['../classfreetensor_1_1HoistReturnVars.html#a6b9b1b2dec1751e9786c6e24f96cb30a',1,'freetensor::HoistReturnVars']]],
+  ['hoistreturnvars_10',['hoistReturnVars',['../namespacefreetensor.html#a347f7684c28340f2c1710b73f1440dfe',1,'freetensor']]],
+  ['hoistselectedvar_11',['HoistSelectedVar',['../classfreetensor_1_1HoistSelectedVar.html#a2912bd594035f10ebca68b6a779262cb',1,'freetensor::HoistSelectedVar']]],
+  ['hoistselectedvar_12',['hoistSelectedVar',['../namespacefreetensor.html#a41ae05b32fc68791a6fc2db4c52e8343',1,'freetensor::hoistSelectedVar(const Stmt &amp;op, const std::string &amp;selector)'],['../namespacefreetensor.html#a6b3087c55c70d92b6b9e7c452d1db16f',1,'freetensor::hoistSelectedVar(const Stmt &amp;op, const Ref&lt; Selector &gt; &amp;selector)']]],
+  ['hoistvaroverstmtseq_13',['HoistVarOverStmtSeq',['../classfreetensor_1_1HoistVarOverStmtSeq.html#ac9a952597067498d0a3f9989906d985a',1,'freetensor::HoistVarOverStmtSeq']]],
+  ['hoistvaroverstmtseq_14',['hoistVarOverStmtSeq',['../namespacefreetensor.html#ad011792a62e69506f3d9b178a1e25a56',1,'freetensor']]]
 ];

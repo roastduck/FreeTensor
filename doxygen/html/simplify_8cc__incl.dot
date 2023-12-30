@@ -179,9 +179,12 @@ digraph "src/pass/simplify.cc"
   Node63 -> Node75 [color="steelblue1",style="solid"];
   Node75 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node75 -> Node21 [color="steelblue1",style="solid"];
+  Node75 -> Node8 [color="steelblue1",style="solid"];
+  Node75 -> Node16 [color="steelblue1",style="solid"];
   Node75 -> Node3 [color="steelblue1",style="solid"];
   Node75 -> Node64 [color="steelblue1",style="solid"];
   Node75 -> Node62 [color="steelblue1",style="solid"];
+  Node75 -> Node72 [color="steelblue1",style="solid"];
   Node75 -> Node68 [color="steelblue1",style="solid"];
   Node63 -> Node76 [color="steelblue1",style="solid"];
   Node76 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];

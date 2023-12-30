@@ -150,9 +150,12 @@ digraph "include/pass/simplify.h"
   Node1 -> Node71 [color="steelblue1",style="solid"];
   Node71 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node71 -> Node15 [color="steelblue1",style="solid"];
+  Node71 -> Node10 [color="steelblue1",style="solid"];
+  Node71 -> Node3 [color="steelblue1",style="solid"];
   Node71 -> Node4 [color="steelblue1",style="solid"];
   Node71 -> Node5 [color="steelblue1",style="solid"];
   Node71 -> Node63 [color="steelblue1",style="solid"];
+  Node71 -> Node66 [color="steelblue1",style="solid"];
   Node71 -> Node57 [color="steelblue1",style="solid"];
   Node1 -> Node72 [color="steelblue1",style="solid"];
   Node72 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];

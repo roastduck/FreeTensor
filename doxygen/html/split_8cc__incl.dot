@@ -128,9 +128,12 @@ digraph "src/schedule/split.cc"
   Node62 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node74 -> Node12 [color="steelblue1",style="solid"];
+  Node74 -> Node5 [color="steelblue1",style="solid"];
+  Node74 -> Node6 [color="steelblue1",style="solid"];
   Node74 -> Node17 [color="steelblue1",style="solid"];
   Node74 -> Node63 [color="steelblue1",style="solid"];
   Node74 -> Node66 [color="steelblue1",style="solid"];
+  Node74 -> Node69 [color="steelblue1",style="solid"];
   Node74 -> Node55 [color="steelblue1",style="solid"];
   Node62 -> Node75 [color="steelblue1",style="solid"];
   Node75 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];

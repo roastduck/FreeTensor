@@ -10,5 +10,6 @@ var searchData=
   ['totcnt_5f_7',['totCnt_',['../classfreetensor_1_1RandCtxImpl.html#ae0ca99d9a7f9f838514df66ec1938cc0',1,'freetensor::RandCtxImpl::totCnt_()'],['../structfreetensor_1_1DiscreteObservation.html#acfd68b35c25390e52fcb6c9e3e86cd2e',1,'freetensor::DiscreteObservation::totCnt_()']]],
   ['trace_5f_8',['trace_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#a911fdb624e1d7c8dadec5f445abd4a20',1,'freetensor::AutoScheduleTuneTrial']]],
   ['traces_5f_9',['traces_',['../classfreetensor_1_1RandCtxImpl.html#ae17006673357530a1fe0a976e8770a29',1,'freetensor::RandCtxImpl']]],
-  ['type_5f_10',['type_',['../structfreetensor_1_1ParallelInfo.html#a7c7fd34bbce45bd7d3bf57f3b8ad9ec3',1,'freetensor::ParallelInfo']]]
+  ['transients_5f_10',['transients_',['../classfreetensor_1_1CompUniqueBounds.html#af1946d0aec5424f86f12a30c0be6d088',1,'freetensor::CompUniqueBounds']]],
+  ['type_5f_11',['type_',['../structfreetensor_1_1ParallelInfo.html#a7c7fd34bbce45bd7d3bf57f3b8ad9ec3',1,'freetensor::ParallelInfo']]]
 ];

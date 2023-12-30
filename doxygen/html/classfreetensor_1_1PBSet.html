@@ -111,10 +111,22 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a296ba70ece52361f146460ccaf621bb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45c4672fff416f667c53b84828e8310c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#a45c4672fff416f667c53b84828e8310c">empty</a> () const</td></tr>
 <tr class="separator:a45c4672fff416f667c53b84828e8310c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e27dfef5e9b5ab163368ec82f322d0a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#a2e27dfef5e9b5ab163368ec82f322d0a">isSingleValued</a> () const</td></tr>
+<tr class="separator:a2e27dfef5e9b5ab163368ec82f322d0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8840a4392202d342c45a88615ed4a148"><td class="memItemLeft" align="right" valign="top">isl_size&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#a8840a4392202d342c45a88615ed4a148">nBasic</a> () const</td></tr>
 <tr class="separator:a8840a4392202d342c45a88615ed4a148"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd2c77d9bf8a7769cd9246c56a2bc91d"><td class="memItemLeft" align="right" valign="top">isl_size&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#afd2c77d9bf8a7769cd9246c56a2bc91d">nDims</a> () const</td></tr>
 <tr class="separator:afd2c77d9bf8a7769cd9246c56a2bc91d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22edc0f25d707a8ccfdc5e4d3bcfdf8e"><td class="memItemLeft" align="right" valign="top">isl_size&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#a22edc0f25d707a8ccfdc5e4d3bcfdf8e">nParamDims</a> () const</td></tr>
+<tr class="separator:a22edc0f25d707a8ccfdc5e4d3bcfdf8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a578409ad00a5a8947672e83965818f"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#a6a578409ad00a5a8947672e83965818f">nameDim</a> (unsigned i) const</td></tr>
+<tr class="separator:a6a578409ad00a5a8947672e83965818f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14d351a5fec4989f88dc3d29e83cddea"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#a14d351a5fec4989f88dc3d29e83cddea">nameParamDim</a> (unsigned i) const</td></tr>
+<tr class="separator:a14d351a5fec4989f88dc3d29e83cddea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adeef7a032483c900c300fa5144eb3673"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#adeef7a032483c900c300fa5144eb3673">hasLowerBound</a> (unsigned i) const</td></tr>
+<tr class="separator:adeef7a032483c900c300fa5144eb3673"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a739b4752145b3ed330a447977699cc7e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBSet.html#a739b4752145b3ed330a447977699cc7e">hasUpperBound</a> (unsigned i) const</td></tr>
+<tr class="separator:a739b4752145b3ed330a447977699cc7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
@@ -362,6 +374,83 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="adeef7a032483c900c300fa5144eb3673" name="adeef7a032483c900c300fa5144eb3673"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adeef7a032483c900c300fa5144eb3673">&#9670;&#160;</a></span>hasLowerBound()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::PBSet::hasLowerBound </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>i</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a739b4752145b3ed330a447977699cc7e" name="a739b4752145b3ed330a447977699cc7e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a739b4752145b3ed330a447977699cc7e">&#9670;&#160;</a></span>hasUpperBound()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::PBSet::hasUpperBound </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>i</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2e27dfef5e9b5ab163368ec82f322d0a" name="a2e27dfef5e9b5ab163368ec82f322d0a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e27dfef5e9b5ab163368ec82f322d0a">&#9670;&#160;</a></span>isSingleValued()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool freetensor::PBSet::isSingleValued </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a68e7e7d8159003b19d222d11af1bb15b" name="a68e7e7d8159003b19d222d11af1bb15b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a68e7e7d8159003b19d222d11af1bb15b">&#9670;&#160;</a></span>isValid()</h2>
 
@@ -412,6 +501,58 @@ Friends</h2></td></tr>
 
 </div>
 </div>
+<a id="a6a578409ad00a5a8947672e83965818f" name="a6a578409ad00a5a8947672e83965818f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a578409ad00a5a8947672e83965818f">&#9670;&#160;</a></span>nameDim()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * freetensor::PBSet::nameDim </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>i</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a14d351a5fec4989f88dc3d29e83cddea" name="a14d351a5fec4989f88dc3d29e83cddea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14d351a5fec4989f88dc3d29e83cddea">&#9670;&#160;</a></span>nameParamDim()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * freetensor::PBSet::nameParamDim </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>i</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a8840a4392202d342c45a88615ed4a148" name="a8840a4392202d342c45a88615ed4a148"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8840a4392202d342c45a88615ed4a148">&#9670;&#160;</a></span>nBasic()</h2>
 
@@ -448,6 +589,31 @@ Friends</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">isl_size freetensor::PBSet::nDims </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a22edc0f25d707a8ccfdc5e4d3bcfdf8e" name="a22edc0f25d707a8ccfdc5e4d3bcfdf8e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22edc0f25d707a8ccfdc5e4d3bcfdf8e">&#9670;&#160;</a></span>nParamDims()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">isl_size freetensor::PBSet::nParamDims </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>

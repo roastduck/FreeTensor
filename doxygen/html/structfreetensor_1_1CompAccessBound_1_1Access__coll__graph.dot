@@ -10,8 +10,8 @@ digraph "freetensor::CompAccessBound::Access"
   Node2 [label="std::vector\< freetensor\l::Ref \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
   Node3 -> Node2 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
   Node3 [label="freetensor::Ref\< T \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
-  Node4 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" lower_" ];
-  Node4 [label="std::vector\< std::vector\l\< freetensor::LowerBound \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
-  Node5 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" upper_" ];
-  Node5 [label="std::vector\< std::vector\l\< freetensor::UpperBound \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node4 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" bounds_" ];
+  Node4 [label="std::vector\< freetensor\l::Ref\< freetensor::CompUnique\lBounds::Bound \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
+  Node5 -> Node4 [dir="back",color="darkorchid3",style="dashed",label=" elements" ];
+  Node5 [label="freetensor::Ref\< freetensor\l::CompUniqueBounds::Bound \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Ref.html",tooltip=" "];
 }

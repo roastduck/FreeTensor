@@ -83,11 +83,13 @@ digraph "src/schedule/cache.cc"
   Node67 [label="pass/shrink_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__var_8h.html",tooltip=" "];
   Node67 -> Node12 [color="steelblue1",style="solid"];
   Node67 -> Node68 [color="steelblue1",style="solid"];
-  Node68 [label="analyze/comp_access\l_bound.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__access__bound_8h.html",tooltip=" "];
+  Node68 [label="analyze/comp_access\l_bound.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__access__bound_8h.html",tooltip=" "];
   Node68 -> Node12 [color="steelblue1",style="solid"];
   Node68 -> Node13 [color="steelblue1",style="solid"];
   Node68 -> Node69 [color="steelblue1",style="solid"];
   Node69 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
+  Node69 -> Node10 [color="steelblue1",style="solid"];
+  Node69 -> Node12 [color="steelblue1",style="solid"];
   Node69 -> Node13 [color="steelblue1",style="solid"];
   Node69 -> Node70 [color="steelblue1",style="solid"];
   Node70 [label="analyze/comp_transient\l_bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$comp__transient__bounds_8h.html",tooltip=" "];
@@ -98,6 +100,7 @@ digraph "src/schedule/cache.cc"
   Node78 -> Node7 [color="steelblue1",style="solid"];
   Node78 -> Node13 [color="steelblue1",style="solid"];
   Node70 -> Node22 [color="steelblue1",style="solid"];
+  Node69 -> Node78 [color="steelblue1",style="solid"];
   Node69 -> Node55 [color="steelblue1",style="solid"];
   Node68 -> Node52 [color="steelblue1",style="solid"];
   Node68 -> Node78 [color="steelblue1",style="solid"];

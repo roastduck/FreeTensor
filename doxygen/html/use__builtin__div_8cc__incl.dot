@@ -46,15 +46,6 @@ digraph "src/pass/use_builtin_div.cc"
   Node18 -> Node15 [color="steelblue1",style="solid"];
   Node18 -> Node8 [color="steelblue1",style="solid"];
   Node18 -> Node16 [color="steelblue1",style="solid"];
-  Node13 -> Node20 [color="steelblue1",style="solid"];
-  Node20 [label="metadata.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$metadata_8h.html",tooltip=" "];
-  Node20 -> Node14 [color="steelblue1",style="solid"];
-  Node20 -> Node15 [color="steelblue1",style="solid"];
-  Node20 -> Node8 [color="steelblue1",style="solid"];
-  Node20 -> Node9 [color="steelblue1",style="solid"];
-  Node20 -> Node4 [color="steelblue1",style="solid"];
-  Node20 -> Node12 [color="steelblue1",style="solid"];
-  Node20 -> Node18 [color="steelblue1",style="solid"];
   Node7 -> Node42 [color="steelblue1",style="solid"];
   Node42 [label="buffer.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$buffer_8h.html",tooltip=" "];
   Node42 -> Node43 [color="steelblue1",style="solid"];
@@ -164,9 +155,12 @@ digraph "src/pass/use_builtin_div.cc"
   Node2 -> Node72 [color="steelblue1",style="solid"];
   Node72 [label="analyze/comp_unique\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8h.html",tooltip=" "];
   Node72 -> Node16 [color="steelblue1",style="solid"];
+  Node72 -> Node9 [color="steelblue1",style="solid"];
+  Node72 -> Node10 [color="steelblue1",style="solid"];
   Node72 -> Node4 [color="steelblue1",style="solid"];
   Node72 -> Node3 [color="steelblue1",style="solid"];
   Node72 -> Node64 [color="steelblue1",style="solid"];
+  Node72 -> Node67 [color="steelblue1",style="solid"];
   Node72 -> Node58 [color="steelblue1",style="solid"];
   Node2 -> Node73 [color="steelblue1",style="solid"];
   Node73 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];
@@ -176,6 +170,8 @@ digraph "src/pass/use_builtin_div.cc"
   Node73 -> Node71 [color="steelblue1",style="solid"];
   Node73 -> Node51 [color="steelblue1",style="solid"];
   Node2 -> Node7 [color="steelblue1",style="solid"];
+  Node2 -> Node23 [color="steelblue1",style="solid"];
+  Node23 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node2 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="mutator.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mutator_8h.html",tooltip=" "];
   Node74 -> Node59 [color="steelblue1",style="solid"];

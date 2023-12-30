@@ -77,11 +77,11 @@ digraph "src/schedule.cc"
   Node67 [label="lower.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lower_8h.html",tooltip=" "];
   Node67 -> Node18 [color="steelblue1",style="solid"];
   Node67 -> Node3 [color="steelblue1",style="solid"];
-  Node67 -> Node96 [color="steelblue1",style="solid"];
-  Node96 [label="pass/make_reduction.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$make__reduction_8h.html",tooltip=" "];
-  Node96 -> Node18 [color="steelblue1",style="solid"];
-  Node96 -> Node4 [color="steelblue1",style="solid"];
-  Node96 -> Node54 [color="steelblue1",style="solid"];
+  Node67 -> Node97 [color="steelblue1",style="solid"];
+  Node97 [label="pass/make_reduction.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$make__reduction_8h.html",tooltip=" "];
+  Node97 -> Node18 [color="steelblue1",style="solid"];
+  Node97 -> Node4 [color="steelblue1",style="solid"];
+  Node97 -> Node54 [color="steelblue1",style="solid"];
   Node1 -> Node119 [color="steelblue1",style="solid"];
   Node119 [label="omp_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$omp__utils_8h.html",tooltip=" "];
   Node119 -> Node12 [color="steelblue1",style="solid"];
@@ -95,7 +95,7 @@ digraph "src/schedule.cc"
   Node123 -> Node7 [color="steelblue1",style="solid"];
   Node123 -> Node4 [color="steelblue1",style="solid"];
   Node123 -> Node54 [color="steelblue1",style="solid"];
-  Node1 -> Node96 [color="steelblue1",style="solid"];
+  Node1 -> Node97 [color="steelblue1",style="solid"];
   Node1 -> Node125 [color="steelblue1",style="solid"];
   Node125 [label="schedule.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$schedule_8h.html",tooltip=" "];
   Node125 -> Node12 [color="steelblue1",style="solid"];
