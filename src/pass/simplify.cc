@@ -56,6 +56,8 @@ static Expr reduceMul(const std::vector<Expr> &factors) {
 static Expr recursiveNegateMul(const Expr &e) {
     if (e->nodeType() == ASTNodeType::IntConst) {
         return makeIntConst(-e.as<IntConstNode>()->val_);
+    } else if (e->nodeType() == ASTNodeType::FloatConst) {
+        return makeFloatConst(-e.as<FloatConstNode>()->val_);
     } else if (e->nodeType() == ASTNodeType::Mul) {
         auto &&mul = e.as<MulNode>();
         if (auto &&nl = recursiveNegateMul(mul->lhs_); nl.isValid()) {
@@ -67,6 +69,30 @@ static Expr recursiveNegateMul(const Expr &e) {
         }
     } else {
         return nullptr;
+    }
+}
+
+static std::pair<Expr, int64_t> recursiveGetConstOffset(const Expr &e) {
+    if (e->nodeType() == ASTNodeType::IntConst) {
+        return {nullptr, e.as<IntConstNode>()->val_};
+    } else if (e->nodeType() == ASTNodeType::Add) {
+        auto &&add = e.as<AddNode>();
+        auto &&[le, lc] = recursiveGetConstOffset(add->lhs_);
+        auto &&[re, rc] = recursiveGetConstOffset(add->rhs_);
+        return {le.isValid() && re.isValid() ? makeAdd(le, re)
+                : le.isValid()               ? le
+                                             : re,
+                lc + rc};
+    } else if (e->nodeType() == ASTNodeType::Sub) {
+        auto &&sub = e.as<SubNode>();
+        auto &&[le, lc] = recursiveGetConstOffset(sub->lhs_);
+        auto &&[re, rc] = recursiveGetConstOffset(sub->rhs_);
+        return {le.isValid() && re.isValid() ? makeSub(le, re)
+                : le.isValid()               ? le
+                                             : makeSub(makeIntConst(0), re),
+                lc - rc};
+    } else {
+        return {e, 0};
     }
 }
 
@@ -136,6 +162,19 @@ Expr SimplifyPass::visit(const Add &_op) {
         return op->lhs_;
     }
 
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[re, rc] = recursiveGetConstOffset(op->rhs_); rc != 0) {
+            return makeAdd(makeIntConst(op->lhs_.as<IntConstNode>()->val_ + rc),
+                           re);
+        }
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[le, lc] = recursiveGetConstOffset(op->lhs_); lc != 0) {
+            return makeAdd(
+                le, makeIntConst(op->rhs_.as<IntConstNode>()->val_ + lc));
+        }
+    }
+
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {
         return makeMin(makeAdd(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
                        makeAdd(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
@@ -171,6 +210,19 @@ Expr SimplifyPass::visit(const Sub &_op) {
     }
     if (equals(op->rhs_, 0)) {
         return op->lhs_;
+    }
+
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[re, rc] = recursiveGetConstOffset(op->rhs_); rc != 0) {
+            return makeSub(makeIntConst(op->lhs_.as<IntConstNode>()->val_ - rc),
+                           re);
+        }
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[le, lc] = recursiveGetConstOffset(op->lhs_); lc != 0) {
+            return makeAdd(
+                le, makeIntConst(lc - op->rhs_.as<IntConstNode>()->val_));
+        }
     }
 
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {
