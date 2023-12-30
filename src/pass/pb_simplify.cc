@@ -42,11 +42,10 @@ namespace {
 // min/max of the pieces gives the correct result; if not, fallback to IfExpr.
 Expr translateBoundFunc(
     PBCtx &ctx, const PBSet &boundSet,
-    const std::unordered_map<std::string, Expr> &demangleMap,
-    int64_t defaultVal) {
+    const std::unordered_map<std::string, Expr> &demangleMap) {
 
     if (boundSet.empty()) {
-        return makeIntConst(defaultVal);
+        return nullptr;
     }
 
     // TODO: clear out those not related params
@@ -74,10 +73,10 @@ Expr translateBoundFunc(
 } // namespace
 
 Expr CompUniqueBoundsPB::Bound::lowerExpr() const {
-    return translateBoundFunc(*ctx_, lexmin(bound_), *demangleMap_, LLONG_MIN);
+    return translateBoundFunc(*ctx_, lexmin(bound_), *demangleMap_);
 }
 Expr CompUniqueBoundsPB::Bound::upperExpr() const {
-    return translateBoundFunc(*ctx_, lexmax(bound_), *demangleMap_, LLONG_MAX);
+    return translateBoundFunc(*ctx_, lexmax(bound_), *demangleMap_);
 }
 
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::Bound::restrictScope(
@@ -125,12 +124,7 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
             break;
         restrictedBound = std::move(newRestrictedBound);
     }
-    if (!restrictedBound.empty()) {
-        return translateBoundFunc(*ctx_, restrictedBound, *demangleMap_,
-                                  0 /* any value */);
-    } else {
-        return nullptr;
-    }
+    return translateBoundFunc(*ctx_, restrictedBound, *demangleMap_);
 }
 
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
@@ -245,8 +239,8 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
     }
 
     // translate the lower and upper bounds back to expression
-    return {translateBoundFunc(*ctx_, lexmin(bound), demangleMap, LLONG_MIN),
-            translateBoundFunc(*ctx_, lexmax(bound), demangleMap, LLONG_MAX)};
+    return {translateBoundFunc(*ctx_, lexmin(bound), demangleMap),
+            translateBoundFunc(*ctx_, lexmax(bound), demangleMap)};
 }
 
 Stmt pbSimplify(const Stmt &op) {

@@ -19,12 +19,29 @@ class CompUniqueBounds {
       public:
         virtual ~Bound() {}
 
+        /**
+         * Get an integer bound. In case of no solution, return LLONG_MAX or
+         * LLONG_MIN
+         *
+         * @{
+         */
         virtual int64_t lowerInt() const = 0;
         virtual int64_t upperInt() const = 0;
+        /** @} */
+
+        /**
+         * If the bounded value is a constant integer, return it
+         */
         virtual std::optional<int64_t> getInt() const = 0;
 
+        /**
+         * Return an Expr for the bound. In case of no solution, return nullptr
+         *
+         * @{
+         */
         virtual Expr lowerExpr() const = 0;
         virtual Expr upperExpr() const = 0;
+        /** @} */
 
         virtual Ref<Bound>
         restrictScope(const std::unordered_set<std::string> &scope) const = 0;

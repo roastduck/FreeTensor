@@ -99,9 +99,11 @@ void CompAccessBound::visit(const VarDef &op) {
             ranges::to<std::vector>());
         // include the original trivial bounds, if specified
         if (includeTrivialBound_) {
-            l = makeMax(l, makeIntConst(0));
-            u = makeMin(
-                u, makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1)));
+            auto &&tl = makeIntConst(0);
+            auto &&tu =
+                makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1));
+            l = l.isValid() ? makeMax(l, tl) : tl;
+            u = u.isValid() ? makeMin(u, tu) : tu;
         }
         result_.lower_.emplace_back(l);
         result_.upper_.emplace_back(u);

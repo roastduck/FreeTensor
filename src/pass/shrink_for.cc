@@ -145,8 +145,8 @@ Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
         shrinker.setSubAST(subAST);
     op = shrinker(op);
 
-    if (doSimplify)
-        op = simplify(op);
+    if (doSimplify) // Make new ranges simple + remove redundant branches
+        op = simplify(z3Simplify(op));
 
     return op;
 }

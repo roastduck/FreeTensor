@@ -72,7 +72,7 @@ Expr CompUniqueBoundsCombination::Bound::lowerExpr() const {
         else
             result = b.expr();
     }
-    return result.isValid() ? result : makeIntConst(LLONG_MIN);
+    return result;
 }
 Expr CompUniqueBoundsCombination::Bound::upperExpr() const {
     Expr result;
@@ -82,7 +82,7 @@ Expr CompUniqueBoundsCombination::Bound::upperExpr() const {
         else
             result = b.expr();
     }
-    return result.isValid() ? result : makeIntConst(LLONG_MAX);
+    return result;
 }
 
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsCombination::Bound::restrictScope(
