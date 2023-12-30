@@ -3,10 +3,10 @@
 #include <climits>
 
 #include <analyze/merge_no_deps_hint.h>
-#include <pass/gpu/normalize_thread_dims.h>
 #include <pass/gpu/normalize_threads.h>
 #include <pass/normalize_loops.h>
-#include <pass/shrink_for.h>
+#include <pass/simplify.h>
+#include <pass/z3_simplify.h>
 
 namespace freetensor {
 
@@ -145,13 +145,55 @@ Stmt NormalizeThreads::visit(const Eval &op) {
     return doVisitStmt(Mutator::visit(op));
 }
 
+bool ShrinkNormalizedThreads::filterLoop(const For &op) {
+    return std::holds_alternative<CUDAScope>(op->property_->parallel_);
+}
+
+std::unordered_set<std::string> ShrinkNormalizedThreads::filterNames(
+    const std::unordered_set<std::string> &names) {
+    std::unordered_set<std::string> ret;
+    for (auto &&name : names) {
+        if (hasLoop(name)) {
+            // Only iterators from outside of the kernel is OK
+            if (openLoopsInKernel_.count(loop(name))) {
+                continue;
+            }
+        } else if (!hasDef(name) || buffer(name)->mtype() != MemType::ByValue) {
+            continue;
+        }
+        ret.insert(name);
+    }
+    return ret;
+}
+
+Stmt ShrinkNormalizedThreads::visit(const For &op) {
+    Stmt ret;
+    if (std::holds_alternative<CUDAScope>(op->property_->parallel_)) {
+        openLoopsInKernel_.insert(op);
+        auto oldInKernel = inKernel_;
+        inKernel_ = true;
+        ret = BaseClass::visit(op);
+        inKernel_ = oldInKernel;
+        openLoopsInKernel_.erase(op);
+    } else {
+        if (inKernel_) {
+            openLoopsInKernel_.insert(op);
+            ret = BaseClass::visit(op);
+            openLoopsInKernel_.erase(op);
+        } else {
+            ret = BaseClass::visit(op);
+        }
+    }
+    return ret;
+}
+
 Stmt normalizeThreads(const Stmt &_op) {
     auto op = normalizeLoops(_op, [](const For &l) {
         return std::holds_alternative<CUDAScope>(l->property_->parallel_);
     });
     op = NormalizeThreads(op)(op);
-    op = shrinkFor(op);
-    op = normalizeThreadDims(op);
+    op = ShrinkNormalizedThreads{}(op);
+    op = simplify(z3Simplify(op));
     // NOTE: Although we have inserted a lot of identical `if`s, we must delay
     // `pass/merge_and_hoist_if` until we have done `pass/gpu/make_sync`.
     // Otherwise, we are introducing dependences between an `if`'s "then" case

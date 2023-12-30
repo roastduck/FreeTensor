@@ -39,6 +39,14 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     void setSubAST(const Stmt &subAST);
 
   protected:
+    virtual bool filterLoop(const For &op) { return true; }
+
+    virtual std::unordered_set<std::string>
+    filterNames(const std::unordered_set<std::string> &names) {
+        return names;
+    }
+
+  protected:
     using BaseClass::visit;
 
     Stmt visitStmt(const Stmt &stmt) override;

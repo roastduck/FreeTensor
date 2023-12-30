@@ -73,10 +73,14 @@ Expr translateBoundFunc(
 } // namespace
 
 Expr CompUniqueBoundsPB::Bound::lowerExpr() const {
-    return translateBoundFunc(*ctx_, lexmin(bound_), *demangleMap_);
+    return bound_.hasLowerBound(0)
+               ? translateBoundFunc(*ctx_, lexmin(bound_), *demangleMap_)
+               : nullptr;
 }
 Expr CompUniqueBoundsPB::Bound::upperExpr() const {
-    return translateBoundFunc(*ctx_, lexmax(bound_), *demangleMap_);
+    return bound_.hasUpperBound(0)
+               ? translateBoundFunc(*ctx_, lexmax(bound_), *demangleMap_)
+               : nullptr;
 }
 
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::Bound::restrictScope(
@@ -239,8 +243,13 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
     }
 
     // translate the lower and upper bounds back to expression
-    return {translateBoundFunc(*ctx_, lexmin(bound), demangleMap),
-            translateBoundFunc(*ctx_, lexmax(bound), demangleMap)};
+    auto l = bound.hasLowerBound(0)
+                 ? translateBoundFunc(*ctx_, lexmin(bound), demangleMap)
+                 : nullptr;
+    auto u = bound.hasUpperBound(0)
+                 ? translateBoundFunc(*ctx_, lexmax(bound), demangleMap)
+                 : nullptr;
+    return {l, u};
 }
 
 Stmt pbSimplify(const Stmt &op) {

@@ -56,7 +56,7 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     }
     if (checker.hasSideEffect()) {
         for (auto &&[_var, _names] : views::zip(iterStack_, namesStack_)) {
-            auto &&names = _names;
+            auto &&names = filterNames(_names);
 
             // We need linear programming from PBCompBounds, because the
             // minimum/maximum value of a linear function does not always appear
@@ -87,6 +87,10 @@ Stmt ShrinkFor::visit(const For &_op) {
     auto op = __op.as<ForNode>();
     namesStack_.pop_back();
     iterStack_.pop_back();
+
+    if (!filterLoop(op)) {
+        return op;
+    }
 
     if (!newRange_.count(var)) {
         return makeStmtSeq({});

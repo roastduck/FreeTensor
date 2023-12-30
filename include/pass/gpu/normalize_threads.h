@@ -7,6 +7,7 @@
 
 #include <func.h>
 #include <mutator.h>
+#include <pass/shrink_for.h>
 
 namespace freetensor {
 
@@ -37,6 +38,23 @@ class NormalizeThreads : public Mutator {
     Stmt visit(const Store &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const Eval &op) override;
+};
+
+class ShrinkNormalizedThreads : public ShrinkFor {
+    typedef ShrinkFor BaseClass;
+
+    std::unordered_set<For> openLoopsInKernel_;
+    bool inKernel_ = false;
+
+  protected:
+    bool filterLoop(const For &op) override;
+
+    std::unordered_set<std::string>
+    filterNames(const std::unordered_set<std::string> &names) override;
+
+  protected:
+    using BaseClass::visit;
+    Stmt visit(const For &op) override;
 };
 
 /**

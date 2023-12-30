@@ -8,6 +8,7 @@
 #include <pass/gpu/normalize_thread_dims.h>
 #include <pass/make_nested_loops.h>
 #include <pass/normalize_loops.h>
+#include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -359,8 +360,7 @@ Stmt lowerParallelReduction(const Stmt &_op) {
         }
         op = ShrinkVar(boundsWithShape, boundsWithoutShape, true)(op);
 
-        // 5. Simplify, to flatten singleton loops, and to simplify the
-        // expressions from `pass/shrink_var`
+        // 5. Simplify expressions from `pass/shrink_var`
         op = simplify(op);
 
         // 6. As per our definition of inter-thread dependence, a VarDef defined
@@ -373,6 +373,9 @@ Stmt lowerParallelReduction(const Stmt &_op) {
         op = CorrectInterThreadDependence(insertWorkspaces.ws2red())(op);
     }
 
+    // Find and flatten singleton loops
+    op = shrinkFor(op);
+    op = simplify(op);
     return op;
 }
 

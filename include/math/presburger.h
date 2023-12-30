@@ -252,6 +252,13 @@ class PBSet {
         return isl_set_get_dim_name(get(), isl_dim_param, i);
     }
 
+    bool hasLowerBound(unsigned i) const {
+        return isl_set_dim_has_lower_bound(get(), isl_dim_set, i);
+    }
+    bool hasUpperBound(unsigned i) const {
+        return isl_set_dim_has_upper_bound(get(), isl_dim_set, i);
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const PBSet &set) {
         return os << isl_set_to_str(set.set_);
     }
