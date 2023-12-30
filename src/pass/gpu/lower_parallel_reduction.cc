@@ -354,7 +354,7 @@ Stmt lowerParallelReduction(const Stmt &_op) {
         for (auto &&[wsId, scopeId] : insertBinaryReduction.ws2scope()) {
             boundsWithShape[wsId] = compAccessBound(
                 op, wsId, COMP_ACCESS_BOUND_READ, true, scopeId);
-            boundsWithShape[wsId] = compAccessBound(
+            boundsWithoutShape[wsId] = compAccessBound(
                 op, wsId, COMP_ACCESS_BOUND_READ, false, scopeId);
         }
         op = ShrinkVar(boundsWithShape, boundsWithoutShape, true)(op);

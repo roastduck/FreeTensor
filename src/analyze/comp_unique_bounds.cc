@@ -223,6 +223,7 @@ std::pair<Expr, Expr> CompUniqueBoundsCombination::unionBounds(
     const std::vector<Ref<CompUniqueBounds::Bound>> &bounds) {
     std::vector<std::vector<Expr>> lowers, uppers;
     for (auto &&rb : bounds) {
+        ASSERT(rb->type() == BoundType::Combination);
         Bound &b = *rb.as<Bound>().get();
         std::vector<Expr> lowerTerm, upperTerm;
         for (auto &&l : b.lowerBounds_)

@@ -206,16 +206,16 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
     // PBSet in _bounds may be from foreign ctx. Reconstruct them in our ctx
     auto bounds = ranges::to<std::vector>(
         _bounds | views::transform([&](auto &&_bound) {
-            auto &&bound = _bound.template as<CompUniqueBoundsPB::Bound>();
-            return Ref<CompUniqueBoundsPB::Bound>::make(
-                ctx_, bound->demangleMap_,
-                PBSet(*ctx_, toString(bound->bound_)));
+            ASSERT(_bound->type() == BoundType::Presburger);
+            auto &&bound = _bound.template as<Bound>();
+            return Ref<Bound>::make(ctx_, bound->demangleMap_,
+                                    PBSet(*ctx_, toString(bound->bound_)));
         }));
 
     // union the bounds
-    PBSet bound = bounds[0].as<Bound>()->bound_;
+    PBSet bound = bounds[0]->bound_;
     for (size_t i = 1; i < bounds.size(); ++i) {
-        bound = uni(std::move(bound), bounds[i].as<Bound>()->bound_);
+        bound = uni(std::move(bound), bounds[i]->bound_);
     }
     bound = coalesce(std::move(bound));
 

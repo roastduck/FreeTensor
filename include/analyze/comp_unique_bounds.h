@@ -15,9 +15,13 @@ namespace freetensor {
 
 class CompUniqueBounds {
   public:
+    enum class BoundType { Combination, Presburger };
+
     class Bound {
       public:
         virtual ~Bound() {}
+
+        virtual BoundType type() const = 0;
 
         /**
          * Get an integer bound. In case of no solution, return LLONG_MAX or
@@ -119,6 +123,8 @@ class CompUniqueBoundsCombination : public CompUniqueBounds, public Visitor {
               std::vector<UpperBound> upperBounds)
             : lowerBounds_(std::move(lowerBounds)),
               upperBounds_(std::move(upperBounds)) {}
+
+        BoundType type() const override { return BoundType::Combination; }
 
         int64_t lowerInt() const override;
         int64_t upperInt() const override;

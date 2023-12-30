@@ -40,6 +40,8 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
             : ctx_(std::move(ctx)), demangleMap_(std::move(demangleMap)),
               bound_(std::move(bound)) {}
 
+        BoundType type() const override { return BoundType::Presburger; }
+
         int64_t lowerInt() const override;
         int64_t upperInt() const override;
         std::optional<int64_t> getInt() const override;
