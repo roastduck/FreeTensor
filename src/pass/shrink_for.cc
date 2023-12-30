@@ -56,7 +56,7 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
     }
     if (checker.hasSideEffect()) {
         for (auto &&[_var, _names] : views::zip(iterStack_, namesStack_)) {
-            auto &&names = _names;
+            auto &&names = filterNames(_names);
 
             // We need linear programming from PBCompBounds, because the
             // minimum/maximum value of a linear function does not always appear
@@ -64,19 +64,12 @@ Stmt ShrinkFor::visitStmt(const Stmt &stmt) {
             // See 2.pass/test_shrink_for.py::test_linear_bounds
             //
             // PBCompBounds requires one instance per Stmt
-            PBCompBounds bound(*this);
+            CompUniqueBoundsPB bound(*this);
 
+            // Trigger recomputing in analyze/comp_unique_bounds
             auto var = deepCopy(_var).as<VarNode>();
-
-            std::vector<Expr> lower, upper;
-            for (auto &&b : bound.getDefinedLower(var, names)) {
-                lower.emplace_back(b.expr());
-            }
-            for (auto &&b : bound.getDefinedUpper(var, names)) {
-                upper.emplace_back(b.expr());
-            }
-            newRange_[var].first.emplace_back(std::move(lower));
-            newRange_[var].second.emplace_back(std::move(upper));
+            newRange_[var].emplace_back(
+                bound.getBound(var)->restrictScope(names));
         }
     }
 
@@ -95,17 +88,21 @@ Stmt ShrinkFor::visit(const For &_op) {
     namesStack_.pop_back();
     iterStack_.pop_back();
 
+    if (!filterLoop(op)) {
+        return op;
+    }
+
     if (!newRange_.count(var)) {
         return makeStmtSeq({});
     }
-    auto lower = makeMinMax(newRange_.at(var).first);
-    auto upper = makeMaxMin(newRange_.at(var).second);
+
+    // PBCompBounds requires one instance per Stmt
+    CompUniqueBoundsPB bound(*this);
+
+    auto [lower, upper] = bound.unionBounds(newRange_[var]);
 
     if (op->property_->unroll_) {
         // Backends do not support these loops to be of variable lengths
-
-        // PBCompBounds requires one instance per Stmt
-        PBCompBounds bound(*this);
 
         lower = makeIntConst(bound.getIntLower(lower));
         upper = makeIntConst(bound.getIntUpper(upper));
@@ -152,8 +149,8 @@ Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
         shrinker.setSubAST(subAST);
     op = shrinker(op);
 
-    if (doSimplify)
-        op = simplify(op);
+    if (doSimplify) // Make new ranges simple + remove redundant branches
+        op = simplify(z3Simplify(op));
 
     return op;
 }

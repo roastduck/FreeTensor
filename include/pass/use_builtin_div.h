@@ -5,6 +5,7 @@
 #include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
+#include <memory>
 #include <mutator.h>
 
 namespace freetensor {

@@ -3,6 +3,7 @@
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_access_bound.h>
 #include <math/min_max.h>
+#include <pass/pb_simplify.h>
 
 namespace freetensor {
 
@@ -47,7 +48,7 @@ void FindMemType::visit(const VarDef &op) {
 void CompAccessBound::visitStmt(const Stmt &stmt) {
     // CompUniqueBounds requires one instance per Stmt
     auto uniqueOfOuterStmt = unique_;
-    unique_ = Ref<CompUniqueBounds>::make(*this);
+    unique_ = Ref<CompUniqueBoundsPB>::make(*this);
 
     if (stmt->id() == filterSubTree_) {
         filtered_ = true;
@@ -90,56 +91,21 @@ void CompAccessBound::visit(const VarDef &op) {
     }
 
     for (size_t i = 0; i < n; i++) {
-        std::vector<std::vector<Expr>> lower, upper;
-        for (size_t j = 0, jEnd = access_.size(); j < jEnd; j++) {
-            ASSERT(access_[j].indices_.size() == n);
-            auto &&index = access_[j].indices_[i];
-            std::vector<Expr> lowerItem;
-            if (checkAllDefined(defs_, index)) {
-                lowerItem.emplace_back(index);
-            }
-            bool insertedNonTrivialBounds = false;
-            for (auto &&b : access_[j].lower_[i]) {
-                if (!HashComparator{}(index, b.expr())) {
-                    lowerItem.emplace_back(b.expr());
-                    insertedNonTrivialBounds = true;
-                }
-            }
-            if (includeTrivialBound_ || insertedNonTrivialBounds) {
-                // If `insertedNonTrivialBounds`, we still include the trivial
-                // bound, to avoid make a variable even larger after
-                // pass/shrink_var
-                lowerItem.emplace_back(makeIntConst(0));
-            }
-            lower.emplace_back(std::move(lowerItem));
+        // union the bounds of all accesses and get the lower and upper
+        // expression
+        auto [l, u] = unique_->unionBounds(
+            // get bounds of the i-th dimension
+            access_ | views::transform([&](auto &&a) { return a.bounds_[i]; }) |
+            // ... and pack into vector
+            ranges::to<std::vector>());
+        // include the original trivial bounds, if specified
+        if (includeTrivialBound_) {
+            auto &&tl = makeIntConst(0);
+            auto &&tu =
+                makeSub(op->buffer_->tensor()->shape()[i], makeIntConst(1));
+            l = l.isValid() ? makeMax(l, tl) : tl;
+            u = u.isValid() ? makeMin(u, tu) : tu;
         }
-
-        for (size_t j = 0, jEnd = access_.size(); j < jEnd; j++) {
-            ASSERT(access_[j].indices_.size() == n);
-            auto &&index = access_[j].indices_[i];
-            std::vector<Expr> upperItem;
-            if (checkAllDefined(defs_, index)) {
-                upperItem.emplace_back(index);
-            }
-            bool insertedNonTrivialBounds = false;
-            for (auto &&b : access_[j].upper_[i]) {
-                if (!HashComparator{}(index, b.expr())) {
-                    upperItem.emplace_back(b.expr());
-                    insertedNonTrivialBounds = true;
-                }
-            }
-            if (includeTrivialBound_ || insertedNonTrivialBounds) {
-                // If `insertedNonTrivialBounds`, we still include the trivial
-                // bound, to avoid make a variable even larger after
-                // pass/shrink_var
-                upperItem.emplace_back(makeSub(
-                    op->buffer_->tensor()->shape()[i], makeIntConst(1)));
-            }
-            upper.emplace_back(std::move(upperItem));
-        }
-
-        auto l = makeMinMax(lower);
-        auto u = makeMaxMin(upper);
         result_.lower_.emplace_back(l);
         result_.upper_.emplace_back(u);
         if (l.isValid() && u.isValid()) {

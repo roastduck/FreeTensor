@@ -87,6 +87,14 @@ expr returns [Expr node]
       {
         $node = makeCeilDiv($expr0.node, $expr1.node);
       }
+    | MIN '(' expr0=expr ',' expr1=expr ')'
+      {
+        $node = makeMin($expr0.node, $expr1.node);
+      }
+    | MAX '(' expr0=expr ',' expr1=expr ')'
+      {
+        $node = makeMax($expr0.node, $expr1.node);
+      }
     | intConst expr
       {
         $node = makeMul($intConst.node, $expr.node);
@@ -121,20 +129,12 @@ expr returns [Expr node]
           case 2: $node = makeSub($expr0.node, $expr1.node); break;
         }
       }
-    | MIN '(' expr0=expr ',' expr1=expr ')'
-      {
-        $node = makeMin($expr0.node, $expr1.node);
-      }
-    | MAX '(' expr0=expr ',' expr1=expr ')'
-      {
-        $node = makeMax($expr0.node, $expr1.node);
-      }
     ;
 
 boolExpr returns [Expr node]
-    : '(' boolExpr ')'
+    : '(' boolExpr0=boolExpr ')'
       {
-        $node = $boolExpr.node;
+        $node = $boolExpr0.node;
       }
     | expr0=expr
       {

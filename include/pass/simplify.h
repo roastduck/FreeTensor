@@ -107,7 +107,7 @@ class BuiltinSimplify : public SimplifyPass {
   public:
     BuiltinSimplify()
         : SimplifyPass([](const CompTransientBoundsInterface &tr) {
-              return Ref<CompUniqueBounds>::make(tr);
+              return Ref<CompUniqueBoundsCombination>::make(tr);
           }) {}
 };
 

@@ -96,61 +96,40 @@ Stmt MakeLoopCarriedReduction::visit(const ReduceTo &_op) {
             return op;
         }
 
-        CompUniqueBounds unique(*this);
+        CompUniqueBoundsCombination unique(*this);
         for (auto &&loopId :
              paraLoopStack_ |
                  views::slice(needSyncUpTo + 1, (int)paraLoopStack_.size())) {
             if (toAlter_.at(op->id()).count(loopId)) {
-                std::vector<std::vector<Expr>> lowers, uppers; // [dim][bound]
+                std::vector<Ref<CompUniqueBounds::Bound>> bounds; // [dim]
                 for (auto &&[i, idx, dim] : views::zip(
                          views::ints(0, ranges::unreachable), _op->indices_,
                          buffer(_op->var_)->tensor()->shape())) {
-                    std::vector<Expr> dimLowers{makeIntConst(0)},
-                        dimUppers{dim};
-                    for (auto &&item : unique.getDefinedLower(
-                             idx, scopeDefined_.at(loopId))) {
-                        dimLowers.emplace_back(item.expr());
-                    }
-                    for (auto &&item : unique.getDefinedUpper(
-                             idx, scopeDefined_.at(loopId))) {
-                        dimUppers.emplace_back(item.expr());
-                    }
-                    lowers.emplace_back(std::move(dimLowers));
-                    uppers.emplace_back(std::move(dimUppers));
+                    bounds.emplace_back(unique.getBound(idx)->restrictScope(
+                        scopeDefined_.at(loopId)));
                 }
-                for (auto &[redOp, var, allLowers, allUppers, syncFlush] :
-                     forReductions_[loopId]) {
-                    // allLowers, allUppers : [dim][access][bound]
+                for (auto &[redOp, var, allBounds, syncFlush] :
+                     forReductions_[loopId]) { // allBounds : [dim][access]
                     if (redOp == op->op_ && var == op->var_) {
-                        ASSERT(allLowers.size() == lowers.size());
-                        ASSERT(allUppers.size() == uppers.size());
-                        for (auto &&[allLowersItem, lowersItem] :
-                             views::zip(allLowers, lowers)) {
-                            allLowersItem.emplace_back(lowersItem);
-                        }
-                        for (auto &&[allUppersItem, uppersItem] :
-                             views::zip(allUppers, uppers)) {
-                            allUppersItem.emplace_back(uppersItem);
+                        ASSERT(allBounds.size() == bounds.size());
+                        for (auto &&[allBoundsItem, boundsItem] :
+                             views::zip(allBounds, bounds)) {
+                            allBoundsItem.emplace_back(boundsItem);
                         }
                         syncFlush |= needSyncUpTo >= 0;
                         goto done;
                     }
                 }
                 {
-                    std::vector<std::vector<std::vector<Expr>>> allLowers(
-                        lowers.size()),
-                        allUppers(uppers.size());
-                    for (auto &&[allLowersItem, lowersItem] :
-                         views::zip(allLowers, lowers)) {
-                        allLowersItem.emplace_back(lowersItem);
-                    }
-                    for (auto &&[allUppersItem, uppersItem] :
-                         views::zip(allUppers, uppers)) {
-                        allUppersItem.emplace_back(uppersItem);
+                    std::vector<std::vector<Ref<CompUniqueBounds::Bound>>>
+                        allBounds(bounds.size());
+                    for (auto &&[allBoundsItem, boundsItem] :
+                         views::zip(allBounds, bounds)) {
+                        allBoundsItem.emplace_back(boundsItem);
                     }
                     forReductions_[loopId].emplace_back(ReductionItemFactors{
-                        op->op_, op->var_, std::move(allLowers),
-                        std::move(allUppers), needSyncUpTo >= 0});
+                        op->op_, op->var_, std::move(allBounds),
+                        needSyncUpTo >= 0});
                 }
             done:;
             }
@@ -172,16 +151,17 @@ Stmt MakeLoopCarriedReduction::visit(const For &_op) {
     scopeDefined_.erase(_op->id());
     paraScopes_.erase(_op->id());
 
+    CompUniqueBoundsCombination unique(*this);
     if (forReductions_.count(op->id())) {
-        for (auto &&[redOp, var, allLowers, allUppers, syncFlush] :
+        for (auto &&[redOp, var, allBounds, syncFlush] :
              forReductions_.at(op->id())) {
             std::vector<Expr> begins, ends;
-            for (auto &&dimLowers : allLowers) {
-                begins.emplace_back(makeMinMax(dimLowers));
-            }
-            for (auto &&dimUppers : allUppers) {
+            for (auto &&[dimBounds, dimVarSize] :
+                 views::zip(allBounds, buffer(var)->tensor()->shape())) {
+                auto [l, u] = unique.unionBounds(dimBounds);
+                begins.emplace_back(makeMax(makeIntConst(0), l));
                 ends.emplace_back(
-                    makeAdd(makeMaxMin(dimUppers), makeIntConst(1)));
+                    makeMin(dimVarSize, makeAdd(u, makeIntConst(1))));
             }
             op->property_->reductions_.emplace_back(makeReductionItem(
                 redOp, var, std::move(begins), std::move(ends), syncFlush));
@@ -254,12 +234,12 @@ Stmt MakeSyncReduction::visit(const ReduceTo &_op) {
         // There will be no cross-thread dependences except the reduction we
         // are working on (guranteed by schedule/parallelize). Therefore, We
         // can cache the variable being reduced, so it can be first reduced
-        // serially inside a thread, before reduced to the finally target in a
-        // synchronized operation. We will cache over some serial inner loops,
-        // if reduction is invariant to this loop, or if the loop densly
-        // iterates over the reduction
-        ID loopToCache; // Scope to flush locally accumulated result to target
-                        // tensor
+        // serially inside a thread, before reduced to the finally target in
+        // a synchronized operation. We will cache over some serial inner
+        // loops, if reduction is invariant to this loop, or if the loop
+        // densly iterates over the reduction
+        ID loopToCache; // Scope to flush locally accumulated result to
+                        // target tensor
         std::vector<bool> preserveDim(op->indices_.size(), false);
         if (serialOverRed_.count(op->id())) {
             // Cache at out of the outer-most serial fully reduction loop
@@ -310,8 +290,8 @@ Stmt MakeSyncReduction::visit(const ReduceTo &_op) {
                     newTargetIndices.emplace_back(idx);
                 }
             }
-            // Try to reuse existing cache array with the same size and the same
-            // target indices
+            // Try to reuse existing cache array with the same size and the
+            // same target indices
             for (auto &existing : cacheSync_[loopToCache]) {
                 if (existing.oldNode_->var_ == _op->var_ &&
                     existing.preserveDim_ == preserveDim &&
@@ -418,8 +398,8 @@ Stmt makeParallelReduction(const Stmt &_op, const Ref<Target> &target) {
             std::holds_alternative<CUDAScope>(parallel) &&
             std::get<CUDAScope>(parallel).level_ == CUDAScope::Thread &&
             d.later() != d.earlier()) {
-            // Use `__syncthreads` inserted by `pass/gpu/make_sync`, instead of
-            // synchronizing individual `ReduceTo`s
+            // Use `__syncthreads` inserted by `pass/gpu/make_sync`, instead
+            // of synchronizing individual `ReduceTo`s
             return;
         }
         toAlter[d.later().as<ReduceToNode>()->id()].insert(loopId);

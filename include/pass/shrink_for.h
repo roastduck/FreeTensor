@@ -3,6 +3,7 @@
 
 #include <analyze/check_all_defined.h>
 #include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
 #include <analyze/symbol_table.h>
 #include <container_utils.h>
 #include <func.h>
@@ -26,9 +27,7 @@ class CheckSideEffect : public Visitor {
 class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    ASTHashMap<Var, std::pair<std::vector<std::vector<Expr>>,
-                              std::vector<std::vector<Expr>>>>
-        newRange_;
+    ASTHashMap<Var, std::vector<Ref<CompUniqueBounds::Bound>>> newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;
 
@@ -38,6 +37,14 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
 
   public:
     void setSubAST(const Stmt &subAST);
+
+  protected:
+    virtual bool filterLoop(const For &op) { return true; }
+
+    virtual std::unordered_set<std::string>
+    filterNames(const std::unordered_set<std::string> &names) {
+        return names;
+    }
 
   protected:
     using BaseClass::visit;

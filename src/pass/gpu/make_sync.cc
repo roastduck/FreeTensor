@@ -48,7 +48,7 @@ class RelaxOneLoop : public CompTransientBounds<SymbolTable<Mutator>> {
         auto op = __op.as<ForNode>();
 
         if (op->id() == loopId_) {
-            CompUniqueBounds bound(*this);
+            CompUniqueBoundsCombination bound(*this);
             // Already normalized
             ASSERT(op->begin_->nodeType() == ASTNodeType::IntConst &&
                    op->begin_.as<IntConstNode>()->val_ == 0);

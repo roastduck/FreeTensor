@@ -237,7 +237,7 @@ def test_thread_local_no_prop():
                 ("u", (10,), "float32", "cache", "gpu/shared"),
             ]) as (t, u):
                 with ft.For("j", 0, 10, label="Lj1") as j:
-                    t[j] = x[i, j] + (t[j - 1] if j > 0 else 0)
+                    t[j] = x[i, j] + t[(j + 1) % 10]
                     u[j] = ft.sin(t[j]) * ft.cos(t[j])
                 with ft.For("j", 0, 10, label="Lj2") as j:
                     # Used `u` for only once, but we can't propagate the `t`-expression
@@ -248,7 +248,7 @@ def test_thread_local_no_prop():
     s.parallelize("Li", "blockIdx.x")
     s.parallelize("Lj2", "threadIdx.x")
     ast = s.ast()
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, skip_passes=['use_builtin_div'])
 
     with ft.VarDef([("x", (5, 10), "float32", "input", "gpu/global"),
                     ("y", (5, 10), "float32", "output", "gpu/global")]) as (x,
@@ -258,7 +258,7 @@ def test_thread_local_no_prop():
                 with ft.VarDef("t", (10,), "float32", "cache",
                                "gpu/local") as t:
                     with ft.For("j", 0, 10, label="Lj1") as j:
-                        t[j] = x[i, j] + (t[j - 1] if j > 0 else 0)
+                        t[j] = x[i, j] + t[(j + 1) % 10]
                         u[j] = ft.sin(t[j]) * ft.cos(t[j])
                 with ft.For("j", 0, 10, label="Lj2") as j:
                     y[i, j] = u[j]  # Unchanged

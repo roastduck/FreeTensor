@@ -6,7 +6,7 @@ static Expr makeNeg(const Expr &expr) { return makeSub(makeIntConst(0), expr); }
 
 Stmt UseBuiltinDiv::visitStmt(const Stmt &op) {
     auto boundOfOuterStmt = bound_;
-    bound_ = Ref<CompUniqueBounds>::make(*this);
+    bound_ = Ref<CompUniqueBoundsCombination>::make(*this);
     auto ret = BaseClass::visitStmt(op);
     bound_ = boundOfOuterStmt;
     return ret;

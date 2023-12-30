@@ -24,33 +24,48 @@ Stmt ShrinkVar::visit(const VarDef &_op) {
     if (isInputting(_op->buffer_->atype()) ||
         isOutputting(_op->buffer_->atype()) || _op->viewOf_.has_value() ||
         !findAllStmt(_op, isViewOfThis).empty() || _op->pinned_ ||
-        !newRange_.count(_op->id())) {
+        !newRangeWithShape_.count(_op->id()) ||
+        !newRangeWithoutShape_.count(_op->id())) {
         return Mutator::visit(_op);
     }
 
-    auto &&range = newRange_.at(_op->id());
+    auto &&rangeWithShape = newRangeWithShape_.at(_op->id());
+    auto &&rangeWithoutShape = newRangeWithoutShape_.at(_op->id());
 
     size_t n = _op->buffer_->tensor()->shape().size();
-    ASSERT(range.lower_.size() == n);
-    ASSERT(range.upper_.size() == n);
-    ASSERT(range.len_.size() == n);
-    ASSERT(!lower_.count(_op->name_));
-    ASSERT(!upper_.count(_op->name_));
-    lower_[_op->name_] = range.lower_;
-    upper_[_op->name_] = range.upper_;
+
+    ASSERT(rangeWithShape.lower_.size() == n);
+    ASSERT(rangeWithShape.upper_.size() == n);
+    ASSERT(rangeWithShape.len_.size() == n);
+    ASSERT(!lowerWithShape_.count(_op->name_));
+    ASSERT(!upperWithShape_.count(_op->name_));
+    lowerWithShape_[_op->name_] = rangeWithShape.lower_;
+    upperWithShape_[_op->name_] = rangeWithShape.upper_;
+
+    ASSERT(rangeWithoutShape.lower_.size() == n);
+    ASSERT(rangeWithoutShape.upper_.size() == n);
+    ASSERT(rangeWithoutShape.len_.size() == n);
+    ASSERT(!lowerWithoutShape_.count(_op->name_));
+    ASSERT(!upperWithoutShape_.count(_op->name_));
+    lowerWithoutShape_[_op->name_] = rangeWithoutShape.lower_;
+    upperWithoutShape_[_op->name_] = rangeWithoutShape.upper_;
 
     auto __op = Mutator::visit(_op);
     ASSERT(__op->nodeType() == ASTNodeType::VarDef);
     auto op = __op.as<VarDefNode>();
 
     for (auto &&[len, newLen] :
-         views::zip(op->buffer_->tensor()->shape(), range.len_)) {
+         views::zip(op->buffer_->tensor()->shape(), rangeWithShape.len_)) {
         if (newLen.isValid()) {
             len = newLen;
         }
     }
-    lower_.erase(_op->name_);
-    upper_.erase(_op->name_);
+
+    lowerWithShape_.erase(_op->name_);
+    upperWithShape_.erase(_op->name_);
+    lowerWithoutShape_.erase(_op->name_);
+    upperWithoutShape_.erase(_op->name_);
+
     return op;
 }
 
@@ -92,14 +107,16 @@ Stmt shrinkVar(const Stmt &_op) {
     // (3) Simplify the new indicies
 
     // (1)
-    std::unordered_map<ID, AccessBound> bounds;
+    std::unordered_map<ID, AccessBound> boundsWithShape, boundsWithoutShape;
     for (auto &&[varDefId, name] : allDefs(op, {AccessType::Cache})) {
-        bounds[varDefId] =
+        boundsWithShape[varDefId] =
+            compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, true);
+        boundsWithoutShape[varDefId] =
             compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
     }
 
     // (2)
-    op = ShrinkVar(bounds)(op);
+    op = ShrinkVar(boundsWithShape, boundsWithoutShape)(op);
 
     // (3)
     return simplify(z3Simplify(op));
@@ -109,12 +126,14 @@ Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     auto op = removeDeadVar(_op);
 
     // (1)
-    std::unordered_map<ID, AccessBound> bounds;
-    bounds[varDefId] =
+    std::unordered_map<ID, AccessBound> boundsWithShape, boundsWithoutShape;
+    boundsWithShape[varDefId] =
+        compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, true);
+    boundsWithoutShape[varDefId] =
         compAccessBound(op, varDefId, COMP_ACCESS_BOUND_READ, false);
 
     // (2)
-    op = ShrinkVar(bounds)(op);
+    op = ShrinkVar(boundsWithShape, boundsWithoutShape)(op);
 
     // (3)
     return simplify(z3Simplify(op));

@@ -8,6 +8,7 @@
 #include <pass/gpu/normalize_thread_dims.h>
 #include <pass/make_nested_loops.h>
 #include <pass/normalize_loops.h>
+#include <pass/shrink_for.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
@@ -250,7 +251,7 @@ Stmt CorrectInterThreadDependence::visit(const For &op) {
         for (auto &&ws : it->second) {
             VarDef vardef = ws;
 
-            CompUniqueBounds unique(*this);
+            CompUniqueBoundsCombination unique(*this);
             auto &&red = ws2red_.at(ws->id()).second;
             auto &shape = vardef->buffer_->tensor()->shape();
             for (auto &&[dim, oldBegin, oldEnd] :
@@ -258,14 +259,11 @@ Stmt CorrectInterThreadDependence::visit(const For &op) {
                             red->begins_, red->ends_)) {
                 for (auto &&name : allNames(dim)) {
                     if (!names().count(name)) {
-                        Expr newDim;
-                        for (auto &&b : unique.getDefinedUpper(
-                                 makeMin(dim, makeSub(oldEnd, oldBegin)),
-                                 names())) {
-                            newDim = newDim.isValid()
-                                         ? makeMin(std::move(newDim), b.expr())
-                                         : b.expr();
-                        }
+                        Expr newDim = unique
+                                          .getBound(makeMin(
+                                              dim, makeSub(oldEnd, oldBegin)))
+                                          ->restrictScope(names())
+                                          ->upperExpr();
                         ASSERT(newDim.isValid());
                         dim = std::move(newDim);
                         break;
@@ -353,15 +351,24 @@ Stmt lowerParallelReduction(const Stmt &_op) {
 
         // 4. Try to make the workspace smaller by `pass/shrink_var`. Here we
         // use custom bounds only considering the real use of the workspaces
-        std::unordered_map<ID, AccessBound> bounds;
+        std::unordered_map<ID, AccessBound> boundsWithShape, boundsWithoutShape;
         for (auto &&[wsId, scopeId] : insertBinaryReduction.ws2scope()) {
-            bounds[wsId] = compAccessBound(op, wsId, COMP_ACCESS_BOUND_READ,
-                                           false, scopeId);
-        }
-        op = ShrinkVar(bounds, true)(op);
+            boundsWithShape[wsId] = compAccessBound(
+                op, wsId, COMP_ACCESS_BOUND_READ, true, scopeId);
+            boundsWithoutShape[wsId] = compAccessBound(
+                op, wsId, COMP_ACCESS_BOUND_READ, false, scopeId);
 
-        // 5. Simplify, to flatten singleton loops, and to simplify the
-        // expressions from `pass/shrink_var`
+            // Don't touch the thread dimension
+            boundsWithShape[wsId].lower_[0] = nullptr;
+            boundsWithShape[wsId].upper_[0] = nullptr;
+            boundsWithShape[wsId].len_[0] = nullptr;
+            boundsWithoutShape[wsId].lower_[0] = nullptr;
+            boundsWithoutShape[wsId].upper_[0] = nullptr;
+            boundsWithoutShape[wsId].len_[0] = nullptr;
+        }
+        op = ShrinkVar(boundsWithShape, boundsWithoutShape, true)(op);
+
+        // 5. Simplify expressions from `pass/shrink_var`
         op = simplify(op);
 
         // 6. As per our definition of inter-thread dependence, a VarDef defined
@@ -374,6 +381,9 @@ Stmt lowerParallelReduction(const Stmt &_op) {
         op = CorrectInterThreadDependence(insertWorkspaces.ws2red())(op);
     }
 
+    // Find and flatten singleton loops
+    op = shrinkFor(op);
+    op = simplify(op);
     return op;
 }
 

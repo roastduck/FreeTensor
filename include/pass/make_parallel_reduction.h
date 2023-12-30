@@ -1,10 +1,12 @@
 #ifndef FREE_TENSOR_MAKE_PARLLEL_REDUCTION_H
 #define FREE_TENSOR_MAKE_PARLLEL_REDUCTION_H
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
+#include <analyze/comp_unique_bounds.h>
 #include <analyze/find_loop_variance.h>
 #include <analyze/symbol_table.h>
 #include <driver/target.h>
@@ -62,8 +64,8 @@ class MakeLoopCarriedReduction
     struct ReductionItemFactors {
         ReduceOp op_;
         std::string var_;
-        std::vector<std::vector<std::vector<Expr>>> lower_,
-            upper_; // [dim][access][bound]
+        std::vector<std::vector<Ref<CompUniqueBounds::Bound>>>
+            bound_; // [dim][access]
         bool syncFlush_;
     };
 

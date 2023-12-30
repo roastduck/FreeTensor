@@ -7,6 +7,7 @@
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
+#include <memory>
 #include <mutator.h>
 
 namespace freetensor {
@@ -16,7 +17,7 @@ namespace gpu {
 class NormalizeVarInKernel : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
-    std::vector<std::string> legalNames_;
+    std::unordered_set<std::string> legalNames_;
 
     std::vector<VarDef> varsToHoist_;
     std::unordered_set<std::string> usedNamesInKernel_;

@@ -794,16 +794,17 @@ std::string toString(const AST &op, bool pretty, bool printAllId) {
 }
 
 std::string toString(const AST &op, bool pretty, bool printAllId,
-                     bool dtypeInLoad, bool hexFloat, bool compact) {
+                     bool dtypeInLoad, bool hexFloat, bool compact,
+                     bool parenDespitePriority) {
     return toString(op, pretty, printAllId, dtypeInLoad, hexFloat, compact,
-                    Config::printSourceLocation());
+                    parenDespitePriority, Config::printSourceLocation());
 }
 
 std::string toString(const AST &op, bool pretty, bool printAllId,
                      bool dtypeInLoad, bool hexFloat, bool compact,
-                     bool printSourceLocation) {
+                     bool parenDespitePriority, bool printSourceLocation) {
     PrintVisitor visitor(printAllId, pretty, dtypeInLoad, hexFloat, compact,
-                         printSourceLocation);
+                         parenDespitePriority, printSourceLocation);
     visitor(op);
     return visitor.toString(
         [](const CodeGenStream &stream) { return stream.os_.str(); });

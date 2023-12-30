@@ -117,40 +117,18 @@ int64_t StructuralFeature::calcArea(
     int64_t area = 1;
     size_t n = accesses.front().indices_.size();
     for (size_t i = 0; i < n; i++) {
-        std::vector<std::vector<Expr>> lower, upper;
-        for (size_t j = 0, jEnd = accesses.size(); j < jEnd; j++) {
-            ASSERT(accesses[j].indices_.size() == n);
-            auto &&index = accesses[j].indices_[i];
-            std::vector<Expr> lowerItem({makeIntConst(0)});
-            if (checkAllDefined(names(), index)) {
-                lowerItem.emplace_back(index);
-            }
-            for (auto b : accesses[j].lower_[i]) {
-                if (checkAllDefined(names(), b.allNames())) {
-                    lowerItem.emplace_back(b.expr());
-                }
-            }
-            lower.emplace_back(std::move(lowerItem));
-        }
-
-        for (size_t j = 0, jEnd = accesses.size(); j < jEnd; j++) {
-            ASSERT(accesses[j].indices_.size() == n);
-            auto &&index = accesses[j].indices_[i];
-            std::vector<Expr> upperItem(
-                {makeSub(buffer(var)->tensor()->shape()[i], makeIntConst(1))});
-            if (checkAllDefined(names(), index)) {
-                upperItem.emplace_back(index);
-            }
-            for (auto b : accesses[j].upper_[i]) {
-                if (checkAllDefined(names(), b.allNames())) {
-                    upperItem.emplace_back(b.expr());
-                }
-            }
-            upper.emplace_back(std::move(upperItem));
-        }
-
-        auto l = makeMinMax(lower);
-        auto u = makeMaxMin(upper);
+        // union the bounds of all accesses and get the lower and upper
+        // expression
+        auto [l, u] = bound_->unionBounds(
+            // get bounds of the i-th dimension
+            accesses | views::transform([&](auto &&a) {
+                return a.bounds_[i]->restrictScope(names());
+            }) |
+            // ... and pack into vector
+            ranges::to<std::vector>());
+        l = makeMax(l, makeIntConst(0));
+        u = makeMin(
+            u, makeSub(buffer(var)->tensor()->shape()[i], makeIntConst(1)));
         auto len = makeAdd(makeSub(u, l), makeIntConst(1));
         if (auto constLen = bound_->getInt(len); constLen.has_value()) {
             area *= *constLen;
@@ -207,7 +185,7 @@ void StructuralFeature::visitUnaryOp(const UnaryExpr &op) {
 
 void StructuralFeature::visitStmt(const Stmt &op) {
     auto boundOfOuterStmt = bound_;
-    bound_ = Ref<CompUniqueBounds>::make(*this);
+    bound_ = Ref<CompUniqueBoundsCombination>::make(*this);
     BaseClass::visitStmt(op);
     calcFeatures(op);
     bound_ = boundOfOuterStmt;

@@ -433,8 +433,12 @@ Expr Z3Simplify::visit(const IfExpr &op) {
     }
     auto thenCase = (*this)(op->thenCase_);
     auto elseCase = (*this)(op->elseCase_);
-    return makeIfExpr(std::move(cond), std::move(thenCase), std::move(elseCase),
-                      op->debugBlame());
+    auto ret = makeIfExpr(cond, thenCase, elseCase, op->debugBlame());
+    if (exists(cond) && exists(thenCase) && exists(elseCase)) {
+        put(ret, z3::ite(get(cond), get(thenCase), get(elseCase)),
+            cat(conds(cond), cat(conds(thenCase), conds(elseCase))));
+    }
+    return ret;
 }
 
 Stmt Z3Simplify::visit(const If &op) {

@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_STRUCTURAL_FEATURE_H
 #define FREE_TENSOR_STRUCTURAL_FEATURE_H
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 

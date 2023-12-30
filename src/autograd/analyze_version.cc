@@ -85,16 +85,13 @@ void CountScopeLen::visit(const For &op) {
             Expr len = op->len_;
             if (!allIters(len).empty()) {
                 // Need to relax
-                CompUniqueBounds bound(*this);
+                CompUniqueBoundsCombination bound(*this);
                 auto allowedNames = ranges::to<std::unordered_set>(
                     defs() |
                     views::keys); // Names from all `VarDef`s but not `For`s
-                Expr relaxedInnerLen;
-                for (auto &&b : bound.getDefinedUpper(len, allowedNames)) {
-                    relaxedInnerLen = relaxedInnerLen.isValid()
-                                          ? makeMin(relaxedInnerLen, b.expr())
-                                          : b.expr();
-                }
+                Expr relaxedInnerLen = bound.getBound(len)
+                                           ->restrictScope(allowedNames)
+                                           ->upperExpr();
                 if (!relaxedInnerLen.isValid()) {
                     // Fallback to dynamic tape
                     ASSERT(false); // Unimplemented

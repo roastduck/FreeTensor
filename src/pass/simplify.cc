@@ -9,29 +9,6 @@
 
 namespace freetensor {
 
-class CountHeavyOps : public Visitor {
-    int cnt_ = 0;
-
-  public:
-    int cnt() const { return cnt_; }
-
-  protected:
-    void visitExpr(const Expr &op) {
-        Visitor::visitExpr(op);
-        if (!op->isConst() && op->nodeType() != ASTNodeType::Add &&
-            op->nodeType() != ASTNodeType::Sub &&
-            op->nodeType() != ASTNodeType::Mul) {
-            cnt_++;
-        }
-    }
-};
-
-static int countHeavyOps(const Expr &op) {
-    CountHeavyOps visitor;
-    visitor(op);
-    return visitor.cnt();
-}
-
 static std::vector<Expr> factorize(const Expr &expr) {
     std::vector<Expr> factors;
     std::function<void(const Expr &)> recur = [&](const Expr &expr) {
@@ -76,6 +53,49 @@ static Expr reduceMul(const std::vector<Expr> &factors) {
     return ret.isValid() ? ret : makeIntConst(1);
 }
 
+static Expr recursiveNegateMul(const Expr &e) {
+    if (e->nodeType() == ASTNodeType::IntConst) {
+        return makeIntConst(-e.as<IntConstNode>()->val_);
+    } else if (e->nodeType() == ASTNodeType::FloatConst) {
+        return makeFloatConst(-e.as<FloatConstNode>()->val_);
+    } else if (e->nodeType() == ASTNodeType::Mul) {
+        auto &&mul = e.as<MulNode>();
+        if (auto &&nl = recursiveNegateMul(mul->lhs_); nl.isValid()) {
+            return makeMul(nl, mul->rhs_);
+        } else if (auto &&nr = recursiveNegateMul(mul->rhs_); nr.isValid()) {
+            return makeMul(mul->lhs_, nr);
+        } else {
+            return nullptr;
+        }
+    } else {
+        return nullptr;
+    }
+}
+
+static std::pair<Expr, int64_t> recursiveGetConstOffset(const Expr &e) {
+    if (e->nodeType() == ASTNodeType::IntConst) {
+        return {nullptr, e.as<IntConstNode>()->val_};
+    } else if (e->nodeType() == ASTNodeType::Add) {
+        auto &&add = e.as<AddNode>();
+        auto &&[le, lc] = recursiveGetConstOffset(add->lhs_);
+        auto &&[re, rc] = recursiveGetConstOffset(add->rhs_);
+        return {le.isValid() && re.isValid() ? makeAdd(le, re)
+                : le.isValid()               ? le
+                                             : re,
+                lc + rc};
+    } else if (e->nodeType() == ASTNodeType::Sub) {
+        auto &&sub = e.as<SubNode>();
+        auto &&[le, lc] = recursiveGetConstOffset(sub->lhs_);
+        auto &&[re, rc] = recursiveGetConstOffset(sub->rhs_);
+        return {le.isValid() && re.isValid() ? makeSub(le, re)
+                : le.isValid()               ? le
+                                             : makeSub(makeIntConst(0), re),
+                lc - rc};
+    } else {
+        return {e, 0};
+    }
+}
+
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
     if (!varScope_.count(op->name_)) {
@@ -118,35 +138,11 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
         return op;
     }
 
-    Expr best = nullptr;
-    auto bestScope = -1, bestHeavyOps = -1;
-    for (auto &&lower : unique_->getLower(op)) {
-        for (auto &&upper : unique_->getUpper(op)) {
-            // Check upper <= lower ==> equal
-            // Here we use the less precise alwaysLE instead of analyzing bounds
-            // of `upper - lower`, in order to avoid infinite recursion
-            if (freetensor::alwaysLE(upper, lower)) {
-                // We need to choose the simplest one. Otherwise we are always
-                // picking the original expression
-                Expr expr;
-                if (upper.lin().coeff_.size() + (upper.lin().bias_ != 0) >
-                    lower.lin().coeff_.size() + (lower.lin().bias_ != 0)) {
-                    expr = lower.expr();
-                } else {
-                    expr = upper.expr();
-                }
-                auto scope = findInnerMostScope(varScope_, expr);
-                auto heavyOps = countHeavyOps(expr);
-                if (!best.isValid() || scope < bestScope ||
-                    (scope == bestScope && heavyOps < bestHeavyOps)) {
-                    best = expr, bestScope = scope, bestHeavyOps = heavyOps;
-                }
-                break;
-            }
+    if (auto bound = unique_->getBound(op); bound.isValid()) {
+        Expr best = bound->simplestExpr(varScope_);
+        if (best.isValid() && !HashComparator()(best, op)) {
+            return best;
         }
-    }
-    if (best.isValid() && !HashComparator()(best, op)) {
-        return best;
     }
     return op;
 }
@@ -166,21 +162,34 @@ Expr SimplifyPass::visit(const Add &_op) {
         return op->lhs_;
     }
 
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[re, rc] = recursiveGetConstOffset(op->rhs_); rc != 0) {
+            return makeAdd(makeIntConst(op->lhs_.as<IntConstNode>()->val_ + rc),
+                           re);
+        }
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[le, lc] = recursiveGetConstOffset(op->lhs_); lc != 0) {
+            return makeAdd(
+                le, makeIntConst(op->rhs_.as<IntConstNode>()->val_ + lc));
+        }
+    }
+
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {
         return makeMin(makeAdd(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
                        makeAdd(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
     }
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Max) {
-        return makeMax(makeAdd(op->lhs_, op->rhs_.as<MinNode>()->lhs_),
-                       makeAdd(op->lhs_, op->rhs_.as<MinNode>()->rhs_));
+        return makeMax(makeAdd(op->lhs_, op->rhs_.as<MaxNode>()->lhs_),
+                       makeAdd(op->lhs_, op->rhs_.as<MaxNode>()->rhs_));
     }
     if (op->lhs_->nodeType() == ASTNodeType::Min && op->rhs_->isConst()) {
         return makeMin(makeAdd(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
                        makeAdd(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
     }
     if (op->lhs_->nodeType() == ASTNodeType::Max && op->rhs_->isConst()) {
-        return makeMax(makeAdd(op->lhs_.as<MinNode>()->lhs_, op->rhs_),
-                       makeAdd(op->lhs_.as<MinNode>()->rhs_, op->rhs_));
+        return makeMax(makeAdd(op->lhs_.as<MaxNode>()->lhs_, op->rhs_),
+                       makeAdd(op->lhs_.as<MaxNode>()->rhs_, op->rhs_));
     }
 
     return op;
@@ -194,8 +203,26 @@ Expr SimplifyPass::visit(const Sub &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Sub);
     auto op = __op.as<SubNode>();
 
+    if (equals(op->lhs_, 0)) {
+        if (auto &&nr = recursiveNegateMul(op->rhs_); nr.isValid()) {
+            return nr;
+        }
+    }
     if (equals(op->rhs_, 0)) {
         return op->lhs_;
+    }
+
+    if (op->lhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[re, rc] = recursiveGetConstOffset(op->rhs_); rc != 0) {
+            return makeSub(makeIntConst(op->lhs_.as<IntConstNode>()->val_ - rc),
+                           re);
+        }
+    }
+    if (op->rhs_->nodeType() == ASTNodeType::IntConst) {
+        if (auto &&[le, lc] = recursiveGetConstOffset(op->lhs_); lc != 0) {
+            return makeAdd(
+                le, makeIntConst(lc - op->rhs_.as<IntConstNode>()->val_));
+        }
     }
 
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {
@@ -237,6 +264,16 @@ Expr SimplifyPass::visit(const Mul &_op) {
     }
     if (equals(op->rhs_, 0)) {
         return makeIntConst(0);
+    }
+    if (equals(op->lhs_, -1)) {
+        if (auto &&nr = recursiveNegateMul(op->rhs_); nr.isValid()) {
+            return nr;
+        }
+    }
+    if (equals(op->rhs_, -1)) {
+        if (auto &&nl = recursiveNegateMul(op->lhs_); nl.isValid()) {
+            return nl;
+        }
     }
 
     if (op->lhs_->isConst() && op->rhs_->nodeType() == ASTNodeType::Min) {

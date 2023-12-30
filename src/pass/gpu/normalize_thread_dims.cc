@@ -39,21 +39,20 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
         inKernel_ = oldInKernel;
 
         // CompUniqueBounds requires one instance per Stmt
-        CompUniqueBounds bound(*this);
+        CompUniqueBoundsCombination bound(*this);
+
+        std::unordered_set<std::string> allLegalNames;
+        for (auto &&name : names()) {
+            if (isLegalLen({name}))
+                allLegalNames.emplace(name);
+        }
 
         if (!isLegalLen(op->begin_)) {
             op->body_ = makeIf(
                 makeUnbound(makeGE(makeVar(op->iter_), op->begin_)), op->body_);
-            Expr begin;
-            for (auto &&b : bound.getLower(op->begin_)) {
-                if (isLegalLen(b.allNames())) {
-                    if (b.lin().isConst() && b.lin().bias_ <= INT_MIN + 1) {
-                        continue;
-                    }
-                    begin =
-                        begin.isValid() ? makeMax(begin, b.expr()) : b.expr();
-                }
-            }
+            Expr begin = bound.getBound(op->begin_)
+                             ->restrictScope(allLegalNames)
+                             ->lowerExpr();
             if (!begin.isValid()) {
                 throw InvalidProgram(
                     "Length of " + toString(op->property_->parallel_) +
@@ -68,15 +67,9 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
         if (!isLegalLen(op->end_)) {
             op->body_ = makeIf(
                 makeUnbound(makeLT(makeVar(op->iter_), op->end_)), op->body_);
-            Expr end;
-            for (auto &&b : bound.getUpper(op->end_)) {
-                if (isLegalLen(b.allNames())) {
-                    if (b.lin().isConst() && b.lin().bias_ >= INT_MAX - 1) {
-                        continue;
-                    }
-                    end = end.isValid() ? makeMin(end, b.expr()) : b.expr();
-                }
-            }
+            Expr end = bound.getBound(op->end_)
+                           ->restrictScope(allLegalNames)
+                           ->upperExpr();
             if (!end.isValid()) {
                 throw InvalidProgram(
                     "Length of " + toString(op->property_->parallel_) +

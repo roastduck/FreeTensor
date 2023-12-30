@@ -2,13 +2,80 @@
 #define FREE_TENSOR_COMP_UNIQUE_BOUNDS_H
 
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 #include <analyze/comp_transient_bounds.h>
 #include <hash.h>
+#include <math/bounds.h>
 #include <visitor.h>
 
 namespace freetensor {
+
+class CompUniqueBounds {
+  public:
+    enum class BoundType { Combination, Presburger };
+
+    class Bound {
+      public:
+        virtual ~Bound() {}
+
+        virtual BoundType type() const = 0;
+
+        /**
+         * Get an integer bound. In case of no solution, return LLONG_MAX or
+         * LLONG_MIN
+         *
+         * @{
+         */
+        virtual int64_t lowerInt() const = 0;
+        virtual int64_t upperInt() const = 0;
+        /** @} */
+
+        /**
+         * If the bounded value is a constant integer, return it
+         */
+        virtual std::optional<int64_t> getInt() const = 0;
+
+        /**
+         * Return an Expr for the bound. In case of no solution, return nullptr
+         *
+         * @{
+         */
+        virtual Expr lowerExpr() const = 0;
+        virtual Expr upperExpr() const = 0;
+        /** @} */
+
+        virtual Ref<Bound>
+        restrictScope(const std::unordered_set<std::string> &scope) const = 0;
+
+        virtual Expr simplestExpr(
+            const std::unordered_map<std::string, int> &orderedScope) const = 0;
+    };
+
+  protected:
+    const CompTransientBoundsInterface &transients_;
+
+  public:
+    CompUniqueBounds(const CompTransientBoundsInterface &transients)
+        : transients_(transients) {}
+    virtual ~CompUniqueBounds() {}
+
+    virtual Ref<Bound> getBound(const Expr &op) = 0;
+
+    int64_t getIntLower(const Expr &op) { return getBound(op)->lowerInt(); }
+    int64_t getIntUpper(const Expr &op) { return getBound(op)->upperInt(); }
+    std::optional<int64_t> getInt(const Expr &op) {
+        return getBound(op)->getInt();
+    }
+
+    virtual bool alwaysLT(const Expr &lhs, const Expr &rhs) = 0;
+    virtual bool alwaysLE(const Expr &lhs, const Expr &rhs) = 0;
+
+    virtual std::pair<Expr, Expr>
+    unionBounds(const std::vector<Ref<Bound>> &bounds) = 0;
+};
 
 /**
  * Compute bounds of each UNIQUE INTEGER (sub)expression
@@ -31,49 +98,52 @@ namespace freetensor {
  * This pass is not accurate. Simplifying passes using this analysis may need
  * to run for multiple rounds
  */
-class CompUniqueBounds : public Visitor {
+class CompUniqueBoundsCombination : public CompUniqueBounds, public Visitor {
     typedef Visitor BaseClass;
 
-  public:
     typedef std::vector<LowerBound> LowerBoundsList;
     typedef std::vector<UpperBound> UpperBoundsList;
     typedef ASTHashMap<Expr, LowerBoundsList> LowerBoundsMap;
     typedef ASTHashMap<Expr, UpperBoundsList> UpperBoundsMap;
 
-  private:
-    const CompTransientBoundsInterface &transients_;
-
     LowerBoundsMap lower_;
     UpperBoundsMap upper_;
 
   public:
-    CompUniqueBounds(const CompTransientBoundsInterface &transients)
-        : transients_(transients) {}
+    class Bound : public CompUniqueBounds::Bound {
+        // retrieving expr from Lower/UpperBound requires to be mutable. fake it
+        // here.
+        mutable std::vector<LowerBound> lowerBounds_;
+        mutable std::vector<UpperBound> upperBounds_;
 
-    LowerBoundsList getLower(const Expr &op) {
-        (*this)(op);
-        return lower_.at(op);
-    }
-    UpperBoundsList getUpper(const Expr &op) {
-        (*this)(op);
-        return upper_.at(op);
-    }
+        friend class CompUniqueBoundsCombination;
 
-    int64_t getIntLower(const Expr &op);
-    int64_t getIntUpper(const Expr &op);
-    std::optional<int64_t> getInt(const Expr &op);
+      public:
+        Bound(std::vector<LowerBound> lowerBounds,
+              std::vector<UpperBound> upperBounds)
+            : lowerBounds_(std::move(lowerBounds)),
+              upperBounds_(std::move(upperBounds)) {}
 
-    /**
-     * Get all bounds defined by only variables or iterators in `names`
-     * @{
-     */
-    LowerBoundsList
-    getDefinedLower(const Expr &op,
-                    const std::unordered_set<std::string> &names);
-    UpperBoundsList
-    getDefinedUpper(const Expr &op,
-                    const std::unordered_set<std::string> &names);
-    /** @} */
+        BoundType type() const override { return BoundType::Combination; }
+
+        int64_t lowerInt() const override;
+        int64_t upperInt() const override;
+        std::optional<int64_t> getInt() const override;
+
+        Expr lowerExpr() const override;
+        Expr upperExpr() const override;
+
+        Ref<CompUniqueBounds::Bound> restrictScope(
+            const std::unordered_set<std::string> &scope) const override;
+
+        Expr simplestExpr(const std::unordered_map<std::string, int>
+                              &orderedScope) const override;
+    };
+
+    CompUniqueBoundsCombination(const CompTransientBoundsInterface &transients)
+        : CompUniqueBounds(transients) {}
+
+    Ref<CompUniqueBounds::Bound> getBound(const Expr &op) override;
 
     /**
      * Check wheter `lhs` is always less than `rhs`
@@ -83,10 +153,22 @@ class CompUniqueBounds : public Visitor {
      * For precise comparison, please use `getLower` or `getUpper` on
      * `makeSub(lhs, rhs)`
      */
-    bool alwaysLT(const Expr &lhs, const Expr &rhs);
-    bool alwaysLE(const Expr &lhs, const Expr &rhs);
+    bool alwaysLT(const Expr &lhs, const Expr &rhs) override;
+    bool alwaysLE(const Expr &lhs, const Expr &rhs) override;
+
+    std::pair<Expr, Expr> unionBounds(
+        const std::vector<Ref<CompUniqueBounds::Bound>> &bounds) override;
 
   protected:
+    LowerBoundsList getLower(const Expr &op) {
+        (*this)(op);
+        return lower_.at(op);
+    }
+    UpperBoundsList getUpper(const Expr &op) {
+        (*this)(op);
+        return upper_.at(op);
+    }
+
     template <class T> void setLower(const Expr &op, T &&list) {
         lower_[op] = std::forward<T>(list);
     }

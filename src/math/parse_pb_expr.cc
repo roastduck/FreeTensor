@@ -1,12 +1,26 @@
 #include <antlr4-runtime.h>
+#include <isl/ast.h>
+#include <isl/ast_build.h>
+#include <isl/ast_type.h>
+#include <isl/union_set.h>
 
+#include <analyze/all_uses.h>
 #include <debug.h>
 #include <math/parse_pb_expr.h>
 #include <mutator.h>
 #include <pb_lexer.h>
 #include <pb_parser.h>
+#include <serialize/to_string.h>
 
 namespace freetensor {
+
+std::ostream &operator<<(std::ostream &os, const SimplePBFuncAST &ast) {
+    os << "[" << ast.args_ << "] -> [" << ast.values_ << "]";
+    if (ast.cond_.isValid()) {
+        os << " : " << ast.cond_;
+    }
+    return os;
+}
 
 namespace {
 
@@ -117,6 +131,216 @@ SimplePBFuncAST parseSimplePBFunc(const std::string &str) {
         throw ParserError(str + " is not a simple PBFunc");
     }
     return ret.front();
+}
+
+namespace {
+
+Expr isl2Expr(__isl_take isl_ast_expr *e) {
+    Expr res;
+    try {
+        switch (isl_ast_expr_get_type(e)) {
+        case isl_ast_expr_id: {
+            auto id = isl_ast_expr_get_id(e);
+            std::string name = isl_id_get_name(id);
+            res = makeVar(name);
+            isl_id_free(id);
+            break;
+        }
+        case isl_ast_expr_int: {
+            auto val = isl_ast_expr_get_val(e);
+            ASSERT(isl_val_get_den_si(val) == 1);
+            res = makeIntConst(isl_val_get_num_si(val));
+            isl_val_free(val);
+            break;
+        }
+        case isl_ast_expr_op: {
+            auto args = views::ints(0, isl_ast_expr_op_get_n_arg(e)) |
+                        views::transform([&](int i) {
+                            auto result =
+                                isl2Expr(isl_ast_expr_op_get_arg(e, i));
+                            return result;
+                        }) |
+                        ranges::to_vector;
+            switch (isl_ast_expr_op_get_type(e)) {
+            case isl_ast_expr_op_and:
+                ASSERT(args.size() == 2);
+                res = makeLAnd(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_or:
+                ASSERT(args.size() == 2);
+                res = makeLOr(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_max: {
+                ASSERT(!args.empty());
+                Expr result = args[0];
+                for (size_t i = 1; i < args.size(); ++i)
+                    result = makeMax(result, args[i]);
+                res = result;
+            } break;
+            case isl_ast_expr_op_min: {
+                ASSERT(!args.empty());
+                Expr result = args[0];
+                for (size_t i = 1; i < args.size(); ++i)
+                    result = makeMin(result, args[i]);
+                res = result;
+            } break;
+            case isl_ast_expr_op_add:
+                ASSERT(args.size() == 2);
+                res = makeAdd(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_sub:
+                ASSERT(args.size() == 2);
+                res = makeSub(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_minus:
+                ASSERT(args.size() == 1);
+                res = makeMul(makeIntConst(-1), args[0]);
+                break;
+            case isl_ast_expr_op_mul:
+                ASSERT(args.size() == 2);
+                res = makeMul(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_div: // Exact division. Any rounding is OK. By
+                                      // defaults we use FloorDiv
+            case isl_ast_expr_op_fdiv_q: // Floor division
+            case isl_ast_expr_op_pdiv_q: // Floor division on non-negative
+                                         // divisor
+                ASSERT(args.size() == 2);
+                res = makeFloorDiv(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_pdiv_r: // Remainder on non-negative divisor.
+                                         // Equivalent to Mod. We prefer Mod
+                                         // over Remainder
+            case isl_ast_expr_op_zdiv_r: // Divisible ? 0 : any non-zero value
+                ASSERT(args.size() == 2);
+                res = makeMod(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_select:
+                ASSERT(args.size() == 3);
+                res = makeIfExpr(args[0], args[1], args[2]);
+                break;
+            case isl_ast_expr_op_eq:
+                ASSERT(args.size() == 2);
+                res = makeEQ(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_le:
+                ASSERT(args.size() == 2);
+                res = makeLE(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_lt:
+                ASSERT(args.size() == 2);
+                res = makeLT(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_ge:
+                ASSERT(args.size() == 2);
+                res = makeGE(args[0], args[1]);
+                break;
+            case isl_ast_expr_op_gt:
+                ASSERT(args.size() == 2);
+                res = makeGT(args[0], args[1]);
+                break;
+            default:
+                ASSERT(false);
+            }
+        } break;
+        default:
+            ASSERT(false);
+        }
+    } catch (...) {
+        isl_ast_expr_free(e);
+        throw;
+    }
+    isl_ast_expr_free(e);
+    return res;
+}
+
+PBFuncAST isl2Func(__isl_take isl_ast_node *node) {
+    PBFuncAST ret;
+    try {
+        if (isl_ast_node_get_type(node) == isl_ast_node_if) {
+            auto cond = isl2Expr(isl_ast_node_if_get_cond(node));
+            for (auto &&[thenNames, thenFT, thenCond] :
+                 isl2Func(isl_ast_node_if_get_then(node))) {
+                ret.push_back(SimplePBFuncAST{
+                    thenNames, thenFT,
+                    thenCond.isValid() ? makeLAnd(cond, thenCond) : cond});
+            }
+            if (isl_ast_node_if_has_else(node)) {
+                for (auto &&[elseNames, elseFT, elseCond] :
+                     isl2Func(isl_ast_node_if_get_else(node))) {
+                    ret.push_back(SimplePBFuncAST{
+                        elseNames, elseFT,
+                        elseCond.isValid() ? makeLAnd(makeLNot(cond), elseCond)
+                                           : makeLNot(cond)});
+                }
+            }
+
+        } else {
+            // otherwise, node is a user node
+            ASSERT(isl_ast_node_get_type(node) == isl_ast_node_user);
+            auto expr = isl_ast_node_user_get_expr(node);
+            try {
+                ASSERT(isl_ast_expr_get_type(expr) == isl_ast_expr_op);
+                ASSERT(isl_ast_expr_op_get_type(expr) == isl_ast_expr_op_call);
+                auto nVals =
+                    isl_ast_expr_op_get_n_arg(expr) -
+                    1; // Arguments of the user node is values we need. The
+                       // first arumgnet of the user node is its name
+                auto vals =
+                    views::ints(1, nVals + 1) | views::transform([&](int i) {
+                        return isl2Expr(isl_ast_expr_op_get_arg(expr, i));
+                    }) |
+                    ranges::to_vector;
+
+                std::unordered_set<std::string> names;
+                for (auto &&item : vals) {
+                    for (auto &&name : allNames(item)) {
+                        names.insert(name);
+                    }
+                }
+                ret = {SimplePBFuncAST{ranges::to<std::vector>(names), vals,
+                                       nullptr}};
+            } catch (...) {
+                isl_ast_expr_free(expr);
+                throw;
+            }
+            isl_ast_expr_free(expr);
+        }
+    } catch (...) {
+        isl_ast_node_free(node);
+        throw;
+    }
+    isl_ast_node_free(node);
+    return ret;
+}
+
+} // Anonymous namespace
+
+PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
+    // This is a hack to isl's schedule. Treat the set as an iteration domain.
+    // For a single-valued set, the domain will be zero or one statement,
+    // implemented by a statement in multiple branches. We can recover Expr from
+    // the statement and the branches' conditions.
+
+    ASSERT(set.isSingleValued());
+
+    isl_options_set_ast_build_detect_min_max(ctx.get(), 1);
+
+    PBFuncAST ret;
+    isl_ast_build *build = isl_ast_build_alloc(ctx.get());
+    try {
+        isl_schedule *s =
+            isl_schedule_from_domain(isl_union_set_from_set(set.copy()));
+        isl_ast_node *ast =
+            isl_ast_build_node_from_schedule(build /* keep */, s /* take */);
+        ret = isl2Func(ast /* take */);
+    } catch (...) {
+        isl_ast_build_free(build);
+        throw;
+    }
+    isl_ast_build_free(build);
+
+    return ret;
 }
 
 } // namespace freetensor

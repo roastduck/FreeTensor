@@ -296,7 +296,7 @@ def test_dynamic_loop_range():
                 #! label: V_z
                 z = ft.empty((), "float32")
                 z[()] = x[bn, pn] + 1
-                z_tape[bn * (n * n) + pn + 1 - 1] = z[()]
+                z_tape[bn * (n * n) + pn] = z[()]
                 y[pn % n] += z[()] * z[()]
 
     assert expected.body.match(ast)
