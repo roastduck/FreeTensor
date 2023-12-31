@@ -1,3 +1,4 @@
+#include <analyze/comp_unique_bounds_combination.h>
 #include <pass/use_builtin_div.h>
 
 namespace freetensor {

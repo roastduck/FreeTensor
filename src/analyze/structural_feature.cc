@@ -1,6 +1,7 @@
 #include <climits>
 
 #include <analyze/check_all_defined.h>
+#include <analyze/comp_unique_bounds_combination.h>
 #include <analyze/structural_feature.h>
 #include <container_utils.h>
 #include <math/min_max.h>

@@ -1,5 +1,5 @@
-#ifndef FREE_TENSOR_PB_SIMPLIFY_H
-#define FREE_TENSOR_PB_SIMPLIFY_H
+#ifndef FREE_TENSOR_COMP_UNIQUE_BOUNDS_PB_H
+#define FREE_TENSOR_COMP_UNIQUE_BOUNDS_PB_H
 
 #include <optional>
 #include <unordered_map>
@@ -7,10 +7,7 @@
 
 #include <analyze/comp_unique_bounds.h>
 #include <math/gen_pb_expr.h>
-#include <math/parse_pb_expr.h>
 #include <math/presburger.h>
-#include <math/utils.h>
-#include <pass/simplify.h>
 
 namespace freetensor {
 
@@ -78,18 +75,6 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
         const std::vector<Ref<CompUniqueBounds::Bound>> &bounds) override;
 };
 
-class PBSimplify : public SimplifyPass {
-  public:
-    PBSimplify()
-        : SimplifyPass([](const CompTransientBoundsInterface &tr) {
-              return Ref<CompUniqueBoundsPB>::make(tr);
-          }) {}
-};
-
-Stmt pbSimplify(const Stmt &op);
-
-DEFINE_PASS_FOR_FUNC(pbSimplify)
-
 } // namespace freetensor
 
-#endif // FREE_TENSOR_PB_SIMPLIFY_H
+#endif // FREE_TENSOR_COMP_UNIQUE_BOUNDS_PB_H

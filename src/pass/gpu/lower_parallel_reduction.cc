@@ -1,6 +1,7 @@
 #ifdef FT_WITH_CUDA
 
 #include <analyze/all_uses.h>
+#include <analyze/comp_unique_bounds_combination.h>
 #include <container_utils.h>
 #include <hash.h>
 #include <pass/const_fold.h>
