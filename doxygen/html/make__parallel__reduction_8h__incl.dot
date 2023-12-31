@@ -153,9 +153,6 @@ digraph "include/pass/make_parallel_reduction.h"
   Node71 -> Node3 [color="steelblue1",style="solid"];
   Node71 -> Node4 [color="steelblue1",style="solid"];
   Node71 -> Node5 [color="steelblue1",style="solid"];
-  Node71 -> Node63 [color="steelblue1",style="solid"];
-  Node71 -> Node66 [color="steelblue1",style="solid"];
-  Node71 -> Node57 [color="steelblue1",style="solid"];
   Node1 -> Node72 [color="steelblue1",style="solid"];
   Node72 [label="analyze/find_loop_variance.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$find__loop__variance_8h.html",tooltip=" "];
   Node72 -> Node3 [color="steelblue1",style="solid"];

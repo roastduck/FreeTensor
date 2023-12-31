@@ -182,9 +182,6 @@ digraph "include/pass/shrink_for.h"
   Node72 -> Node9 [color="steelblue1",style="solid"];
   Node72 -> Node3 [color="steelblue1",style="solid"];
   Node72 -> Node62 [color="steelblue1",style="solid"];
-  Node72 -> Node64 [color="steelblue1",style="solid"];
-  Node72 -> Node67 [color="steelblue1",style="solid"];
-  Node72 -> Node57 [color="steelblue1",style="solid"];
   Node1 -> Node73 [color="steelblue1",style="solid"];
   Node73 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];
   Node73 -> Node23 [color="steelblue1",style="solid"];

@@ -89,7 +89,7 @@ digraph "include/analyze/check_all_defined.h"
   Node1 -> Node40 [dir="back",color="steelblue1",style="solid"];
   Node40 [label="src/analyze/comp_access\l_bound.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__access__bound_8cc.html",tooltip=" "];
   Node1 -> Node41 [dir="back",color="steelblue1",style="solid"];
-  Node41 [label="src/analyze/comp_unique\l_bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8cc.html",tooltip=" "];
+  Node41 [label="src/analyze/comp_unique\l_bounds_combination.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds__combination_8cc.html",tooltip=" "];
   Node1 -> Node42 [dir="back",color="steelblue1",style="solid"];
   Node42 [label="src/analyze/structural\l_feature.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structural__feature_8cc.html",tooltip=" "];
   Node1 -> Node43 [dir="back",color="steelblue1",style="solid"];

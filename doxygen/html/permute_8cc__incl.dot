@@ -142,8 +142,6 @@ digraph "src/schedule/permute.cc"
   Node98 -> Node9 [color="steelblue1",style="solid"];
   Node98 -> Node4 [color="steelblue1",style="solid"];
   Node98 -> Node90 [color="steelblue1",style="solid"];
-  Node98 -> Node68 [color="steelblue1",style="solid"];
-  Node98 -> Node56 [color="steelblue1",style="solid"];
   Node88 -> Node63 [color="steelblue1",style="solid"];
   Node88 -> Node33 [color="steelblue1",style="solid"];
   Node88 -> Node6 [color="steelblue1",style="solid"];

@@ -175,9 +175,6 @@ digraph "include/analyze/structural_feature.h"
   Node72 -> Node55 [color="steelblue1",style="solid"];
   Node55 [label="variant",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node9 -> Node52 [color="steelblue1",style="solid"];
-  Node6 -> Node65 [color="steelblue1",style="solid"];
-  Node6 -> Node68 [color="steelblue1",style="solid"];
-  Node6 -> Node59 [color="steelblue1",style="solid"];
   Node5 -> Node73 [color="steelblue1",style="solid"];
   Node73 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];
   Node73 -> Node25 [color="steelblue1",style="solid"];

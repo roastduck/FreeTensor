@@ -166,9 +166,6 @@ digraph "include/pass/use_builtin_div.h"
   Node71 -> Node9 [color="steelblue1",style="solid"];
   Node71 -> Node3 [color="steelblue1",style="solid"];
   Node71 -> Node2 [color="steelblue1",style="solid"];
-  Node71 -> Node63 [color="steelblue1",style="solid"];
-  Node71 -> Node66 [color="steelblue1",style="solid"];
-  Node71 -> Node57 [color="steelblue1",style="solid"];
   Node1 -> Node72 [color="steelblue1",style="solid"];
   Node72 [label="analyze/symbol_table.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$symbol__table_8h.html",tooltip=" "];
   Node72 -> Node23 [color="steelblue1",style="solid"];
