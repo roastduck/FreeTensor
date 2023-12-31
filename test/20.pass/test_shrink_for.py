@@ -101,6 +101,30 @@ def test_presburger_bounds():
     assert std.match(ast)
 
 
+def test_presburger_bounds_strided():
+    with ft.VarDef([("x", (128, 128), "int32", "input", "cpu"),
+                    ("y", (128, 128), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i0", 0, 8) as i0:
+            with ft.For("j0", 0, 8) as j0:
+                with ft.For("i", 0, 128) as i:
+                    with ft.For("j", 0, 128) as j:
+                        with ft.If(ft.l_and(i % 8 == i0, j % 8 == j0)):
+                            y[i, j] = x[i, j] * 2
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (128, 128), "int32", "input", "cpu"),
+                    ("y", (128, 128), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i0", 0, 8) as i0:
+            with ft.For("j0", 0, 8) as j0:
+                with ft.For("i", i0, i0 + 121, 8) as i:
+                    with ft.For("j", j0, j0 + 121, 8) as j:
+                        y[i, j] = x[i, j] * 2
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_multiple_branches():
     with ft.VarDef([("x", (32, 4), "int32", "inout", "cpu"),
                     ("y", (32, 4), "int32", "output", "cpu")]) as (x, y):

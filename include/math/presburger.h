@@ -319,6 +319,8 @@ class PBSingleFunc {
   public:
     PBSingleFunc() {}
     PBSingleFunc(isl_pw_aff *func) : func_(func) {}
+    explicit PBSingleFunc(isl_aff *func) : func_(isl_pw_aff_from_aff(func)) {}
+
     ~PBSingleFunc() {
         if (func_ != nullptr) {
             isl_pw_aff_free(func_);
