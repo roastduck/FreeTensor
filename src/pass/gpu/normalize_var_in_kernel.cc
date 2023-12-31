@@ -1,4 +1,4 @@
-#include <analyze/comp_unique_bounds.h>
+#include <analyze/comp_unique_bounds_combination.h>
 #include <container_utils.h>
 #include <pass/gpu/normalize_var_in_kernel.h>
 #include <pass/rename_var.h>

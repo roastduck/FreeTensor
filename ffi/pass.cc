@@ -15,7 +15,6 @@
 #include <pass/make_reduction.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/move_out_first_or_last_iter.h>
-#include <pass/pb_simplify.h>
 #include <pass/prop_one_time_use.h>
 #include <pass/remove_cyclic_assign.h>
 #include <pass/remove_dead_var.h>

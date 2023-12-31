@@ -1,7 +1,7 @@
 #ifdef FT_WITH_CUDA
 
 #include <analyze/all_uses.h>
-#include <analyze/comp_unique_bounds.h>
+#include <analyze/comp_unique_bounds_combination.h>
 #include <pass/gpu/normalize_thread_dims.h>
 
 namespace freetensor {

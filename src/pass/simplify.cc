@@ -890,6 +890,10 @@ Stmt builtinSimplify(const Stmt &op) {
     return flattenStmtSeq(simplifyImpl<BuiltinSimplify>(op));
 }
 
+Stmt pbSimplify(const Stmt &op) {
+    return flattenStmtSeq(simplifyImpl<PBSimplify>(op));
+}
+
 Stmt simplify(const Stmt &op) { return builtinSimplify(op); }
 
 } // namespace freetensor

@@ -7,6 +7,8 @@
 
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds.h>
+#include <analyze/comp_unique_bounds_combination.h>
+#include <analyze/comp_unique_bounds_pb.h>
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <math/bounds.h>
@@ -111,6 +113,14 @@ class BuiltinSimplify : public SimplifyPass {
           }) {}
 };
 
+class PBSimplify : public SimplifyPass {
+  public:
+    PBSimplify()
+        : SimplifyPass([](const CompTransientBoundsInterface &tr) {
+              return Ref<CompUniqueBoundsPB>::make(tr);
+          }) {}
+};
+
 /**
  * Simplify a program and compute bounds of each expressions
  *
@@ -138,9 +148,11 @@ template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
 }
 
 Stmt builtinSimplify(const Stmt &op);
-
+Stmt pbSimplify(const Stmt &op);
 Stmt simplify(const Stmt &op);
 
+DEFINE_PASS_FOR_FUNC(builtinSimplify)
+DEFINE_PASS_FOR_FUNC(pbSimplify)
 DEFINE_PASS_FOR_FUNC(simplify)
 
 } // namespace freetensor

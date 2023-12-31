@@ -18,8 +18,8 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/normalize_loops.h>
-#include <pass/pb_simplify.h>
 #include <pass/shrink_for.h>
+#include <pass/simplify.h>
 #include <pass/sink_var.h>
 #include <schedule.h>
 #include <schedule/check_not_in_lib.h>

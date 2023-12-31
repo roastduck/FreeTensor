@@ -1,7 +1,7 @@
 #include <functional>
 
 #include <analyze/all_uses.h>
-#include <analyze/comp_unique_bounds.h>
+#include <analyze/comp_unique_bounds_combination.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <autograd/analyze_version.h>

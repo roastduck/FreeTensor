@@ -3,12 +3,13 @@
 #include <unordered_map>
 
 #include <analyze/all_uses.h>
+#include <analyze/comp_unique_bounds_pb.h>
 #include <container_utils.h>
 #include <expr.h>
 #include <math/parse_pb_expr.h>
 #include <math/presburger.h>
+#include <math/utils.h>
 #include <pass/flatten_stmt_seq.h>
-#include <pass/pb_simplify.h>
 #include <pass/replace_iter.h>
 #include <serialize/mangle.h>
 #include <type/data_type.h>
@@ -250,10 +251,6 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
                  ? translateBoundFunc(*ctx_, lexmax(bound), demangleMap)
                  : nullptr;
     return {l, u};
-}
-
-Stmt pbSimplify(const Stmt &op) {
-    return flattenStmtSeq(simplifyImpl<PBSimplify>(op));
 }
 
 } // namespace freetensor

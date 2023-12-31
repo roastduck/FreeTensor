@@ -1,6 +1,6 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/check_all_defined.h>
-#include <analyze/comp_unique_bounds.h>
+#include <analyze/comp_unique_bounds_combination.h>
 #include <analyze/deps.h>
 #include <container_utils.h>
 #include <hash.h>

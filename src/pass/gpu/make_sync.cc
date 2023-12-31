@@ -6,7 +6,7 @@
 
 #include <analyze/check_not_modified.h>
 #include <analyze/comp_transient_bounds.h>
-#include <analyze/comp_unique_bounds.h>
+#include <analyze/comp_unique_bounds_combination.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
 #include <pass/const_fold.h>
