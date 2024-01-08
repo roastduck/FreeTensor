@@ -336,11 +336,12 @@ std::string AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
     return "[" + ret + "]";
 }
 
-std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
-                                  const std::vector<std::pair<Expr, ID>> &conds,
-                                  RelaxMode relax, GenPBExpr::VarMap &externals,
+std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
+                                  GenPBExpr::VarMap &externals,
                                   bool eraseOutsideVarDef,
                                   const AccessPoint &ap) {
+    const auto &conds = ap.conds_;
+
     // If the condition is defined outside of the variable we are analyzing, and
     // external variables in this condition is not used in any accessing or
     // iterating coordinates, and if `eraseOutsideVarDef_` is enabled, we can
@@ -424,8 +425,8 @@ PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
     GenPBExpr genPBExpr(extSuffix, noNeedToBeVars);
     auto ret = makeIterList(p.iter_, iterDim) + " -> " +
                makeAccList(genPBExpr, p.access_, relax, externals);
-    if (auto str = makeCond(genPBExpr, p.conds_, relax, externals,
-                            eraseOutsideVarDef_, p);
+    if (auto str =
+            makeCond(genPBExpr, relax, externals, eraseOutsideVarDef_, p);
         !str.empty()) {
         ret += ": " + str;
     }
