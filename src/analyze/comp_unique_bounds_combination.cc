@@ -234,7 +234,11 @@ std::pair<Expr, Expr> CompUniqueBoundsCombination::unionBounds(
         lowers.emplace_back(std::move(lowerTerm));
         uppers.emplace_back(std::move(upperTerm));
     }
-    return {makeMinMax(lowers), makeMaxMin(uppers)};
+    return {
+        makeMinMax(
+            lowers, []() -> Expr { ERROR("Cannot union nothing"); }, nullptr),
+        makeMaxMin(
+            uppers, []() -> Expr { ERROR("Cannot union nothing"); }, nullptr)};
 }
 
 void CompUniqueBoundsCombination::insertSignDataTypeInfo(const Expr &op) {
