@@ -94,9 +94,6 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
     Expr visit(const GE &op) override;
     Expr visit(const EQ &op) override;
     Expr visit(const NE &op) override;
-    Expr visit(const LAnd &op) override;
-    Expr visit(const LOr &op) override;
-    Expr visit(const LNot &op) override;
     Expr visit(const IfExpr &op) override;
     Stmt visit(const ReduceTo &op) override;
     Stmt visit(const VarDef &op) override;

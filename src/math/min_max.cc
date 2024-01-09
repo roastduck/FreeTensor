@@ -26,10 +26,31 @@ auto makeMaxFunc = [](const Expr &lhs, const Expr &rhs) {
     }
     return makeMax(lhs, rhs);
 };
+auto makeLAndFunc = [](const Expr &lhs, const Expr &rhs) {
+    if (lhs->nodeType() == ASTNodeType::BoolConst) {
+        return lhs.as<BoolConstNode>()->val_ ? rhs : makeBoolConst(false);
+    }
+    if (rhs->nodeType() == ASTNodeType::BoolConst) {
+        return rhs.as<BoolConstNode>()->val_ ? lhs : makeBoolConst(false);
+    }
+    return makeLAnd(lhs, rhs);
+};
+auto makeLOrFunc = [](const Expr &lhs, const Expr &rhs) {
+    if (lhs->nodeType() == ASTNodeType::BoolConst) {
+        return lhs.as<BoolConstNode>()->val_ ? makeBoolConst(true) : rhs;
+    }
+    if (rhs->nodeType() == ASTNodeType::BoolConst) {
+        return rhs.as<BoolConstNode>()->val_ ? makeBoolConst(true) : lhs;
+    }
+    return makeLOr(lhs, rhs);
+};
 
 Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
                     std::vector<ASTHashSet<Expr>>::iterator begin,
                     std::vector<ASTHashSet<Expr>>::iterator end) {
+    // This function assumes the outer term to be non-empty, and returns nullptr
+    // in case of any inner term is empty
+
     for (auto it = begin; it != end; it++) {
         if (it->empty()) {
             // In case of min(max(...), ...), this means min(max(empty), ...) =
@@ -77,7 +98,12 @@ Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
 }
 
 Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
-                    const std::vector<std::vector<Expr>> &exprs) {
+                    const std::vector<std::vector<Expr>> &exprs,
+                    const std::function<Expr()> &innerEmptyGenerator,
+                    const std::function<Expr()> &outerEmptyGenerator) {
+    if (exprs.empty()) {
+        return outerEmptyGenerator();
+    }
     std::vector<ASTHashSet<Expr>> exprsSet;
     exprsSet.reserve(exprs.size());
     for (auto &&group : exprs) {
@@ -87,18 +113,29 @@ Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
         }
         exprsSet.emplace_back(std::move(groupSet));
     }
-    return makeOuterInner(makeOuter, makeInner, exprsSet.begin(),
-                          exprsSet.end());
+    auto ret =
+        makeOuterInner(makeOuter, makeInner, exprsSet.begin(), exprsSet.end());
+    return ret.isValid() ? ret : innerEmptyGenerator();
 }
 
 } // Anonymous namespace
 
-Expr makeMinMax(const std::vector<std::vector<Expr>> &exprs) {
-    return makeOuterInner(makeMinFunc, makeMaxFunc, exprs);
+Expr makeMinMaxImpl(const std::vector<std::vector<Expr>> &exprs,
+                    const std::function<Expr()> &negInf,
+                    const std::function<Expr()> &inf) {
+    return makeOuterInner(makeMinFunc, makeMaxFunc, exprs, negInf, inf);
 }
 
-Expr makeMaxMin(const std::vector<std::vector<Expr>> &exprs) {
-    return makeOuterInner(makeMaxFunc, makeMinFunc, exprs);
+Expr makeMaxMinImpl(const std::vector<std::vector<Expr>> &exprs,
+                    const std::function<Expr()> &negInf,
+                    const std::function<Expr()> &inf) {
+    return makeOuterInner(makeMaxFunc, makeMinFunc, exprs, inf, negInf);
+}
+
+Expr makeLOrLAnd(const std::vector<std::vector<Expr>> &exprs) {
+    return makeOuterInner(
+        makeLOrFunc, makeLAndFunc, exprs, []() { return makeBoolConst(true); },
+        []() { return makeBoolConst(false); });
 }
 
 } // namespace freetensor

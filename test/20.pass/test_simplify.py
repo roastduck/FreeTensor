@@ -795,6 +795,56 @@ def test_simplify_not_logic_op(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
+def test_simplify_identical_term_in_logic_or(p):
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.If(ft.l_or(x[i] < 0, ft.l_or(x[i] >= 10, x[i] < 0))):
+                y[i] = x[i]
+            with ft.Else():
+                y[i] = 0
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.If(ft.l_or(x[i] < 0, x[i] >= 10)):
+                y[i] = x[i]
+            with ft.Else():
+                y[i] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
+def test_simplify_identical_term_in_logic_and(p):
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.If(ft.l_and(x[i] >= 0, ft.l_and(x[i] < 10, x[i] >= 0))):
+                y[i] = x[i]
+            with ft.Else():
+                y[i] = 0
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
+                    ("y", (4,), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 4) as i:
+            with ft.If(ft.l_and(x[i] >= 0, x[i] < 10)):
+                y[i] = x[i]
+            with ft.Else():
+                y[i] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
 def test_min_minus_min(p):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
