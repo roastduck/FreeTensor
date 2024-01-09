@@ -39,7 +39,7 @@ jobs:
           source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
           # Setting OMP_NUM_THREADS=256 seems to work around the conflict of PyTorch
-          OMP_NUM_THREADS=256 OMP_PROC_BIND=true srun --exclusive -N 1 -p v100 pytest --color=yes test
+          OMP_NUM_THREADS=256 OMP_PROC_BIND=true srun --exclusive -N 1 -p ja --gres=gpu:v100:1 pytest --color=yes test
   build-and-test-gcc-minimal-run_in_tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
@@ -66,7 +66,7 @@ jobs:
           spack load python~debug@3.9.12%gcc@10.2.1 java@11 gcc@12.1.0
           source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
-          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p v100 pytest --color=yes test
+          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p ja pytest --color=yes test
   build-and-test-clang-run-in-tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
@@ -93,4 +93,4 @@ jobs:
           spack load python~debug@3.9.12%gcc@10.2.1 java@11 llvm@16%gcc@12
           source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
-          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p v100 pytest --color=yes test
+          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p ja pytest --color=yes test
