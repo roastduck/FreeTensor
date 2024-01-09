@@ -33,6 +33,7 @@ inline std::function<Expr()> asExprGenerator(const Expr &e) {
  * the `min` term is empty. Can be nullptr.
  * @param negInf : Expr or function returning an Expr. What to return in case of
  * any `max` term is empty. Can be nullptr.
+ * @return : Result expression. Always non-null.
  */
 template <typename T, typename U>
 Expr makeMinMax(const std::vector<std::vector<Expr>> &exprs, const T &inf,
@@ -49,6 +50,7 @@ Expr makeMinMax(const std::vector<std::vector<Expr>> &exprs, const T &inf,
  * the `max` term is empty. Can be nullptr.
  * @param inf : Expr or function returning an Expr. What to return in case of
  * any `in` term is empty. Can be nullptr.
+ * @return : Result expression. Always non-null.
  */
 template <typename T, typename U>
 Expr makeMaxMin(const std::vector<std::vector<Expr>> &exprs, const T &negInf,
@@ -59,10 +61,9 @@ Expr makeMaxMin(const std::vector<std::vector<Expr>> &exprs, const T &negInf,
 /**
  * Make l_or(l_and(...), l_and(...), ...) and remove duplications
  *
- * This will remove some duplicated items in advance, to reduce the burden on
- * simplifier
- *
- * Always returning non-null
+ * @param exprs : Vector of vector or exprs. Items of inner ones are combined
+ * with l_and. Items of the outer one are combined with l_or.
+ * @return : Result expression. Always non-null.
  */
 Expr makeLOrLAnd(const std::vector<std::vector<Expr>> &exprs);
 
