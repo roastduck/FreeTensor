@@ -183,5 +183,6 @@ digraph "src/analyze/comp_access_bound.cc"
   Node75 -> Node77 [color="steelblue1",style="solid"];
   Node1 -> Node94 [color="steelblue1",style="solid"];
   Node94 [label="math/min_max.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8h.html",tooltip=" "];
+  Node94 -> Node15 [color="steelblue1",style="solid"];
   Node94 -> Node43 [color="steelblue1",style="solid"];
 }

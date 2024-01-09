@@ -1625,10 +1625,24 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a8da64aa4d9100586983f72d7b94472f8"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a8da64aa4d9100586983f72d7b94472f8"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8da64aa4d9100586983f72d7b94472f8">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structfreetensor_1_1LinearExpr.html">LinearExpr</a>&lt; T &gt; &amp;lin)</td></tr>
 <tr class="separator:a8da64aa4d9100586983f72d7b94472f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0260001028b6b84273b63c94c2683d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa0260001028b6b84273b63c94c2683d3">makeMinMax</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs)</td></tr>
-<tr class="separator:aa0260001028b6b84273b63c94c2683d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac01fbb51827243e01be6ccc23cfc7ce9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac01fbb51827243e01be6ccc23cfc7ce9">makeMaxMin</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs)</td></tr>
-<tr class="separator:ac01fbb51827243e01be6ccc23cfc7ce9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe2626a46ce65db515c132df34de399a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afe2626a46ce65db515c132df34de399a">makeMinMaxImpl</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs, const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;inf, const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;negInf)</td></tr>
+<tr class="separator:afe2626a46ce65db515c132df34de399a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a972780c9bbda02f9dff24ab3fcf43acc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a972780c9bbda02f9dff24ab3fcf43acc">makeMaxMinImpl</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs, const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;inf, const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;negInf)</td></tr>
+<tr class="separator:a972780c9bbda02f9dff24ab3fcf43acc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a817e1f1b1b2503b414113e5a831482d5"><td class="memItemLeft" align="right" valign="top">std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a817e1f1b1b2503b414113e5a831482d5">asExprGenerator</a> (std::nullptr_t)</td></tr>
+<tr class="separator:a817e1f1b1b2503b414113e5a831482d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60c0863234f4a1eb3c7b8f5d0462a68c"><td class="memItemLeft" align="right" valign="top">std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a60c0863234f4a1eb3c7b8f5d0462a68c">asExprGenerator</a> (const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;e)</td></tr>
+<tr class="separator:a60c0863234f4a1eb3c7b8f5d0462a68c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed69c4a4a9e678394127e81f49a4fc9a"><td class="memItemLeft" align="right" valign="top">std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aed69c4a4a9e678394127e81f49a4fc9a">asExprGenerator</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;e)</td></tr>
+<tr class="separator:aed69c4a4a9e678394127e81f49a4fc9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15442ae0db2e201f0110405dd8307ded"><td class="memTemplParams" colspan="2">template&lt;typename T , typename U &gt; </td></tr>
+<tr class="memitem:a15442ae0db2e201f0110405dd8307ded"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a15442ae0db2e201f0110405dd8307ded">makeMinMax</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs, const T &amp;inf, const U &amp;negInf)</td></tr>
+<tr class="separator:a15442ae0db2e201f0110405dd8307ded"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78f54288603c6ed29ba9b0c091070e8e"><td class="memTemplParams" colspan="2">template&lt;typename T , typename U &gt; </td></tr>
+<tr class="memitem:a78f54288603c6ed29ba9b0c091070e8e"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a78f54288603c6ed29ba9b0c091070e8e">makeMaxMin</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs, const T &amp;negInf, const U &amp;inf)</td></tr>
+<tr class="separator:a78f54288603c6ed29ba9b0c091070e8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59ed57966181c652bdf47622dd120c73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a59ed57966181c652bdf47622dd120c73">makeLOrLAnd</a> (const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;exprs)</td></tr>
+<tr class="separator:a59ed57966181c652bdf47622dd120c73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad95d0b37a8ce3bb42362e23ad2c7be2e"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad95d0b37a8ce3bb42362e23ad2c7be2e">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a> &amp;ast)</td></tr>
 <tr class="separator:ad95d0b37a8ce3bb42362e23ad2c7be2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca9654a5ea538c714eac06d7a005446f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aca9654a5ea538c714eac06d7a005446f">parsePBFunc</a> (const std::string &amp;str)</td></tr>
@@ -5508,6 +5522,84 @@ template&lt;PBMapRef T, PBMapRef U&gt; </div>
       </table>
 </div><div class="memdoc">
 <p>Normalize an bool expression to be a disjunctive normal form </p>
+
+</div>
+</div>
+<a id="aed69c4a4a9e678394127e81f49a4fc9a" name="aed69c4a4a9e678394127e81f49a4fc9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed69c4a4a9e678394127e81f49a4fc9a">&#9670;&#160;</a></span>asExprGenerator() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; freetensor::asExprGenerator </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;&#160;</td>
+          <td class="paramname"><em>e</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a60c0863234f4a1eb3c7b8f5d0462a68c" name="a60c0863234f4a1eb3c7b8f5d0462a68c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60c0863234f4a1eb3c7b8f5d0462a68c">&#9670;&#160;</a></span>asExprGenerator() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; freetensor::asExprGenerator </td>
+          <td>(</td>
+          <td class="paramtype">const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;&#160;</td>
+          <td class="paramname"><em>e</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a817e1f1b1b2503b414113e5a831482d5" name="a817e1f1b1b2503b414113e5a831482d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a817e1f1b1b2503b414113e5a831482d5">&#9670;&#160;</a></span>asExprGenerator() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; freetensor::asExprGenerator </td>
+          <td>(</td>
+          <td class="paramtype">std::nullptr_t&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -12456,6 +12548,32 @@ template&lt;class T , class U &gt; </div>
 
 </div>
 </div>
+<a id="a59ed57966181c652bdf47622dd120c73" name="a59ed57966181c652bdf47622dd120c73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59ed57966181c652bdf47622dd120c73">&#9670;&#160;</a></span>makeLOrLAnd()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::makeLOrLAnd </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>exprs</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Make l_or(l_and(...), l_and(...), ...) and remove duplications</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">exprs</td><td>: Vector of vector or exprs. Items of inner ones are combined with l_and. Items of the outer one are combined with l_or. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>: Result expression. Always non-null. </dd></dl>
+
+</div>
+</div>
 <a id="a259772a52a9308f1b660f8be720dbfdf" name="a259772a52a9308f1b660f8be720dbfdf"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a259772a52a9308f1b660f8be720dbfdf">&#9670;&#160;</a></span>makeLT()</h2>
 
@@ -12744,24 +12862,83 @@ template&lt;class T , class U &gt; </div>
 
 </div>
 </div>
-<a id="ac01fbb51827243e01be6ccc23cfc7ce9" name="ac01fbb51827243e01be6ccc23cfc7ce9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac01fbb51827243e01be6ccc23cfc7ce9">&#9670;&#160;</a></span>makeMaxMin()</h2>
+<a id="a78f54288603c6ed29ba9b0c091070e8e" name="a78f54288603c6ed29ba9b0c091070e8e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78f54288603c6ed29ba9b0c091070e8e">&#9670;&#160;</a></span>makeMaxMin()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename U &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::makeMaxMin </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>exprs</em></td><td>)</td>
+          <td class="paramname"><em>exprs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const T &amp;&#160;</td>
+          <td class="paramname"><em>negInf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const U &amp;&#160;</td>
+          <td class="paramname"><em>inf</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Make max(min(...), min(...), ...)</p>
-<p>This will remove some duplicated items in advance, to reduce the burden on simplifier</p>
-<p>Returning nullptr means +inf </p>
+<p>Make max(min(...), min(...), ...) and remove duplications</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">exprs</td><td>: Vector of vector or exprs. Items of inner ones are combined with min. Items of the outer one are combined with max. </td></tr>
+    <tr><td class="paramname">negInf</td><td>: Expr or function returning an Expr. What to return in case of the <code>max</code> term is empty. Can be nullptr. </td></tr>
+    <tr><td class="paramname">inf</td><td>: Expr or function returning an Expr. What to return in case of any <code>in</code> term is empty. Can be nullptr. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>: Result expression. Always non-null. </dd></dl>
+
+</div>
+</div>
+<a id="a972780c9bbda02f9dff24ab3fcf43acc" name="a972780c9bbda02f9dff24ab3fcf43acc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a972780c9bbda02f9dff24ab3fcf43acc">&#9670;&#160;</a></span>makeMaxMinImpl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::makeMaxMinImpl </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>exprs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;&#160;</td>
+          <td class="paramname"><em>inf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;&#160;</td>
+          <td class="paramname"><em>negInf</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -12921,24 +13098,83 @@ template&lt;class T , class U &gt; </div>
 
 </div>
 </div>
-<a id="aa0260001028b6b84273b63c94c2683d3" name="aa0260001028b6b84273b63c94c2683d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa0260001028b6b84273b63c94c2683d3">&#9670;&#160;</a></span>makeMinMax()</h2>
+<a id="a15442ae0db2e201f0110405dd8307ded" name="a15442ae0db2e201f0110405dd8307ded"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a15442ae0db2e201f0110405dd8307ded">&#9670;&#160;</a></span>makeMinMax()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename U &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::makeMinMax </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>exprs</em></td><td>)</td>
+          <td class="paramname"><em>exprs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const T &amp;&#160;</td>
+          <td class="paramname"><em>inf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const U &amp;&#160;</td>
+          <td class="paramname"><em>negInf</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Make min(max(...), max(...), ...)</p>
-<p>This will remove some duplicated items in advance, to reduce the burden on simplifier</p>
-<p>Returning nullptr means -inf </p>
+<p>Make min(max(...), max(...), ...) and remove duplications</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">exprs</td><td>: Vector of vector or exprs. Items of inner ones are combined with max. Items of the outer one are combined with min. </td></tr>
+    <tr><td class="paramname">inf</td><td>: Expr or function returning an Expr. What to return in case of the <code>min</code> term is empty. Can be nullptr. </td></tr>
+    <tr><td class="paramname">negInf</td><td>: Expr or function returning an Expr. What to return in case of any <code>max</code> term is empty. Can be nullptr. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>: Result expression. Always non-null. </dd></dl>
+
+</div>
+</div>
+<a id="afe2626a46ce65db515c132df34de399a" name="afe2626a46ce65db515c132df34de399a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe2626a46ce65db515c132df34de399a">&#9670;&#160;</a></span>makeMinMaxImpl()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> freetensor::makeMinMaxImpl </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>exprs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;&#160;</td>
+          <td class="paramname"><em>inf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>()&gt; &amp;&#160;</td>
+          <td class="paramname"><em>negInf</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>

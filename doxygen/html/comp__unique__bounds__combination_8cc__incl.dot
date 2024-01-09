@@ -193,5 +193,6 @@ digraph "src/analyze/comp_unique_bounds_combination.cc"
   Node1 -> Node69 [color="steelblue1",style="solid"];
   Node1 -> Node75 [color="steelblue1",style="solid"];
   Node75 [label="math/min_max.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8h.html",tooltip=" "];
+  Node75 -> Node15 [color="steelblue1",style="solid"];
   Node75 -> Node43 [color="steelblue1",style="solid"];
 }

@@ -128,5 +128,6 @@ digraph "include/analyze/as_dnf.h"
   Node46 [label="src/analyze/as_dnf.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$as__dnf_8cc.html",tooltip=" "];
   Node1 -> Node47 [dir="back",color="steelblue1",style="solid"];
   Node47 [label="src/pass/annotate_conds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$annotate__conds_8cc.html",tooltip=" "];
+  Node1 -> Node24 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node31 [dir="back",color="steelblue1",style="solid"];
 }

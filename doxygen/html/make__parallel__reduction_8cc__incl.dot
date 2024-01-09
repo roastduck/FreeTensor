@@ -175,6 +175,7 @@ digraph "src/pass/make_parallel_reduction.cc"
   Node1 -> Node6 [color="steelblue1",style="solid"];
   Node1 -> Node98 [color="steelblue1",style="solid"];
   Node98 [label="math/min_max.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8h.html",tooltip=" "];
+  Node98 -> Node12 [color="steelblue1",style="solid"];
   Node98 -> Node7 [color="steelblue1",style="solid"];
   Node1 -> Node70 [color="steelblue1",style="solid"];
   Node70 [label="math/utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$utils_8h.html",tooltip=" "];

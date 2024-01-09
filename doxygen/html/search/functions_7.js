@@ -28,8 +28,8 @@ var searchData=
   ['gettype_25',['getType',['../classfreetensor_1_1AnonymousMetadataContent.html#a338a12fce7c51ee9c063ef047fbcd7f5',1,'freetensor::AnonymousMetadataContent::getType()'],['../classfreetensor_1_1SourceMetadataContent.html#a1595b05695306b90f4b2f64aafde2bfa',1,'freetensor::SourceMetadataContent::getType()'],['../classfreetensor_1_1TransformedMetadataContent.html#ac49732da6035f13b3607ef8cd6e7ece1',1,'freetensor::TransformedMetadataContent::getType()'],['../classfreetensor_1_1MetadataContent.html#aa06068ad01a43c08841a0a28c83e17df',1,'freetensor::MetadataContent::getType()']]],
   ['getupper_26',['getUpper',['../classfreetensor_1_1CompUniqueBoundsCombination.html#a408bfa705de1df8bb7289761cfd08f48',1,'freetensor::CompUniqueBoundsCombination']]],
   ['getvarid_27',['getVarId',['../classfreetensor_1_1Z3Simplify.html#aee88484abb8e1ced538b07e43f31af13',1,'freetensor::Z3Simplify']]],
-  ['grad_28',['grad',['../classfreetensor_1_1ReplaceBySaved.html#a80673e86eaa7b801ceae6e135f5f5c16',1,'freetensor::ReplaceBySaved']]],
-  ['grad_29',['Grad',['../classfreetensor_1_1Grad.html#aad2ac5d0fe64620cb588a568088f0515',1,'freetensor::Grad']]],
+  ['grad_28',['Grad',['../classfreetensor_1_1Grad.html#aad2ac5d0fe64620cb588a568088f0515',1,'freetensor::Grad']]],
+  ['grad_29',['grad',['../classfreetensor_1_1ReplaceBySaved.html#a80673e86eaa7b801ceae6e135f5f5c16',1,'freetensor::ReplaceBySaved']]],
   ['gradbody_30',['gradBody',['../namespacefreetensor.html#a57c40e3f6293782ec79a305f6f734a63',1,'freetensor']]],
   ['gradfuncinplace_31',['gradFuncInplace',['../namespacefreetensor.html#a22fbf710f96eed126c7ad22fa38a0b38',1,'freetensor']]],
   ['gradfuncoutofplace_32',['gradFuncOutOfPlace',['../namespacefreetensor.html#a64bc65d22b8574d2320d62ee629c50de',1,'freetensor']]]

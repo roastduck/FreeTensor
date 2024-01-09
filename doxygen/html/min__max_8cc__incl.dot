@@ -166,5 +166,6 @@ digraph "src/math/min_max.cc"
   Node39 -> Node47 [color="steelblue1",style="solid"];
   Node1 -> Node48 [color="steelblue1",style="solid"];
   Node48 [label="math/min_max.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8h.html",tooltip=" "];
+  Node48 -> Node2 [color="steelblue1",style="solid"];
   Node48 -> Node6 [color="steelblue1",style="solid"];
 }

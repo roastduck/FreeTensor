@@ -194,5 +194,6 @@ digraph "src/analyze/structural_feature.cc"
   Node1 -> Node35 [color="steelblue1",style="solid"];
   Node1 -> Node78 [color="steelblue1",style="solid"];
   Node78 [label="math/min_max.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$min__max_8h.html",tooltip=" "];
+  Node78 -> Node15 [color="steelblue1",style="solid"];
   Node78 -> Node44 [color="steelblue1",style="solid"];
 }

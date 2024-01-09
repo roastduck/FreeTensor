@@ -35,8 +35,6 @@ digraph "include/except.h"
   Node2 -> Node238 [dir="back",color="steelblue1",style="solid"];
   Node238 [label="include/pass/make_nested\l_loops.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$make__nested__loops_8h.html",tooltip=" "];
   Node238 -> Node18 [dir="back",color="steelblue1",style="solid"];
-  Node238 -> Node20 [dir="back",color="steelblue1",style="solid"];
-  Node20 [label="src/pass/cpu/lower\l_parallel_reduction.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$cpu_2lower__parallel__reduction_8cc.html",tooltip=" "];
   Node2 -> Node41 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node8 [label="include/pass/shrink\l_var.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$shrink__var_8h.html",tooltip=" "];
@@ -56,6 +54,8 @@ digraph "include/except.h"
   Node39 [label="src/analyze/comp_unique\l_bounds_pb.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds__pb_8cc.html",tooltip=" "];
   Node2 -> Node278 [dir="back",color="steelblue1",style="solid"];
   Node278 [label="include/type/mem_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$mem__type_8h.html",tooltip=" "];
+  Node2 -> Node199 [dir="back",color="steelblue1",style="solid"];
+  Node199 [label="src/analyze/as_dnf.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$as__dnf_8cc.html",tooltip=" "];
   Node2 -> Node35 [dir="back",color="steelblue1",style="solid"];
   Node35 [label="src/analyze/comp_unique\l_bounds_combination.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds__combination_8cc.html",tooltip=" "];
   Node2 -> Node39 [dir="back",color="steelblue1",style="solid"];
@@ -91,7 +91,6 @@ digraph "include/except.h"
   Node217 [label="src/metadata.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$metadata_8cc.html",tooltip=" "];
   Node2 -> Node174 [dir="back",color="steelblue1",style="solid"];
   Node174 [label="src/pass/annotate_conds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$annotate__conds_8cc.html",tooltip=" "];
-  Node2 -> Node20 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node261 [dir="back",color="steelblue1",style="solid"];
   Node261 [label="include/math/presburger.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$presburger_8h.html",tooltip=" "];
   Node261 -> Node47 [dir="back",color="steelblue1",style="solid"];
