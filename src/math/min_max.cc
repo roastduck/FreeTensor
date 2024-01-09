@@ -99,8 +99,8 @@ Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
 
 Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
                     const std::vector<std::vector<Expr>> &exprs,
-                    const std::function<Expr()> &innerEmptyGenerator,
-                    const std::function<Expr()> &outerEmptyGenerator) {
+                    const std::function<Expr()> &outerEmptyGenerator,
+                    const std::function<Expr()> &innerEmptyGenerator) {
     if (exprs.empty()) {
         return outerEmptyGenerator();
     }
@@ -121,21 +121,21 @@ Expr makeOuterInner(const MakerType &makeOuter, const MakerType &makeInner,
 } // Anonymous namespace
 
 Expr makeMinMaxImpl(const std::vector<std::vector<Expr>> &exprs,
-                    const std::function<Expr()> &negInf,
-                    const std::function<Expr()> &inf) {
-    return makeOuterInner(makeMinFunc, makeMaxFunc, exprs, negInf, inf);
+                    const std::function<Expr()> &inf,
+                    const std::function<Expr()> &negInf) {
+    return makeOuterInner(makeMinFunc, makeMaxFunc, exprs, inf, negInf);
 }
 
 Expr makeMaxMinImpl(const std::vector<std::vector<Expr>> &exprs,
-                    const std::function<Expr()> &negInf,
-                    const std::function<Expr()> &inf) {
-    return makeOuterInner(makeMaxFunc, makeMinFunc, exprs, inf, negInf);
+                    const std::function<Expr()> &inf,
+                    const std::function<Expr()> &negInf) {
+    return makeOuterInner(makeMaxFunc, makeMinFunc, exprs, negInf, inf);
 }
 
 Expr makeLOrLAnd(const std::vector<std::vector<Expr>> &exprs) {
     return makeOuterInner(
-        makeLOrFunc, makeLAndFunc, exprs, []() { return makeBoolConst(true); },
-        []() { return makeBoolConst(false); });
+        makeLOrFunc, makeLAndFunc, exprs, []() { return makeBoolConst(false); },
+        []() { return makeBoolConst(true); });
 }
 
 } // namespace freetensor
