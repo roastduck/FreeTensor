@@ -1,16 +1,7 @@
 #include <analyze/as_dnf.h>
+#include <container_utils.h>
 
 namespace freetensor {
-
-template <class T>
-static std::vector<T> merge(const std::vector<T> &lhs,
-                            const std::vector<T> &rhs) {
-    std::vector<T> ret;
-    ret.reserve(lhs.size() + rhs.size());
-    ret.insert(ret.end(), lhs.begin(), lhs.end());
-    ret.insert(ret.end(), rhs.begin(), rhs.end());
-    return ret;
-}
 
 void AsDNF::visitExpr(const Expr &op) {
     Visitor::visitExpr(op);
@@ -24,22 +15,22 @@ void AsDNF::visit(const LAnd &op) {
     if (!neg_) {
         for (auto &&l : results_.at(op->lhs_)) {
             for (auto &&r : results_.at(op->rhs_)) {
-                results_[op].emplace_back(merge(l, r));
+                results_[op].emplace_back(cat(l, r));
             }
         }
     } else {
-        results_[op] = merge(results_.at(op->lhs_), results_.at(op->rhs_));
+        results_[op] = cat(results_.at(op->lhs_), results_.at(op->rhs_));
     }
 }
 
 void AsDNF::visit(const LOr &op) {
     Visitor::visit(op);
     if (!neg_) {
-        results_[op] = merge(results_.at(op->lhs_), results_.at(op->rhs_));
+        results_[op] = cat(results_.at(op->lhs_), results_.at(op->rhs_));
     } else {
         for (auto &&l : results_.at(op->lhs_)) {
             for (auto &&r : results_.at(op->rhs_)) {
-                results_[op].emplace_back(merge(l, r));
+                results_[op].emplace_back(cat(l, r));
             }
         }
     }
@@ -97,6 +88,14 @@ void AsDNF::visit(const GE &op) {
         results_[op] = {{op}};
     } else {
         results_[op] = {{makeLT(op->lhs_, op->rhs_)}};
+    }
+}
+
+void AsDNF::visit(const Load &op) {
+    if (!neg_) {
+        results_[op] = {{op}};
+    } else {
+        results_[op] = {{makeLNot(op)}};
     }
 }
 

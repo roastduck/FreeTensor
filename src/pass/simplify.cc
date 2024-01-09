@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <unordered_set>
 
+#include <analyze/as_dnf.h>
 #include <except.h>
+#include <math/min_max.h>
 #include <math/utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/replace_iter.h>
@@ -96,6 +98,29 @@ static std::pair<Expr, int64_t> recursiveGetConstOffset(const Expr &e) {
     }
 }
 
+namespace {
+
+class CountExprNodes : public Visitor {
+    int count_ = 0;
+
+  public:
+    int count() const { return count_; }
+
+  protected:
+    void visitExpr(const Expr &e) {
+        Visitor::visitExpr(e);
+        count_++;
+    }
+};
+
+int countExprNodes(const Expr &e) {
+    CountExprNodes visitor;
+    visitor(e);
+    return visitor.count();
+}
+
+} // Anonymous namespace
+
 void FindInnerMostScope::visit(const Var &op) {
     Visitor::visit(op);
     if (!varScope_.count(op->name_)) {
@@ -142,6 +167,17 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
         Expr best = bound->simplestExpr(varScope_);
         if (best.isValid() && !HashComparator()(best, op)) {
             return best;
+        }
+    }
+
+    if (_op->dtype() == DataType::Bool) {
+        if (auto p = _op->parentExpr();
+            !p.isValid() || p->dtype() != DataType::Bool) {
+            // this is base bool expr
+            Expr normalized = makeLOrLAnd(asDNF(op));
+            if (countExprNodes(normalized) < countExprNodes(op)) {
+                op = normalized;
+            }
         }
     }
     return op;
@@ -664,83 +700,6 @@ Expr SimplifyPass::visit(const NE &_op) {
     }
     if (auto &&c = unique_->getInt(diff); c.has_value() && *c == 0) {
         return makeBoolConst(false);
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const LAnd &_op) {
-    auto __op = BaseClass::visit(_op);
-    if (__op->isConst()) {
-        return __op;
-    }
-    ASSERT(__op->nodeType() == ASTNodeType::LAnd);
-    auto op = __op.as<LAndNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
-        return op->lhs_.as<BoolConstNode>()->val_ ? (Expr)op->rhs_
-                                                  : makeBoolConst(false);
-    }
-    if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
-        return op->rhs_.as<BoolConstNode>()->val_ ? (Expr)op->lhs_
-                                                  : makeBoolConst(false);
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const LOr &_op) {
-    auto __op = BaseClass::visit(_op);
-    if (__op->isConst()) {
-        return __op;
-    }
-    ASSERT(__op->nodeType() == ASTNodeType::LOr);
-    auto op = __op.as<LOrNode>();
-    if (op->lhs_->nodeType() == ASTNodeType::BoolConst) {
-        return op->lhs_.as<BoolConstNode>()->val_ ? makeBoolConst(true)
-                                                  : (Expr)op->rhs_;
-    }
-    if (op->rhs_->nodeType() == ASTNodeType::BoolConst) {
-        return op->rhs_.as<BoolConstNode>()->val_ ? makeBoolConst(true)
-                                                  : (Expr)op->lhs_;
-    }
-    return op;
-}
-
-Expr SimplifyPass::visit(const LNot &_op) {
-    auto __op = BaseClass::visit(_op);
-    if (__op->isConst()) {
-        return __op;
-    }
-    ASSERT(__op->nodeType() == ASTNodeType::LNot);
-    auto op = __op.as<LNotNode>();
-    switch (op->expr_->nodeType()) {
-    case ASTNodeType::BoolConst:
-        return makeBoolConst(!op->expr_.as<BoolConstNode>()->val_);
-    case ASTNodeType::LT:
-        return makeGE(op->expr_.as<LTNode>()->lhs_,
-                      op->expr_.as<LTNode>()->rhs_);
-    case ASTNodeType::GT:
-        return makeLE(op->expr_.as<GTNode>()->lhs_,
-                      op->expr_.as<GTNode>()->rhs_);
-    case ASTNodeType::LE:
-        return makeGT(op->expr_.as<LENode>()->lhs_,
-                      op->expr_.as<LENode>()->rhs_);
-    case ASTNodeType::GE:
-        return makeLT(op->expr_.as<GENode>()->lhs_,
-                      op->expr_.as<GENode>()->rhs_);
-    case ASTNodeType::EQ:
-        return makeNE(op->expr_.as<EQNode>()->lhs_,
-                      op->expr_.as<EQNode>()->rhs_);
-    case ASTNodeType::NE:
-        return makeEQ(op->expr_.as<NENode>()->lhs_,
-                      op->expr_.as<NENode>()->rhs_);
-    case ASTNodeType::LAnd:
-        return makeLOr(makeLNot(op->expr_.as<LAndNode>()->lhs_),
-                       makeLNot(op->expr_.as<LAndNode>()->rhs_));
-    case ASTNodeType::LOr:
-        return makeLAnd(makeLNot(op->expr_.as<LOrNode>()->lhs_),
-                        makeLNot(op->expr_.as<LOrNode>()->rhs_));
-    case ASTNodeType::LNot:
-        return op->expr_.as<LNotNode>()->expr_;
-    default:;
     }
     return op;
 }
