@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <vector>
 
+#include <container_utils.h>
 #include <ref.h>
 
 namespace freetensor {
