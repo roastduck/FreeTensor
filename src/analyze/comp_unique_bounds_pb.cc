@@ -38,9 +38,6 @@ std::optional<int64_t> CompUniqueBoundsPB::Bound::getInt() const {
 
 namespace {
 
-// Translate a computed bound function in ISL back to our Expr.
-// We prefer min/max expressions as final results, so we first test if simply
-// min/max of the pieces gives the correct result; if not, fallback to IfExpr.
 Expr translateBoundFunc(
     PBCtx &ctx, const PBSet &boundSet,
     const std::unordered_map<std::string, Expr> &demangleMap) {
@@ -202,11 +199,10 @@ bool CompUniqueBoundsPB::alwaysLT(const Expr &lhs, const Expr &rhs) {
     return combined.empty();
 }
 
-std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
+Ref<CompUniqueBoundsPB::Bound> CompUniqueBoundsPB::unionBoundsAsBound(
     const std::vector<Ref<CompUniqueBounds::Bound>> &_bounds) {
-    // if no bound presented, return an empty range
     if (_bounds.size() == 0)
-        return {makeIntConst(0), makeIntConst(-1)};
+        return nullptr;
 
     // PBSet in _bounds may be from foreign ctx. Reconstruct them in our ctx
     auto bounds = ranges::to<std::vector>(
@@ -225,7 +221,7 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
     bound = coalesce(std::move(bound));
 
     // construct the demangle map
-    std::unordered_map<std::string, Expr> demangleMap;
+    auto demangleMap = Ref<std::unordered_map<std::string, Expr>>::make();
     for (isl_size dim = 0; dim < bound.nParamDims(); ++dim) {
         auto dimName = bound.nameParamDim(dim);
         Expr demangled;
@@ -240,17 +236,23 @@ std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
                 }
             }
         }
-        demangleMap[dimName] = demangled;
+        (*demangleMap)[dimName] = demangled;
+    }
+
+    return Ref<CompUniqueBoundsPB::Bound>::make(ctx_, demangleMap, bound);
+}
+
+std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(
+    const std::vector<Ref<CompUniqueBounds::Bound>> &bounds) {
+    auto bound = unionBoundsAsBound(bounds);
+
+    // if no bound presented, return an empty range
+    if (!bound.isValid()) {
+        return {makeIntConst(0), makeIntConst(-1)};
     }
 
     // translate the lower and upper bounds back to expression
-    auto l = bound.hasLowerBound(0)
-                 ? translateBoundFunc(*ctx_, lexmin(bound), demangleMap)
-                 : nullptr;
-    auto u = bound.hasUpperBound(0)
-                 ? translateBoundFunc(*ctx_, lexmax(bound), demangleMap)
-                 : nullptr;
-    return {l, u};
+    return {bound->lowerExpr(), bound->upperExpr()};
 }
 
 } // namespace freetensor

@@ -8,24 +8,40 @@ void init_ffi_parallel_scope(py::module_ &m) {
         .def(py::init<>())
         .def("__str__",
              [](const SerialScope &scope) { return toString(scope); })
-        .def("__eq__", [](const SerialScope &lhs, const SerialScope &rhs) {
-            return lhs == rhs;
-        });
+        .def("__eq__", [](const SerialScope &lhs,
+                          const SerialScope &rhs) { return lhs == rhs; })
+        .def("__eq__",
+             [](const SerialScope &lhs, const std::string &rhs) {
+                 return ParallelScope{lhs} == parseParallelScope(rhs);
+             })
+        .def("__eq__",
+             [](const SerialScope &lhs, py::object rhs) { return false; });
 
     py::class_<OpenMPScope>(m, "OpenMPScope")
         .def(py::init<>())
         .def("__str__",
              [](const OpenMPScope &scope) { return toString(scope); })
-        .def("__eq__", [](const OpenMPScope &lhs, const OpenMPScope &rhs) {
-            return lhs == rhs;
-        });
+        .def("__eq__", [](const OpenMPScope &lhs,
+                          const OpenMPScope &rhs) { return lhs == rhs; })
+        .def("__eq__",
+             [](const OpenMPScope &lhs, const std::string &rhs) {
+                 return ParallelScope{lhs} == parseParallelScope(rhs);
+             })
+        .def("__eq__",
+             [](const OpenMPScope &lhs, py::object rhs) { return false; });
 
     py::class_<CUDAStreamScope>(m, "CUDAStreamScope")
         .def(py::init<>())
         .def("__str__",
              [](const CUDAStreamScope &scope) { return toString(scope); })
         .def("__eq__", [](const CUDAStreamScope &lhs,
-                          const CUDAStreamScope &rhs) { return lhs == rhs; });
+                          const CUDAStreamScope &rhs) { return lhs == rhs; })
+        .def("__eq__",
+             [](const CUDAStreamScope &lhs, const std::string &rhs) {
+                 return ParallelScope{lhs} == parseParallelScope(rhs);
+             })
+        .def("__eq__",
+             [](const CUDAStreamScope &lhs, py::object rhs) { return false; });
 
     py::enum_<CUDAScope::Level>(m, "CUDAScopeLevel")
         .value("Block", CUDAScope::Level::Block)
@@ -40,9 +56,14 @@ void init_ffi_parallel_scope(py::module_ &m) {
                 return CUDAScope{level, dim};
             }))
         .def("__str__", [](const CUDAScope &scope) { return toString(scope); })
-        .def("__eq__", [](const CUDAScope &lhs, const CUDAScope &rhs) {
-            return lhs == rhs;
-        });
+        .def("__eq__", [](const CUDAScope &lhs,
+                          const CUDAScope &rhs) { return lhs == rhs; })
+        .def("__eq__",
+             [](const CUDAScope &lhs, const std::string &rhs) {
+                 return ParallelScope{lhs} == parseParallelScope(rhs);
+             })
+        .def("__eq__",
+             [](const CUDAScope &lhs, py::object rhs) { return false; });
 
     // Factory function, used as a class
     m.def("ParallelScope", &parseParallelScope);

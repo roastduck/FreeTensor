@@ -539,13 +539,21 @@ Stmt Z3Simplify::visit(const For &op) {
         if (step > 0) {
             push((*this)(makeGE(var, begin)));
             push((*this)(makeLT(var, end)));
+            push(
+                (*this)(makeEQ(makeMod(makeSub(var, begin), makeIntConst(step)),
+                               makeIntConst(0))));
             body = (*this)(op->body_);
+            pop();
             pop();
             pop();
         } else if (step < 0) {
             push((*this)(makeLE(var, begin)));
             push((*this)(makeGT(var, end)));
+            push((*this)(
+                makeEQ(makeMod(makeSub(begin, var), makeIntConst(-step)),
+                       makeIntConst(0))));
             body = (*this)(op->body_);
+            pop();
             pop();
             pop();
         } else {

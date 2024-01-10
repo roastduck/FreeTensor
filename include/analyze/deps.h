@@ -47,7 +47,7 @@ struct AccessPoint {
     Ref<Buffer> buffer_;
     int defAxis_;                /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
-    std::vector<Expr> access_;   /// The spacial location of the access
+    std::vector<Expr> access_;   /// The spatial location of the access
     std::vector<std::pair<Expr, ID>>
         conds_; /// - first: The condition (predicate) of the access
                 /// - second: the statement that contribute to the condition)
@@ -365,16 +365,25 @@ class AnalyzeDeps {
                                    const std::vector<Expr> &list,
                                    RelaxMode relax,
                                    GenPBExpr::VarMap &externals);
-    static std::string makeCond(GenPBExpr &genPBExpr,
-                                const std::vector<std::pair<Expr, ID>> &conds,
-                                RelaxMode relax, GenPBExpr::VarMap &externals,
+    static std::string makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
+                                GenPBExpr::VarMap &externals,
                                 bool eraseOutsideVarDef, const AccessPoint &ap);
+    static PBMap makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
+                                  int iterDim, int accDim, RelaxMode relax,
+                                  const std::string &extSuffix,
+                                  GenPBExpr::VarMap &externals,
+                                  const ASTHashSet<Expr> &noNeedToBeVars,
+                                  bool eraseOutsideVarDef);
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
                      int accDim, RelaxMode relax, const std::string &extSuffix,
                      GenPBExpr::VarMap &externals,
-                     const ASTHashSet<Expr> &noNeedToBeVars);
+                     const ASTHashSet<Expr> &noNeedToBeVars) {
+        return makeAccMapStatic(presburger, p, iterDim, accDim, relax,
+                                extSuffix, externals, noNeedToBeVars,
+                                eraseOutsideVarDef_);
+    }
 
     PBMap makeEqForBothOps(PBCtx &presburger,
                            const std::vector<std::pair<int, int>> &coord,

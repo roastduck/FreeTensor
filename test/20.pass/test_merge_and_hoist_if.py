@@ -102,7 +102,9 @@ def test_hoist():
                 with ft.If(i % 2 == 0):
                     y[i, j] = x[i, j]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, skip_passes=['use_builtin_div'], verbose=1)
+    ast = ft.lower(ast,
+                   skip_passes=['shrink_for', 'use_builtin_div'],
+                   verbose=1)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):
@@ -179,7 +181,9 @@ def test_hoist_then_merge():
             with ft.If(i % 2 == 0):
                 y[i, 0] += 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, skip_passes=['use_builtin_div'], verbose=1)
+    ast = ft.lower(ast,
+                   skip_passes=['shrink_for', 'use_builtin_div'],
+                   verbose=1)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):

@@ -131,6 +131,8 @@ void init_ffi_schedule(py::module_ &m) {
         .def("inline", &Schedule::inlining, "vardef"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a,
              "allow_reduction"_a = true)
+        .def("parallelize_as", &Schedule::parallelizeAs, "nest"_a,
+             "reference"_a, "def_id"_a)
         .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
         .def("vectorize", &Schedule::vectorize, "loop"_a)
         .def("separate_tail", &Schedule::separateTail,

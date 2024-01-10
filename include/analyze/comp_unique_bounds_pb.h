@@ -20,6 +20,7 @@ namespace freetensor {
 class CompUniqueBoundsPB : public CompUniqueBounds {
   public:
     class Bound : public CompUniqueBounds::Bound {
+      public: // Visible to CompUniqueBoundsPB's subclasses
         Ref<PBCtx> ctx_;
         // isl var -> ft expr, the demangling map yielded from GenPBExpr
         // shared from CompUniqueBoundsPB::cachedFreeVars_
@@ -27,8 +28,6 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
         // isl bounding set, multiple params being all outer variables and
         // single output being the bounded expression
         PBSet bound_;
-
-        friend class CompUniqueBoundsPB;
 
       public:
         Bound(Ref<PBCtx> ctx,
@@ -62,6 +61,10 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
     PBSet cachedConds_;
     Ref<std::unordered_map<std::string, Expr>> cachedFreeVars_;
     std::unordered_map<Expr, Ref<Bound>> cachedValues_;
+
+  protected:
+    Ref<CompUniqueBoundsPB::Bound>
+    unionBoundsAsBound(const std::vector<Ref<CompUniqueBounds::Bound>> &bounds);
 
   public:
     CompUniqueBoundsPB(const CompTransientBoundsInterface &transients)

@@ -1,19 +1,11 @@
 #include <analyze/all_uses.h>
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
+#include <get_new_name.h>
 #include <pass/rename_var.h>
 #include <schedule/hoist_selected_var.h>
 
 namespace freetensor {
-
-static std::string getNewName(const std::string &oldName,
-                              const std::unordered_set<std::string> &used) {
-    for (int i = 1;; i++) {
-        if (auto name = oldName + "." + std::to_string(i); !used.count(name)) {
-            return name;
-        }
-    }
-}
 
 Stmt HoistSelectedVar::visit(const For &op) {
     if (toHoist_.count(op->body_->id())) {

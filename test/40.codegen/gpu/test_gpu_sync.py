@@ -517,7 +517,8 @@ def test_syncthreads_no_need_to_split_branch():
         for i in range(3):
             #! label: L1
             for j in range(4):
-                if i % 2 == 0:
+                if ft.intrinsic("% == %", i, i,
+                                ret_type="bool"):  # Whatever condition
                     # NO NEED TO SPLIT THIS BRANCH, BECAUSE IS EVALUATED TO THE
                     # SAME VALUE IN THE SAME THREAD BLOCK, AND WE ONLY SYNC INSIDE
                     # A THREAD BLOCK
@@ -569,7 +570,8 @@ def test_syncthreads_no_need_to_split_branch_warp():
         for i in range(3):
             #! label: L1
             for j in range(4):
-                if i % 2 == 0:
+                if ft.intrinsic("% == %", i, i,
+                                ret_type="bool"):  # Whatever condition
                     # NO NEED TO SPLIT THIS BRANCH, BECAUSE WE ONLY NEED
                     # __syncwarp(__activemask()), WHICH IS ACTUALLY A MEMORY FLUSH
                     # INSTEAD OF A SYNCHRONIZATION
