@@ -27,8 +27,8 @@ LoopInScopes findLoopInScopes(const Stmt &stmt, const ID &id,
                               FindLoopInScopesDirection direction) {
     if (stmt->id() == id) {
         if (stmt->nodeType() != ASTNodeType::For) {
-            throw InvalidSchedule("Statement " + toString(id) +
-                                  " is not a loop");
+            throw InvalidSchedule(FT_MSG << "Statement " << id
+                                         << " is not a loop");
         }
         return LoopInScopes{stmt.as<ForNode>(), {}};
     }
@@ -143,16 +143,16 @@ Stmt FuseFor::visit(const StmtSeq &_op) {
                                               FindLoopInScopesDirection::Back);
         if (loop0InScopes.loop_.isValid()) {
             if (i + 1 == iEnd) {
-                throw InvalidSchedule("Fuse: Loop " + toString(id0_) + " and " +
-                                      toString(id1_) +
-                                      " shuold be directly following");
+                throw InvalidSchedule(
+                    FT_MSG << "Fuse: Loop " << id0_ << " and " << id1_
+                           << " shuold be directly following");
             }
             auto loop1InScopes = findLoopInScopes(
                 op->stmts_[i + 1], id1_, FindLoopInScopesDirection::Front);
             if (!loop1InScopes.loop_.isValid()) {
-                throw InvalidSchedule("Fuse: Loop " + toString(id0_) + " and " +
-                                      toString(id1_) +
-                                      " shuold be directly following");
+                throw InvalidSchedule(
+                    FT_MSG << "Fuse: Loop " << id0_ << " and " << id1_
+                           << " shuold be directly following");
             }
 
             auto loop0 = loop0InScopes.loop_;
@@ -222,16 +222,16 @@ void CheckFuseAccessible::visit(const StmtSeq &op) {
                                               FindLoopInScopesDirection::Back);
             if (loop0InScopes_.loop_.isValid()) {
                 if (i + 1 == iEnd) {
-                    throw InvalidSchedule("Fuse: Loop " + toString(id0_) +
-                                          " and " + toString(id1_) +
-                                          " shuold be directly following");
+                    throw InvalidSchedule(
+                        FT_MSG << "Fuse: Loop " << id0_ << " and " << id1_
+                               << " shuold be directly following");
                 }
                 loop1InScopes_ = findLoopInScopes(
                     op->stmts_[i + 1], id1_, FindLoopInScopesDirection::Front);
                 if (!loop1InScopes_.loop_.isValid()) {
-                    throw InvalidSchedule("Fuse: Loop " + toString(id0_) +
-                                          " and " + toString(id1_) +
-                                          " shuold be directly following");
+                    throw InvalidSchedule(
+                        FT_MSG << "Fuse: Loop " << id0_ << " and " << id1_
+                               << " shuold be directly following");
                 }
                 return;
             }
@@ -282,15 +282,15 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
         .filterLater([&](const AccessPoint &later) {
             return later.stmt_->ancestorById(mutator.beforeId()).isValid();
         })(ast, [&](const Dependence &d) {
-            throw InvalidSchedule(toString(d) + " cannot be resolved");
+            throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
         });
 
     try {
         ast = simplify(ast);
     } catch (const AssertAlwaysFalse &e) {
-        throw InvalidSchedule("Fusing " + toString(loop0) + " and " +
-                              toString(loop1) +
-                              " loop1 with different lengths? " + e.what());
+        throw InvalidSchedule(FT_MSG << "Fusing " << loop0 << " and " << loop1
+                                     << " loop1 with different lengths? "
+                                     << e.what());
     }
 
     ast = propOneTimeUse(ast, mutator.fused());
@@ -373,9 +373,9 @@ ID Schedule::fuse(const ID &loop0, bool strict) {
     }
 
     abortTransaction();
-    throw InvalidSchedule("Invalid fuse(" + toString(loop0) +
-                          "): Unable to find a following loop of " +
-                          toString(loop0));
+    throw InvalidSchedule(FT_MSG << "Invalid fuse(" << loop0
+                                 << "): Unable to find a following loop of "
+                                 << loop0);
 }
 
 } // namespace freetensor

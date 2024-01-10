@@ -30,8 +30,8 @@ void FindAllScopesInside::visit(const StmtSeq &op) {
 Stmt BlendPass::visit(const For &op) {
     if (op->id() == loop_) {
         if (op->len_->nodeType() != ASTNodeType::IntConst) {
-            throw InvalidSchedule("The length of " + toString(loop_) +
-                                  " should be a constant");
+            throw InvalidSchedule(FT_MSG << "The length of " << loop_
+                                         << " should be a constant");
         }
         iter_ = op->iter_;
         begin_ = op->begin_;
@@ -172,7 +172,7 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     FindAllScopesInside finder(loop);
     finder(ast);
     if (!finder.found()) {
-        throw InvalidSchedule("Loop " + toString(loop) + " not found");
+        throw InvalidSchedule(FT_MSG << "Loop " << loop << " not found");
     }
 
     std::vector<FindDepsDir> direction;
@@ -182,7 +182,7 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     }
     auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 2);
-        throw InvalidSchedule(toString(d) + " cannot be resolved");
+        throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
     };
     FindDeps().direction(direction).filterSubAST(loop)(ast, found);
 

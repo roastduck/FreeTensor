@@ -8,9 +8,9 @@ namespace freetensor {
 
 inline void checkNotInLib(const Stmt &ast, const ID &stmt) {
     if (!findAllStmt(ast, "<MatMul>->>" + toString(stmt)).empty()) {
-        throw InvalidSchedule("Scheduling " + toString(stmt) +
-                              " inside a sub-program bound to an external "
-                              "library call is meaningless");
+        throw InvalidSchedule(FT_MSG << "Scheduling " << stmt
+                                     << " inside a sub-program bound to an "
+                                        "external library call is meaningless");
     }
 }
 

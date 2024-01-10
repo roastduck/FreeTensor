@@ -37,7 +37,7 @@ std::string LowerVector::vecType(DataType dtype) const {
         ret = "int";
         break;
     default:
-        ERROR("Unsupported data type " + toString(dtype));
+        ERROR(FT_MSG << "Unsupported data type " << dtype);
     }
     return ret + std::to_string(vecLen_);
 }
@@ -74,9 +74,9 @@ bool LowerVector::hasVectorIndices(const std::vector<Expr> &indices,
         toProve = (*this)(toProve);
         simplifyOnly_ = false;
         if (!prove(toProve)) {
-            throw InvalidGPUVector("Vectorized memory access should be"
-                                   "aligned to the vector length: " +
-                                   toString(toProve) + " does not hold");
+            throw InvalidGPUVector(FT_MSG << "Vectorized memory access should "
+                                             "be aligned to the vector length: "
+                                          << toProve << " does not hold");
         }
         return true;
     } else {
@@ -127,10 +127,9 @@ Stmt LowerVector::visit(const For &op) {
                 ret->end_ = makeAdd(ret->begin_, ret->len_);
                 ret->body_ = (*this)(ret->body_);
             } catch (const InvalidGPUVector &e) {
-                WARNING("Vectorizing loop " + toString(op->id()) + "(" +
-                        toString(op->metadata()) + ") to length " +
-                        std::to_string(vecLen) +
-                        " failed because: " + e.what());
+                WARNING(FT_MSG << "Vectorizing loop " << op->id() << "("
+                               << op->metadata() << ") to length " << vecLen
+                               << " failed because: " << e.what());
                 var_ = nullptr;
                 continue;
             }

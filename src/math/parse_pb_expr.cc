@@ -120,8 +120,8 @@ PBFuncAST parsePBFunc(const std::string &str) {
         }
         return ret;
     } catch (const antlr4::ParseCancellationException &e) {
-        throw ParserError((std::string) "Parser error: " + e.what() +
-                          "\n during parsing \"" + str + "\"");
+        throw ParserError(FT_MSG << "Parser error: " << e.what()
+                                 << "\n during parsing \"" << str << "\"");
     }
 }
 

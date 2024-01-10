@@ -15,7 +15,7 @@ AST loadAST(const std::string &txt) {
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         return parser.ast()->node;
     } catch (const antlr4::ParseCancellationException &e) {
-        throw ParserError((std::string) "Parser error: " + e.what());
+        throw ParserError(FT_MSG << "Parser error: " << e.what());
     }
 }
 

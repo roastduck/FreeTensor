@@ -49,9 +49,9 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
-                            ast(), "Fission a " + toString(s->nodeType()) +
-                                       " node in a StmtSeq is not currently "
-                                       "supported in moveTo");
+                            ast(), FT_MSG << "Fission a " << s->nodeType()
+                                          << " node in a StmtSeq is not "
+                                             "currently supported in moveTo");
                         // TODO: Fission IfNode
                     }
                     auto idMapBefore = fission(s->id(), FissionSide::After,
@@ -77,9 +77,9 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
                     }
                     if (s->nodeType() != ASTNodeType::For) {
                         throw InvalidSchedule(
-                            ast(), "Fission a " + toString(s->nodeType()) +
-                                       " node in a StmtSeq is not currently "
-                                       "supported in moveTo");
+                            ast(), FT_MSG << "Fission a " << s->nodeType()
+                                          << " node in a StmtSeq is not "
+                                             "currently supported in moveTo");
                         // TODO: Fission IfNode
                     }
                     // Leave IDs of the other statements unchanged
@@ -98,9 +98,9 @@ std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
         }
     } catch (const InvalidSchedule &e) {
         abortTransaction();
-        throw InvalidSchedule(ast(), "Invalid move_to(" + toString(_stmt) +
-                                         ", " + toString(_dst) +
-                                         "): " + e.what());
+        throw InvalidSchedule(ast(), FT_MSG << "Invalid move_to(" << _stmt
+                                            << ", " << _dst
+                                            << "): " << e.what());
     }
 }
 

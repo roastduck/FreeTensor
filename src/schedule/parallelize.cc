@@ -103,7 +103,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
     auto oldAst = ast;
     ast = mutator(ast);
     if (!mutator.done()) {
-        throw InvalidSchedule("Loop " + toString(loop) + " not found");
+        throw InvalidSchedule(FT_MSG << "Loop " << loop << " not found");
     }
 
     // Make sure there is no illegal cross-thread dependence
@@ -115,7 +115,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         .direction({findDepsDir})
         .filterSubAST(loop)
         .ignoreReductionWAW(allowReduction)(oldAst, [&](const Dependence &d) {
-            throw InvalidSchedule(toString(d) + " cannot be resolved");
+            throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
         });
 
     // Make sure no thread-local variable is used by another thread
@@ -141,7 +141,7 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
         })
         .ignoreReductionWAW(allowReduction)(ast, [&](const Dependence &d) {
             ASSERT(d.dir_.size() == 1);
-            throw InvalidSchedule(toString(d) + " cannot be resolved");
+            throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
         });
 
     // Check illegal cases even in our extended fork-join model. See the

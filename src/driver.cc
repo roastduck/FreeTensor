@@ -110,8 +110,8 @@ static void *requestPtr(const Ref<Array> &arr, const Ref<Device> &device,
         d = device;
         break;
     default:
-        throw InvalidProgram("An I/O variable cannot have a " +
-                             toString(mtype) + " memory type");
+        throw InvalidProgram(FT_MSG << "An I/O variable cannot have a " << mtype
+                                    << " memory type");
     }
     switch (atype) {
     case AccessType::Input:
@@ -306,15 +306,14 @@ void Driver::buildAndLoad() {
 
     dlHandle_ = dlopen(so.c_str(), RTLD_NOW);
     if (!dlHandle_) {
-        throw DriverError((std::string) "Unable to load target code: " +
-                          dlerror());
+        throw DriverError(FT_MSG << "Unable to load target code: "
+                                 << dlerror());
     }
 
     func_ = (void (*)(void **, void **, size_t **, size_t *, void *))dlsym(
         dlHandle_, nativeCode_.entry().c_str());
     if (!func_) {
-        throw DriverError((std::string) "Target function not found: " +
-                          dlerror());
+        throw DriverError(FT_MSG << "Target function not found: " << dlerror());
     }
 
     if (!Config::debugBinary()) {
@@ -322,9 +321,9 @@ void Driver::buildAndLoad() {
         remove(so.c_str());
         rmdir(path);
     } else {
-        WARNING((std::string) "debug-binary mode on. The produced files are "
-                              "saved in " +
-                path);
+        WARNING(
+            FT_MSG << "debug-binary mode on. The produced files are saved in "
+                   << path);
     }
 
     switch (dev_->type()) {
@@ -359,18 +358,18 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
             ASSERT(param.dtype_.has_value());
             ASSERT(param.mtype_.has_value());
             if (param.dtype_->base() != args[i]->dtype().base()) {
-                throw InvalidIO("Cannot pass a " + toString(args[i]->dtype()) +
-                                " Array to the " + std::to_string(j) +
-                                "-th parameter " + param.name_ + " of type " +
-                                toString(*param.dtype_));
+                throw InvalidIO(FT_MSG << "Cannot pass a " << args[i]->dtype()
+                                       << " Array to the " << j
+                                       << "-th parameter " << param.name_
+                                       << " of type " << *param.dtype_);
             }
             try {
                 rawArgs_[j] = requestPtr(args[i], dev_, hostDev_, *param.mtype_,
                                          param.atype_);
             } catch (const InvalidIO &e) {
-                throw InvalidIO("Error passing the " + std::to_string(j) +
-                                "-th parameter " + param.name_ + ": " +
-                                e.what());
+                throw InvalidIO(FT_MSG << "Error passing the " << j
+                                       << "-th parameter " << param.name_
+                                       << ": " << e.what());
             }
         }
         if (param.isInClosure() && param.updateClosure_) {
@@ -389,19 +388,18 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
             ASSERT(param.dtype_.has_value());
             ASSERT(param.mtype_.has_value());
             if (param.dtype_->base() != value->dtype().base()) {
-                throw InvalidIO("Cannot pass a " + toString(value->dtype()) +
-                                " Array to the " +
-                                std::to_string(name2param_[key]) +
-                                "-th parameter " + key + " of type " +
-                                toString(*param.dtype_));
+                throw InvalidIO(FT_MSG << "Cannot pass a " << value->dtype()
+                                       << " Array to the " << name2param_[key]
+                                       << "-th parameter " << key << " of type "
+                                       << *param.dtype_);
             }
             try {
                 rawArgs_[paramId] = requestPtr(value, dev_, hostDev_,
                                                *param.mtype_, param.atype_);
             } catch (const InvalidIO &e) {
-                throw InvalidIO("Error passing the " +
-                                std::to_string(name2param_[key]) +
-                                "-th parameter " + key + ": " + e.what());
+                throw InvalidIO(FT_MSG << "Error passing the "
+                                       << name2param_[key] << "-th parameter "
+                                       << key << ": " << e.what());
             }
         }
         if (param.isInClosure()) {
@@ -426,8 +424,8 @@ void Driver::setArgs(const std::vector<Ref<Array>> &args,
                                     *param.mtype_, param.atype_);
             }
             if (rawArg == nullptr) {
-                throw InvalidIO("The " + std::to_string(i) + "-th parameter " +
-                                param.name_ + " is missing");
+                throw InvalidIO(FT_MSG << "The " << i << "-th parameter "
+                                       << param.name_ << " is missing");
             }
         }
     }

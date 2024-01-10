@@ -179,8 +179,9 @@ void init_ffi_pass(py::module_ &m) {
 #else
 #define GPU_ONLY(name, ...)                                                    \
     name, [](const py::args &, const py::kwargs &) {                           \
-        ERROR((std::string)name + " is unavailable because FT_WITH_CUDA is "   \
-                                  "disabled when building FreeTensor");        \
+        ERROR(FT_MSG << name                                                   \
+                     << " is unavailable because FT_WITH_CUDA is disabled "    \
+                        "when building FreeTensor");                           \
     }
 #endif
 

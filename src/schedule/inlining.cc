@@ -18,8 +18,8 @@ Expr MakeInline::visit(const Load &op) {
         if (replace_.count(op)) {
             return (*this)(replace_.at(op));
         } else {
-            throw InvalidSchedule("Unable to inline into " + toString(op) +
-                                  " in " + toString(curStmt()));
+            throw InvalidSchedule(FT_MSG << "Unable to inline into " << op
+                                         << " in " << curStmt());
         }
     } else {
         return BaseClass::visit(op);
@@ -119,9 +119,10 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                     newExpr = ReplaceIter(oldIterToNewIter)(expr);
                 } catch (const ParserError &e) {
                     throw InvalidSchedule(
-                        "Unable to resolve relation of the iterators between "
-                        "the defining point and the use point: " +
-                        toString(PBFunc(dep.later2EarlierIter_)));
+                        FT_MSG
+                        << "Unable to resolve relation of the iterators "
+                           "between the defining point and the use point: "
+                        << PBFunc(dep.later2EarlierIter_));
                 }
             } else {
                 newExpr = expr;
@@ -140,10 +141,10 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                         d = dep.extraCheck(d, f->id(), DepDirection::Same);
                         if (d != dep.later2EarlierIter_) {
                             throw InvalidSchedule(
-                                "Unsupported: The loop iterator will be "
-                                "changed after inlining from " +
-                                toString(dep.earlier_.stmt_) + " into " +
-                                toString(dep.later_.stmt_));
+                                FT_MSG << "Unsupported: The loop iterator will "
+                                          "be changed after inlining from "
+                                       << dep.earlier_.stmt_ << " into "
+                                       << dep.later_.stmt_);
                         }
                         break;
                     }
@@ -157,9 +158,8 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
                               CheckNotModifiedSide::Before,
                               dep.later_.stmt_->id())) {
             throw InvalidSchedule(
-                "The expression will be modified after inlining from " +
-                toString(dep.earlier_.stmt_) + " into " +
-                toString(dep.later_.stmt_));
+                FT_MSG << "The expression will be modified after inlining from "
+                       << dep.earlier_.stmt_ << " into " << dep.later_.stmt_);
         }
         {
             std::lock_guard l(m);

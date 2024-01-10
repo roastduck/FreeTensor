@@ -8,9 +8,9 @@ Stmt VarMerge::visit(const VarDef &_op) {
         found_ = true;
 
         if (dim_ + 1 >= (int)_op->buffer_->tensor()->shape().size()) {
-            throw InvalidSchedule(
-                "There is no dimension " + std::to_string(dim_) + " ~ " +
-                std::to_string(dim_ + 1) + " in variable " + _op->name_);
+            throw InvalidSchedule(FT_MSG << "There is no dimension " << dim_
+                                         << " ~ " << (dim_ + 1)
+                                         << " in variable " << _op->name_);
         }
         factor_ = _op->buffer_->tensor()->shape()[dim_ + 1];
         var_ = _op->name_;
@@ -68,7 +68,7 @@ Stmt varMerge(const Stmt &_ast, const ID &def, int dim) {
     VarMerge mutator(def, dim);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
-        throw InvalidSchedule(toString(def) + " not found");
+        throw InvalidSchedule(FT_MSG << def << " not found");
     }
     return ast;
 }

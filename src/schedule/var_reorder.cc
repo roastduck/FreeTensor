@@ -74,7 +74,7 @@ Stmt varReorder(const Stmt &_ast, const ID &def,
     VarReorder mutator(def, order);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
-        throw InvalidSchedule(toString(def) + " not found");
+        throw InvalidSchedule(FT_MSG << def << " not found");
     }
     return ast;
 }

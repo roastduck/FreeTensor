@@ -839,7 +839,8 @@ Stmt SimplifyPass::visit(const Assert &_op) {
             return op->body_;
         } else {
             // Print the unchanged _op
-            throw AssertAlwaysFalse("Assertion always false: " + toString(_op));
+            throw AssertAlwaysFalse(FT_MSG << "Assertion always false: "
+                                           << _op);
         }
     }
     return op;

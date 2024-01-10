@@ -58,7 +58,7 @@ class RelaxOneLoop : public CompTransientBounds<SymbolTable<Mutator>> {
                 op->end_ = makeIntConst(u);
                 op->len_ = makeIntConst(u);
             } else {
-                throw InvalidProgram("Unable to relax " + toString(op->end_));
+                throw InvalidProgram(FT_MSG << "Unable to relax " << op->end_);
             }
         }
         return op;
@@ -136,12 +136,13 @@ Stmt CopyParts::visit(const For &_op) {
             // TODO: Dynamic lengths but evaluated to be the same value in each
             // blocks should also be accpetable here
             throw RetryMakeSync(
-                op->id(), "Unable to insert a synchronizing statment because "
-                          "it requires splitting a dynamic loop " +
-                              toString(op->id()) +
-                              " into two parts, to avoid synchronizing inside "
-                              "a condition of " +
-                              toString(cond_) + ".");
+                op->id(), FT_MSG
+                              << "Unable to insert a synchronizing statment "
+                                 "because it requires splitting a dynamic loop "
+                              << op->id()
+                              << " into two parts, to avoid synchronizing "
+                                 "inside a condition of "
+                              << cond_ << ".");
         }
     }
     return op;
@@ -366,9 +367,10 @@ Stmt MakeSync::visit(const If &op) {
         if (!checkNotModified(root_, cond, CheckNotModifiedSide::Before,
                               op->id(), CheckNotModifiedSide::After,
                               op->id())) {
-            throw InvalidProgram("Unable to insert a synchronizing statment "
-                                 "inside an If node because the condition " +
-                                 toString(cond) + " is being modified");
+            throw InvalidProgram(FT_MSG
+                                 << "Unable to insert a synchronizing statment "
+                                    "inside an If node because the condition "
+                                 << cond << " is being modified");
         }
 
         Stmt thenBody;
@@ -479,9 +481,10 @@ static Stmt doMakeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
         .filter(filter)
         .ignoreReductionWAW(false)
         .eraseOutsideVarDef(false)(op, [](const Dependence &d) {
-            throw InvalidProgram("Dependence between blocks in a single CUDA "
-                                 "kernel cannot be resolved: " +
-                                 toString(d));
+            throw InvalidProgram(FT_MSG
+                                 << "Dependence between blocks in a single "
+                                    "CUDA kernel cannot be resolved: "
+                                 << d);
         });
 
     FindAllThreads finder(target);
@@ -550,9 +553,9 @@ Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
             try {
                 op = relaxOneLoop(op, e1.loopId());
             } catch (const InvalidProgram &e2) {
-                throw InvalidProgram(
-                    std::string(e1.what()) +
-                    " Tried to relax the loop, but: " + e2.what());
+                throw InvalidProgram(FT_MSG << e1.what()
+                                            << " Tried to relax the loop, but: "
+                                            << e2.what());
             }
         }
     }

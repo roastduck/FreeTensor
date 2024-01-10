@@ -201,7 +201,7 @@ Ref<Selector> parseSelector(const std::string &str) {
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         return parser.all()->s;
     } catch (const antlr4::ParseCancellationException &e) {
-        throw ParserError((std::string) "Parser error: " + e.what());
+        throw ParserError(FT_MSG << "Parser error: " << e.what());
     }
 }
 

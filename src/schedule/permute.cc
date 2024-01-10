@@ -136,8 +136,8 @@ std::pair<Stmt, std::vector<ID>> permute(
         for (auto &&[i, expr] : views::enumerate(permutedIter))
             if (allReads(expr).size() > 0)
                 throw InvalidSchedule(
-                    "Unexpected load in component " + std::to_string(i) +
-                    " of provided transform, which is " + toString(expr));
+                    FT_MSG << "Unexpected load in component " << i
+                           << " of provided transform, which is " << expr);
 
         // start serializing the map
         std::ostringstream oss;

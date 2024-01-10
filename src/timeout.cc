@@ -67,8 +67,7 @@ bool timeout(const std::function<void()> &func, int seconds) {
         }
         return true;
     } else {
-        WARNING("Function timed out after " + std::to_string(seconds) +
-                " seconds");
+        WARNING(FT_MSG << "Function timed out after " << seconds << " seconds");
         return false;
     }
 }

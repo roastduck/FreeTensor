@@ -23,7 +23,8 @@ Stmt findStmt(const Stmt &ast, const ID &id) {
     FindStmtById visitor(id);
     visitor(ast);
     if (!visitor.result().isValid()) {
-        throw UnexpectedQueryResult("Statement " + toString(id) + " not found");
+        throw UnexpectedQueryResult(FT_MSG << "Statement " << id
+                                           << " not found");
     }
     return visitor.result();
 }

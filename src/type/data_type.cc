@@ -145,8 +145,8 @@ BaseDataType upCast(BaseDataType lhs, BaseDataType rhs) {
     if ((isInt(lhs) && isInt(rhs)) || (isFloat(lhs) && isFloat(rhs))) {
         return sizeOf(rhs) > sizeOf(lhs) ? rhs : lhs;
     }
-    throw InvalidProgram("Cannot upCast(" + toString(lhs) + ", " +
-                         toString(rhs) + ")");
+    throw InvalidProgram(FT_MSG << "Cannot upCast(" << lhs << ", " << rhs
+                                << ")");
 }
 
 SignDataType upCast(SignDataType lhs, SignDataType rhs) {

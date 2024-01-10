@@ -21,10 +21,10 @@ Stmt vectorize(const Stmt &_ast, const ID &loop) {
     Vectorize mutator(loop);
     auto ast = mutator(_ast);
     if (!mutator.done()) {
-        throw InvalidSchedule("Loop " + toString(loop) + " not found");
+        throw InvalidSchedule(FT_MSG << "Loop " << loop << " not found");
     }
     auto found = [&](const Dependence &d) {
-        throw InvalidSchedule(toString(d) + " cannot be resolved");
+        throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
     };
     FindDeps()
         .direction({{{loop, DepDirection::Normal}}})

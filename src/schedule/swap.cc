@@ -100,7 +100,7 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
                                  [&](const ID &id) { return id == s1->id(); });
         return (old0 < old1) != (new0 < new1);
     })(ast, [&](const Dependence &d) {
-        throw InvalidSchedule(toString(d) + " cannot be resolved");
+        throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
     });
 
     return sinkVar(ast);
