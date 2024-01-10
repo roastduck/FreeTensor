@@ -150,6 +150,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9bfc2f98d42e75a3838eaa0166b802e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afed97de683ffe2a24b50c167cfc1f273"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#afed97de683ffe2a24b50c167cfc1f273">parallelize</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, const <a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a> &amp;parallel, bool allowReduction=true)</td></tr>
 <tr class="separator:afed97de683ffe2a24b50c167cfc1f273"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad24166b2d80a2173a3e4ac29ddc03c01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ad24166b2d80a2173a3e4ac29ddc03c01">parallelizeAs</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;nest, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;reference, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;defId)</td></tr>
+<tr class="separator:ad24166b2d80a2173a3e4ac29ddc03c01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ae9bde8c67ec254ea7ea1542ef74660"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a3ae9bde8c67ec254ea7ea1542ef74660">unroll</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, bool immediate=false)</td></tr>
 <tr class="separator:a3ae9bde8c67ec254ea7ea1542ef74660"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1d9ada77583888471a8378d400daf49"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ac1d9ada77583888471a8378d400daf49">vectorize</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
@@ -1521,7 +1523,7 @@ template&lt;class T &gt; </div>
 <div class="line">      <span class="keywordflow">for</span> k  # Lk1_c</div>
 <div class="line">        <a class="code hl_function" href="namespacefreetensor.html#a0c9ed402d06313ae47881e5da1a4987c">sum</a> += A_cache[k] * B_cache[k]</div>
 <div class="line">    C[i, j] = local_sum</div>
-<div class="ttc" id="anamespacefreetensor_html_a0c9ed402d06313ae47881e5da1a4987c"><div class="ttname"><a href="namespacefreetensor.html#a0c9ed402d06313ae47881e5da1a4987c">freetensor::sum</a></div><div class="ttdeci">PBMap sum(T &amp;&amp;lhs, U &amp;&amp;rhs)</div><div class="ttdef"><b>Definition:</b> presburger.h:756</div></div>
+<div class="ttc" id="anamespacefreetensor_html_a0c9ed402d06313ae47881e5da1a4987c"><div class="ttname"><a href="namespacefreetensor.html#a0c9ed402d06313ae47881e5da1a4987c">freetensor::sum</a></div><div class="ttdeci">PBMap sum(T &amp;&amp;lhs, U &amp;&amp;rhs)</div><div class="ttdef"><b>Definition:</b> presburger.h:758</div></div>
 </div><!-- fragment --><p>A seemingly plausible solution to avoid this extension is to reorder <code>Lk0</code> to outer-most, and then move <code>Lk1_a</code> and <code>Lk1_b</code> out of <code>Li</code> or <code>Lj</code>. This resolves the nested <code>threadIdx.x</code> and <code>threadIdx.y</code> binding problem by running <code>Li+Lk1_a</code>, <code>Lj+Lk1_b</code> and <code>Li+Lj</code> interleavingly, instead of running <code>Lk1_a</code> and <code>Lk1_b</code> inside <code>Li+Lj</code>. However, this approach is illegal, because the local variable <code>local_sum</code> can no longer be kept inside the body of <code>Li</code> and <code>Lj</code>: It has to be reused across multiple runs of <code>Li</code> and <code>Lj</code></p>
 <p>Please also note that we can bind one <code>threadIdx.x</code> to two loops only when the body statement is loop-invariant to one of them. For example, the following binding is still illegal, even in our extended fork-join model, because it violates its serial semantics:</p>
 <div class="fragment"><div class="line"><span class="keywordflow">for</span> i : threadIdx.x</div>
@@ -1538,6 +1540,55 @@ template&lt;class T &gt; </div>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a></td><td>if the loop is not found or unable to be parallelized </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ad24166b2d80a2173a3e4ac29ddc03c01" name="ad24166b2d80a2173a3e4ac29ddc03c01"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad24166b2d80a2173a3e4ac29ddc03c01">&#9670;&#160;</a></span>parallelizeAs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Schedule::parallelizeAs </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>nest</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>reference</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>defId</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p><a class="el" href="classfreetensor_1_1Parallelize.html">Parallelize</a> a loop nest according to another loop nest to keep a tensor thread-local</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">nest</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the loop nest to be parallelized. The <a class="el" href="classfreetensor_1_1ID.html">ID</a> can be of any statement type, and all statements it contains will be parallelized. </td></tr>
+    <tr><td class="paramname">reference</td><td><a class="el" href="classfreetensor_1_1ID.html">ID</a> of the loop nest to be referenced. The <a class="el" href="classfreetensor_1_1ID.html">ID</a> can be of any statement type, and all statements it contains will be referenced. </td></tr>
+    <tr><td class="paramname">defId</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the VarDef statement of the tensor to be kept thread-local. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a></td><td>if any of the <a class="el" href="classfreetensor_1_1ID.html">ID</a> is not found, or the reference loop nest is already thread-non-local. </td></tr>
   </table>
   </dd>
 </dl>
@@ -2280,6 +2331,7 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="merge_8cc.html">merge.cc</a></li>
 <li>src/schedule/<a class="el" href="move__to_8cc.html">move_to.cc</a></li>
 <li>src/schedule/<a class="el" href="parallelize_8cc.html">parallelize.cc</a></li>
+<li>src/schedule/<a class="el" href="parallelize__as_8cc.html">parallelize_as.cc</a></li>
 <li>src/schedule/<a class="el" href="permute_8cc.html">permute.cc</a></li>
 <li>src/schedule/<a class="el" href="pluto_8cc.html">pluto.cc</a></li>
 <li>src/schedule/<a class="el" href="reorder_8cc.html">reorder.cc</a></li>

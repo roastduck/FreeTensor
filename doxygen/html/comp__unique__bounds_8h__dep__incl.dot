@@ -97,12 +97,14 @@ digraph "include/analyze/comp_unique_bounds.h"
   Node38 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node38 -> Node21 [dir="back",color="steelblue1",style="solid"];
   Node38 -> Node39 [dir="back",color="steelblue1",style="solid"];
-  Node39 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
+  Node39 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
+  Node38 -> Node40 [dir="back",color="steelblue1",style="solid"];
+  Node40 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
   Node38 -> Node28 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node14 [dir="back",color="steelblue1",style="solid"];
-  Node1 -> Node40 [dir="back",color="steelblue1",style="solid"];
-  Node40 [label="include/pass/use_builtin\l_div.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$use__builtin__div_8h.html",tooltip=" "];
-  Node40 -> Node6 [dir="back",color="steelblue1",style="solid"];
-  Node40 -> Node34 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node41 [dir="back",color="steelblue1",style="solid"];
+  Node41 [label="include/pass/use_builtin\l_div.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$use__builtin__div_8h.html",tooltip=" "];
+  Node41 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node41 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node32 [dir="back",color="steelblue1",style="solid"];
 }

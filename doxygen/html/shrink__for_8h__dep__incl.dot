@@ -12,7 +12,9 @@ digraph "include/pass/shrink_for.h"
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node4 [label="src/pass/shrink_for.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8cc.html",tooltip=" "];
   Node1 -> Node5 [dir="back",color="steelblue1",style="solid"];
-  Node5 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
+  Node5 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
   Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
-  Node6 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
+  Node6 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
+  Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node7 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
 }

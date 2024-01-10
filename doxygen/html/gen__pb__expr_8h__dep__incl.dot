@@ -47,8 +47,6 @@ digraph "include/math/gen_pb_expr.h"
   Node22 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
   Node3 -> Node23 [dir="back",color="steelblue1",style="solid"];
   Node23 [label="src/schedule/separate\l_tail.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$separate__tail_8cc.html",tooltip=" "];
-  Node3 -> Node24 [dir="back",color="steelblue1",style="solid"];
-  Node24 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
   Node2 -> Node26 [dir="back",color="steelblue1",style="solid"];
   Node26 [label="src/analyze/comp_access\l_bound.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__access__bound_8cc.html",tooltip=" "];
   Node2 -> Node27 [dir="back",color="steelblue1",style="solid"];
@@ -101,14 +99,16 @@ digraph "include/math/gen_pb_expr.h"
   Node28 -> Node47 [dir="back",color="steelblue1",style="solid"];
   Node47 [label="src/schedule/parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8cc.html",tooltip=" "];
   Node28 -> Node48 [dir="back",color="steelblue1",style="solid"];
-  Node48 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
-  Node28 -> Node22 [dir="back",color="steelblue1",style="solid"];
+  Node48 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
   Node28 -> Node49 [dir="back",color="steelblue1",style="solid"];
-  Node49 [label="src/schedule/reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8cc.html",tooltip=" "];
+  Node49 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
+  Node28 -> Node22 [dir="back",color="steelblue1",style="solid"];
   Node28 -> Node50 [dir="back",color="steelblue1",style="solid"];
-  Node50 [label="src/schedule/swap.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$swap_8cc.html",tooltip=" "];
+  Node50 [label="src/schedule/reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8cc.html",tooltip=" "];
   Node28 -> Node51 [dir="back",color="steelblue1",style="solid"];
-  Node51 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
-  Node1 -> Node52 [dir="back",color="steelblue1",style="solid"];
-  Node52 [label="src/math/gen_pb_expr.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8cc.html",tooltip=" "];
+  Node51 [label="src/schedule/swap.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$swap_8cc.html",tooltip=" "];
+  Node28 -> Node52 [dir="back",color="steelblue1",style="solid"];
+  Node52 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
+  Node1 -> Node53 [dir="back",color="steelblue1",style="solid"];
+  Node53 [label="src/math/gen_pb_expr.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8cc.html",tooltip=" "];
 }

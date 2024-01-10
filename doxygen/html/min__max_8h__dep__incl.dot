@@ -19,4 +19,6 @@ digraph "include/math/min_max.h"
   Node7 [label="src/pass/shrink_for.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8cc.html",tooltip=" "];
   Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node8 [label="src/pass/simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$simplify_8cc.html",tooltip=" "];
+  Node1 -> Node9 [dir="back",color="steelblue1",style="solid"];
+  Node9 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
 }

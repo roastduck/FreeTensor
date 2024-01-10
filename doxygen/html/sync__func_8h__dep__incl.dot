@@ -58,13 +58,15 @@ digraph "include/sync_func.h"
   Node2 -> Node27 [dir="back",color="steelblue1",style="solid"];
   Node27 [label="src/schedule/parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8cc.html",tooltip=" "];
   Node2 -> Node28 [dir="back",color="steelblue1",style="solid"];
-  Node28 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
+  Node28 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
   Node2 -> Node29 [dir="back",color="steelblue1",style="solid"];
-  Node29 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
+  Node29 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
   Node2 -> Node30 [dir="back",color="steelblue1",style="solid"];
-  Node30 [label="src/schedule/reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8cc.html",tooltip=" "];
+  Node30 [label="src/schedule/pluto.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$pluto_8cc.html",tooltip=" "];
   Node2 -> Node31 [dir="back",color="steelblue1",style="solid"];
-  Node31 [label="src/schedule/swap.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$swap_8cc.html",tooltip=" "];
+  Node31 [label="src/schedule/reorder.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8cc.html",tooltip=" "];
   Node2 -> Node32 [dir="back",color="steelblue1",style="solid"];
-  Node32 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
+  Node32 [label="src/schedule/swap.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$swap_8cc.html",tooltip=" "];
+  Node2 -> Node33 [dir="back",color="steelblue1",style="solid"];
+  Node33 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
 }

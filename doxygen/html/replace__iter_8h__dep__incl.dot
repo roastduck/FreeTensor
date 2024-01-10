@@ -16,11 +16,15 @@ digraph "include/pass/replace_iter.h"
   Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node6 [label="src/pass/remove_writes.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$remove__writes_8cc.html",tooltip=" "];
   Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
-  Node7 [label="src/pass/simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$simplify_8cc.html",tooltip=" "];
+  Node7 [label="src/pass/shrink_for.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8cc.html",tooltip=" "];
   Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
-  Node8 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
+  Node8 [label="src/pass/simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$simplify_8cc.html",tooltip=" "];
   Node1 -> Node9 [dir="back",color="steelblue1",style="solid"];
-  Node9 [label="src/pass/z3_simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$z3__simplify_8cc.html",tooltip=" "];
+  Node9 [label="src/pass/tensor_prop\l_const.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor__prop__const_8cc.html",tooltip=" "];
   Node1 -> Node10 [dir="back",color="steelblue1",style="solid"];
-  Node10 [label="src/schedule/inlining.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlining_8cc.html",tooltip=" "];
+  Node10 [label="src/pass/z3_simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$z3__simplify_8cc.html",tooltip=" "];
+  Node1 -> Node11 [dir="back",color="steelblue1",style="solid"];
+  Node11 [label="src/schedule/inlining.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$inlining_8cc.html",tooltip=" "];
+  Node1 -> Node12 [dir="back",color="steelblue1",style="solid"];
+  Node12 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
 }

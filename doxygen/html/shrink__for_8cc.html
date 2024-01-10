@@ -74,13 +74,15 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#namespaces">Namespaces</a>  </div>
   <div class="headertitle"><div class="title">shrink_for.cc File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;<a class="el" href="comp__unique__bounds__pb_8h_source.html">analyze/comp_unique_bounds_pb.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="find__stmt_8h_source.html">analyze/find_stmt.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="min__max_8h_source.html">math/min_max.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="parse__pb__expr_8h_source.html">math/parse_pb_expr.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="replace__iter_8h_source.html">pass/replace_iter.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="shrink__for_8h_source.html">pass/shrink_for.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="simplify_8h_source.html">pass/simplify.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="z3__simplify_8h_source.html">pass/z3_simplify.h</a>&gt;</code><br />
@@ -97,8 +99,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a1d3404cbd1fd5a4356a6808ce3ca57c9"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1d3404cbd1fd5a4356a6808ce3ca57c9">freetensor::shrinkFor</a> (const Stmt &amp;op, const Stmt &amp;subAST=nullptr, bool doSimplify=true)</td></tr>
-<tr class="separator:a1d3404cbd1fd5a4356a6808ce3ca57c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
+<tr class="memitem:a744cbb104fdbd92391e0a4b716e0f9bf"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a744cbb104fdbd92391e0a4b716e0f9bf">freetensor::shrinkFor</a> (const Stmt &amp;op, const ID &amp;subAST=ID(), bool doSimplify=true)</td></tr>
+<tr class="separator:a744cbb104fdbd92391e0a4b716e0f9bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->

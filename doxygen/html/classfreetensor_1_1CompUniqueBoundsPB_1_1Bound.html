@@ -75,7 +75,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
+<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classfreetensor_1_1CompUniqueBoundsPB_1_1Bound-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">freetensor::CompUniqueBoundsPB::Bound Class Reference</div></div>
 </div><!--header-->
@@ -125,10 +125,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5bdf5ac4476764471450c0106831c07a inherit pub_methods_classfreetensor_1_1CompUniqueBounds_1_1Bound"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBounds_1_1Bound.html#a5bdf5ac4476764471450c0106831c07a">simplestExpr</a> (const std::unordered_map&lt; std::string, int &gt; &amp;orderedScope) const =0</td></tr>
 <tr class="separator:a5bdf5ac4476764471450c0106831c07a inherit pub_methods_classfreetensor_1_1CompUniqueBounds_1_1Bound"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:aad190002bee63c25134e552f9e48d634"><td class="memItemLeft" align="right" valign="top">class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBoundsPB_1_1Bound.html#aad190002bee63c25134e552f9e48d634">CompUniqueBoundsPB</a></td></tr>
-<tr class="separator:aad190002bee63c25134e552f9e48d634"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
+Public Attributes</h2></td></tr>
+<tr class="memitem:adee44651329b54d64222913f87510a92"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBoundsPB_1_1Bound.html#adee44651329b54d64222913f87510a92">ctx_</a></td></tr>
+<tr class="separator:adee44651329b54d64222913f87510a92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0fa3ea013bbb02ce9547d03055ffd074"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; std::unordered_map&lt; std::string, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBoundsPB_1_1Bound.html#a0fa3ea013bbb02ce9547d03055ffd074">demangleMap_</a></td></tr>
+<tr class="separator:a0fa3ea013bbb02ce9547d03055ffd074"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e75dea5f409e256a1d4357129ae5d5d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompUniqueBoundsPB_1_1Bound.html#a7e75dea5f409e256a1d4357129ae5d5d">bound_</a></td></tr>
+<tr class="separator:a7e75dea5f409e256a1d4357129ae5d5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a1ddacb849d8d907dd609526226474fe5" name="a1ddacb849d8d907dd609526226474fe5"></a>
@@ -395,25 +399,45 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Friends And Related Function Documentation</h2>
-<a id="aad190002bee63c25134e552f9e48d634" name="aad190002bee63c25134e552f9e48d634"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad190002bee63c25134e552f9e48d634">&#9670;&#160;</a></span>CompUniqueBoundsPB</h2>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a7e75dea5f409e256a1d4357129ae5d5d" name="a7e75dea5f409e256a1d4357129ae5d5d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e75dea5f409e256a1d4357129ae5d5d">&#9670;&#160;</a></span>bound_</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">friend class <a class="el" href="classfreetensor_1_1CompUniqueBoundsPB.html">CompUniqueBoundsPB</a></td>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::CompUniqueBoundsPB::Bound::bound_</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
-  </tr>
-</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="adee44651329b54d64222913f87510a92" name="adee44651329b54d64222913f87510a92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adee44651329b54d64222913f87510a92">&#9670;&#160;</a></span>ctx_</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;<a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a>&gt; freetensor::CompUniqueBoundsPB::Bound::ctx_</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a0fa3ea013bbb02ce9547d03055ffd074" name="a0fa3ea013bbb02ce9547d03055ffd074"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0fa3ea013bbb02ce9547d03055ffd074">&#9670;&#160;</a></span>demangleMap_</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt;std::unordered_map&lt;std::string, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>&gt; &gt; freetensor::CompUniqueBoundsPB::Bound::demangleMap_</td>
+        </tr>
+      </table>
 </div><div class="memdoc">
 
 </div>

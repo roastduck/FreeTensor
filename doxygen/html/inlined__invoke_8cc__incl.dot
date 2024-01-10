@@ -43,15 +43,6 @@ digraph "src/frontend/inlined_invoke.cc"
   Node17 -> Node14 [color="steelblue1",style="solid"];
   Node17 -> Node7 [color="steelblue1",style="solid"];
   Node17 -> Node15 [color="steelblue1",style="solid"];
-  Node12 -> Node19 [color="steelblue1",style="solid"];
-  Node19 [label="metadata.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$metadata_8h.html",tooltip=" "];
-  Node19 -> Node13 [color="steelblue1",style="solid"];
-  Node19 -> Node14 [color="steelblue1",style="solid"];
-  Node19 -> Node7 [color="steelblue1",style="solid"];
-  Node19 -> Node8 [color="steelblue1",style="solid"];
-  Node19 -> Node4 [color="steelblue1",style="solid"];
-  Node19 -> Node11 [color="steelblue1",style="solid"];
-  Node19 -> Node17 [color="steelblue1",style="solid"];
   Node12 -> Node29 [color="steelblue1",style="solid"];
   Node29 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node29 -> Node30 [color="steelblue1",style="solid"];
@@ -176,13 +167,17 @@ digraph "src/frontend/inlined_invoke.cc"
   Node61 -> Node6 [color="steelblue1",style="solid"];
   Node61 -> Node66 [color="steelblue1",style="solid"];
   Node1 -> Node67 [color="steelblue1",style="solid"];
-  Node67 [label="pass/hoist_return_vars.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__return__vars_8h.html",tooltip=" "];
-  Node67 -> Node9 [color="steelblue1",style="solid"];
+  Node67 [label="get_new_name.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$get__new__name_8h.html",tooltip=" "];
+  Node67 -> Node8 [color="steelblue1",style="solid"];
   Node67 -> Node4 [color="steelblue1",style="solid"];
-  Node67 -> Node6 [color="steelblue1",style="solid"];
-  Node67 -> Node66 [color="steelblue1",style="solid"];
   Node1 -> Node68 [color="steelblue1",style="solid"];
-  Node68 [label="pass/rename_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$rename__var_8h.html",tooltip=" "];
+  Node68 [label="pass/hoist_return_vars.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__return__vars_8h.html",tooltip=" "];
   Node68 -> Node9 [color="steelblue1",style="solid"];
+  Node68 -> Node4 [color="steelblue1",style="solid"];
+  Node68 -> Node6 [color="steelblue1",style="solid"];
   Node68 -> Node66 [color="steelblue1",style="solid"];
+  Node1 -> Node69 [color="steelblue1",style="solid"];
+  Node69 [label="pass/rename_var.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$rename__var_8h.html",tooltip=" "];
+  Node69 -> Node9 [color="steelblue1",style="solid"];
+  Node69 -> Node66 [color="steelblue1",style="solid"];
 }
