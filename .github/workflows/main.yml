@@ -16,7 +16,7 @@ jobs:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v3
+      - uses: roastduck/checkout@main
         with:
           ssh-key: ${{ secrets.CI }}
           submodules: true
@@ -44,7 +44,7 @@ jobs:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v3
+      - uses: roastduck/checkout@main
         with:
           ssh-key: ${{ secrets.CI }}
           submodules: true
@@ -71,7 +71,7 @@ jobs:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v3
+      - uses: roastduck/checkout@main
         with:
           ssh-key: ${{ secrets.CI }}
           submodules: true
