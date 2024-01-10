@@ -69,7 +69,7 @@ var searchData=
   ['sinkvar_66',['sinkVar',['../namespacefreetensor.html#a3ea9ec8163d64f4273fa2036239d4247',1,'freetensor']]],
   ['size_67',['size',['../classfreetensor_1_1Array.html#a035aeb73ab137ad9a86a0a7d0f19bfd6',1,'freetensor::Array::size()'],['../classfreetensor_1_1SubTreeList.html#abf6aa3b8e52a4ad8cfbf0c2cba4baec4',1,'freetensor::SubTreeList::size()']]],
   ['sizeof_68',['sizeOf',['../namespacefreetensor.html#af7ab87f14948ccb37b08ac716a52cc59',1,'freetensor::sizeOf(BaseDataType dtype)'],['../namespacefreetensor.html#a2a5a61628cc53077d43848df39d8b9f5',1,'freetensor::sizeOf(const DataType &amp;dtype)']]],
-  ['slice_69',['slice',['../namespacefreetensor.html#af48c11699284671252af9daf68c3fe81',1,'freetensor::slice(const std::string &amp;s, int _begin, int _end)'],['../namespacefreetensor.html#a6fe014826b28d440dafae5edcfd2ce64',1,'freetensor::slice(const std::string &amp;s, int begin)']]],
+  ['slice_69',['slice',['../namespacefreetensor.html#a41737122641f670c5cd7807655404079',1,'freetensor::slice(const std::string &amp;s, int begin, int end)'],['../namespacefreetensor.html#a6fe014826b28d440dafae5edcfd2ce64',1,'freetensor::slice(const std::string &amp;s, int begin)']]],
   ['smallitemallocator_70',['SmallItemAllocator',['../classfreetensor_1_1SmallItemAllocator.html#a392af378021e0f0a4b7980af35024033',1,'freetensor::SmallItemAllocator']]],
   ['sourcemetadatacontent_71',['SourceMetadataContent',['../classfreetensor_1_1SourceMetadataContent.html#a864de9c31e1ecdd375800881590710fa',1,'freetensor::SourceMetadataContent']]],
   ['sources_72',['sources',['../classfreetensor_1_1TransformedMetadataContent.html#a9205b47af0ec1456b3954c9b45805325',1,'freetensor::TransformedMetadataContent']]],

@@ -73,10 +73,6 @@ digraph "src/schedule/blend.cc"
   Node36 -> Node7 [color="steelblue1",style="solid"];
   Node36 -> Node8 [color="steelblue1",style="solid"];
   Node36 -> Node9 [color="steelblue1",style="solid"];
-  Node36 -> Node29 [color="steelblue1",style="solid"];
-  Node29 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node29 -> Node4 [color="steelblue1",style="solid"];
-  Node29 -> Node6 [color="steelblue1",style="solid"];
   Node2 -> Node65 [color="steelblue1",style="solid"];
   Node65 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node3 [color="steelblue1",style="solid"];
@@ -94,11 +90,13 @@ digraph "src/schedule/blend.cc"
   Node68 -> Node8 [color="steelblue1",style="solid"];
   Node68 -> Node9 [color="steelblue1",style="solid"];
   Node68 -> Node29 [color="steelblue1",style="solid"];
-  Node68 -> Node31 [color="steelblue1",style="solid"];
-  Node31 [label="serialize/to_string.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$to__string_8h.html",tooltip=" "];
+  Node29 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
+  Node29 -> Node6 [color="steelblue1",style="solid"];
+  Node68 -> Node32 [color="steelblue1",style="solid"];
+  Node32 [label="serialize/to_string.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node66 -> Node53 [color="steelblue1",style="solid"];
   Node2 -> Node68 [color="steelblue1",style="solid"];
-  Node2 -> Node31 [color="steelblue1",style="solid"];
+  Node2 -> Node32 [color="steelblue1",style="solid"];
   Node2 -> Node85 [color="steelblue1",style="solid"];
   Node85 [label="sync_func.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sync__func_8h.html",tooltip=" "];
   Node85 -> Node3 [color="steelblue1",style="solid"];
@@ -208,7 +206,7 @@ digraph "src/schedule/blend.cc"
   Node119 [label="schedule/schedule_log.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$schedule__log_8h.html",tooltip=" "];
   Node119 -> Node4 [color="steelblue1",style="solid"];
   Node119 -> Node5 [color="steelblue1",style="solid"];
-  Node119 -> Node31 [color="steelblue1",style="solid"];
+  Node119 -> Node32 [color="steelblue1",style="solid"];
   Node103 -> Node121 [color="steelblue1",style="solid"];
   Node121 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
   Node121 -> Node6 [color="steelblue1",style="solid"];

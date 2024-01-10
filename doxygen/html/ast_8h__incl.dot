@@ -56,16 +56,16 @@ digraph "include/ast.h"
   Node17 -> Node12 [color="steelblue1",style="solid"];
   Node14 -> Node20 [color="steelblue1",style="solid"];
   Node20 [label="except.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node20 -> Node4 [color="steelblue1",style="solid"];
   Node20 -> Node6 [color="steelblue1",style="solid"];
   Node20 -> Node21 [color="steelblue1",style="solid"];
-  Node21 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node21 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node20 -> Node22 [color="steelblue1",style="solid"];
+  Node22 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node20 -> Node7 [color="steelblue1",style="solid"];
   Node1 -> Node14 [color="steelblue1",style="solid"];
-  Node1 -> Node22 [color="steelblue1",style="solid"];
-  Node22 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
-  Node22 -> Node23 [color="steelblue1",style="solid"];
-  Node23 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node1 -> Node23 [color="steelblue1",style="solid"];
+  Node23 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
+  Node23 -> Node21 [color="steelblue1",style="solid"];
   Node1 -> Node24 [color="steelblue1",style="solid"];
   Node24 [label="sub_tree.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sub__tree_8h.html",tooltip=" "];
   Node24 -> Node2 [color="steelblue1",style="solid"];
@@ -85,7 +85,7 @@ digraph "include/ast.h"
   Node27 -> Node4 [color="steelblue1",style="solid"];
   Node27 -> Node30 [color="steelblue1",style="solid"];
   Node30 [label="ranges",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node27 -> Node23 [color="steelblue1",style="solid"];
+  Node27 -> Node21 [color="steelblue1",style="solid"];
   Node27 -> Node7 [color="steelblue1",style="solid"];
   Node27 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="tuple",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -97,7 +97,6 @@ digraph "include/ast.h"
   Node33 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node27 -> Node34 [color="steelblue1",style="solid"];
   Node34 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node27 -> Node20 [color="steelblue1",style="solid"];
   Node25 -> Node20 [color="steelblue1",style="solid"];
-  Node25 -> Node22 [color="steelblue1",style="solid"];
+  Node25 -> Node23 [color="steelblue1",style="solid"];
 }

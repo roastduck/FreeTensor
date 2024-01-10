@@ -43,10 +43,10 @@ digraph "src/schedule/swap.cc"
   Node17 -> Node19 [color="steelblue1",style="solid"];
   Node19 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node17 -> Node8 [color="steelblue1",style="solid"];
-  Node17 -> Node32 [color="steelblue1",style="solid"];
-  Node32 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
-  Node32 -> Node33 [color="steelblue1",style="solid"];
-  Node33 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node17 -> Node33 [color="steelblue1",style="solid"];
+  Node33 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
+  Node33 -> Node31 [color="steelblue1",style="solid"];
+  Node31 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node11 -> Node52 [color="steelblue1",style="solid"];
   Node52 [label="analyze/track_stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
   Node52 -> Node10 [color="steelblue1",style="solid"];
@@ -82,7 +82,7 @@ digraph "src/schedule/swap.cc"
   Node37 -> Node6 [color="steelblue1",style="solid"];
   Node37 -> Node39 [color="steelblue1",style="solid"];
   Node39 [label="ranges",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node37 -> Node33 [color="steelblue1",style="solid"];
+  Node37 -> Node31 [color="steelblue1",style="solid"];
   Node37 -> Node8 [color="steelblue1",style="solid"];
   Node37 -> Node40 [color="steelblue1",style="solid"];
   Node40 [label="tuple",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -93,10 +93,6 @@ digraph "src/schedule/swap.cc"
   Node41 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node37 -> Node42 [color="steelblue1",style="solid"];
   Node42 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node37 -> Node30 [color="steelblue1",style="solid"];
-  Node30 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node30 -> Node6 [color="steelblue1",style="solid"];
-  Node30 -> Node8 [color="steelblue1",style="solid"];
   Node4 -> Node65 [color="steelblue1",style="solid"];
   Node65 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node5 [color="steelblue1",style="solid"];
@@ -114,10 +110,13 @@ digraph "src/schedule/swap.cc"
   Node68 -> Node9 [color="steelblue1",style="solid"];
   Node68 -> Node10 [color="steelblue1",style="solid"];
   Node68 -> Node30 [color="steelblue1",style="solid"];
-  Node68 -> Node32 [color="steelblue1",style="solid"];
+  Node30 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
+  Node30 -> Node31 [color="steelblue1",style="solid"];
+  Node30 -> Node8 [color="steelblue1",style="solid"];
+  Node68 -> Node33 [color="steelblue1",style="solid"];
   Node66 -> Node53 [color="steelblue1",style="solid"];
   Node4 -> Node68 [color="steelblue1",style="solid"];
-  Node4 -> Node32 [color="steelblue1",style="solid"];
+  Node4 -> Node33 [color="steelblue1",style="solid"];
   Node4 -> Node85 [color="steelblue1",style="solid"];
   Node85 [label="sync_func.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sync__func_8h.html",tooltip=" "];
   Node85 -> Node5 [color="steelblue1",style="solid"];
@@ -168,7 +167,7 @@ digraph "src/schedule/swap.cc"
   Node100 -> Node10 [color="steelblue1",style="solid"];
   Node89 -> Node101 [color="steelblue1",style="solid"];
   Node101 [label="schedule/as_matmul.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$as__matmul_8h.html",tooltip=" "];
-  Node101 -> Node33 [color="steelblue1",style="solid"];
+  Node101 -> Node31 [color="steelblue1",style="solid"];
   Node101 -> Node3 [color="steelblue1",style="solid"];
   Node101 -> Node9 [color="steelblue1",style="solid"];
   Node101 -> Node12 [color="steelblue1",style="solid"];
@@ -192,7 +191,7 @@ digraph "src/schedule/swap.cc"
   Node108 -> Node6 [color="steelblue1",style="solid"];
   Node108 -> Node7 [color="steelblue1",style="solid"];
   Node108 -> Node17 [color="steelblue1",style="solid"];
-  Node108 -> Node32 [color="steelblue1",style="solid"];
+  Node108 -> Node33 [color="steelblue1",style="solid"];
   Node89 -> Node110 [color="steelblue1",style="solid"];
   Node110 [label="schedule/reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reorder_8h.html",tooltip=" "];
   Node110 -> Node8 [color="steelblue1",style="solid"];

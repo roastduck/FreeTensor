@@ -130,9 +130,10 @@ Macros</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">    <span class="keywordflow">if</span> (!(cond)(dtype) &amp;&amp; (dtype) != DataType::Custom) {                       \</div>
-<div class="line">        <span class="keywordflow">throw</span> InvalidProgram(<span class="stringliteral">&quot;Invalid data type &quot;</span> + toString(dtype) + <span class="stringliteral">&quot; in &quot;</span> + \</div>
-<div class="line">                             toString(op.self().as&lt;ASTNode&gt;()));               \</div>
+<div class="line">        <span class="keywordflow">throw</span> InvalidProgram(<a class="code hl_define" href="except_8h.html#a97d20845384951778b797b46af50067b">FT_MSG</a> &lt;&lt; <span class="stringliteral">&quot;Invalid data type &quot;</span> &lt;&lt; dtype &lt;&lt; <span class="stringliteral">&quot; in &quot;</span> \</div>
+<div class="line">                                    &lt;&lt; op.self().as&lt;ASTNode&gt;());               \</div>
 <div class="line">    }</div>
+<div class="ttc" id="aexcept_8h_html_a97d20845384951778b797b46af50067b"><div class="ttname"><a href="except_8h.html#a97d20845384951778b797b46af50067b">FT_MSG</a></div><div class="ttdeci">#define FT_MSG</div><div class="ttdef"><b>Definition:</b> except.h:23</div></div>
 </div><!-- fragment -->
 </div>
 </div>

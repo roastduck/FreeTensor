@@ -36,10 +36,6 @@ digraph "src/schedule/auto_parallelize.cc"
   Node69 -> Node53 [color="steelblue1",style="solid"];
   Node69 -> Node70 [color="steelblue1",style="solid"];
   Node70 [label="mutator.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$mutator_8h.html",tooltip=" "];
-  Node70 -> Node26 [color="steelblue1",style="solid"];
-  Node26 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node26 -> Node14 [color="steelblue1",style="solid"];
-  Node26 -> Node9 [color="steelblue1",style="solid"];
   Node2 -> Node60 [color="steelblue1",style="solid"];
   Node1 -> Node71 [color="steelblue1",style="solid"];
   Node71 [label="analyze/deps.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$deps_8h.html",tooltip=" "];
@@ -80,8 +76,8 @@ digraph "src/schedule/auto_parallelize.cc"
   Node33 -> Node14 [color="steelblue1",style="solid"];
   Node33 -> Node36 [color="steelblue1",style="solid"];
   Node36 [label="ranges",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node33 -> Node29 [color="steelblue1",style="solid"];
-  Node29 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node33 -> Node27 [color="steelblue1",style="solid"];
+  Node27 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node33 -> Node9 [color="steelblue1",style="solid"];
   Node33 -> Node37 [color="steelblue1",style="solid"];
   Node37 [label="tuple",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -92,7 +88,6 @@ digraph "src/schedule/auto_parallelize.cc"
   Node38 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node33 -> Node39 [color="steelblue1",style="solid"];
   Node39 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node33 -> Node26 [color="steelblue1",style="solid"];
   Node71 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node74 -> Node13 [color="steelblue1",style="solid"];
@@ -108,13 +103,12 @@ digraph "src/schedule/auto_parallelize.cc"
   Node76 -> Node9 [color="steelblue1",style="solid"];
   Node76 -> Node6 [color="steelblue1",style="solid"];
   Node76 -> Node10 [color="steelblue1",style="solid"];
-  Node76 -> Node26 [color="steelblue1",style="solid"];
-  Node76 -> Node28 [color="steelblue1",style="solid"];
-  Node28 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
-  Node28 -> Node29 [color="steelblue1",style="solid"];
+  Node76 -> Node29 [color="steelblue1",style="solid"];
+  Node29 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
+  Node29 -> Node27 [color="steelblue1",style="solid"];
   Node75 -> Node60 [color="steelblue1",style="solid"];
   Node71 -> Node76 [color="steelblue1",style="solid"];
-  Node71 -> Node28 [color="steelblue1",style="solid"];
+  Node71 -> Node29 [color="steelblue1",style="solid"];
   Node71 -> Node93 [color="steelblue1",style="solid"];
   Node93 [label="sync_func.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sync__func_8h.html",tooltip=" "];
   Node93 -> Node13 [color="steelblue1",style="solid"];
@@ -198,7 +192,7 @@ digraph "src/schedule/auto_parallelize.cc"
   Node115 -> Node10 [color="steelblue1",style="solid"];
   Node104 -> Node116 [color="steelblue1",style="solid"];
   Node116 [label="schedule/as_matmul.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$as__matmul_8h.html",tooltip=" "];
-  Node116 -> Node29 [color="steelblue1",style="solid"];
+  Node116 -> Node27 [color="steelblue1",style="solid"];
   Node116 -> Node3 [color="steelblue1",style="solid"];
   Node116 -> Node6 [color="steelblue1",style="solid"];
   Node116 -> Node4 [color="steelblue1",style="solid"];
@@ -214,4 +208,8 @@ digraph "src/schedule/auto_parallelize.cc"
   Node118 -> Node65 [color="steelblue1",style="solid"];
   Node118 -> Node33 [color="steelblue1",style="solid"];
   Node118 -> Node70 [color="steelblue1",style="solid"];
+  Node104 -> Node119 [color="steelblue1",style="solid"];
+  Node119 [label="schedule/memoized_schedules.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$memoized__schedules_8h.html",tooltip=" "];
+  Node119 -> Node63 [color="steelblue1",style="solid"];
+  Node119 -> Node6 [color="steelblue1",style="solid"];
 }

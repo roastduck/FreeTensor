@@ -98,10 +98,6 @@ digraph "src/autograd/invert_stmts.cc"
   Node38 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node33 -> Node39 [color="steelblue1",style="solid"];
   Node39 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node33 -> Node27 [color="steelblue1",style="solid"];
-  Node27 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node27 -> Node7 [color="steelblue1",style="solid"];
-  Node27 -> Node8 [color="steelblue1",style="solid"];
   Node61 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node14 [color="steelblue1",style="solid"];
@@ -138,6 +134,9 @@ digraph "src/autograd/invert_stmts.cc"
   Node74 [label="isl/id.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node69 -> Node57 [color="steelblue1",style="solid"];
   Node69 -> Node27 [color="steelblue1",style="solid"];
+  Node27 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
+  Node27 -> Node2 [color="steelblue1",style="solid"];
+  Node27 -> Node8 [color="steelblue1",style="solid"];
   Node69 -> Node29 [color="steelblue1",style="solid"];
   Node29 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node29 -> Node2 [color="steelblue1",style="solid"];

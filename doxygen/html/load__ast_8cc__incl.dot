@@ -66,16 +66,16 @@ digraph "src/serialize/load_ast.cc"
   Node22 -> Node17 [color="steelblue1",style="solid"];
   Node19 -> Node25 [color="steelblue1",style="solid"];
   Node25 [label="except.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node25 -> Node9 [color="steelblue1",style="solid"];
   Node25 -> Node11 [color="steelblue1",style="solid"];
   Node25 -> Node26 [color="steelblue1",style="solid"];
-  Node26 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node26 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node25 -> Node27 [color="steelblue1",style="solid"];
+  Node27 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node25 -> Node12 [color="steelblue1",style="solid"];
   Node6 -> Node19 [color="steelblue1",style="solid"];
-  Node6 -> Node27 [color="steelblue1",style="solid"];
-  Node27 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
-  Node27 -> Node28 [color="steelblue1",style="solid"];
-  Node28 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node6 -> Node28 [color="steelblue1",style="solid"];
+  Node28 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
+  Node28 -> Node26 [color="steelblue1",style="solid"];
   Node6 -> Node29 [color="steelblue1",style="solid"];
   Node29 [label="sub_tree.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sub__tree_8h.html",tooltip=" "];
   Node29 -> Node7 [color="steelblue1",style="solid"];
@@ -95,7 +95,7 @@ digraph "src/serialize/load_ast.cc"
   Node32 -> Node9 [color="steelblue1",style="solid"];
   Node32 -> Node35 [color="steelblue1",style="solid"];
   Node35 [label="ranges",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node32 -> Node28 [color="steelblue1",style="solid"];
+  Node32 -> Node26 [color="steelblue1",style="solid"];
   Node32 -> Node12 [color="steelblue1",style="solid"];
   Node32 -> Node36 [color="steelblue1",style="solid"];
   Node36 [label="tuple",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -107,7 +107,6 @@ digraph "src/serialize/load_ast.cc"
   Node38 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node32 -> Node39 [color="steelblue1",style="solid"];
   Node39 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node32 -> Node25 [color="steelblue1",style="solid"];
   Node30 -> Node25 [color="steelblue1",style="solid"];
-  Node30 -> Node27 [color="steelblue1",style="solid"];
+  Node30 -> Node28 [color="steelblue1",style="solid"];
 }

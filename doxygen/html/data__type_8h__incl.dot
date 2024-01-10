@@ -35,15 +35,14 @@ digraph "include/type/data_type.h"
   Node15 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node4 -> Node16 [color="steelblue1",style="solid"];
   Node16 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node4 -> Node17 [color="steelblue1",style="solid"];
+  Node1 -> Node17 [color="steelblue1",style="solid"];
   Node17 [label="except.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node17 -> Node7 [color="steelblue1",style="solid"];
   Node17 -> Node18 [color="steelblue1",style="solid"];
   Node18 [label="source_location",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node17 -> Node9 [color="steelblue1",style="solid"];
   Node17 -> Node19 [color="steelblue1",style="solid"];
   Node19 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node17 -> Node10 [color="steelblue1",style="solid"];
-  Node1 -> Node17 [color="steelblue1",style="solid"];
   Node1 -> Node20 [color="steelblue1",style="solid"];
   Node20 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node20 -> Node9 [color="steelblue1",style="solid"];

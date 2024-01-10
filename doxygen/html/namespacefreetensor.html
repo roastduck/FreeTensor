@@ -472,6 +472,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MergeTapeInput.html">MergeTapeInput</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MessageBuilder.html">MessageBuilder</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MetadataContent.html">MetadataContent</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1MetadataSelector.html">MetadataSelector</a></td></tr>
@@ -1367,8 +1369,8 @@ requires (std::convertible_to&lt;Srcs, <a class="el" href="namespacefreetensor.h
 <tr class="separator:a5997edb53e600a6645243d5d2684f129"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a351c1c9b3cd5f91e3afa3ef78ea9b4d8"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a351c1c9b3cd5f91e3afa3ef78ea9b4d8">tolower</a> (const std::string &amp;s)</td></tr>
 <tr class="separator:a351c1c9b3cd5f91e3afa3ef78ea9b4d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af48c11699284671252af9daf68c3fe81"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af48c11699284671252af9daf68c3fe81">slice</a> (const std::string &amp;s, int _begin, int _end)</td></tr>
-<tr class="separator:af48c11699284671252af9daf68c3fe81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41737122641f670c5cd7807655404079"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a41737122641f670c5cd7807655404079">slice</a> (const std::string &amp;s, int begin, int end)</td></tr>
+<tr class="separator:a41737122641f670c5cd7807655404079"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6fe014826b28d440dafae5edcfd2ce64"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6fe014826b28d440dafae5edcfd2ce64">slice</a> (const std::string &amp;s, int begin)</td></tr>
 <tr class="separator:a6fe014826b28d440dafae5edcfd2ce64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d818b0f9d4666227af367e90fb055d6"><td class="memTemplParams" colspan="2">template&lt;class T &gt; <br />
@@ -19095,51 +19097,8 @@ template&lt;class Simplifier &gt; </div>
 
 </div>
 </div>
-<a id="af48c11699284671252af9daf68c3fe81" name="af48c11699284671252af9daf68c3fe81"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af48c11699284671252af9daf68c3fe81">&#9670;&#160;</a></span>slice() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string freetensor::slice </td>
-          <td>(</td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>s</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>_begin</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>_end</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Python-like slicing that supports negative indexing as reversed indexing </p>
-
-</div>
-</div>
 <a id="a6fe014826b28d440dafae5edcfd2ce64" name="a6fe014826b28d440dafae5edcfd2ce64"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6fe014826b28d440dafae5edcfd2ce64">&#9670;&#160;</a></span>slice() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fe014826b28d440dafae5edcfd2ce64">&#9670;&#160;</a></span>slice() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -19171,6 +19130,41 @@ template&lt;class Simplifier &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a41737122641f670c5cd7807655404079" name="a41737122641f670c5cd7807655404079"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41737122641f670c5cd7807655404079">&#9670;&#160;</a></span>slice() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::slice </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>s</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>begin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>end</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Python-like slicing that supports negative indexing as reversed indexing </p>
 
 </div>
 </div>

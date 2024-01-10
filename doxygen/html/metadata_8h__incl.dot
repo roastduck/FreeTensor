@@ -46,10 +46,11 @@ digraph "include/metadata.h"
   Node15 -> Node7 [color="steelblue1",style="solid"];
   Node12 -> Node18 [color="steelblue1",style="solid"];
   Node18 [label="except.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node18 -> Node4 [color="steelblue1",style="solid"];
   Node18 -> Node19 [color="steelblue1",style="solid"];
   Node19 [label="source_location",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node18 -> Node20 [color="steelblue1",style="solid"];
-  Node20 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node20 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node18 -> Node21 [color="steelblue1",style="solid"];
+  Node21 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node18 -> Node5 [color="steelblue1",style="solid"];
 }

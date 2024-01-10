@@ -62,16 +62,16 @@ digraph "include/reduce_op.h"
   Node19 -> Node4 [color="steelblue1",style="solid"];
   Node16 -> Node22 [color="steelblue1",style="solid"];
   Node22 [label="except.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node22 -> Node8 [color="steelblue1",style="solid"];
   Node22 -> Node10 [color="steelblue1",style="solid"];
   Node22 -> Node23 [color="steelblue1",style="solid"];
-  Node23 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node23 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node22 -> Node24 [color="steelblue1",style="solid"];
+  Node24 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node22 -> Node3 [color="steelblue1",style="solid"];
   Node5 -> Node16 [color="steelblue1",style="solid"];
-  Node5 -> Node24 [color="steelblue1",style="solid"];
-  Node24 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
-  Node24 -> Node25 [color="steelblue1",style="solid"];
-  Node25 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node5 -> Node25 [color="steelblue1",style="solid"];
+  Node25 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
+  Node25 -> Node23 [color="steelblue1",style="solid"];
   Node5 -> Node26 [color="steelblue1",style="solid"];
   Node26 [label="sub_tree.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$sub__tree_8h.html",tooltip=" "];
   Node26 -> Node6 [color="steelblue1",style="solid"];
@@ -91,7 +91,7 @@ digraph "include/reduce_op.h"
   Node29 -> Node8 [color="steelblue1",style="solid"];
   Node29 -> Node32 [color="steelblue1",style="solid"];
   Node32 [label="ranges",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node29 -> Node25 [color="steelblue1",style="solid"];
+  Node29 -> Node23 [color="steelblue1",style="solid"];
   Node29 -> Node3 [color="steelblue1",style="solid"];
   Node29 -> Node33 [color="steelblue1",style="solid"];
   Node33 [label="tuple",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -103,9 +103,8 @@ digraph "include/reduce_op.h"
   Node35 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node29 -> Node36 [color="steelblue1",style="solid"];
   Node36 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node29 -> Node22 [color="steelblue1",style="solid"];
   Node27 -> Node22 [color="steelblue1",style="solid"];
-  Node27 -> Node24 [color="steelblue1",style="solid"];
+  Node27 -> Node25 [color="steelblue1",style="solid"];
   Node2 -> Node27 [color="steelblue1",style="solid"];
   Node1 -> Node27 [color="steelblue1",style="solid"];
 }

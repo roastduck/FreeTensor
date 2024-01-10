@@ -34,7 +34,8 @@ digraph "src/schedule/auto_mem_layout.cc"
   Node20 -> Node12 [color="steelblue1",style="solid"];
   Node20 -> Node26 [color="steelblue1",style="solid"];
   Node26 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node26 -> Node5 [color="steelblue1",style="solid"];
+  Node26 -> Node27 [color="steelblue1",style="solid"];
+  Node27 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node26 -> Node6 [color="steelblue1",style="solid"];
   Node10 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="type/data_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$data__type_8h.html",tooltip=" "];
@@ -43,14 +44,12 @@ digraph "src/schedule/auto_mem_layout.cc"
   Node33 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
   Node33 -> Node2 [color="steelblue1",style="solid"];
   Node33 -> Node5 [color="steelblue1",style="solid"];
-  Node33 -> Node29 [color="steelblue1",style="solid"];
-  Node29 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node33 -> Node27 [color="steelblue1",style="solid"];
   Node33 -> Node6 [color="steelblue1",style="solid"];
   Node33 -> Node7 [color="steelblue1",style="solid"];
   Node33 -> Node18 [color="steelblue1",style="solid"];
   Node18 [label="unordered_set",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node33 -> Node9 [color="steelblue1",style="solid"];
-  Node33 -> Node26 [color="steelblue1",style="solid"];
   Node31 -> Node26 [color="steelblue1",style="solid"];
   Node4 -> Node39 [color="steelblue1",style="solid"];
   Node39 [label="buffer.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$buffer_8h.html",tooltip=" "];
@@ -151,7 +150,7 @@ digraph "src/schedule/auto_mem_layout.cc"
   Node67 [label="probability/rand_cond.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$rand__cond_8h.html",tooltip=" "];
   Node67 -> Node12 [color="steelblue1",style="solid"];
   Node67 -> Node5 [color="steelblue1",style="solid"];
-  Node67 -> Node29 [color="steelblue1",style="solid"];
+  Node67 -> Node27 [color="steelblue1",style="solid"];
   Node67 -> Node6 [color="steelblue1",style="solid"];
   Node67 -> Node55 [color="steelblue1",style="solid"];
   Node64 -> Node71 [color="steelblue1",style="solid"];
@@ -170,7 +169,7 @@ digraph "src/schedule/auto_mem_layout.cc"
   Node73 -> Node9 [color="steelblue1",style="solid"];
   Node59 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="schedule/as_matmul.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$as__matmul_8h.html",tooltip=" "];
-  Node74 -> Node29 [color="steelblue1",style="solid"];
+  Node74 -> Node27 [color="steelblue1",style="solid"];
   Node74 -> Node7 [color="steelblue1",style="solid"];
   Node74 -> Node18 [color="steelblue1",style="solid"];
   Node74 -> Node75 [color="steelblue1",style="solid"];
