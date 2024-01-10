@@ -417,16 +417,16 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
     return ret;
 }
 
-PBMap AnalyzeDeps::makeAccMap(PBCtx &presburger, const AccessPoint &p,
-                              int iterDim, int accDim, RelaxMode relax,
-                              const std::string &extSuffix,
-                              GenPBExpr::VarMap &externals,
-                              const ASTHashSet<Expr> &noNeedToBeVars) {
+PBMap AnalyzeDeps::makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
+                                    int iterDim, int accDim, RelaxMode relax,
+                                    const std::string &extSuffix,
+                                    GenPBExpr::VarMap &externals,
+                                    const ASTHashSet<Expr> &noNeedToBeVars,
+                                    bool eraseOutsideVarDef) {
     GenPBExpr genPBExpr(extSuffix, noNeedToBeVars);
     auto ret = makeIterList(p.iter_, iterDim) + " -> " +
                makeAccList(genPBExpr, p.access_, relax, externals);
-    if (auto str =
-            makeCond(genPBExpr, relax, externals, eraseOutsideVarDef_, p);
+    if (auto str = makeCond(genPBExpr, relax, externals, eraseOutsideVarDef, p);
         !str.empty()) {
         ret += ": " + str;
     }

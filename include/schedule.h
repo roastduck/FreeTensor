@@ -646,6 +646,21 @@ class Schedule {
                      bool allowReduction = true);
 
     /**
+     * Parallelize a loop nest according to another loop nest to keep a tensor
+     * thread-local
+     *
+     * @param nest : ID of the loop nest to be parallelized. The ID can be of
+     * any statement type, and all statements it contains will be parallelized.
+     * @param reference: ID of the loop nest to be referenced. The ID can be of
+     * any statement type, and all statements it contains will be referenced.
+     * @param defId : ID of the VarDef statement of the tensor to be kept
+     * thread-local.
+     * @throw InvalidSchedule if any of the ID is not found, or the reference
+     * loop nest is already thread-non-local.
+     */
+    void parallelizeAs(const ID &nest, const ID &reference, const ID &defId);
+
+    /**
      * Unroll a loop
      *
      * @param loop : ID of the loop

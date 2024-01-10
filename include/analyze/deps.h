@@ -368,12 +368,22 @@ class AnalyzeDeps {
     static std::string makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
                                 GenPBExpr::VarMap &externals,
                                 bool eraseOutsideVarDef, const AccessPoint &ap);
+    static PBMap makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
+                                  int iterDim, int accDim, RelaxMode relax,
+                                  const std::string &extSuffix,
+                                  GenPBExpr::VarMap &externals,
+                                  const ASTHashSet<Expr> &noNeedToBeVars,
+                                  bool eraseOutsideVarDef);
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
                      int accDim, RelaxMode relax, const std::string &extSuffix,
                      GenPBExpr::VarMap &externals,
-                     const ASTHashSet<Expr> &noNeedToBeVars);
+                     const ASTHashSet<Expr> &noNeedToBeVars) {
+        return makeAccMapStatic(presburger, p, iterDim, accDim, relax,
+                                extSuffix, externals, noNeedToBeVars,
+                                eraseOutsideVarDef_);
+    }
 
     PBMap makeEqForBothOps(PBCtx &presburger,
                            const std::vector<std::pair<int, int>> &coord,

@@ -1,4 +1,5 @@
 #include <analyze/comp_unique_bounds_pb.h>
+#include <analyze/find_stmt.h>
 #include <math/min_max.h>
 #include <math/parse_pb_expr.h>
 #include <pass/replace_iter.h>
@@ -213,7 +214,7 @@ void ShrinkFor::setSubAST(const Stmt &subAST) {
         subASTAncestors_.insert(s);
 }
 
-Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
+Stmt shrinkFor(const Stmt &_op, const ID &subAST, bool doSimplify) {
     auto op = _op;
 
     // DO NOT CALL normalizeLoops HERE! Since we often use (-INT_MAX, INT_MAX)
@@ -225,7 +226,7 @@ Stmt shrinkFor(const Stmt &_op, const Stmt &subAST, bool doSimplify) {
 
     ShrinkFor shrinker;
     if (subAST.isValid())
-        shrinker.setSubAST(subAST);
+        shrinker.setSubAST(findStmt(op, subAST));
     op = shrinker(op);
 
     if (doSimplify) // Make new ranges simple + remove redundant branches

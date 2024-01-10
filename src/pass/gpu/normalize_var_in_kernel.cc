@@ -1,5 +1,6 @@
 #include <analyze/comp_unique_bounds_combination.h>
 #include <container_utils.h>
+#include <get_new_name.h>
 #include <pass/gpu/normalize_var_in_kernel.h>
 #include <pass/rename_var.h>
 #include <pass/simplify.h>
@@ -33,15 +34,6 @@ std::unordered_map<std::string, int> countNames(const Stmt &s) {
     CountNames visitor;
     visitor(s);
     return visitor.nameCnt();
-}
-
-std::string getNewName(const std::string &oldName,
-                       const std::unordered_set<std::string> &used) {
-    for (int i = 1;; i++) {
-        if (auto name = oldName + "." + std::to_string(i); !used.count(name)) {
-            return name;
-        }
-    }
 }
 
 } // Anonymous namespace

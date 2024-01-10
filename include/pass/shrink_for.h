@@ -56,9 +56,15 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
 /**
  * Increase the begin and decrease the end index, to remove redundant iterations
  * from For loops
+ *
+ * @{
  */
-Stmt shrinkFor(const Stmt &op, const Stmt &subAST = nullptr,
-               bool doSimplify = true);
+Stmt shrinkFor(const Stmt &op, const ID &subAST = ID(), bool doSimplify = true);
+inline Stmt shrinkFor(const Stmt &op, const Stmt &subAST,
+                      bool doSimplify = true) {
+    return shrinkFor(op, subAST.isValid() ? subAST->id() : ID(), doSimplify);
+}
+/** @} */
 
 DEFINE_PASS_FOR_FUNC(shrinkFor)
 

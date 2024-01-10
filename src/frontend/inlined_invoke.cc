@@ -3,19 +3,11 @@
 #include <analyze/all_uses.h>
 #include <container_utils.h>
 #include <frontend/inlined_invoke.h>
+#include <get_new_name.h>
 #include <pass/hoist_return_vars.h>
 #include <pass/rename_var.h>
 
 namespace freetensor {
-
-static std::string getNewName(const std::string &oldName,
-                              const std::unordered_set<std::string> &used) {
-    for (int i = 1;; i++) {
-        if (auto name = oldName + "." + std::to_string(i); !used.count(name)) {
-            return name;
-        }
-    }
-}
 
 Stmt StripReturns::visit(const VarDef &op) {
     if (auto it = std::find_if(

@@ -692,6 +692,31 @@ class Schedule(ffi.Schedule):
         """
         super().parallelize(self._lookup(loop), ParallelScope(parallel))
 
+    def parallelize_as(self, nest, reference, vardef):
+        '''
+        Parallelize a loop nest according to another loop nest to keep a tensor
+        thread-local
+
+        Parameters
+        ----------
+        nest : str, ID or Stmt
+            The loop nest to be parallelized. The ID can be of any statement type,
+            and all statements it contains will be parallelized.
+        reference: str, ID or Stmt
+            The loop nest to be referenced. The ID can be of any statement type,
+            and all statements it contains will be referenced.
+        vardef : str, ID or Stmt
+            The VarDef statement of the tensor to be kept thread-local.
+
+        Raises
+        ------
+        InvalidSchedule
+            if any of the ID is not found, or the reference loop nest is already
+            thread-non-local.
+        '''
+        super().parallelize_as(self._lookup(nest), self._lookup(reference),
+                               self._lookup(vardef))
+
     def unroll(self, loop, immediate=False):
         """
         Unroll a loop
