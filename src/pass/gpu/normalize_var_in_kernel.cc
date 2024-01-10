@@ -52,8 +52,9 @@ Stmt NormalizeVarInKernel::visit(const VarDef &_op) {
                 unique.getBound(dim)->restrictScope(legalNames_)->upperExpr();
             if (!newDim.isValid()) {
                 throw InvalidProgram(
-                    "The shape of " + toString(op->id()) + " " + op->name_ +
-                    " should be able to be determined outside a CUDA kernel");
+                    FT_MSG << "The shape of " << op->id() << " " << op->name_
+                           << " should be able to be determined outside a CUDA "
+                              "kernel");
             }
             dim = std::move(newDim);
         }

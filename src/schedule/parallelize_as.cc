@@ -75,9 +75,8 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
                     f = parseSimplePBFunc(toString(PBFunc(idx2iter)));
                 } catch (const ParserError &e) {
                     throw InvalidSchedule(
-                        std::string(
-                            "Thread mapping is not a simple function: ") +
-                        e.what());
+                        FT_MSG << "Thread mapping is not a simple function: "
+                               << e.what());
                 }
                 ASSERT(f.args_.size() == op->indices_.size());
                 ASSERT(f.values_.size() == 1);
@@ -174,8 +173,8 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
     auto checkSafeToMoveOrThrow = [&](const Expr &expr) {
         if (!isSafeToMove(expr)) {
             throw InvalidSchedule(
-                toString(expr) +
-                " in a reference nest's loop range is not supported");
+                FT_MSG << expr
+                       << " in a reference nest's loop range is not supported");
         }
     };
 
@@ -195,8 +194,8 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
             RelaxMode::Possible, "", externals, {}, true);
         if (!externals.empty()) {
             throw InvalidSchedule(
-                "Indirect thread mapping in reference loop nest " +
-                toString(reference) + " is not supported");
+                FT_MSG << "Indirect thread mapping in reference loop nest "
+                       << reference << " is not supported");
         }
 
         std::unordered_map<std::string, For> iter2Scope;
@@ -241,17 +240,17 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
                 return f->property_->parallel_ == loop->property_->parallel_;
             }) != orderedScopes.end()) {
             throw InvalidSchedule(
-                "Multiple loops bound to the same parallel scope " +
-                toString(loop->property_->parallel_) +
-                " in the reference loop nest " + toString(reference) +
-                " is not supported yet");
+                FT_MSG << "Multiple loops bound to the same parallel scope "
+                       << loop->property_->parallel_
+                       << " in the reference loop nest " << reference
+                       << " is not supported yet");
         }
         if (auto it = scope2Idx2Iter.find(loop->id());
             it != scope2Idx2Iter.end()) {
             if (!it->second.isSingleValued()) {
-                throw InvalidSchedule("Reference loop nest " +
-                                      toString(reference) +
-                                      " is not thread-local");
+                throw InvalidSchedule(FT_MSG << "Reference loop nest "
+                                             << reference
+                                             << " is not thread-local");
             }
             orderedScopes.emplace_back(s.as<ForNode>());
         }

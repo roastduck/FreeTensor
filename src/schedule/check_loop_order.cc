@@ -21,8 +21,9 @@ void CheckLoopOrder::visit(const For &op) {
                 hasIntersect(itersDefinedInNest_, allIters(op->end_)) ||
                 hasIntersect(itersDefinedInNest_, allIters(op->step_))) {
                 throw InvalidSchedule(
-                    "The range of Loop " + toString(op->id()) +
-                    " is not defined out of the loop nest being scheduled");
+                    FT_MSG
+                    << "The range of Loop " << op->id()
+                    << " is not defined out of the loop nest being scheduled");
             }
             itersDefinedInNest_.emplace(op->iter_);
         }
@@ -60,11 +61,12 @@ void CheckLoopOrder::visit(const StmtSeq &op) {
 
 const std::vector<For> &CheckLoopOrder::order() const {
     if (curOrder_.size() != dstOrder_.size()) {
-        std::string msg = "Loops ";
+        MessageBuilder msg;
+        msg << "Loops ";
         for (auto &&[i, item] : views::enumerate(dstOrder_)) {
-            msg += (i > 0 ? ", " : "") + toString(item);
+            msg << (i > 0 ? ", " : "") << item;
         }
-        msg += " should be directly nested";
+        msg << " should be directly nested";
         throw InvalidSchedule(msg);
     }
     return curOrder_;

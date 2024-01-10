@@ -16,14 +16,14 @@ Stmt MergeTapeInput::visitStmt(const Stmt &s) {
             for (auto &&dim : newNode->buffer_->tensor()->shape()) {
                 auto allNamesInDim = allNames(dim);
                 if (!checkAllDefined(names(), allNamesInDim)) {
-                    ERROR(
-                        "Cannot merge tape inputs, or the shape of the input " +
-                        toString(newNode) + " will be undefined");
+                    ERROR(FT_MSG << "Cannot merge tape inputs, or the shape of "
+                                    "the input "
+                                 << newNode << " will be undefined");
                 }
                 if (hasIntersect(allWritesInBody, allNamesInDim)) {
-                    ERROR(
-                        "Cannot merge tape inputs, or the shape of the input " +
-                        toString(newNode) + " will be modified");
+                    ERROR(FT_MSG << "Cannot merge tape inputs, or the shape of "
+                                    "the input "
+                                 << newNode << " will be modified");
                 }
             }
             ret = makeVarDef(newNode->name_, newNode->buffer_, newNode->viewOf_,
@@ -70,9 +70,9 @@ Stmt mergeTapeInput(const Stmt &op) {
                 auto &&node = *it;
                 if (!HashComparator{}(newNode->buffer_->tensor(),
                                       node->buffer_->tensor())) {
-                    ERROR("Cannot merge tape input because " +
-                          toString(newNode) + " and " + toString(node) +
-                          " have different definitions");
+                    ERROR(FT_MSG << "Cannot merge tape input because "
+                                 << newNode << " and " << node
+                                 << " have different definitions");
                 }
                 lca = lcaStmt(lca, node);
                 if (node->buffer_->atype() == AccessType::InputMutable) {

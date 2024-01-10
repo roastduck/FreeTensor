@@ -16,10 +16,9 @@ static std::string writeToBorrowedMsg(const Ref<Device> &lendingDev,
     std::ostringstream os;
     os << "Attempted to write ";
     if (requestDev.isValid()) {
-        os << "from " + toString(*requestDev) + ", ";
+        os << "from " << *requestDev << ", ";
     }
-    os << "to a buffer borrowed from an external object at "
-       << toString(*lendingDev)
+    os << "to a buffer borrowed from an external object at " << *lendingDev
        << ". Please either explicitly create a FreeTensor object by "
           "`ft.array`, which features automatic inter-device data transfer, or "
           "borrow from a object from the same device (e.g., from a "

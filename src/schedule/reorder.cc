@@ -227,10 +227,10 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &_dstOrder,
                           .first;
             }
         } catch (const InvalidSchedule &e) {
-            throw InvalidSchedule(
-                std::string("mode == MoveOutImperfect triggers a fission, "
-                            "which throws an exception: ") +
-                e.what());
+            throw InvalidSchedule(FT_MSG
+                                  << "mode == MoveOutImperfect triggers a "
+                                     "fission, which throws an exception: "
+                                  << e.what());
         }
     }
 
@@ -255,8 +255,8 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &_dstOrder,
         .direction(
             notLexLessAfterPermu(checker.outerLoops(), dstLoopAndStmtSeqOrder))
         .filterSubAST(curOrder.front()->id())(ast, [&](const Dependence &d) {
-            throw InvalidSchedule("Loops are not permutable: " + toString(d) +
-                                  " cannot be resolved");
+            throw InvalidSchedule(FT_MSG << "Loops are not permutable: " << d
+                                         << " cannot be resolved");
         });
 
     // Bubble Sort

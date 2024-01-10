@@ -419,8 +419,8 @@ void Derivative::visit(const Abs &op) {
 }
 
 void Derivative::visit(const Intrinsic &op) {
-    throw InvalidAutoGrad("Please provide gradient of " + toString(op) +
-                          " explicitly by `UserGrad`");
+    throw InvalidAutoGrad(FT_MSG << "Please provide gradient of " << op
+                                 << " explicitly by `UserGrad`");
 }
 
 } // namespace freetensor

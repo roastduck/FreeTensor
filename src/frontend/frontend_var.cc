@@ -40,9 +40,9 @@ Expr FrontendVar::shape(const Expr &idx) const {
     }
     if (!ret.isValid()) {
         ASSERT(idx->nodeType() == ASTNodeType::IntConst);
-        throw InvalidProgram(toString(*this) + ".shape(" + toString(idx) +
-                             ") is out of range. Must be in [0, " +
-                             std::to_string(ndim()) + ")");
+        throw InvalidProgram(FT_MSG << *this << ".shape(" << idx
+                                    << ") is out of range. Must be in [0, "
+                                    << ndim() << ")");
     }
     return ret;
 }
@@ -66,10 +66,10 @@ std::vector<Expr> FrontendVar::shape() const {
 
 Expr FrontendVar::asLoad() const {
     if (ndim() != 0) {
-        throw InvalidProgram(
-            name_ + " is of a " + std::to_string(fullShape_.size()) +
-            "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
-            "-D indices are given");
+        throw InvalidProgram(FT_MSG << name_ << " is of a " << fullShape_.size()
+                                    << "-D shape, but "
+                                    << ((int)fullShape_.size() - ndim())
+                                    << "-D indices are given");
     }
     std::vector<Expr> indices;
     indices.reserve(indices_.size());
@@ -86,10 +86,10 @@ Expr FrontendVar::asLoad() const {
 
 Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
     if (ndim() != 0) {
-        throw InvalidProgram(
-            name_ + " is of a " + std::to_string(fullShape_.size()) +
-            "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
-            "-D indices are given");
+        throw InvalidProgram(FT_MSG << name_ << " is of a " << fullShape_.size()
+                                    << "-D shape, but "
+                                    << ((int)fullShape_.size() - ndim())
+                                    << "-D indices are given");
     }
     if (isLoadAtVersion_) {
         throw InvalidAutoGrad(
@@ -108,10 +108,10 @@ Stmt FrontendVar::asStore(const Metadata &metadata, const Expr &value) const {
 Stmt FrontendVar::asReduceTo(ReduceOp op, const Metadata &metadata,
                              const Expr &value, bool atomic) const {
     if (ndim() != 0) {
-        throw InvalidProgram(
-            name_ + " is of a " + std::to_string(fullShape_.size()) +
-            "-D shape, but " + std::to_string((int)fullShape_.size() - ndim()) +
-            "-D indices are given");
+        throw InvalidProgram(FT_MSG << name_ << " is of a " << fullShape_.size()
+                                    << "-D shape, but "
+                                    << ((int)fullShape_.size() - ndim())
+                                    << "-D indices are given");
     }
     std::vector<Expr> indices;
     indices.reserve(indices_.size());

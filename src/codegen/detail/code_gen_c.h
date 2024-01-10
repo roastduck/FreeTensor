@@ -774,8 +774,8 @@ std::string CodeGenC<Stream>::gen(const DataType &dtype) {
     case DataType::Bool:
         return "bool";
     default:
-        throw InvalidProgram(toString(dtype) +
-                             " is not supported by this codegen backend");
+        throw InvalidProgram(
+            FT_MSG << dtype << " is not supported by this codegen backend");
     }
 }
 

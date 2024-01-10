@@ -87,7 +87,7 @@ Stmt varSplit(const Stmt &_ast, const ID &def, int dim, VarSplitMode mode,
     VarSplit mutator(def, dim, mode == VarSplitMode::FixedSize, factor, nparts);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
-        throw InvalidSchedule(toString(def) + " not found");
+        throw InvalidSchedule(FT_MSG << def << " not found");
     }
     return ast;
 }

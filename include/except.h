@@ -1,12 +1,26 @@
 #ifndef FREE_TENSOR_EXCEPT_H
 #define FREE_TENSOR_EXCEPT_H
 
-#include <iostream>
 #include <source_location>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
 namespace freetensor {
+
+class MessageBuilder {
+    std::ostringstream os_;
+
+  public:
+    template <typename T> MessageBuilder &operator<<(const T &obj) {
+        os_ << obj;
+        return *this;
+    }
+
+    operator std::string() const { return os_.str(); }
+};
+
+#define FT_MSG MessageBuilder()
 
 class Error : public std::runtime_error {
   public:
@@ -14,8 +28,8 @@ class Error : public std::runtime_error {
     // copied efficiently.
     Error(const std::string &msg,
           std::source_location loc = std::source_location::current())
-        : std::runtime_error((std::string)loc.file_name() + ":" +
-                             std::to_string(loc.line()) + ": " + msg) {}
+        : std::runtime_error(FT_MSG << loc.file_name() << ":" << loc.line()
+                                    << ": " << msg) {}
 };
 
 class StmtNode;
@@ -131,8 +145,8 @@ void reportWarning(const std::string &msg);
 
 #define WARNING(msg)                                                           \
     do {                                                                       \
-        reportWarning((std::string) "[WARNING] " __FILE__ ":" +                \
-                      std::to_string(__LINE__) + ": " + (msg));                \
+        reportWarning(FT_MSG << "[WARNING] " __FILE__ ":" << __LINE__ << ": "  \
+                             << std::string(msg));                             \
     } while (0)
 
 #define ASSERT(expr)                                                           \

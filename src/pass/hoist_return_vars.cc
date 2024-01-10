@@ -17,12 +17,13 @@ Stmt HoistReturnVars::visit(const VarDef &_op) {
                                   CheckNotModifiedSide::Before, op->id(),
                                   CheckNotModifiedSide::Before, outMostLoop_)) {
                 throw InvalidProgram(
-                    "A `Func`'s returning values are allocated during run "
-                    "time, and the allocation cannot be parallelized. "
-                    "Furthermore, it is unable to hoist " +
-                    op->name_ + " out of " + toString(outMostLoop_) +
-                    " or the dimension size " + toString(dim) +
-                    " will be modified");
+                    FT_MSG
+                    << "A `Func`'s returning values are allocated during run "
+                       "time, and the allocation cannot be parallelized. "
+                       "Furthermore, it is unable to hoist " +
+                           op->name_
+                    << " out of " << outMostLoop_ << " or the dimension size "
+                    << dim << " will be modified");
             }
         }
         toHoist_.emplace_back(op);

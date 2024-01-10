@@ -56,7 +56,7 @@ static std::string getStrEnvRequired(const char *name) {
     if (auto &&ret = getStrEnv(name); ret.has_value()) {
         return *ret;
     } else {
-        ERROR((std::string) "Environment varialbe " + name + " not found");
+        ERROR(FT_MSG << "Environment varialbe " << name << " not found");
     }
 }
 
@@ -69,9 +69,9 @@ static std::optional<bool> getBoolEnv(const char *name) {
                    env == "0") {
             return false;
         } else {
-            ERROR(
-                (std::string) "Value of " + name +
-                " must be true/yes/on/1 or false/no/off/0 (case insensitive)");
+            ERROR(FT_MSG << "Value of " << name
+                         << " must be true/yes/on/1 or false/no/off/0 (case "
+                            "insensitive)");
         }
     } else {
         return std::nullopt;
@@ -98,7 +98,7 @@ Config::checkValidPaths(const std::vector<fs::path> &paths, bool required) {
     auto ret =
         filter(paths, static_cast<bool (*)(const fs::path &)>(fs::exists));
     if (required && ret.empty()) {
-        ERROR(toString(paths) + " are not valid paths");
+        ERROR(FT_MSG << paths << " are not valid paths");
     }
     return ret;
 }

@@ -77,7 +77,7 @@ Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
         done = mutator.done();
     }
     if (!done) {
-        throw InvalidSchedule("Loop " + toString(loop) + " not found");
+        throw InvalidSchedule(FT_MSG << "Loop " << loop << " not found");
     }
     return ast;
 }

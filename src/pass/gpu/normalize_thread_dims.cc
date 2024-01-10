@@ -55,12 +55,13 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
                              ->lowerExpr();
             if (!begin.isValid()) {
                 throw InvalidProgram(
-                    "Length of " + toString(op->property_->parallel_) +
-                    " should have a finite bound. Note: if you are making a "
-                    "dynamic ranged threadIdx or blockIdx loop, please use "
-                    "memory type \"byvalue\" for its range, because it is used "
-                    "both for launching the kernel and guarding the execution "
-                    "inside the kernel");
+                    FT_MSG
+                    << "Length of " << op->property_->parallel_
+                    << " should have a finite bound. Note: if you are making a "
+                       "dynamic ranged threadIdx or blockIdx loop, please use "
+                       "memory type \"byvalue\" for its range, because it is "
+                       "used both for launching the kernel and guarding the "
+                       "execution inside the kernel");
             }
             op->begin_ = std::move(begin);
         }
@@ -72,12 +73,13 @@ Stmt NormalizeThreadDims::visit(const For &_op) {
                            ->upperExpr();
             if (!end.isValid()) {
                 throw InvalidProgram(
-                    "Length of " + toString(op->property_->parallel_) +
-                    " should have a finite bound. Note: if you are making a "
-                    "dynamic ranged threadIdx or blockIdx loop, please use "
-                    "memory type \"byvalue\" for its range, because it is used "
-                    "both for launching the kernel and guarding the execution "
-                    "inside the kernel");
+                    FT_MSG
+                    << "Length of " << op->property_->parallel_
+                    << " should have a finite bound. Note: if you are making a "
+                       "dynamic ranged threadIdx or blockIdx loop, please use "
+                       "memory type \"byvalue\" for its range, because it is "
+                       "used both for launching the kernel and guarding the "
+                       "execution inside the kernel");
             }
             op->end_ = std::move(end);
         }

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <mutex>
 #include <unordered_map>
 
@@ -15,18 +16,18 @@ namespace freetensor {
 
 InvalidSchedule::InvalidSchedule(const Stmt &ast, const std::string &msg,
                                  std::source_location loc)
-    : InvalidSchedule("Apply schedule on this AST is invalid: \n\n" +
-                          toString(ast, Config::prettyPrint(), true) +
-                          "\nThe reason is: " + msg,
+    : InvalidSchedule(FT_MSG << "Apply schedule on this AST is invalid: \n\n"
+                             << toString(ast, Config::prettyPrint(), true)
+                             << "\nThe reason is: " << msg,
                       loc) {}
 
 InvalidSchedule::InvalidSchedule(const Ref<ScheduleLogItem> &log,
                                  const Stmt &ast, const std::string &msg,
                                  std::source_location loc)
-    : InvalidSchedule("Apply schedule " + toString(*log) +
-                          " on this AST is invalid: \n\n" +
-                          toString(ast, Config::prettyPrint(), true) +
-                          "\nThe reason is: " + msg,
+    : InvalidSchedule(FT_MSG << "Apply schedule " << *log
+                             << " on this AST is invalid: \n\n"
+                             << toString(ast, Config::prettyPrint(), true)
+                             << "\nThe reason is: " << msg,
                       loc) {}
 
 InterruptExcept::InterruptExcept() : Error("Interrupted (Ctrl+C)") {

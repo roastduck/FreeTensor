@@ -192,8 +192,8 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
     try {
         splitterNode = findStmt(_ast, splitter);
     } catch (const UnexpectedQueryResult &e) {
-        throw InvalidSchedule("Split point " + toString(splitter) +
-                              " not found inside " + toString(loop));
+        throw InvalidSchedule(FT_MSG << "Split point " << splitter
+                                     << " not found inside " << loop);
     }
     ID leftOfSplitter, rightOfSplitter;
     if (side == FissionSide::Before) {
@@ -250,7 +250,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
                 // iteration. Solving this type of conflict by adding dimensions
                 // is non-trivial. (TODO: We can support this in the future in
                 // the way like `firstprivate` and `lastprivate` in OpenMP)
-                throw InvalidSchedule(toString(d) + " cannot be resolved");
+                throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
             }
             if (allowEnlarge) {
                 if (!isRealWrite(id, d.def()) &&
@@ -266,7 +266,7 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
                     toAdd[d.defId()].emplace_back(id);
                 }
             } else {
-                throw InvalidSchedule(toString(d) + " cannot be resolved");
+                throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
             }
         };
         auto leftOfSplitterStmt = findStmt(ast, leftOfSplitter);

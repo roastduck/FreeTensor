@@ -6,7 +6,7 @@ namespace freetensor {
 void checkVarCrossParallel(const Stmt &ast, const ID &def, MemType mtype) {
     auto found = [&](const Dependence &d) {
         ASSERT(d.dir_.size() == 1);
-        throw InvalidSchedule(toString(d) + " cannot be resolved");
+        throw InvalidSchedule(FT_MSG << d << " cannot be resolved");
     };
     std::vector<FindDepsDir> direction;
     switch (mtype) {

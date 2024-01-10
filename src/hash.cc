@@ -686,7 +686,7 @@ bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
         DISPATCH(LoadAtVersion);
 
     default:
-        ERROR("Unexpected Expr node type: " + toString(lhs->nodeType()));
+        ERROR(FT_MSG << "Unexpected Expr node type: " << lhs->nodeType());
     }
 }
 

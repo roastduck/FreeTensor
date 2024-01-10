@@ -167,8 +167,8 @@ Stmt AsMatMul::visitStmt(const Stmt &op) {
         op->nodeType() != ASTNodeType::StmtSeq &&
         op->nodeType() != ASTNodeType::For &&
         op->nodeType() != ASTNodeType::VarDef) {
-        throw InvalidSchedule("Unexpected " + toString(op->nodeType()) +
-                              " node");
+        throw InvalidSchedule(FT_MSG << "Unexpected " << op->nodeType()
+                                     << " node");
     }
     return BaseClass::visitStmt(op);
 }
@@ -440,7 +440,7 @@ Stmt asMatMul(const Stmt &_ast, const ID &loop, MatMulBackend backend) {
                                // from libop. TODO: simplify only needed region
     ast = mutator(ast);
     if (!mutator.done()) {
-        throw InvalidSchedule(toString(loop) + " not found");
+        throw InvalidSchedule(FT_MSG << loop << " not found");
     }
     return ast;
 }
@@ -468,10 +468,10 @@ void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
                     abortTransaction();
                     throw InvalidSchedule(
                         log, ast(),
-                        std::string(e.what()) +
-                            ". Tried var_reorder, but resulting in another "
-                            "exception: " +
-                            e2.what());
+                        FT_MSG << e.what()
+                               << ". Tried var_reorder, but resulting in "
+                                  "another exception: "
+                               << e2.what());
                 }
             } else {
                 abortTransaction();
@@ -495,8 +495,8 @@ void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
         asMatMul(loop, mode, target, MatMulBackend::Cutlass);
         break;
     default:
-        throw InvalidSchedule(ast(), "No default MatMul backend for target " +
-                                         toString(target));
+        throw InvalidSchedule(
+            ast(), FT_MSG << "No default MatMul backend for target " << target);
     }
 }
 

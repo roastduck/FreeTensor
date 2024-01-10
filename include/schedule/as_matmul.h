@@ -112,9 +112,9 @@ class AsMatMul : public SymbolTable<Mutator> {
             int loopLevel = iterMap_.at(var->name_);
             if (!HashComparator()(loop(var->name_)->len_, dimLen)) {
                 throw InvalidSchedule(
-                    "Iterator " + var->name_ + " of " + acc->var_ +
-                    " should loop over the entire range (" + toString(dimLen) +
-                    "), instead of " + toString(loop(var->name_)->len_));
+                    FT_MSG << "Iterator " << var->name_ << " of " << acc->var_
+                           << " should loop over the entire range (" << dimLen
+                           << "), instead of " << loop(var->name_)->len_);
             }
             usedBy[loopLevel] = true;
             order.emplace_back(loopLevel);
@@ -158,8 +158,8 @@ class AsMatMul : public SymbolTable<Mutator> {
                 if (lastInDim.isValid()) {
                     if (!lastDimIn) {
                         throw InvalidSchedule(
-                            "Dimensions " + toString(lastInDim) + " and " +
-                            toString(idx) + " should be contiguous");
+                            FT_MSG << "Dimensions " << lastInDim << " and "
+                                   << idx << " should be contiguous");
                     }
                 }
                 len = len.isValid() ? makeMul(len, dimLen) : (Expr)dimLen;

@@ -483,7 +483,7 @@ Stmt Z3Simplify::visit(const Assert &op) {
         return op->body_;
     }
     if (prove(notCond)) {
-        throw AssertAlwaysFalse("Assertion always false: " + toString(op));
+        throw AssertAlwaysFalse(FT_MSG << "Assertion always false: " << op);
     }
 
     Stmt body;

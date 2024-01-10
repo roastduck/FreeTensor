@@ -5,8 +5,8 @@ namespace freetensor {
 
 #define CHK_TYPE(cond, dtype, op)                                              \
     if (!(cond)(dtype) && (dtype) != DataType::Custom) {                       \
-        throw InvalidProgram("Invalid data type " + toString(dtype) + " in " + \
-                             toString(op.self().as<ASTNode>()));               \
+        throw InvalidProgram(FT_MSG << "Invalid data type " << dtype << " in " \
+                                    << op.self().as<ASTNode>());               \
     }
 
 /**
