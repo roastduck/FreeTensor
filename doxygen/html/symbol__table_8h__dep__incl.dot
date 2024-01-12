@@ -13,8 +13,6 @@ digraph "include/analyze/symbol_table.h"
   Node4 [label="src/pass/hoist_return\l_vars.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__return__vars_8cc.html",tooltip=" "];
   Node2 -> Node5 [dir="back",color="steelblue1",style="solid"];
   Node5 [label="src/pass/prop_one_time\l_use.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$prop__one__time__use_8cc.html",tooltip=" "];
-  Node2 -> Node6 [dir="back",color="steelblue1",style="solid"];
-  Node6 [label="src/pass/remove_writes.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$remove__writes_8cc.html",tooltip=" "];
   Node2 -> Node7 [dir="back",color="steelblue1",style="solid"];
   Node7 [label="src/schedule/fuse.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$fuse_8cc.html",tooltip=" "];
   Node2 -> Node9 [dir="back",color="steelblue1",style="solid"];
@@ -33,7 +31,6 @@ digraph "include/analyze/symbol_table.h"
   Node24 -> Node29 [dir="back",color="steelblue1",style="solid"];
   Node29 [label="src/autograd/find_tape\l_or_recomp_stmts.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$find__tape__or__recomp__stmts_8cc.html",tooltip=" "];
   Node24 -> Node5 [dir="back",color="steelblue1",style="solid"];
-  Node24 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node24 -> Node7 [dir="back",color="steelblue1",style="solid"];
   Node24 -> Node43 [dir="back",color="steelblue1",style="solid"];
   Node43 [label="src/schedule/parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8cc.html",tooltip=" "];
@@ -47,7 +44,6 @@ digraph "include/analyze/symbol_table.h"
   Node52 [label="include/pass/make_parallel\l_reduction.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$make__parallel__reduction_8h.html",tooltip=" "];
   Node51 -> Node53 [dir="back",color="steelblue1",style="solid"];
   Node53 [label="include/pass/remove\l_writes.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$remove__writes_8h.html",tooltip=" "];
-  Node53 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node51 -> Node43 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node12 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node59 [dir="back",color="steelblue1",style="solid"];
@@ -126,7 +122,9 @@ digraph "include/analyze/symbol_table.h"
   Node1 -> Node137 [dir="back",color="steelblue1",style="solid"];
   Node137 [label="include/schedule/set\l_mem_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$set__mem__type_8h.html",tooltip=" "];
   Node1 -> Node138 [dir="back",color="steelblue1",style="solid"];
-  Node138 [label="include/schedule/var\l_reorder.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$var__reorder_8h.html",tooltip=" "];
+  Node138 [label="include/schedule/split.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$split_8h.html",tooltip=" "];
+  Node1 -> Node139 [dir="back",color="steelblue1",style="solid"];
+  Node139 [label="include/schedule/var\l_reorder.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$var__reorder_8h.html",tooltip=" "];
   Node1 -> Node29 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node60 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];

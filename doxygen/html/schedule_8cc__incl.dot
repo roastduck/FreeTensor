@@ -183,6 +183,7 @@ digraph "src/schedule.cc"
   Node1 -> Node172 [color="steelblue1",style="solid"];
   Node172 [label="schedule/split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8h.html",tooltip=" "];
   Node172 -> Node6 [color="steelblue1",style="solid"];
+  Node172 -> Node61 [color="steelblue1",style="solid"];
   Node172 -> Node54 [color="steelblue1",style="solid"];
   Node1 -> Node173 [color="steelblue1",style="solid"];
   Node173 [label="schedule/swap.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$swap_8h.html",tooltip=" "];

@@ -65,6 +65,8 @@ digraph "include/selector.h"
   Node12 -> Node18 [dir="back",color="steelblue1",style="solid"];
   Node18 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
   Node12 -> Node42 [dir="back",color="steelblue1",style="solid"];
+  Node12 -> Node44 [dir="back",color="steelblue1",style="solid"];
+  Node44 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
   Node2 -> Node106 [dir="back",color="steelblue1",style="solid"];
   Node106 [label="include/analyze/deps.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$deps_8h.html",tooltip=" "];
   Node106 -> Node89 [dir="back",color="steelblue1",style="solid"];
@@ -111,7 +113,6 @@ digraph "include/selector.h"
   Node22 -> Node41 [dir="back",color="steelblue1",style="solid"];
   Node22 -> Node42 [dir="back",color="steelblue1",style="solid"];
   Node22 -> Node44 [dir="back",color="steelblue1",style="solid"];
-  Node44 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
   Node22 -> Node45 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node110 [dir="back",color="steelblue1",style="solid"];
   Node110 [label="include/schedule/check\l_not_in_lib.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$check__not__in__lib_8h.html",tooltip=" "];

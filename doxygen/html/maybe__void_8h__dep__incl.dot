@@ -54,8 +54,6 @@ digraph "include/maybe_void.h"
   Node55 -> Node59 [dir="back",color="steelblue1",style="solid"];
   Node59 [label="src/autograd/find_tape\l_or_recomp_stmts.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$find__tape__or__recomp__stmts_8cc.html",tooltip=" "];
   Node55 -> Node12 [dir="back",color="steelblue1",style="solid"];
-  Node55 -> Node70 [dir="back",color="steelblue1",style="solid"];
-  Node70 [label="src/schedule/parallelize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize_8cc.html",tooltip=" "];
   Node47 -> Node74 [dir="back",color="steelblue1",style="solid"];
   Node74 [label="include/analyze/find\l_indexing_loops.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$find__indexing__loops_8h.html",tooltip=" "];
   Node47 -> Node77 [dir="back",color="steelblue1",style="solid"];
@@ -64,7 +62,6 @@ digraph "include/maybe_void.h"
   Node77 -> Node39 [dir="back",color="steelblue1",style="solid"];
   Node77 -> Node78 [dir="back",color="steelblue1",style="solid"];
   Node78 [label="include/pass/remove\l_writes.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$remove__writes_8h.html",tooltip=" "];
-  Node77 -> Node70 [dir="back",color="steelblue1",style="solid"];
   Node47 -> Node5 [dir="back",color="steelblue1",style="solid"];
   Node47 -> Node44 [dir="back",color="steelblue1",style="solid"];
   Node47 -> Node83 [dir="back",color="steelblue1",style="solid"];
@@ -133,15 +130,15 @@ digraph "include/maybe_void.h"
   Node47 -> Node142 [dir="back",color="steelblue1",style="solid"];
   Node142 [label="include/schedule/set\l_mem_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$set__mem__type_8h.html",tooltip=" "];
   Node47 -> Node143 [dir="back",color="steelblue1",style="solid"];
-  Node143 [label="include/schedule/var\l_reorder.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$var__reorder_8h.html",tooltip=" "];
+  Node143 [label="include/schedule/split.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$split_8h.html",tooltip=" "];
+  Node47 -> Node144 [dir="back",color="steelblue1",style="solid"];
+  Node144 [label="include/schedule/var\l_reorder.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$var__reorder_8h.html",tooltip=" "];
   Node47 -> Node59 [dir="back",color="steelblue1",style="solid"];
   Node47 -> Node45 [dir="back",color="steelblue1",style="solid"];
   Node47 -> Node12 [dir="back",color="steelblue1",style="solid"];
-  Node47 -> Node70 [dir="back",color="steelblue1",style="solid"];
-  Node1 -> Node144 [dir="back",color="steelblue1",style="solid"];
-  Node144 [label="include/analyze/track\l_stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
-  Node144 -> Node55 [dir="back",color="steelblue1",style="solid"];
-  Node144 -> Node77 [dir="back",color="steelblue1",style="solid"];
-  Node144 -> Node44 [dir="back",color="steelblue1",style="solid"];
-  Node144 -> Node70 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node145 [dir="back",color="steelblue1",style="solid"];
+  Node145 [label="include/analyze/track\l_stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
+  Node145 -> Node55 [dir="back",color="steelblue1",style="solid"];
+  Node145 -> Node77 [dir="back",color="steelblue1",style="solid"];
+  Node145 -> Node44 [dir="back",color="steelblue1",style="solid"];
 }
