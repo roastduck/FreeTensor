@@ -1,4 +1,7 @@
+#include <analyze/all_uses.h>
 #include <analyze/find_stmt.h>
+#include <container_utils.h>
+#include <get_new_name.h>
 #include <pass/const_fold.h>
 #include <pass/simplify.h>
 #include <schedule.h>
@@ -9,8 +12,9 @@ namespace freetensor {
 
 Stmt Splitter::visit(const For &_op) {
     if (_op->id() == src_) {
-        auto iter0 = _op->iter_ + ".0";
-        auto iter1 = _op->iter_ + ".1";
+        auto usedNames = uni(names(), allNames(_op));
+        auto iter0 = getNewName(_op->iter_ + ".0", usedNames);
+        auto iter1 = getNewName(_op->iter_ + ".1", usedNames);
         auto shift = makeIntConst(shift_);
         auto shiftedLen = makeAdd(_op->len_, shift);
         Expr factor, nparts;
@@ -23,7 +27,7 @@ Stmt Splitter::visit(const For &_op) {
                 // Quick path: no need to split then simplify then shrink
                 dst1_ = _op->id();
                 found_ = true;
-                auto ret = Mutator::visit(_op);
+                auto ret = BaseClass::visit(_op);
                 ret->metadata() = makeMetadata("split.1", _op);
                 return ret;
             }
@@ -37,7 +41,7 @@ Stmt Splitter::visit(const For &_op) {
                 // Quick path: no need to split then simplify then shrink
                 dst0_ = _op->id();
                 found_ = true;
-                auto ret = Mutator::visit(_op);
+                auto ret = BaseClass::visit(_op);
                 ret->metadata() = makeMetadata("split.0", _op);
                 return ret;
             }
@@ -51,7 +55,7 @@ Stmt Splitter::visit(const For &_op) {
 
         iterFrom_ = _op->iter_;
         iterTo_ = newIter;
-        auto &&__op = Mutator::visit(_op);
+        auto &&__op = BaseClass::visit(_op);
         iterFrom_.clear();
         iterTo_ = nullptr;
         ASSERT(__op->nodeType() == ASTNodeType::For);
@@ -71,7 +75,7 @@ Stmt Splitter::visit(const For &_op) {
         found_ = true;
         return outer;
     } else {
-        return Mutator::visit(_op);
+        return BaseClass::visit(_op);
     }
 }
 
@@ -79,7 +83,7 @@ Expr Splitter::visit(const Var &op) {
     if (op->name_ == iterFrom_) {
         return iterTo_;
     } else {
-        return Mutator::visit(op);
+        return BaseClass::visit(op);
     }
 }
 

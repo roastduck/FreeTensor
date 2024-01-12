@@ -210,3 +210,25 @@ def test_simplify_split_then_merge():
     ast = ft.lower(ast, verbose=1)
 
     assert std.match(ast)
+
+
+def test_name_conflict():
+    with ft.VarDef("y", (8, 8), "int32", "output", "cpu") as y:
+        with ft.For("i.0", 0, 8) as i0:
+            with ft.For("i", 0, 8, label="L1") as i:
+                y[i0, i] = i
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=2)
+    outer, inner = s.split("L1", 4)
+    assert s.find(outer) == s.find("$split.0{L1}")
+    assert s.find(inner) == s.find("$split.1{L1}")
+    ast = ft.lower(s.ast(), verbose=1)
+
+    with ft.VarDef("y", (8, 8), "int32", "output", "cpu") as y:
+        with ft.For("i.0", 0, 8) as i0:
+            with ft.For("i.1", 0, 2) as i1:
+                with ft.For("i.2", 0, 4) as i2:
+                    y[i0, i2 + 4 * i1] = i2 + 4 * i1
+    std = ft.pop_ast()
+
+    assert std.match(ast)

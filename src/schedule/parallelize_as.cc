@@ -248,9 +248,11 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
         if (auto it = scope2Idx2Iter.find(loop->id());
             it != scope2Idx2Iter.end()) {
             if (!it->second.isSingleValued()) {
-                throw InvalidSchedule(FT_MSG << "Reference loop nest "
-                                             << reference
-                                             << " is not thread-local");
+                throw InvalidSchedule(
+                    FT_MSG << "Reference loop nest " << reference
+                           << " is not thread-local w.r.t scope " << loop->id()
+                           << ". The mapping from indices to iterator is "
+                           << it->second << ".");
             }
             orderedScopes.emplace_back(s.as<ForNode>());
         }

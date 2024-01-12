@@ -214,15 +214,32 @@ void ShrinkFor::setSubAST(const Stmt &subAST) {
         subASTAncestors_.insert(s);
 }
 
-Stmt shrinkFor(const Stmt &_op, const ID &subAST, bool doSimplify) {
+Stmt shrinkFor(const Stmt &_op, const ID &_subAST, bool doSimplify) {
     auto op = _op;
+    auto subAST = _subAST;
 
     // DO NOT CALL normalizeLoops HERE! Since we often use (-INT_MAX, INT_MAX)
     // for unkown ranges and then do shrinkFor, normalizing loops here will end
     // up with complex expressions around INT_MAX.
 
-    if (doSimplify) // Const prop + eliminate empty loops
+    if (doSimplify) { // Const prop + eliminate empty loops
+        std::vector<Stmt> allInSubAST;
+        if (subAST.isValid()) {
+            allInSubAST = findAllStmt(op, "(<<-" + toString(subAST) + ")|" +
+                                              toString(subAST));
+        }
+
         op = simplify(op);
+
+        Stmt newSubAST;
+        for (auto &&item : allInSubAST) {
+            if (auto &&s = findAllStmt(op, item->id()); !s.empty()) {
+                newSubAST = newSubAST.isValid() ? lcaStmt(newSubAST, s.front())
+                                                : s.front();
+            }
+        }
+        subAST = newSubAST.isValid() ? newSubAST->id() : ID();
+    }
 
     ShrinkFor shrinker;
     if (subAST.isValid())
