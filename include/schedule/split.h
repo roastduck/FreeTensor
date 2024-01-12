@@ -3,11 +3,14 @@
 
 #include <string>
 
+#include <analyze/symbol_table.h>
 #include <mutator.h>
 
 namespace freetensor {
 
-class Splitter : public Mutator {
+class Splitter : public SymbolTable<Mutator> {
+    typedef SymbolTable<Mutator> BaseClass;
+
     ID src_, dst0_, dst1_;
     int factor_ = -1, nparts_ = -1, shift_ = 0;
 
@@ -25,6 +28,7 @@ class Splitter : public Mutator {
     bool found() const { return found_; }
 
   protected:
+    using BaseClass::visit;
     Stmt visit(const For &op) override;
     Expr visit(const Var &op) override;
 };
