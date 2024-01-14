@@ -617,6 +617,15 @@ PBMap moveDimsOutputToInput(T &&map, unsigned first, unsigned n,
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_in, target, isl_dim_out,
                              first, n);
 }
+/**
+ * Move other dimensions to be parameters.
+ *
+ * NOTE: This function can only be applied on named dimensions, which typically
+ * mean dimensions previously converted from parameters. For unnamed dimensions,
+ * currently you need to apply a moving mapping by yourself.
+ *
+ * @{
+ */
 template <PBMapRef T>
 PBMap moveDimsInputToParam(T &&map, unsigned first, unsigned n,
                            unsigned target) {
@@ -629,6 +638,7 @@ PBMap moveDimsOutputToParam(T &&map, unsigned first, unsigned n,
     return isl_map_move_dims(PBRefTake<T>(map), isl_dim_param, target,
                              isl_dim_out, first, n);
 }
+/** @} */
 template <PBMapRef T>
 PBMap moveDimsParamToInput(T &&map, unsigned first, unsigned n,
                            unsigned target) {

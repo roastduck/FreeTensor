@@ -57,6 +57,13 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
  * Increase the begin and decrease the end index, to remove redundant iterations
  * from For loops
  *
+ * @param op : The AST to transform.
+ * @param subAST : If specified, only transform sub-tree of the statement with
+ * the specified ID.
+ * @param doSimplify : If true, run simplify before and after the tranformation.
+ * Transformations are required to ensure the effectiveness of the shrinking.
+ * Please do your own simplification if you want to set it to false.
+ *
  * @{
  */
 Stmt shrinkFor(const Stmt &op, const ID &subAST = ID(), bool doSimplify = true);

@@ -133,7 +133,7 @@ Stmt ShrinkFor::visit(const For &_op) {
     namesStack_.pop_back();
     iterStack_.pop_back();
 
-    if (!filterLoop(op)) {
+    if ((subAST_.isValid() && !inSubAST_) || !filterLoop(op)) {
         return op;
     }
 

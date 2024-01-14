@@ -191,7 +191,7 @@ struct _Join {
 };
 
 template <std::ranges::range Container>
-std::string join(const Container &c, const std::string &splitter) {
+std::string join(Container &&c, const std::string &splitter) {
     std::ostringstream oss;
     bool first = true;
     for (const auto &s : c) {
@@ -206,8 +206,8 @@ std::string join(const Container &c, const std::string &splitter) {
 inline auto join(const std::string &splitter) { return _Join{splitter}; }
 
 template <std::ranges::range Container>
-auto operator|(const Container &c, const _Join &joiner) {
-    return join(c, joiner.splitter);
+auto operator|(Container &&c, const _Join &joiner) {
+    return join(std::forward<Container>(c), joiner.splitter);
 }
 
 } // namespace freetensor
