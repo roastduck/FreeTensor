@@ -1380,14 +1380,14 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:a4fce3fc20d5123cfba4a15c1c79c0d0d"><td class="memTemplParams" colspan="2">template&lt;typename... Ts&gt; </td></tr>
 <tr class="memitem:a4fce3fc20d5123cfba4a15c1c79c0d0d"><td class="memTemplItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4fce3fc20d5123cfba4a15c1c79c0d0d">operator&lt;&lt;</a> (std::ostream &amp;os, std::tuple&lt; Ts... &gt; const &amp;tuple)</td></tr>
 <tr class="separator:a4fce3fc20d5123cfba4a15c1c79c0d0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a49ff326369829548736d879fd6016bf8"><td class="memTemplParams" colspan="2">template&lt;std::ranges::range Container&gt; </td></tr>
-<tr class="memitem:a49ff326369829548736d879fd6016bf8"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a49ff326369829548736d879fd6016bf8">join</a> (const Container &amp;c, const std::string &amp;splitter)</td></tr>
-<tr class="separator:a49ff326369829548736d879fd6016bf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae83565475c625d5f2fcb5aa120d4d8f"><td class="memTemplParams" colspan="2">template&lt;std::ranges::range Container&gt; </td></tr>
+<tr class="memitem:aae83565475c625d5f2fcb5aa120d4d8f"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aae83565475c625d5f2fcb5aa120d4d8f">join</a> (Container &amp;&amp;c, const std::string &amp;splitter)</td></tr>
+<tr class="separator:aae83565475c625d5f2fcb5aa120d4d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae3e2fd2cf2584ecf6a901f9b28328df1"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae3e2fd2cf2584ecf6a901f9b28328df1">join</a> (const std::string &amp;splitter)</td></tr>
 <tr class="separator:ae3e2fd2cf2584ecf6a901f9b28328df1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d763c3eeb93059567b20cfce12a2919"><td class="memTemplParams" colspan="2">template&lt;std::ranges::range Container&gt; </td></tr>
-<tr class="memitem:a4d763c3eeb93059567b20cfce12a2919"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4d763c3eeb93059567b20cfce12a2919">operator|</a> (const Container &amp;c, const <a class="el" href="structfreetensor_1_1__Join.html">_Join</a> &amp;joiner)</td></tr>
-<tr class="separator:a4d763c3eeb93059567b20cfce12a2919"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa91651176f63d4a2e9fbbcffc1c6c0a"><td class="memTemplParams" colspan="2">template&lt;std::ranges::range Container&gt; </td></tr>
+<tr class="memitem:afa91651176f63d4a2e9fbbcffc1c6c0a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afa91651176f63d4a2e9fbbcffc1c6c0a">operator|</a> (Container &amp;&amp;c, const <a class="el" href="structfreetensor_1_1__Join.html">_Join</a> &amp;joiner)</td></tr>
+<tr class="separator:afa91651176f63d4a2e9fbbcffc1c6c0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69b12235146ab210071e589e98530649"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a69b12235146ab210071e589e98530649">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op)</td></tr>
 <tr class="separator:a69b12235146ab210071e589e98530649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a6ae19f9b43a1565df544e305ddf209"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8a6ae19f9b43a1565df544e305ddf209">match</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;pattern, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;instance)</td></tr>
@@ -1740,12 +1740,6 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a6449d19c43f08cd504895cf9b324d4b9"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a6449d19c43f08cd504895cf9b324d4b9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6449d19c43f08cd504895cf9b324d4b9">moveDimsOutputToInput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
 <tr class="separator:a6449d19c43f08cd504895cf9b324d4b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
-<tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0889e914685f3130c3b71061e8c1b239">moveDimsInputToParam</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
-<tr class="separator:a0889e914685f3130c3b71061e8c1b239"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a50f0e146c8ef2898541661b5a713efea"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
-<tr class="memitem:a50f0e146c8ef2898541661b5a713efea"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a50f0e146c8ef2898541661b5a713efea">moveDimsOutputToParam</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
-<tr class="separator:a50f0e146c8ef2898541661b5a713efea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8c66da0b78e682a9dae2028596658ac"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:ac8c66da0b78e682a9dae2028596658ac"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac8c66da0b78e682a9dae2028596658ac">moveDimsParamToInput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
 <tr class="separator:ac8c66da0b78e682a9dae2028596658ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2410,6 +2404,13 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a35cb96789223a339e92d846dc814ab18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1468fe7f8dbffb57d44d3e9efbe6941"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab1468fe7f8dbffb57d44d3e9efbe6941">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat, bool compact, bool parenDespitePriority, bool printSourceLocation)</td></tr>
 <tr class="separator:ab1468fe7f8dbffb57d44d3e9efbe6941"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
+<tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0889e914685f3130c3b71061e8c1b239">moveDimsInputToParam</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a0889e914685f3130c3b71061e8c1b239"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50f0e146c8ef2898541661b5a713efea"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a50f0e146c8ef2898541661b5a713efea"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a50f0e146c8ef2898541661b5a713efea">moveDimsOutputToParam</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
+<tr class="separator:a50f0e146c8ef2898541661b5a713efea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:aa660083ab40fd852364e7670a4cd5bbe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa660083ab40fd852364e7670a4cd5bbe">renameVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::unordered_map&lt; std::string, std::string &gt; &amp;rename)</td></tr>
 <tr class="separator:aa660083ab40fd852364e7670a4cd5bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -10153,38 +10154,8 @@ template&lt;class T , class Hash , class KeyEqual &gt; </div>
 
 </div>
 </div>
-<a id="a49ff326369829548736d879fd6016bf8" name="a49ff326369829548736d879fd6016bf8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a49ff326369829548736d879fd6016bf8">&#9670;&#160;</a></span>join() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;std::ranges::range Container&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string freetensor::join </td>
-          <td>(</td>
-          <td class="paramtype">const Container &amp;&#160;</td>
-          <td class="paramname"><em>c</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>splitter</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="ae3e2fd2cf2584ecf6a901f9b28328df1" name="ae3e2fd2cf2584ecf6a901f9b28328df1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae3e2fd2cf2584ecf6a901f9b28328df1">&#9670;&#160;</a></span>join() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3e2fd2cf2584ecf6a901f9b28328df1">&#9670;&#160;</a></span>join() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10205,6 +10176,36 @@ template&lt;std::ranges::range Container&gt; </div>
 <span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aae83565475c625d5f2fcb5aa120d4d8f" name="aae83565475c625d5f2fcb5aa120d4d8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae83565475c625d5f2fcb5aa120d4d8f">&#9670;&#160;</a></span>join() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;std::ranges::range Container&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string freetensor::join </td>
+          <td>(</td>
+          <td class="paramtype">Container &amp;&amp;&#160;</td>
+          <td class="paramname"><em>c</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>splitter</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
 </div><div class="memdoc">
 
 </div>
@@ -15014,6 +15015,8 @@ template&lt;PBMapRef T&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Move other dimensions to be parameters.</p>
+<p>NOTE: This function can only be applied on named dimensions, which typically mean dimensions previously converted from parameters. For unnamed dimensions, currently you need to apply a moving mapping by yourself. </p>
 
 </div>
 </div>
@@ -17187,8 +17190,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a4d763c3eeb93059567b20cfce12a2919" name="a4d763c3eeb93059567b20cfce12a2919"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4d763c3eeb93059567b20cfce12a2919">&#9670;&#160;</a></span>operator|()</h2>
+<a id="afa91651176f63d4a2e9fbbcffc1c6c0a" name="afa91651176f63d4a2e9fbbcffc1c6c0a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa91651176f63d4a2e9fbbcffc1c6c0a">&#9670;&#160;</a></span>operator|()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -17198,7 +17201,7 @@ template&lt;std::ranges::range Container&gt; </div>
         <tr>
           <td class="memname">auto freetensor::operator| </td>
           <td>(</td>
-          <td class="paramtype">const Container &amp;&#160;</td>
+          <td class="paramtype">Container &amp;&amp;&#160;</td>
           <td class="paramname"><em>c</em>, </td>
         </tr>
         <tr>
@@ -18848,7 +18851,15 @@ template&lt;PBSetRef T&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Increase the begin and decrease the end index, to remove redundant iterations from For loops </p>
+<p>Increase the begin and decrease the end index, to remove redundant iterations from For loops</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">op</td><td>: The AST to transform. </td></tr>
+    <tr><td class="paramname">subAST</td><td>: If specified, only transform sub-tree of the statement with the specified <a class="el" href="classfreetensor_1_1ID.html">ID</a>. </td></tr>
+    <tr><td class="paramname">doSimplify</td><td>: If true, run simplify before and after the tranformation. Transformations are required to ensure the effectiveness of the shrinking. Please do your own simplification if you want to set it to false. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
