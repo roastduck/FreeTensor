@@ -99,14 +99,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a10c85930dba5429bede7a862a15f3a94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7bcfdf920d9f3601ad91106d9729b0e6"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a7bcfdf920d9f3601ad91106d9729b0e6">conds</a> () const override</td></tr>
 <tr class="separator:a7bcfdf920d9f3601ad91106d9729b0e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a798816cc0c9b75b407321683545fd54f"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a798816cc0c9b75b407321683545fd54f">currentStmt</a> () const override</td></tr>
-<tr class="separator:a798816cc0c9b75b407321683545fd54f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e0408acc363efef55af6190eb7dd041"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="structfreetensor_1_1TransientBound.html">TransientBound</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html#a2e0408acc363efef55af6190eb7dd041">transient</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op) const =0</td></tr>
 <tr class="separator:a2e0408acc363efef55af6190eb7dd041"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60c19f9111cc859928018d5401a6b0f5"><td class="memItemLeft" align="right" valign="top">virtual const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html#a60c19f9111cc859928018d5401a6b0f5">conds</a> () const =0</td></tr>
 <tr class="separator:a60c19f9111cc859928018d5401a6b0f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5711a857c7dbd1bf7074e82f9964c123"><td class="memItemLeft" align="right" valign="top">virtual const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html#a5711a857c7dbd1bf7074e82f9964c123">currentStmt</a> () const =0</td></tr>
-<tr class="separator:a5711a857c7dbd1bf7074e82f9964c123"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -118,8 +114,6 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:aea88255abb45c8b8b7dda7006966902c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0285044779bba483456e0334c45dd3bf"><td class="memItemLeft" align="right" valign="top">BaseClass::StmtRetType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a0285044779bba483456e0334c45dd3bf">visit</a> (const <a class="el" href="namespacefreetensor.html#a00cd6feb1348a6c714fa85959c290f18">Assume</a> &amp;op) override</td></tr>
 <tr class="separator:a0285044779bba483456e0334c45dd3bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24acece7096d5e1ef115a1d1ca5aefea"><td class="memItemLeft" align="right" valign="top">BaseClass::StmtRetType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a24acece7096d5e1ef115a1d1ca5aefea">visitStmt</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op) override</td></tr>
-<tr class="separator:a24acece7096d5e1ef115a1d1ca5aefea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class BaseClass&gt;<br />
@@ -158,35 +152,6 @@ template&lt;class BaseClass &gt; </div>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html#a60c19f9111cc859928018d5401a6b0f5">freetensor::CompTransientBoundsInterface</a>.</p>
-
-</div>
-</div>
-<a id="a798816cc0c9b75b407321683545fd54f" name="a798816cc0c9b75b407321683545fd54f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a798816cc0c9b75b407321683545fd54f">&#9670;&#160;</a></span>currentStmt()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class BaseClass &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp; <a class="el" href="classfreetensor_1_1CompTransientBounds.html">freetensor::CompTransientBounds</a>&lt; BaseClass &gt;::currentStmt </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Implements <a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html#a5711a857c7dbd1bf7074e82f9964c123">freetensor::CompTransientBoundsInterface</a>.</p>
 
 </div>
 </div>
@@ -319,34 +284,6 @@ template&lt;class BaseClass &gt; </div>
           <td class="memname">BaseClass::StmtRetType <a class="el" href="classfreetensor_1_1CompTransientBounds.html">freetensor::CompTransientBounds</a>&lt; BaseClass &gt;::visit </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a4cc9fa73027c8534e97d51f54349f0b1">If</a> &amp;&#160;</td>
-          <td class="paramname"><em>op</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a24acece7096d5e1ef115a1d1ca5aefea" name="a24acece7096d5e1ef115a1d1ca5aefea"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a24acece7096d5e1ef115a1d1ca5aefea">&#9670;&#160;</a></span>visitStmt()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class BaseClass &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">BaseClass::StmtRetType <a class="el" href="classfreetensor_1_1CompTransientBounds.html">freetensor::CompTransientBounds</a>&lt; BaseClass &gt;::visitStmt </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
           <td class="paramname"><em>op</em></td><td>)</td>
           <td></td>
         </tr>

@@ -55,9 +55,10 @@ var searchData=
   ['coordinates_52',['coordinates',['../classfreetensor_1_1PBPoint.html#a286c98c387c5e4ab56cb7a42e61e0733',1,'freetensor::PBPoint']]],
   ['copy_53',['copy',['../classfreetensor_1_1PBFunc.html#a7714ab2a4d468a45bc1dbeae95cf2613',1,'freetensor::PBFunc::copy()'],['../classfreetensor_1_1PBPoint.html#a6878ec014bd762263d703f9d93aa1486',1,'freetensor::PBPoint::copy()'],['../classfreetensor_1_1PBSingleFunc.html#ad6805612ba5d853e33123d4c5067327a',1,'freetensor::PBSingleFunc::copy()'],['../classfreetensor_1_1PBSpace.html#ae32b32a47a8be13ecd7269f9dbdff67e',1,'freetensor::PBSpace::copy()'],['../classfreetensor_1_1PBSet.html#ae2d9aba0fab3fd91a5af29ba1099a681',1,'freetensor::PBSet::copy()'],['../classfreetensor_1_1PBVal.html#af0b6756d6ee1bbf16b1860e6b0218de9',1,'freetensor::PBVal::copy()'],['../classfreetensor_1_1PBMap.html#ab464a697196c178d9cc25bf331d8d590',1,'freetensor::PBMap::copy()']]],
   ['copyinfo_54',['copyInfo',['../namespacefreetensor.html#a4a6fa06c091f0e75bb3113644d58ae5b',1,'freetensor']]],
-  ['counts_55',['counts',['../classfreetensor_1_1CountContigAccessLoops.html#a83360468d283fd021c8173ddbb2b1758',1,'freetensor::CountContigAccessLoops']]],
-  ['countscopelen_56',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html#a94517a247a21eeac7653384a57cc82c3',1,'freetensor::CountScopeLen']]],
-  ['cputarget_57',['CPUTarget',['../classfreetensor_1_1CPUTarget.html#a3cef677fccbb2e484f53a7ad6cd34766',1,'freetensor::CPUTarget']]],
-  ['currentstmt_58',['currentStmt',['../classfreetensor_1_1CompTransientBounds.html#a798816cc0c9b75b407321683545fd54f',1,'freetensor::CompTransientBounds::currentStmt()'],['../classfreetensor_1_1CompTransientBoundsInterface.html#a5711a857c7dbd1bf7074e82f9964c123',1,'freetensor::CompTransientBoundsInterface::currentStmt()']]],
-  ['curstmt_59',['curStmt',['../classfreetensor_1_1TrackStmt.html#acd7d97491ad826088892828e2898ac4c',1,'freetensor::TrackStmt']]]
+  ['countheavyops_55',['countHeavyOps',['../classfreetensor_1_1CompUniqueBounds_1_1Bound.html#a9432b35ae48250c2f734e0a4246c9783',1,'freetensor::CompUniqueBounds::Bound']]],
+  ['counts_56',['counts',['../classfreetensor_1_1CountContigAccessLoops.html#a83360468d283fd021c8173ddbb2b1758',1,'freetensor::CountContigAccessLoops']]],
+  ['countscope_57',['countScope',['../classfreetensor_1_1CompUniqueBounds_1_1Bound.html#a059b26370e59d90c357a0e88102f99f5',1,'freetensor::CompUniqueBounds::Bound']]],
+  ['countscopelen_58',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html#a94517a247a21eeac7653384a57cc82c3',1,'freetensor::CountScopeLen']]],
+  ['cputarget_59',['CPUTarget',['../classfreetensor_1_1CPUTarget.html#a3cef677fccbb2e484f53a7ad6cd34766',1,'freetensor::CPUTarget']]],
+  ['curstmt_60',['curStmt',['../classfreetensor_1_1TrackStmt.html#acd7d97491ad826088892828e2898ac4c',1,'freetensor::TrackStmt']]]
 ];
