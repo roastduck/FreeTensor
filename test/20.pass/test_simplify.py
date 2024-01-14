@@ -891,6 +891,52 @@ def test_min_max_as_bound(p):
     assert std.match(ast)
 
 
+@pytest.mark.parametrize('p', [ft.pb_simplify])
+def test_if_expr(p):
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (a, b, c, y):
+        y[...] = ft.if_then_else(c < 0, a, b) + ft.if_then_else(c < 0, b, a)
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (a, b, c, y):
+        y[...] = a + b
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.pb_simplify])
+def test_if_expr_in_cond(p):
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "input", "cpu"),
+                    ("d", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (a, b, c, d, y):
+        with ft.Assert(d == ft.if_then_else(c < 0, a, b)):
+            y[...] = d + ft.if_then_else(c < 0, b, a)
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "input", "cpu"),
+                    ("d", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (a, b, c, d, y):
+        with ft.Assert(d == ft.if_then_else(c < 0, a, b)):
+            y[...] = a + b
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_accessible_after_writing_if(p):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),

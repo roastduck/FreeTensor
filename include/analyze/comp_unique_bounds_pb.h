@@ -48,7 +48,8 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
         Ref<CompUniqueBounds::Bound> restrictScope(
             const std::unordered_set<std::string> &scope) const override;
 
-        Expr simplestExpr(const std::unordered_map<std::string, int>
+        Expr simplestExpr(const Expr &reference,
+                          const std::unordered_map<std::string, int>
                               &orderedScope) const override;
     };
 
@@ -57,7 +58,6 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
     GenPBExpr genPBExpr_;
     Ref<PBCtx> ctx_;
 
-    Stmt cachedPlace_;
     PBSet cachedConds_;
     Ref<std::unordered_map<std::string, Expr>> cachedFreeVars_;
     std::unordered_map<Expr, Ref<Bound>> cachedValues_;
@@ -67,9 +67,7 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
     unionBoundsAsBound(const std::vector<Ref<CompUniqueBounds::Bound>> &bounds);
 
   public:
-    CompUniqueBoundsPB(const CompTransientBoundsInterface &transients)
-        : CompUniqueBounds(transients), transients_(transients),
-          ctx_(Ref<PBCtx>::make()) {}
+    CompUniqueBoundsPB(const CompTransientBoundsInterface &transients);
 
     Ref<CompUniqueBounds::Bound> getBound(const Expr &op) override;
     bool alwaysLE(const Expr &lhs, const Expr &rhs) override;

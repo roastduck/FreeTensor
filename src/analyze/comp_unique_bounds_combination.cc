@@ -12,33 +12,6 @@
 
 namespace freetensor {
 
-namespace {
-
-class CountHeavyOps : public Visitor {
-    int cnt_ = 0;
-
-  public:
-    int cnt() const { return cnt_; }
-
-  protected:
-    void visitExpr(const Expr &op) {
-        Visitor::visitExpr(op);
-        if (!op->isConst() && op->nodeType() != ASTNodeType::Add &&
-            op->nodeType() != ASTNodeType::Sub &&
-            op->nodeType() != ASTNodeType::Mul) {
-            cnt_++;
-        }
-    }
-};
-
-static int countHeavyOps(const Expr &op) {
-    CountHeavyOps visitor;
-    visitor(op);
-    return visitor.cnt();
-}
-
-} // namespace
-
 int64_t CompUniqueBoundsCombination::Bound::lowerInt() const {
     int64_t ret = LLONG_MIN;
     for (auto &&b : lowerBounds_) {
@@ -96,6 +69,7 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsCombination::Bound::restrictScope(
 }
 
 Expr CompUniqueBoundsCombination::Bound::simplestExpr(
+    const Expr &reference,
     const std::unordered_map<std::string, int> &orderedScope) const {
     Expr best = nullptr;
     auto bestScope = -1, bestHeavyOps = -1;
@@ -115,9 +89,7 @@ Expr CompUniqueBoundsCombination::Bound::simplestExpr(
                     expr = upper.expr();
                 }
                 // firstly choose outermost innermost scope
-                int scope = 0;
-                for (auto &&use : allUses(expr))
-                    scope = std::max(scope, orderedScope.at(use));
+                int scope = countScope(expr, orderedScope);
                 // secondly choose the one with least heavy operations
                 auto heavyOps = countHeavyOps(expr);
                 if (!best.isValid() || scope < bestScope ||

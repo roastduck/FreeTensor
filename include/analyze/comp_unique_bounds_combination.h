@@ -73,7 +73,8 @@ class CompUniqueBoundsCombination : public CompUniqueBounds, public Visitor {
         Ref<CompUniqueBounds::Bound> restrictScope(
             const std::unordered_set<std::string> &scope) const override;
 
-        Expr simplestExpr(const std::unordered_map<std::string, int>
+        Expr simplestExpr(const Expr &reference,
+                          const std::unordered_map<std::string, int>
                               &orderedScope) const override;
     };
 

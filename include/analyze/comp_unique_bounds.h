@@ -15,6 +15,12 @@ class CompUniqueBounds {
     enum class BoundType { Combination, Presburger };
 
     class Bound {
+      protected:
+        static int
+        countScope(const Expr &op,
+                   const std::unordered_map<std::string, int> &orderedScope);
+        static int countHeavyOps(const Expr &op);
+
       public:
         virtual ~Bound() {}
 
@@ -48,6 +54,7 @@ class CompUniqueBounds {
         restrictScope(const std::unordered_set<std::string> &scope) const = 0;
 
         virtual Expr simplestExpr(
+            const Expr &reference,
             const std::unordered_map<std::string, int> &orderedScope) const = 0;
     };
 
