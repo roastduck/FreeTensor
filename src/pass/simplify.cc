@@ -164,7 +164,7 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
     }
 
     if (auto bound = unique_->getBound(op); bound.isValid()) {
-        Expr best = bound->simplestExpr(varScope_);
+        Expr best = bound->simplestExpr(op, varScope_);
         if (best.isValid() && !HashComparator()(best, op)) {
             return best;
         }

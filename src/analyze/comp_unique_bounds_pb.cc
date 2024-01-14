@@ -4,6 +4,7 @@
 
 #include <analyze/all_uses.h>
 #include <analyze/comp_unique_bounds_pb.h>
+#include <analyze/normalize_conditional_expr.h>
 #include <container_utils.h>
 #include <expr.h>
 #include <math/parse_pb_expr.h>
@@ -99,6 +100,7 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::Bound::restrictScope(
 }
 
 Expr CompUniqueBoundsPB::Bound::simplestExpr(
+    const Expr &reference,
     const std::unordered_map<std::string, int> &orderedScope) const {
 
     // first test the original map to be single valued
@@ -108,10 +110,8 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
     std::vector<std::pair<std::string, int>> axesScopeLevel;
     for (int i = 0; i < bound_.nParamDims(); ++i) {
         auto name = bound_.nameParamDim(i);
-        int scopeLevel = 0;
-        for (auto &&used : allUses(demangleMap_->at(name)))
-            scopeLevel = std::max(scopeLevel, orderedScope.at(used));
-        axesScopeLevel.emplace_back(name, scopeLevel);
+        axesScopeLevel.emplace_back(
+            name, countScope(demangleMap_->at(name), orderedScope));
     }
     // sort to innermost first, we will try remove them one by one
     std::sort(axesScopeLevel.begin(), axesScopeLevel.end(),
@@ -119,14 +119,22 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
 
     // remove one axis at a time, try until it's not single valued
     auto restrictedBound = bound_;
-    for (auto &&[axis, _] : axesScopeLevel) {
+    int minScopeLevel = INT_MAX;
+    for (auto &&[axis, scopeLevel] : axesScopeLevel) {
         auto newRestrictedBound =
             projectOutParamById(std::move(restrictedBound), axis);
         if (!newRestrictedBound.isSingleValued())
             break;
         restrictedBound = std::move(newRestrictedBound);
+        minScopeLevel = scopeLevel;
     }
-    return translateBoundFunc(*ctx_, restrictedBound, *demangleMap_);
+    auto resultExpr = translateBoundFunc(*ctx_, restrictedBound, *demangleMap_);
+    if (!resultExpr.isValid()) {
+        return nullptr;
+    }
+    auto isSimplier = minScopeLevel < countScope(reference, orderedScope) ||
+                      countHeavyOps(resultExpr) < countHeavyOps(reference);
+    return isSimplier ? resultExpr : nullptr;
 }
 
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
@@ -144,10 +152,34 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
             fullCond = makeLAnd(fullCond, cond);
 
         // generate PB condition
-        auto [str, varMap] = genPBExpr_.gen(fullCond);
+        std::string str;
+        GenPBExpr::VarMap varMap;
+        for (auto &&[subExpr, cond] : normalizeConditionalExpr(fullCond)) {
+            auto [subStr, subVarMap] = genPBExpr_.gen(subExpr);
+            subStr = "[unique_bounded_var] : " + subStr;
+            for (auto &&[k, v] : subVarMap) {
+                if (auto it = varMap.find(k); it != varMap.end()) {
+                    ASSERT(it->second == v);
+                } else {
+                    varMap[k] = v;
+                }
+            }
+            if (cond.isValid()) {
+                auto [condStr, condVarMap] = genPBExpr_.gen(cond);
+                subStr += " and " + condStr;
+                for (auto &&[k, v] : condVarMap) {
+                    if (auto it = varMap.find(k); it != varMap.end()) {
+                        ASSERT(it->second == v);
+                    } else {
+                        varMap[k] = v;
+                    }
+                }
+            }
+            str += str.empty() ? subStr : "; " + subStr;
+        }
         cachedConds_ =
             PBSet(*ctx_, "[" + (varMap | views::values | join(", ")) +
-                             "] -> { [unique_bounded_var]: " + str + " }");
+                             "] -> {" + str + "}");
 
         // initialize known demangle map
         cachedFreeVars_ = decltype(cachedFreeVars_)::make();
@@ -165,10 +197,34 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
         return it->second;
 
     // not previously queried, construct the bound
-    auto [str, varMap] = genPBExpr_.gen(op);
+    std::string str;
+    GenPBExpr::VarMap varMap;
+    for (auto &&[subExpr, cond] : normalizeConditionalExpr(op)) {
+        auto [subStr, subVarMap] = genPBExpr_.gen(subExpr);
+        subStr = "[" + subStr + "]";
+        for (auto &&[k, v] : subVarMap) {
+            if (auto it = varMap.find(k); it != varMap.end()) {
+                ASSERT(it->second == v);
+            } else {
+                varMap[k] = v;
+            }
+        }
+        if (cond.isValid()) {
+            auto [condStr, condVarMap] = genPBExpr_.gen(cond);
+            subStr += " : " + condStr;
+            for (auto &&[k, v] : condVarMap) {
+                if (auto it = varMap.find(k); it != varMap.end()) {
+                    ASSERT(it->second == v);
+                } else {
+                    varMap[k] = v;
+                }
+            }
+        }
+        str += str.empty() ? subStr : "; " + subStr;
+    }
     auto bound =
         (intersect(PBSet(*ctx_, "[" + (varMap | views::values | join(", ")) +
-                                    "] -> { [" + str + "] }"),
+                                    "] -> {" + str + "}"),
                    cachedConds_));
     // update free variables
     for (auto &&[expr, pbVar] : varMap) {
