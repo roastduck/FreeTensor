@@ -137,60 +137,56 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
     return isSimplier ? resultExpr : nullptr;
 }
 
-Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
-    if (!isInt(op->dtype()))
-        return nullptr;
+CompUniqueBoundsPB::CompUniqueBoundsPB(
+    const CompTransientBoundsInterface &transients)
+    : CompUniqueBounds(transients), transients_(transients),
+      ctx_(Ref<PBCtx>::make()) {
 
-    // check if the cache is valid
-    if (auto place = transients_.currentStmt(); place != cachedPlace_) {
-        // invalid, refresh it with the new transients condition
-        cachedPlace_ = place;
+    // construct full condition
+    Expr fullCond = makeBoolConst(true);
+    for (auto &&cond : transients_.conds())
+        fullCond = makeLAnd(fullCond, cond);
 
-        // construct full condition
-        Expr fullCond = makeBoolConst(true);
-        for (auto &&cond : transients_.conds())
-            fullCond = makeLAnd(fullCond, cond);
-
-        // generate PB condition
-        std::string str;
-        GenPBExpr::VarMap varMap;
-        for (auto &&[subExpr, cond] : normalizeConditionalExpr(fullCond)) {
-            auto [subStr, subVarMap] = genPBExpr_.gen(subExpr);
-            subStr = "[unique_bounded_var] : " + subStr;
-            for (auto &&[k, v] : subVarMap) {
+    // generate PB condition
+    std::string str;
+    GenPBExpr::VarMap varMap;
+    for (auto &&[subExpr, cond] : normalizeConditionalExpr(fullCond)) {
+        auto [subStr, subVarMap] = genPBExpr_.gen(subExpr);
+        subStr = "[unique_bounded_var] : " + subStr;
+        for (auto &&[k, v] : subVarMap) {
+            if (auto it = varMap.find(k); it != varMap.end()) {
+                ASSERT(it->second == v);
+            } else {
+                varMap[k] = v;
+            }
+        }
+        if (cond.isValid()) {
+            auto [condStr, condVarMap] = genPBExpr_.gen(cond);
+            subStr += " and " + condStr;
+            for (auto &&[k, v] : condVarMap) {
                 if (auto it = varMap.find(k); it != varMap.end()) {
                     ASSERT(it->second == v);
                 } else {
                     varMap[k] = v;
                 }
             }
-            if (cond.isValid()) {
-                auto [condStr, condVarMap] = genPBExpr_.gen(cond);
-                subStr += " and " + condStr;
-                for (auto &&[k, v] : condVarMap) {
-                    if (auto it = varMap.find(k); it != varMap.end()) {
-                        ASSERT(it->second == v);
-                    } else {
-                        varMap[k] = v;
-                    }
-                }
-            }
-            str += str.empty() ? subStr : "; " + subStr;
         }
-        cachedConds_ =
-            PBSet(*ctx_, "[" + (varMap | views::values | join(", ")) +
-                             "] -> {" + str + "}");
-
-        // initialize known demangle map
-        cachedFreeVars_ = decltype(cachedFreeVars_)::make();
-        for (auto &&[expr, pbVar] : varMap) {
-            ASSERT(!cachedFreeVars_->contains(pbVar));
-            (*cachedFreeVars_)[pbVar] = expr;
-        }
-
-        // clear cached query results
-        cachedValues_.clear();
+        str += str.empty() ? subStr : "; " + subStr;
     }
+    cachedConds_ = PBSet(*ctx_, "[" + (varMap | views::values | join(", ")) +
+                                    "] -> {" + str + "}");
+
+    // initialize known demangle map
+    cachedFreeVars_ = decltype(cachedFreeVars_)::make();
+    for (auto &&[expr, pbVar] : varMap) {
+        ASSERT(!cachedFreeVars_->contains(pbVar));
+        (*cachedFreeVars_)[pbVar] = expr;
+    }
+}
+
+Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
+    if (!isInt(op->dtype()))
+        return nullptr;
 
     // find in cached results
     if (auto it = cachedValues_.find(op); it != cachedValues_.end())
