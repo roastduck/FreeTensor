@@ -1654,10 +1654,6 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:ad95d0b37a8ce3bb42362e23ad2c7be2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca9654a5ea538c714eac06d7a005446f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aca9654a5ea538c714eac06d7a005446f">parsePBFunc</a> (const std::string &amp;str)</td></tr>
 <tr class="separator:aca9654a5ea538c714eac06d7a005446f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a34838394ebf8a8f18c9c20a8fdf9f57a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a34838394ebf8a8f18c9c20a8fdf9f57a">parseSimplePBFunc</a> (const std::string &amp;str)</td></tr>
-<tr class="separator:a34838394ebf8a8f18c9c20a8fdf9f57a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1482052b693063250a909e3639939d20"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1482052b693063250a909e3639939d20">parsePBFuncReconstructMinMax</a> (const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;set)</td></tr>
-<tr class="separator:a1482052b693063250a909e3639939d20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee725835f2e6cd6677489b1d146f42e0"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:aee725835f2e6cd6677489b1d146f42e0"><td class="memTemplItemLeft" align="right" valign="top">T *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aee725835f2e6cd6677489b1d146f42e0">GET_ISL_PTR</a> (T *ptr)</td></tr>
 <tr class="separator:aee725835f2e6cd6677489b1d146f42e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1736,6 +1732,12 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a4418378670985f9a7ce6882994ab6f1b"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a4418378670985f9a7ce6882994ab6f1b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4418378670985f9a7ce6882994ab6f1b">upperBoundOutputDim</a> (T &amp;&amp;map, unsigned pos, int x)</td></tr>
 <tr class="separator:a4418378670985f9a7ce6882994ab6f1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adea80e2945da9c6bf802b365b92f8a8b"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:adea80e2945da9c6bf802b365b92f8a8b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adea80e2945da9c6bf802b365b92f8a8b">newDomainOnlyMap</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:adea80e2945da9c6bf802b365b92f8a8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af10eba2d7559164867a06606e12c1336"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:af10eba2d7559164867a06606e12c1336"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af10eba2d7559164867a06606e12c1336">newRangeOnlyMap</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:af10eba2d7559164867a06606e12c1336"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09b661e797c2fce244e7f8885cbc378a"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a09b661e797c2fce244e7f8885cbc378a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a09b661e797c2fce244e7f8885cbc378a">moveDimsInputToOutput</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
 <tr class="separator:a09b661e797c2fce244e7f8885cbc378a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2407,6 +2409,16 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="memitem:ab1468fe7f8dbffb57d44d3e9efbe6941"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab1468fe7f8dbffb57d44d3e9efbe6941">toString</a> (const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op, bool pretty, bool printAllId, bool dtypeInLoad, bool hexFloat, bool compact, bool parenDespitePriority, bool printSourceLocation)</td></tr>
 <tr class="separator:ab1468fe7f8dbffb57d44d3e9efbe6941"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
+<tr class="memitem:a1482052b693063250a909e3639939d20"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1482052b693063250a909e3639939d20">parsePBFuncReconstructMinMax</a> (const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, const <a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> &amp;set)</td></tr>
+<tr class="separator:a1482052b693063250a909e3639939d20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0e90035315102d589bb4eca800d561f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac0e90035315102d589bb4eca800d561f">parsePBFuncReconstructMinMax</a> (const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;map)</td></tr>
+<tr class="separator:ac0e90035315102d589bb4eca800d561f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
+<tr class="memitem:a34838394ebf8a8f18c9c20a8fdf9f57a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a34838394ebf8a8f18c9c20a8fdf9f57a">parseSimplePBFunc</a> (const std::string &amp;str)</td></tr>
+<tr class="separator:a34838394ebf8a8f18c9c20a8fdf9f57a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7b08272d66541bce9551e2bfae245ea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ab7b08272d66541bce9551e2bfae245ea">parseSimplePBFuncReconstructMinMax</a> (const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;ctx, const auto &amp;f)</td></tr>
+<tr class="separator:ab7b08272d66541bce9551e2bfae245ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a0889e914685f3130c3b71061e8c1b239"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0889e914685f3130c3b71061e8c1b239">moveDimsInputToParam</a> (T &amp;&amp;map, unsigned first, unsigned <a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, unsigned target)</td></tr>
 <tr class="separator:a0889e914685f3130c3b71061e8c1b239"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2419,10 +2431,10 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="memitem:a7b90ef3191fb39bc49ed33440e4dd5b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7b90ef3191fb39bc49ed33440e4dd5b0">renameVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::string &amp;oldName, const std::string &amp;newName)</td></tr>
 <tr class="separator:a7b90ef3191fb39bc49ed33440e4dd5b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:a744cbb104fdbd92391e0a4b716e0f9bf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a744cbb104fdbd92391e0a4b716e0f9bf">shrinkFor</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;subAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>(), bool doSimplify=true)</td></tr>
-<tr class="separator:a744cbb104fdbd92391e0a4b716e0f9bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af97aa3adf5744a21bd307292c6091e08"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af97aa3adf5744a21bd307292c6091e08">shrinkFor</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;subAST, bool doSimplify=true)</td></tr>
-<tr class="separator:af97aa3adf5744a21bd307292c6091e08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3164162a8a750b42974263be8136b1a6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3164162a8a750b42974263be8136b1a6">shrinkFor</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;subAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>(), bool doSimplify=true, bool unordered=false)</td></tr>
+<tr class="separator:a3164162a8a750b42974263be8136b1a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9f7e9adb8401836c858186c29cbf45d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa9f7e9adb8401836c858186c29cbf45d">shrinkFor</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;subAST, bool doSimplify=true, bool unordered=false)</td></tr>
+<tr class="separator:aa9f7e9adb8401836c858186c29cbf45d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a818863b387986d5139ff122d5437d7a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a818863b387986d5139ff122d5437d7a0">shrinkVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a818863b387986d5139ff122d5437d7a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -15495,6 +15507,46 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
+<a id="adea80e2945da9c6bf802b365b92f8a8b" name="adea80e2945da9c6bf802b365b92f8a8b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adea80e2945da9c6bf802b365b92f8a8b">&#9670;&#160;</a></span>newDomainOnlyMap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::newDomainOnlyMap </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>set</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af10eba2d7559164867a06606e12c1336" name="af10eba2d7559164867a06606e12c1336"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af10eba2d7559164867a06606e12c1336">&#9670;&#160;</a></span>newRangeOnlyMap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::newRangeOnlyMap </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>set</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="adf2ac3793a7239ead053c8acb5df32cb" name="adf2ac3793a7239ead053c8acb5df32cb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adf2ac3793a7239ead053c8acb5df32cb">&#9670;&#160;</a></span>normalizeConditionalExpr()</h2>
 
@@ -17698,8 +17750,36 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
+<a id="ac0e90035315102d589bb4eca800d561f" name="ac0e90035315102d589bb4eca800d561f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0e90035315102d589bb4eca800d561f">&#9670;&#160;</a></span>parsePBFuncReconstructMinMax() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a2c312d0f9e2ef2b2914156bc32fa6c7d">PBFuncAST</a> freetensor::parsePBFuncReconstructMinMax </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;&#160;</td>
+          <td class="paramname"><em>ctx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>map</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1482052b693063250a909e3639939d20" name="a1482052b693063250a909e3639939d20"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1482052b693063250a909e3639939d20">&#9670;&#160;</a></span>parsePBFuncReconstructMinMax()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1482052b693063250a909e3639939d20">&#9670;&#160;</a></span>parsePBFuncReconstructMinMax() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -17776,6 +17856,9 @@ template&lt;PBSetRef T&gt; </div>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a> freetensor::parseSimplePBFunc </td>
@@ -17785,8 +17868,49 @@ template&lt;PBSetRef T&gt; </div>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 <p>Parse a <a class="el" href="classfreetensor_1_1PBFunc.html">PBFunc</a> to be ASTs, but only restricted to one contiguous factor </p>
+
+</div>
+</div>
+<a id="ab7b08272d66541bce9551e2bfae245ea" name="ab7b08272d66541bce9551e2bfae245ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7b08272d66541bce9551e2bfae245ea">&#9670;&#160;</a></span>parseSimplePBFuncReconstructMinMax()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structfreetensor_1_1SimplePBFuncAST.html">SimplePBFuncAST</a> freetensor::parseSimplePBFuncReconstructMinMax </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;&#160;</td>
+          <td class="paramname"><em>ctx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const auto &amp;&#160;</td>
+          <td class="paramname"><em>f</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -18849,8 +18973,8 @@ template&lt;PBSetRef T&gt; </div>
 
 </div>
 </div>
-<a id="a744cbb104fdbd92391e0a4b716e0f9bf" name="a744cbb104fdbd92391e0a4b716e0f9bf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a744cbb104fdbd92391e0a4b716e0f9bf">&#9670;&#160;</a></span>shrinkFor() <span class="overload">[1/2]</span></h2>
+<a id="a3164162a8a750b42974263be8136b1a6" name="a3164162a8a750b42974263be8136b1a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3164162a8a750b42974263be8136b1a6">&#9670;&#160;</a></span>shrinkFor() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18871,7 +18995,13 @@ template&lt;PBSetRef T&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>doSimplify</em> = <code>true</code>&#160;</td>
+          <td class="paramname"><em>doSimplify</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>unordered</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -18886,14 +19016,15 @@ template&lt;PBSetRef T&gt; </div>
     <tr><td class="paramname">op</td><td>: The AST to transform. </td></tr>
     <tr><td class="paramname">subAST</td><td>: If specified, only transform sub-tree of the statement with the specified <a class="el" href="classfreetensor_1_1ID.html">ID</a>. </td></tr>
     <tr><td class="paramname">doSimplify</td><td>: If true, run simplify before and after the tranformation. Transformations are required to ensure the effectiveness of the shrinking. Please do your own simplification if you want to set it to false. </td></tr>
+    <tr><td class="paramname">unordered</td><td>: If true, shrink the loops aggressively which does NOT preserve the iterating order. The caller should guarantee the correctness. This is effective when the pattern of redundant iterations is complex. This may also split one loop into multiple loops. </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="af97aa3adf5744a21bd307292c6091e08" name="af97aa3adf5744a21bd307292c6091e08"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af97aa3adf5744a21bd307292c6091e08">&#9670;&#160;</a></span>shrinkFor() <span class="overload">[2/2]</span></h2>
+<a id="aa9f7e9adb8401836c858186c29cbf45d" name="aa9f7e9adb8401836c858186c29cbf45d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9f7e9adb8401836c858186c29cbf45d">&#9670;&#160;</a></span>shrinkFor() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -18917,7 +19048,13 @@ template&lt;PBSetRef T&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>doSimplify</em> = <code>true</code>&#160;</td>
+          <td class="paramname"><em>doSimplify</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>unordered</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

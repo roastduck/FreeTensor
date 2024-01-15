@@ -12,9 +12,11 @@ digraph "include/get_new_name.h"
   Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
   Node4 [label="src/pass/gpu/normalize\l_var_in_kernel.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$normalize__var__in__kernel_8cc.html",tooltip=" "];
   Node1 -> Node5 [dir="back",color="steelblue1",style="solid"];
-  Node5 [label="src/schedule/hoist\l_selected_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8cc.html",tooltip=" "];
+  Node5 [label="src/pass/shrink_for.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__for_8cc.html",tooltip=" "];
   Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
-  Node6 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
+  Node6 [label="src/schedule/hoist\l_selected_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__selected__var_8cc.html",tooltip=" "];
   Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
-  Node7 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
+  Node7 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
+  Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
+  Node8 [label="src/schedule/split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$split_8cc.html",tooltip=" "];
 }
