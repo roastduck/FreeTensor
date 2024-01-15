@@ -60,6 +60,8 @@ digraph "include/except.h"
   Node77 [label="include/frontend/inlined\l_invoke.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$inlined__invoke_8h.html",tooltip=" "];
   Node59 -> Node79 [dir="back",color="steelblue1",style="solid"];
   Node79 [label="include/pass/annotate\l_conds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$annotate__conds_8h.html",tooltip=" "];
+  Node79 -> Node15 [dir="back",color="steelblue1",style="solid"];
+  Node15 [label="src/pass/simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$simplify_8cc.html",tooltip=" "];
   Node59 -> Node81 [dir="back",color="steelblue1",style="solid"];
   Node81 [label="include/pass/const\l_fold.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$const__fold_8h.html",tooltip=" "];
   Node81 -> Node86 [dir="back",color="steelblue1",style="solid"];
@@ -74,7 +76,6 @@ digraph "include/except.h"
   Node99 -> Node62 [dir="back",color="steelblue1",style="solid"];
   Node99 -> Node28 [dir="back",color="steelblue1",style="solid"];
   Node99 -> Node15 [dir="back",color="steelblue1",style="solid"];
-  Node15 [label="src/pass/simplify.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$simplify_8cc.html",tooltip=" "];
   Node99 -> Node23 [dir="back",color="steelblue1",style="solid"];
   Node59 -> Node86 [dir="back",color="steelblue1",style="solid"];
   Node59 -> Node105 [dir="back",color="steelblue1",style="solid"];

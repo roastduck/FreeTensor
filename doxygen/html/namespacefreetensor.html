@@ -2035,15 +2035,6 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:ab0e688ed6885f31824d0c8546e7a5e78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8119a1a04c582341d32d887f9e5e71b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa8119a1a04c582341d32d887f9e5e71b">findInnerMostScope</a> (const std::unordered_map&lt; std::string, int &gt; &amp;varScope, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op)</td></tr>
 <tr class="separator:aa8119a1a04c582341d32d887f9e5e71b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70b5818f149b3ce3ad03a4b3b7d37f54"><td class="memTemplParams" colspan="2">template&lt;class Simplifier &gt; </td></tr>
-<tr class="memitem:a70b5818f149b3ce3ad03a4b3b7d37f54"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a70b5818f149b3ce3ad03a4b3b7d37f54">simplifyImpl</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;_op)</td></tr>
-<tr class="separator:a70b5818f149b3ce3ad03a4b3b7d37f54"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c54f4c7a864a4e7051d226cfff73cb1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1">builtinSimplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
-<tr class="separator:a5c54f4c7a864a4e7051d226cfff73cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a351b8ec93ce130376baacb2c4a8d9a0c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a351b8ec93ce130376baacb2c4a8d9a0c">pbSimplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
-<tr class="separator:a351b8ec93ce130376baacb2c4a8d9a0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3297bc3ad84b56db521642e9c7f7f2d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3297bc3ad84b56db521642e9c7f7f2d9">simplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
-<tr class="separator:a3297bc3ad84b56db521642e9c7f7f2d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ea9ec8163d64f4273fa2036239d4247"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3ea9ec8163d64f4273fa2036239d4247">sinkVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::optional&lt; std::unordered_set&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt; &gt; &amp;toSink=std::nullopt, const std::function&lt; bool(const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;)&gt; &amp;scopeFilter=nullptr)</td></tr>
 <tr class="separator:a3ea9ec8163d64f4273fa2036239d4247"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e8773382e5c3622f3eff289b0d17ddf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3e8773382e5c3622f3eff289b0d17ddf">tensorPropConst</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;bothInSubAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>(), const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;eitherInSubAST=<a class="el" href="classfreetensor_1_1ID.html">ID</a>())</td></tr>
@@ -2440,6 +2431,13 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a818863b387986d5139ff122d5437d7a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a929a182f386d992a7487a797475a75c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a929a182f386d992a7487a797475a75c8">shrinkSingleVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;varDefId)</td></tr>
 <tr class="separator:a929a182f386d992a7487a797475a75c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader"></div></td></tr>
+<tr class="memitem:a5c54f4c7a864a4e7051d226cfff73cb1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5c54f4c7a864a4e7051d226cfff73cb1">builtinSimplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
+<tr class="separator:a5c54f4c7a864a4e7051d226cfff73cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a351b8ec93ce130376baacb2c4a8d9a0c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a351b8ec93ce130376baacb2c4a8d9a0c">pbSimplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
+<tr class="separator:a351b8ec93ce130376baacb2c4a8d9a0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3297bc3ad84b56db521642e9c7f7f2d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3297bc3ad84b56db521642e9c7f7f2d9">simplify</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
+<tr class="separator:a3297bc3ad84b56db521642e9c7f7f2d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr class="memitem:a41ae05b32fc68791a6fc2db4c52e8343"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a41ae05b32fc68791a6fc2db4c52e8343">hoistSelectedVar</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op, const std::string &amp;selector)</td></tr>
 <tr class="separator:a41ae05b32fc68791a6fc2db4c52e8343"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -5734,6 +5732,10 @@ template&lt;PBMapRef T, PBMapRef U&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Simplify integer expressions in a program</p>
+<p><code>builtinSimplify</code> and <code>simplify</code> uses <code><a class="el" href="classfreetensor_1_1CompUniqueBoundsCombination.html">CompUniqueBoundsCombination</a></code> to simplify the program. <code>pbSimplify</code> uses <code><a class="el" href="classfreetensor_1_1CompUniqueBoundsPB.html">CompUniqueBoundsPB</a></code> to simplify the program.</p>
+<p>This pass can only be applied on a complete program, instead of a single expression, because it examines VarDef nodes of each Var</p>
+<dl class="section return"><dt>Returns</dt><dd>: The simplified AST </dd></dl>
 
 </div>
 </div>
@@ -19161,29 +19163,6 @@ template&lt;PBSetRef T&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-
-</div>
-</div>
-<a id="a70b5818f149b3ce3ad03a4b3b7d37f54" name="a70b5818f149b3ce3ad03a4b3b7d37f54"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70b5818f149b3ce3ad03a4b3b7d37f54">&#9670;&#160;</a></span>simplifyImpl()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Simplifier &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::simplifyImpl </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
-          <td class="paramname"><em>_op</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Simplify a program and compute bounds of each expressions</p>
-<p>This pass can only be applied on a complete program, instead of a single expression, because it examines VarDef nodes of each Var</p>
-<dl class="section return"><dt>Returns</dt><dd>: {simplified, lower, upper} </dd></dl>
 
 </div>
 </div>

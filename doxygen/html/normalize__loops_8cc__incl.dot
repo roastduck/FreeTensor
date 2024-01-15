@@ -44,6 +44,8 @@ digraph "src/pass/normalize_loops.cc"
   Node32 -> Node3 [color="steelblue1",style="solid"];
   Node32 -> Node34 [color="steelblue1",style="solid"];
   Node34 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
+  Node34 -> Node35 [color="steelblue1",style="solid"];
+  Node35 [label="algorithm",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node34 -> Node15 [color="steelblue1",style="solid"];
   Node34 -> Node28 [color="steelblue1",style="solid"];
   Node28 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -101,13 +103,11 @@ digraph "src/pass/normalize_loops.cc"
   Node56 [label="analyze/comp_transient\l_bounds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__transient__bounds_8h.html",tooltip=" "];
   Node56 -> Node4 [color="steelblue1",style="solid"];
   Node56 -> Node57 [color="steelblue1",style="solid"];
-  Node57 [label="analyze/all_uses.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$all__uses_8h.html",tooltip=" "];
+  Node57 [label="analyze/all_uses.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__uses_8h.html",tooltip=" "];
   Node57 -> Node4 [color="steelblue1",style="solid"];
-  Node57 -> Node66 [color="steelblue1",style="solid"];
-  Node66 [label="visitor.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$visitor_8h.html",tooltip=" "];
-  Node66 -> Node51 [color="steelblue1",style="solid"];
-  Node66 -> Node43 [color="steelblue1",style="solid"];
-  Node66 -> Node59 [color="steelblue1",style="solid"];
+  Node57 -> Node58 [color="steelblue1",style="solid"];
+  Node58 [label="analyze/find_stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$find__stmt_8h.html",tooltip=" "];
+  Node58 -> Node59 [color="steelblue1",style="solid"];
   Node59 [label="func.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$func_8h.html",tooltip=" "];
   Node59 -> Node15 [color="steelblue1",style="solid"];
   Node59 -> Node11 [color="steelblue1",style="solid"];
@@ -123,7 +123,13 @@ digraph "src/pass/normalize_loops.cc"
   Node61 -> Node42 [color="steelblue1",style="solid"];
   Node59 -> Node10 [color="steelblue1",style="solid"];
   Node59 -> Node42 [color="steelblue1",style="solid"];
+  Node58 -> Node66 [color="steelblue1",style="solid"];
+  Node66 [label="visitor.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$visitor_8h.html",tooltip=" "];
+  Node66 -> Node51 [color="steelblue1",style="solid"];
+  Node66 -> Node43 [color="steelblue1",style="solid"];
+  Node66 -> Node59 [color="steelblue1",style="solid"];
   Node66 -> Node10 [color="steelblue1",style="solid"];
+  Node57 -> Node66 [color="steelblue1",style="solid"];
   Node56 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="analyze/analyze_linear.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$analyze__linear_8h.html",tooltip=" "];
   Node67 -> Node16 [color="steelblue1",style="solid"];
@@ -136,7 +142,8 @@ digraph "src/pass/normalize_loops.cc"
   Node68 -> Node43 [color="steelblue1",style="solid"];
   Node68 -> Node10 [color="steelblue1",style="solid"];
   Node67 -> Node69 [color="steelblue1",style="solid"];
-  Node69 [label="math/linear.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$linear_8h.html",tooltip=" "];
+  Node69 [label="math/linear.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$linear_8h.html",tooltip=" "];
+  Node69 -> Node35 [color="steelblue1",style="solid"];
   Node69 -> Node15 [color="steelblue1",style="solid"];
   Node69 -> Node57 [color="steelblue1",style="solid"];
   Node69 -> Node68 [color="steelblue1",style="solid"];
@@ -202,15 +209,8 @@ digraph "src/pass/normalize_loops.cc"
   Node55 -> Node71 [color="steelblue1",style="solid"];
   Node55 -> Node50 [color="steelblue1",style="solid"];
   Node55 -> Node96 [color="steelblue1",style="solid"];
-  Node96 [label="pass/annotate_conds.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$annotate__conds_8h.html",tooltip=" "];
+  Node96 [label="pass/const_fold.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$const__fold_8h.html",tooltip=" "];
+  Node96 -> Node59 [color="steelblue1",style="solid"];
   Node96 -> Node50 [color="steelblue1",style="solid"];
-  Node55 -> Node97 [color="steelblue1",style="solid"];
-  Node97 [label="pass/const_fold.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$const__fold_8h.html",tooltip=" "];
-  Node97 -> Node59 [color="steelblue1",style="solid"];
-  Node97 -> Node50 [color="steelblue1",style="solid"];
-  Node55 -> Node98 [color="steelblue1",style="solid"];
-  Node98 [label="pass/flatten_stmt_seq.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$flatten__stmt__seq_8h.html",tooltip=" "];
-  Node98 -> Node59 [color="steelblue1",style="solid"];
-  Node98 -> Node50 [color="steelblue1",style="solid"];
   Node55 -> Node66 [color="steelblue1",style="solid"];
 }

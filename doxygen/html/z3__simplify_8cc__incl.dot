@@ -180,12 +180,10 @@ digraph "src/pass/z3_simplify.cc"
   Node66 -> Node5 [color="steelblue1",style="solid"];
   Node66 -> Node71 [color="steelblue1",style="solid"];
   Node66 -> Node62 [color="steelblue1",style="solid"];
-  Node66 -> Node61 [color="steelblue1",style="solid"];
   Node66 -> Node98 [color="steelblue1",style="solid"];
   Node98 [label="pass/const_fold.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$const__fold_8h.html",tooltip=" "];
   Node98 -> Node5 [color="steelblue1",style="solid"];
   Node98 -> Node62 [color="steelblue1",style="solid"];
-  Node66 -> Node63 [color="steelblue1",style="solid"];
   Node66 -> Node56 [color="steelblue1",style="solid"];
   Node1 -> Node99 [color="steelblue1",style="solid"];
   Node99 [label="pass/z3_simplify.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$z3__simplify_8h.html",tooltip=" "];

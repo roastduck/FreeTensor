@@ -95,8 +95,8 @@ Collaboration diagram for freetensor::SimplifyPass:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a5e2f1e9e08eae2a0b56a155abe0a2473"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SimplifyPass.html#a5e2f1e9e08eae2a0b56a155abe0a2473">SimplifyPass</a> (std::function&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1CompUniqueBounds.html">CompUniqueBounds</a> &gt;(const <a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html">CompTransientBoundsInterface</a> &amp;)&gt; compUniqueBoundsFactory)</td></tr>
-<tr class="separator:a5e2f1e9e08eae2a0b56a155abe0a2473"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa7612ae8f2fcb242b69550125b7e1fa"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1SimplifyPass.html#aaa7612ae8f2fcb242b69550125b7e1fa">SimplifyPass</a> (std::function&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1CompUniqueBounds.html">CompUniqueBounds</a> &gt;(const <a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html">CompTransientBoundsInterface</a> &amp;)&gt; compUniqueBoundsFactory, bool leafFirstBoundAnalysis)</td></tr>
+<tr class="separator:aaa7612ae8f2fcb242b69550125b7e1fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1CompTransientBounds"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1CompTransientBounds')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1CompTransientBounds.html">freetensor::CompTransientBounds&lt; SymbolTable&lt; ConstFold &gt; &gt;</a></td></tr>
 <tr class="memitem:a10c85930dba5429bede7a862a15f3a94 inherit pub_methods_classfreetensor_1_1CompTransientBounds"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfreetensor_1_1TransientBound.html">TransientBound</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1CompTransientBounds.html#a10c85930dba5429bede7a862a15f3a94">transient</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;op) const override</td></tr>
 <tr class="separator:a10c85930dba5429bede7a862a15f3a94 inherit pub_methods_classfreetensor_1_1CompTransientBounds"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -541,9 +541,24 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memdesc:a46c428e8f965d166a2a64ca4d7a1588e inherit pro_static_methods_classfreetensor_1_1ConstFold"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cast the data type of a <code>Const</code> node.  <br /></td></tr>
 <tr class="separator:a46c428e8f965d166a2a64ca4d7a1588e inherit pro_static_methods_classfreetensor_1_1ConstFold"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a5e2f1e9e08eae2a0b56a155abe0a2473" name="a5e2f1e9e08eae2a0b56a155abe0a2473"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5e2f1e9e08eae2a0b56a155abe0a2473">&#9670;&#160;</a></span>SimplifyPass()</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Base class for integer simplify passes</p>
+<p>Simplification from 3 mechanisms:</p>
+<ul>
+<li>Bound analysis from a specific subclass of <code><a class="el" href="classfreetensor_1_1CompUniqueBounds.html">CompUniqueBounds</a></code>. If there is only one integer between an expression's lower bound and upper bound, then the expression can be replaced by the integer.</li>
+<li>Constant folding from <code><a class="el" href="classfreetensor_1_1ConstFold.html">ConstFold</a></code>.</li>
+<li>Simplification rules from <code><a class="el" href="classfreetensor_1_1SimplifyPass.html">SimplifyPass</a></code>. This is a complement of the bound analysis. E.g. to simplify <code>x + 0</code> as <code>x</code>, which cannot be simplified by bound analysis if <code>x</code> has no bound.</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">compUniqueBoundsFactor</td><td>: A factory function creating a specific <code><a class="el" href="classfreetensor_1_1CompUniqueBounds.html">CompUniqueBounds</a></code> instance for bound analysis. </td></tr>
+    <tr><td class="paramname">leafFirstBoundAnalysis</td><td>: Whether to simplify sub-expressions with bound analysis before simplifying their parents. This is useful when the simplification of a sub-expression helps analyzing its parent, but will only waste time if the analysis is based on a unified representation and does not depend on the specific form of the sub-expression. </td></tr>
+  </table>
+  </dd>
+</dl>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="aaa7612ae8f2fcb242b69550125b7e1fa" name="aaa7612ae8f2fcb242b69550125b7e1fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa7612ae8f2fcb242b69550125b7e1fa">&#9670;&#160;</a></span>SimplifyPass()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -555,8 +570,18 @@ Additional Inherited Members</h2></td></tr>
           <td class="memname">freetensor::SimplifyPass::SimplifyPass </td>
           <td>(</td>
           <td class="paramtype">std::function&lt; <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1CompUniqueBounds.html">CompUniqueBounds</a> &gt;(const <a class="el" href="classfreetensor_1_1CompTransientBoundsInterface.html">CompTransientBoundsInterface</a> &amp;)&gt;&#160;</td>
-          <td class="paramname"><em>compUniqueBoundsFactory</em></td><td>)</td>
+          <td class="paramname"><em>compUniqueBoundsFactory</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>leafFirstBoundAnalysis</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
