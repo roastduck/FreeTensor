@@ -33,7 +33,7 @@ jobs:
         run: |
           # Doxygen from Spack can't be used together with our Python venv. So run it in this separated step
           source /opt/spack/share/spack/setup-env.sh
-          spack load doxygen+graphviz
+          spack load doxygen+graphviz^graphviz+libgd
           doxygen Doxyfile
       - name: Build and publish doc
         run: |
