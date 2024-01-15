@@ -30,15 +30,36 @@ typedef std::vector<SimplePBFuncAST> PBFuncAST;
 PBFuncAST parsePBFunc(const std::string &str);
 
 /**
- * Parse a PBFunc to be ASTs, but only restricted to one contiguous factor
- */
-SimplePBFuncAST parseSimplePBFunc(const std::string &str);
-
-/**
  * Construct AST from PBSet while preserving min and max with a special hack to
  * ISL
+ *
+ * @{
  */
 PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set);
+PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBMap &map);
+/** @} */
+
+/**
+ * Parse a PBFunc to be ASTs, but only restricted to one contiguous factor
+ *
+ * @{
+ */
+inline SimplePBFuncAST parseSimplePBFunc(const std::string &str) {
+    auto ret = parsePBFunc(str);
+    if (ret.size() != 1) {
+        throw ParserError(str + " is not a simple PBFunc");
+    }
+    return ret.front();
+}
+inline SimplePBFuncAST parseSimplePBFuncReconstructMinMax(const PBCtx &ctx,
+                                                          const auto &f) {
+    auto ret = parsePBFuncReconstructMinMax(ctx, f);
+    if (ret.size() != 1) {
+        throw ParserError(FT_MSG << f << " is not a simple PBFunc");
+    }
+    return ret.front();
+}
+/** @} */
 
 } // namespace freetensor
 

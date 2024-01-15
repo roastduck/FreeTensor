@@ -605,6 +605,13 @@ template <PBMapRef T> PBMap upperBoundOutputDim(T &&map, unsigned pos, int x) {
     return isl_map_upper_bound_si(PBRefTake<T>(map), isl_dim_out, pos, x);
 }
 
+template <PBSetRef T> PBMap newDomainOnlyMap(T &&set) {
+    return isl_map_from_domain(PBRefTake(set));
+}
+template <PBSetRef T> PBMap newRangeOnlyMap(T &&set) {
+    return isl_map_from_range(PBRefTake(set));
+}
+
 template <PBMapRef T>
 PBMap moveDimsInputToOutput(T &&map, unsigned first, unsigned n,
                             unsigned target) {

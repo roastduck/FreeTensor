@@ -1,10 +1,12 @@
+#include <sstream>
+
 #include <antlr4-runtime.h>
 #include <isl/ast.h>
 #include <isl/ast_build.h>
 #include <isl/ast_type.h>
 #include <isl/union_set.h>
 
-#include <analyze/all_uses.h>
+#include <container_utils.h>
 #include <debug.h>
 #include <math/parse_pb_expr.h>
 #include <mutator.h>
@@ -123,14 +125,6 @@ PBFuncAST parsePBFunc(const std::string &str) {
         throw ParserError(FT_MSG << "Parser error: " << e.what()
                                  << "\n during parsing \"" << str << "\"");
     }
-}
-
-SimplePBFuncAST parseSimplePBFunc(const std::string &str) {
-    auto ret = parsePBFunc(str);
-    if (ret.size() != 1) {
-        throw ParserError(str + " is not a simple PBFunc");
-    }
-    return ret.front();
 }
 
 namespace {
@@ -254,24 +248,25 @@ Expr isl2Expr(__isl_take isl_ast_expr *e) {
     return res;
 }
 
-PBFuncAST isl2Func(__isl_take isl_ast_node *node) {
-    PBFuncAST ret;
+std::vector<std::pair<std::vector<Expr> /* values */, Expr /* cond */>>
+isl2Func(__isl_take isl_ast_node *node) {
+    std::vector<std::pair<std::vector<Expr>, Expr>> ret;
     try {
         if (isl_ast_node_get_type(node) == isl_ast_node_if) {
             auto cond = isl2Expr(isl_ast_node_if_get_cond(node));
-            for (auto &&[thenNames, thenFT, thenCond] :
+            for (auto &&[thenFT, thenCond] :
                  isl2Func(isl_ast_node_if_get_then(node))) {
-                ret.push_back(SimplePBFuncAST{
-                    thenNames, thenFT,
-                    thenCond.isValid() ? makeLAnd(cond, thenCond) : cond});
+                ret.emplace_back(thenFT, thenCond.isValid()
+                                             ? makeLAnd(cond, thenCond)
+                                             : cond);
             }
             if (isl_ast_node_if_has_else(node)) {
-                for (auto &&[elseNames, elseFT, elseCond] :
+                for (auto &&[elseFT, elseCond] :
                      isl2Func(isl_ast_node_if_get_else(node))) {
-                    ret.push_back(SimplePBFuncAST{
-                        elseNames, elseFT,
-                        elseCond.isValid() ? makeLAnd(makeLNot(cond), elseCond)
-                                           : makeLNot(cond)});
+                    ret.emplace_back(elseFT,
+                                     elseCond.isValid()
+                                         ? makeLAnd(makeLNot(cond), elseCond)
+                                         : makeLNot(cond));
                 }
             }
 
@@ -292,14 +287,7 @@ PBFuncAST isl2Func(__isl_take isl_ast_node *node) {
                     }) |
                     ranges::to_vector;
 
-                std::unordered_set<std::string> names;
-                for (auto &&item : vals) {
-                    for (auto &&name : allNames(item)) {
-                        names.insert(name);
-                    }
-                }
-                ret = {SimplePBFuncAST{ranges::to<std::vector>(names), vals,
-                                       nullptr}};
+                ret = {{vals, nullptr}};
             } catch (...) {
                 isl_ast_expr_free(expr);
                 throw;
@@ -324,6 +312,13 @@ PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
 
     ASSERT(set.isSingleValued());
 
+    std::vector<std::string> params =
+        views::ints(0, set.nParamDims()) |
+        views::transform([&](int i) -> std::string {
+            return isl_set_get_dim_name(set.get(), isl_dim_param, i);
+        }) |
+        ranges::to<std::vector>();
+
     isl_options_set_ast_build_detect_min_max(ctx.get(), 1);
 
     PBFuncAST ret;
@@ -333,7 +328,9 @@ PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
             isl_schedule_from_domain(isl_union_set_from_set(set.copy()));
         isl_ast_node *ast =
             isl_ast_build_node_from_schedule(build /* keep */, s /* take */);
-        ret = isl2Func(ast /* take */);
+        for (auto &&[vals, cond] : isl2Func(ast /* take */)) {
+            ret.emplace_back(params, vals, cond);
+        }
     } catch (...) {
         isl_ast_build_free(build);
         throw;
@@ -341,6 +338,38 @@ PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
     isl_ast_build_free(build);
 
     return ret;
+}
+
+namespace {
+
+template <PBMapRef T> PBMap moveAllInputDimsToParam(const PBCtx &ctx, T &&map) {
+    // A name is required for the parameter, so we can't simply use
+    // isl_map_move_dims. We constuct a map to apply on the set to move the
+    // dimension. Example map: [i1, i2] -> {[i1, i2] -> []}. The parameters are
+    // assigned with temporary names.
+
+    int nInDims = map.nInDims();
+    std::ostringstream os;
+    os << "["
+       << (views::ints(0, nInDims) | views::transform([](int i) {
+               return "ft_unnamed_in_dim_" + std::to_string(i);
+           }) |
+           join(","))
+       << "] -> {["
+       << (views::ints(0, nInDims) | views::transform([](int i) {
+               return "ft_unnamed_in_dim_" + std::to_string(i);
+           }) |
+           join(","))
+       << "] -> []}";
+    PBMap moving(ctx, os.str());
+    return applyDomain(std::forward<T>(map), std::move(moving));
+}
+
+} // Anonymous namespace
+
+PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBMap &map) {
+    return parsePBFuncReconstructMinMax(
+        ctx, range(moveAllInputDimsToParam(ctx, map)));
 }
 
 } // namespace freetensor

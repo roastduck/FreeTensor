@@ -1,7 +1,15 @@
+#include <sstream>
+#include <unordered_map>
+#include <unordered_set>
+
+#include <analyze/all_uses.h>
 #include <analyze/comp_unique_bounds_pb.h>
 #include <analyze/find_stmt.h>
+#include <container_utils.h>
+#include <get_new_name.h>
 #include <math/min_max.h>
 #include <math/parse_pb_expr.h>
+#include <pass/normalize_loops.h>
 #include <pass/replace_iter.h>
 #include <pass/shrink_for.h>
 #include <pass/simplify.h>
@@ -11,27 +19,34 @@ namespace freetensor {
 
 namespace {
 
+template <PBSetRef T>
+PBSet moveDimToNamedParam(const PBCtx &ctx, T &&set, int dim,
+                          const std::string &param) {
+    // A name is required for the parameter, so we can't simply use
+    // isl_set_move_dims. We constuct a map to apply on the set to move the
+    // dimension. Example map: [p] -> {[_1, _2, p] -> [_1, _2]}
+
+    int nDims = set.nDims();
+    std::ostringstream os;
+    os << "[" << param << "] -> {["
+       << (views::ints(0, nDims) | views::transform([&](int i) {
+               return i == dim ? param : "_" + std::to_string(i);
+           }) |
+           join(","))
+       << "] -> ["
+       << (views::ints(0, nDims) |
+           views::filter([&](int i) { return i != dim; }) |
+           views::transform([](int i) { return "_" + std::to_string(i); }) |
+           join(","))
+       << "]}";
+    PBMap map(ctx, os.str());
+    return apply(std::forward<T>(set), std::move(map));
+}
+
 class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
-  public:
-    CompUniqueBoundsPBWithStride(const CompTransientBoundsInterface &transients)
-        : CompUniqueBoundsPB(transients) {}
-
-    std::tuple<Expr /* lower */, Expr /* upper */, int64_t /* modulo */,
-               Expr /* offset */>
-    unionBoundsAndGetStride(
-        const std::vector<Ref<CompUniqueBounds::Bound>> &bounds) {
-        auto bound = unionBoundsAsBound(bounds);
-
-        // if no bound presented, return an empty range
-        if (!bound.isValid()) {
-            return {makeIntConst(0), makeIntConst(-1), 1, makeIntConst(0)};
-        }
-
-        // translate the lower and upper bounds back to expression
-        auto l = bound->lowerExpr();
-        auto u = bound->upperExpr();
-
-        // Addition detction for strides
+  private:
+    std::pair<int64_t /* modulo */, Expr /* offset */>
+    getStride(const Ref<CompUniqueBoundsPB::Bound> &bound, bool requireConst) {
         isl_stride_info *info = isl_set_get_stride_info(bound->bound_.get(), 0);
         auto stride = PBVal(isl_stride_info_get_stride(info));
         auto offset = PBSingleFunc(isl_stride_info_get_offset(info));
@@ -44,8 +59,100 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
         // value. Leave it.
         ASSERT(offsetSimpleFunc.values_.size() == 1);
         auto offsetExpr = demangler(offsetSimpleFunc.values_[0]);
+        if (requireConst && !HashComparator{}(offsetExpr, makeIntConst(0))) {
+            strideInt = 1;
+            offsetExpr = makeIntConst(0);
+        }
+        return {strideInt, offsetExpr};
+    }
+
+  public:
+    CompUniqueBoundsPBWithStride(const CompTransientBoundsInterface &transients)
+        : CompUniqueBoundsPB(transients) {}
+
+    std::tuple<Expr /* lower */, Expr /* upper */, int64_t /* modulo */,
+               Expr /* offset */>
+    unionBoundsAndGetStride(
+        const std::vector<Ref<CompUniqueBounds::Bound>> &bounds,
+        bool requireConst) {
+        auto bound = unionBoundsAsBound(bounds);
+
+        // if no bound presented, return an empty range
+        if (!bound.isValid()) {
+            return {makeIntConst(0), makeIntConst(-1), 1, makeIntConst(0)};
+        }
+
+        // translate the lower and upper bounds back to expression
+        auto l =
+            requireConst ? makeIntConst(bound->lowerInt()) : bound->lowerExpr();
+        auto u =
+            requireConst ? makeIntConst(bound->upperInt()) : bound->upperExpr();
+
+        // Addition detction for strides
+        auto [strideInt, offsetExpr] = getStride(bound, requireConst);
 
         return {l, u, strideInt, offsetExpr};
+    }
+
+    std::vector<std::tuple<Expr /* lower */, Expr /* upper */,
+                           int64_t /* modulo */, Expr /* offset */>>
+    unionBoundsAndGetHighOrderStride(
+        const std::vector<Ref<CompUniqueBounds::Bound>> &bounds,
+        bool requireConst) {
+        auto bound = unionBoundsAsBound(bounds);
+
+        // if no bound presented, return an empty loop nest
+        if (!bound.isValid()) {
+            return {};
+        }
+
+        PBSet set = bound->bound_;
+
+        // Reveal local dimensions
+        set = isl_set_lift(set.move());
+
+        // Put local dimension at front, so we can represent the target
+        // dimension by local dimensions, instead of representing local
+        // dimensions by the target dimension. The set returned by isl_set_lift
+        // is a wrapped set, so we can simply unwrap it and then reverse it.
+        set = isl_set_flatten(
+            isl_map_wrap(isl_map_reverse(isl_set_unwrap(set.move()))));
+
+        ASSERT(set.nDims() >= 1);
+        std::vector<std::tuple<Expr, Expr, int64_t, Expr>> ret;
+        ret.reserve(set.nDims());
+        auto demangleMap = *bound->demangleMap_;
+        for (int i = 0;; i++) {
+            // Project onto the loop we are checking
+            PBSet thisLoopSet = projectOutDims(set, 1, set.nDims() - 1);
+
+            auto thisLoopBound = Ref<CompUniqueBoundsPB::Bound>::make(
+                bound->ctx_,
+                Ref<std::unordered_map<std::string, Expr>>::make(demangleMap),
+                thisLoopSet);
+            auto l = requireConst ? makeIntConst(bound->lowerInt())
+                                  : thisLoopBound->lowerExpr();
+            auto u = requireConst ? makeIntConst(bound->upperInt())
+                                  : thisLoopBound->upperExpr();
+            auto [strideInt, offsetExpr] =
+                getStride(thisLoopBound, requireConst);
+            ret.emplace_back(l, u, strideInt, offsetExpr);
+
+            if (set.nDims() == 1) {
+                break;
+            } else {
+                // As we go from outer loops to inner loops, we will move range
+                // dimensions to parameter dimensions, so inner loops will be
+                // represented by outer loops. The parameter name used here is
+                // temporary, and will be replaced later.
+                auto paramName = "ft_shrink_for_tmp_" + std::to_string(i);
+                set = moveDimToNamedParam(*bound->ctx_, std::move(set), 0,
+                                          paramName);
+                demangleMap[paramName] = makeVar(paramName);
+            }
+        }
+
+        return ret;
     }
 };
 
@@ -144,68 +251,111 @@ Stmt ShrinkFor::visit(const For &_op) {
     // PBCompBounds requires one instance per Stmt
     CompUniqueBoundsPBWithStride bound(*this);
 
-    auto [lower, upper, stride, offset] =
-        bound.unionBoundsAndGetStride(newRange_[var]);
+    // Backends do not support these loops to be of variable lengths
+    bool requireConst = op->property_->unroll_;
 
-    if (op->property_->unroll_) {
-        // Backends do not support these loops to be of variable lengths
-        lower = makeIntConst(bound.getIntLower(lower));
-        upper = makeIntConst(bound.getIntUpper(upper));
-        if (!HashComparator{}(offset, makeIntConst(0))) {
-            stride = 1;
-            offset = makeIntConst(0);
-        }
-    }
+    if (unordered_ && op->step_->nodeType() == ASTNodeType::IntConst &&
+        op->property_->parallel_ == serialScope) {
+        auto info = bound.unionBoundsAndGetHighOrderStride(newRange_[var],
+                                                           requireConst);
+        std::unordered_set<std::string> usedNames = uni(names(), allNames(op));
+        std::unordered_map<std::string, Expr> replace;
+        Stmt ret = op->body_;
+        for (auto &&[i, item] : views::reverse(views::enumerate(info))) {
+            auto &&[lower, upper, stride, offset] = item;
 
-    // Since we can't normalize the loops (see the comment in shrinkFor), we
-    // have to handle step_ here.
-    if (op->step_->nodeType() == ASTNodeType::IntConst) {
-        auto step = op->step_.as<IntConstNode>()->val_;
-        ASSERT(stride % step == 0);
-        if (step > 0) {
-            if (lower.isValid()) {
-                if (stride > 1) {
-                    // Find the lowest integer after `lower` that remains
-                    // `offset` modulo `stride`: lowerOnOffset = lower +
-                    // ((offset - lower) % stride + stride) % stride
-                    op->begin_ = makeAdd(
-                        lower, makeMod(makeAdd(makeMod(makeSub(offset, lower),
+            // The last (first before we reverse it) iter is the original iter.
+            // Keep its name. The others are renamed.
+            auto thisIterName = op->iter_;
+            if (i != info.size() - 1) {
+                thisIterName = getNewName(op->iter_, usedNames);
+                usedNames.emplace(thisIterName);
+            }
+            replace["ft_shrink_for_tmp_" + std::to_string(i)] =
+                makeVar(thisIterName);
+
+            // Find the lowest integer after `lower` that remains `offset`
+            // modulo `stride`: lowerOnOffset = lower + ((offset - lower) %
+            // stride + stride) % stride
+            auto begin =
+                makeAdd(lower, makeMod(makeAdd(makeMod(makeSub(offset, lower),
                                                        makeIntConst(stride)),
                                                makeIntConst(stride)),
                                        makeIntConst(stride)));
-                } else {
-                    op->begin_ = lower;
-                }
-            }
-            if (upper.isValid()) {
-                op->end_ = makeAdd(upper, makeIntConst(1));
-            }
-            op->step_ = makeIntConst(stride);
-            op->len_ = makeCeilDiv(makeSub(op->end_, op->begin_), op->step_);
-        } else if (step < 0) {
-            if (upper.isValid()) {
-                if (stride < -1) {
-                    // Find the highest integer before `upper` that remains
-                    // `offset` modulo `stride`: upperOnOffset = upper -
-                    // ((upper - offset) % stride + stride) % stride
-                    op->begin_ = makeSub(
-                        upper, makeMod(makeAdd(makeMod(makeSub(upper, offset),
-                                                       makeIntConst(stride)),
-                                               makeIntConst(stride)),
-                                       makeIntConst(stride)));
-                } else {
-                    op->begin_ = upper;
-                }
-            }
-            if (lower.isValid()) {
-                op->end_ = makeAdd(lower, makeIntConst(-1));
-            }
-            op->step_ = makeIntConst(-stride);
-            op->len_ = makeCeilDiv(makeSub(op->end_, op->begin_), op->step_);
-        }
-    }
+            auto end = makeAdd(upper, makeIntConst(1));
+            auto step = makeIntConst(stride);
+            auto len = makeCeilDiv(makeSub(end, begin), step);
 
-    return op;
+            ret = makeFor(thisIterName, std::move(begin), std::move(end),
+                          std::move(step), std::move(len), op->property_,
+                          std::move(ret));
+        }
+        ret = ReplaceIter{replace}(ret);
+
+        // Assign the old ID and metadata to the outer-most new loop
+        ret->setId(op->id());
+        ret->metadata() = op->metadata();
+
+        return ret;
+
+    } else {
+        auto [lower, upper, stride, offset] =
+            bound.unionBoundsAndGetStride(newRange_[var], requireConst);
+
+        // Since we can't normalize the loops (see the comment in shrinkFor), we
+        // have to handle step_ here.
+        if (op->step_->nodeType() == ASTNodeType::IntConst) {
+            auto step = op->step_.as<IntConstNode>()->val_;
+            ASSERT(stride % step == 0);
+            if (step > 0) {
+                if (lower.isValid()) {
+                    if (stride > 1) {
+                        // Find the lowest integer after `lower` that remains
+                        // `offset` modulo `stride`: lowerOnOffset = lower +
+                        // ((offset - lower) % stride + stride) % stride
+                        op->begin_ = makeAdd(
+                            lower,
+                            makeMod(makeAdd(makeMod(makeSub(offset, lower),
+                                                    makeIntConst(stride)),
+                                            makeIntConst(stride)),
+                                    makeIntConst(stride)));
+                    } else {
+                        op->begin_ = lower;
+                    }
+                }
+                if (upper.isValid()) {
+                    op->end_ = makeAdd(upper, makeIntConst(1));
+                }
+                op->step_ = makeIntConst(stride);
+                op->len_ =
+                    makeCeilDiv(makeSub(op->end_, op->begin_), op->step_);
+            } else if (step < 0) {
+                if (upper.isValid()) {
+                    if (stride < -1) {
+                        // Find the highest integer before `upper` that remains
+                        // `offset` modulo `stride`: upperOnOffset = upper -
+                        // ((upper - offset) % stride + stride) % stride
+                        op->begin_ = makeSub(
+                            upper,
+                            makeMod(makeAdd(makeMod(makeSub(upper, offset),
+                                                    makeIntConst(stride)),
+                                            makeIntConst(stride)),
+                                    makeIntConst(stride)));
+                    } else {
+                        op->begin_ = upper;
+                    }
+                }
+                if (lower.isValid()) {
+                    op->end_ = makeAdd(lower, makeIntConst(-1));
+                }
+                op->step_ = makeIntConst(-stride);
+                op->len_ =
+                    makeCeilDiv(makeSub(op->end_, op->begin_), op->step_);
+            }
+        }
+
+        return op;
+    }
 }
 
 void ShrinkFor::setSubAST(const Stmt &subAST) {
@@ -214,7 +364,8 @@ void ShrinkFor::setSubAST(const Stmt &subAST) {
         subASTAncestors_.insert(s);
 }
 
-Stmt shrinkFor(const Stmt &_op, const ID &_subAST, bool doSimplify) {
+Stmt shrinkFor(const Stmt &_op, const ID &_subAST, bool doSimplify,
+               bool unordered) {
     auto op = _op;
     auto subAST = _subAST;
 
@@ -241,13 +392,21 @@ Stmt shrinkFor(const Stmt &_op, const ID &_subAST, bool doSimplify) {
         subAST = newSubAST.isValid() ? newSubAST->id() : ID();
     }
 
-    ShrinkFor shrinker;
+    ShrinkFor shrinker{unordered};
     if (subAST.isValid())
         shrinker.setSubAST(findStmt(op, subAST));
     op = shrinker(op);
 
+    // Ranges from lifting are often quite strange. We'd better normalize them
+    if (unordered) {
+        op = normalizeLoops(op, [&](const For &loop) {
+            return subAST.isValid() ? loop->ancestorById(subAST).isValid()
+                                    : true;
+        });
+    }
+
     if (doSimplify) // Make new ranges simple + remove redundant branches
-        op = simplify(z3Simplify(op));
+        op = simplify(pbSimplify(z3Simplify(op)));
 
     return op;
 }
