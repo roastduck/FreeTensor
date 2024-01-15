@@ -15,7 +15,8 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
          hexFloat_ = false, parenDespitePriority_ = false,
          printSourceLocation_ = false;
     const std::unordered_set<std::string> keywords = {
-        "if", "else", "for", "in", "assert", "assume", "func", "true", "false",
+        "if",     "else",   "for",    "from", "until", "step",
+        "length", "assert", "assume", "func", "true",  "false",
     };
 
     /**
