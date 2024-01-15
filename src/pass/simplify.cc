@@ -726,6 +726,7 @@ Expr SimplifyPass::visit(const IfExpr &_op) {
     }
     ASSERT(__op->nodeType() == ASTNodeType::IfExpr);
     auto op = __op.as<IfExprNode>();
+
     if (op->cond_->nodeType() == ASTNodeType::BoolConst) {
         if (op->cond_.as<BoolConstNode>()->val_) {
             return op->thenCase_;
@@ -733,6 +734,79 @@ Expr SimplifyPass::visit(const IfExpr &_op) {
             return op->elseCase_;
         }
     }
+
+    if (HashComparator{}(op->thenCase_, op->elseCase_)) {
+        return op->thenCase_;
+    }
+
+    if (op->thenCase_->nodeType() == op->elseCase_->nodeType()) {
+        if (op->thenCase_->isUnary()) {
+            return makeUnary(
+                op->thenCase_->nodeType(),
+                makeIfExpr(op->cond_, op->thenCase_.as<UnaryExprNode>()->expr_,
+                           op->elseCase_.as<UnaryExprNode>()->expr_));
+        } else if (op->thenCase_->isBinary()) {
+            auto &&thenCase = op->thenCase_.as<BinaryExprNode>();
+            auto &&elseCase = op->elseCase_.as<BinaryExprNode>();
+            if (HashComparator{}(thenCase->lhs_, elseCase->lhs_)) {
+                return makeBinary(
+                    thenCase->nodeType(), thenCase->lhs_,
+                    makeIfExpr(op->cond_, thenCase->rhs_, elseCase->rhs_));
+            } else if (HashComparator{}(thenCase->rhs_, elseCase->rhs_)) {
+                return makeBinary(
+                    thenCase->nodeType(),
+                    makeIfExpr(op->cond_, thenCase->lhs_, elseCase->lhs_),
+                    thenCase->rhs_);
+            } else if (thenCase->isCommutative()) {
+                if (HashComparator{}(thenCase->lhs_, elseCase->rhs_)) {
+                    return makeBinary(
+                        thenCase->nodeType(), thenCase->lhs_,
+                        makeIfExpr(op->cond_, thenCase->rhs_, elseCase->lhs_));
+                } else if (HashComparator{}(thenCase->rhs_, elseCase->lhs_)) {
+                    return makeBinary(
+                        thenCase->nodeType(), thenCase->rhs_,
+                        makeIfExpr(op->cond_, thenCase->lhs_, elseCase->rhs_));
+                }
+            }
+        } else if (op->thenCase_->nodeType() == ASTNodeType::Cast) {
+            auto &&thenCase = op->thenCase_.as<CastNode>();
+            auto &&elseCase = op->elseCase_.as<CastNode>();
+            if (thenCase->destType_ == elseCase->destType_) {
+                return makeCast(
+                    makeIfExpr(op->cond_, thenCase->expr_, elseCase->expr_),
+                    thenCase->destType_);
+            }
+        } else if (op->thenCase_->nodeType() == ASTNodeType::Load) {
+            auto &&thenCase = op->thenCase_.as<LoadNode>();
+            auto &&elseCase = op->elseCase_.as<LoadNode>();
+            if (thenCase->var_ == elseCase->var_) {
+                // Since `var_` is the same, these must be the same
+                ASSERT(thenCase->indices_.size() == elseCase->indices_.size());
+                ASSERT(thenCase->loadType_ == elseCase->loadType_);
+                int diffCnt = 0;
+                std::vector<Expr> indices;
+                indices.reserve(thenCase->indices_.size());
+                for (auto &&[thenItem, elseItem] :
+                     views::zip(thenCase->indices_, elseCase->indices_)) {
+                    if (HashComparator{}(thenItem, elseItem)) {
+                        indices.emplace_back(thenItem);
+                    } else {
+                        diffCnt++;
+                        indices.emplace_back(
+                            makeIfExpr(op->cond_, thenItem, elseItem));
+                    }
+                }
+                if (diffCnt <= 1) {
+                    return makeLoad(thenCase->var_, std::move(indices),
+                                    thenCase->loadType_);
+                }
+            }
+        }
+        // TODO: We can also handle `Intrinsic`, but we must properly deal with
+        // `hasSideEffect_`, and check for data type in case of `... ?
+        // intrinsic(..., type_a) : intrinsic(..., type_b)`.
+    }
+
     return op;
 }
 
