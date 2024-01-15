@@ -13,9 +13,7 @@
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
-#include <pass/annotate_conds.h>
 #include <pass/const_fold.h>
-#include <pass/flatten_stmt_seq.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -41,9 +39,27 @@ class FindInnerMostScope : public Visitor {
 int findInnerMostScope(const std::unordered_map<std::string, int> &varScope,
                        const Expr &op);
 
-// NOTE: We use ConstFold because we cannot rely the bound analysis for constant
-// propagation. E.g f(x) + 0, where f(x) is a complex expression and it does not
-// have a bound. The "+ 0" cannot be removed by bound analysis
+/**
+ * Base class for integer simplify passes
+ *
+ * Simplification from 3 mechanisms:
+ *
+ * - Bound analysis from a specific subclass of `CompUniqueBounds`. If there is
+ *   only one integer between an expression's lower bound and upper bound, then
+ *   the expression can be replaced by the integer.
+ * - Constant folding from `ConstFold`.
+ * - Simplification rules from `SimplifyPass`. This is a complement of the bound
+ *   analysis. E.g. to simplify `x + 0` as `x`, which cannot be simplified by
+ *   bound analysis if `x` has no bound.
+ *
+ * @param compUniqueBoundsFactor : A factory function creating a specific
+ * `CompUniqueBounds` instance for bound analysis.
+ * @param leafFirstBoundAnalysis : Whether to simplify sub-expressions with
+ * bound analysis before simplifying their parents. This is useful when the
+ * simplification of a sub-expression helps analyzing its parent, but will only
+ * waste time if the analysis is based on a unified representation and does not
+ * depend on the specific form of the sub-expression.
+ */
 class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
     typedef CompTransientBounds<SymbolTable<ConstFold>> BaseClass;
 
@@ -54,12 +70,15 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
     Ref<CompUniqueBounds> unique_;
     std::function<Ref<CompUniqueBounds>(const CompTransientBoundsInterface &)>
         compUniqueBoundsFactory_;
+    bool leafFirstBoundAnalysis_;
 
   public:
-    SimplifyPass(std::function<
-                 Ref<CompUniqueBounds>(const CompTransientBoundsInterface &)>
-                     compUniqueBoundsFactory)
-        : compUniqueBoundsFactory_(compUniqueBoundsFactory) {}
+    SimplifyPass(std::function<Ref<CompUniqueBounds>(
+                     const CompTransientBoundsInterface &)>
+                     compUniqueBoundsFactory,
+                 bool leafFirstBoundAnalysis)
+        : compUniqueBoundsFactory_(compUniqueBoundsFactory),
+          leafFirstBoundAnalysis_(leafFirstBoundAnalysis) {}
 
   private:
     template <class T> bool equals(const Expr &op, T &&val) const {
@@ -105,48 +124,41 @@ class SimplifyPass : public CompTransientBounds<SymbolTable<ConstFold>> {
 class BuiltinSimplify : public SimplifyPass {
   public:
     BuiltinSimplify()
-        : SimplifyPass([](const CompTransientBoundsInterface &tr) {
-              return Ref<CompUniqueBoundsCombination>::make(tr);
-          }) {}
+        : SimplifyPass(
+              [](const CompTransientBoundsInterface &tr) {
+                  return Ref<CompUniqueBoundsCombination>::make(tr);
+              },
+              true) {}
 };
 
 class PBSimplify : public SimplifyPass {
   public:
     PBSimplify()
-        : SimplifyPass([](const CompTransientBoundsInterface &tr) {
-              return Ref<CompUniqueBoundsPB>::make(tr);
-          }) {}
+        : SimplifyPass(
+              [](const CompTransientBoundsInterface &tr) {
+                  return Ref<CompUniqueBoundsPB>::make(tr);
+              },
+              false) {}
 };
 
 /**
- * Simplify a program and compute bounds of each expressions
+ * Simplify integer expressions in a program
+ *
+ * `builtinSimplify` and `simplify` uses `CompUniqueBoundsCombination` to
+ * simplify the program. `pbSimplify` uses `CompUniqueBoundsPB` to simplify the
+ * program.
  *
  * This pass can only be applied on a complete program, instead of a single
  * expression, because it examines VarDef nodes of each Var
  *
- * @return : {simplified, lower, upper}
+ * @return : The simplified AST
+ *
+ * @{
  */
-template <class Simplifier> Stmt simplifyImpl(const Stmt &_op) {
-    auto op = _op;
-
-    for (int i = 0;; i++) {
-        auto newOp = annotateConds(op);
-        newOp = Simplifier()(newOp);
-        newOp = flattenStmtSeq(newOp);
-        if (HashComparator()(newOp, op) || i > 100) {
-            if (i > 100) {
-                WARNING("pass/simplify iterates over 100 rounds. Maybe there "
-                        "is a bug");
-            }
-            return newOp;
-        }
-        op = newOp;
-    }
-}
-
 Stmt builtinSimplify(const Stmt &op);
 Stmt pbSimplify(const Stmt &op);
 Stmt simplify(const Stmt &op);
+/** @} */
 
 DEFINE_PASS_FOR_FUNC(builtinSimplify)
 DEFINE_PASS_FOR_FUNC(pbSimplify)

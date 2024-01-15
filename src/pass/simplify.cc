@@ -5,6 +5,7 @@
 #include <except.h>
 #include <math/min_max.h>
 #include <math/utils.h>
+#include <pass/annotate_conds.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
@@ -153,24 +154,35 @@ Stmt SimplifyPass::visitStmt(const Stmt &op) {
 }
 
 Expr SimplifyPass::visitExpr(const Expr &_op) {
-    auto op = BaseClass::visitExpr(_op);
-
-    // To avoid divergence
-    if (!HashComparator()(op, _op)) {
-        // E.g.
-        // (1) a[0 - 0] -> a[0]
-        // (2) (1 + 1) * a[0] -> 2 * a[0 - 0], because of the old bound
-        return op;
-    }
-
-    if (auto bound = unique_->getBound(op); bound.isValid()) {
-        Expr best = bound->simplestExpr(op, varScope_);
-        if (best.isValid() && !HashComparator()(best, op)) {
-            return best;
+    if (isInt(_op->dtype())) {
+        if (leafFirstBoundAnalysis_) {
+            auto op = BaseClass::visitExpr(_op);
+            if (!HashComparator()(op, _op)) {
+                // To avoid divergence
+                // E.g.
+                // (1) a[0 - 0] -> a[0]
+                // (2) (1 + 1) * a[0] -> 2 * a[0 - 0], because of the old bound
+                return op;
+            }
+            if (auto bound = unique_->getBound(op); bound.isValid()) {
+                Expr best = bound->simplestExpr(op, varScope_);
+                if (best.isValid() && !HashComparator()(best, op)) {
+                    return best;
+                }
+            }
+            return op;
+        } else {
+            if (auto bound = unique_->getBound(_op); bound.isValid()) {
+                Expr best = bound->simplestExpr(_op, varScope_);
+                if (best.isValid() && !HashComparator()(best, _op)) {
+                    return best;
+                }
+            }
+            return BaseClass::visitExpr(_op);
         }
-    }
 
-    if (_op->dtype() == DataType::Bool) {
+    } else if (isBool(_op->dtype())) {
+        auto op = BaseClass::visitExpr(_op);
         if (auto p = _op->parentExpr();
             !p.isValid() || p->dtype() != DataType::Bool) {
             // this is base bool expr
@@ -179,8 +191,11 @@ Expr SimplifyPass::visitExpr(const Expr &_op) {
                 op = normalized;
             }
         }
+        return op;
+
+    } else {
+        return BaseClass::visitExpr(_op);
     }
-    return op;
 }
 
 Expr SimplifyPass::visit(const Add &_op) {
@@ -844,6 +859,24 @@ Stmt SimplifyPass::visit(const Assert &_op) {
         }
     }
     return op;
+}
+
+template <class Simplifier> static Stmt simplifyImpl(const Stmt &_op) {
+    auto op = _op;
+
+    for (int i = 0;; i++) {
+        auto newOp = annotateConds(op);
+        newOp = Simplifier()(newOp);
+        newOp = flattenStmtSeq(newOp);
+        if (HashComparator()(newOp, op) || i > 100) {
+            if (i > 100) {
+                WARNING("pass/simplify iterates over 100 rounds. Maybe there "
+                        "is a bug");
+            }
+            return newOp;
+        }
+        op = newOp;
+    }
 }
 
 Stmt builtinSimplify(const Stmt &op) {

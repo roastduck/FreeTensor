@@ -119,8 +119,12 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
 
     // remove one axis at a time, try until it's not single valued
     auto restrictedBound = bound_;
-    int minScopeLevel = INT_MAX;
+    int minScopeLevel = INT_MAX,
+        oldScopeLevel = countScope(reference, orderedScope);
     for (auto &&[axis, scopeLevel] : axesScopeLevel) {
+        if (scopeLevel > oldScopeLevel) {
+            continue;
+        }
         auto newRestrictedBound =
             projectOutParamById(std::move(restrictedBound), axis);
         if (!newRestrictedBound.isSingleValued())
@@ -132,7 +136,7 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
     if (!resultExpr.isValid()) {
         return nullptr;
     }
-    auto isSimplier = minScopeLevel < countScope(reference, orderedScope) ||
+    auto isSimplier = minScopeLevel < oldScopeLevel ||
                       countHeavyOps(resultExpr) < countHeavyOps(reference);
     return isSimplier ? resultExpr : nullptr;
 }
