@@ -39,8 +39,9 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
     typedef TrackStmt<SymbolTable<Mutator>> BaseClass;
 
     ID nest_;
+    const PBCtx &presburger_;
     const std::vector<For> &orderedScopes_;
-    const std::unordered_map<ID, PBMap> &scope2Idx2Iter;
+    const std::unordered_map<ID, PBMap> &scope2Idx2Iter_;
 
     ID newNestId_;
     std::vector<std::string> newIterNames_;
@@ -54,10 +55,11 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
     std::unordered_map<ID, std::vector<std::vector<Expr>>> threadGuard_;
 
   public:
-    AddParScopes(const ID &nest, const std::vector<For> &orderedScopes,
+    AddParScopes(const ID &nest, const PBCtx &presburger,
+                 const std::vector<For> &orderedScopes,
                  const std::unordered_map<ID, PBMap> &scope2Idx2Iter)
-        : nest_(nest), orderedScopes_(orderedScopes),
-          scope2Idx2Iter(scope2Idx2Iter) {}
+        : nest_(nest), presburger_(presburger), orderedScopes_(orderedScopes),
+          scope2Idx2Iter_(scope2Idx2Iter) {}
 
     const auto &newScopeIds() const { return newScopeIds_; }
     const auto &newNestId() const { return newNestId_; }
@@ -69,10 +71,11 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
             thisThreadGuard.reserve(orderedScopes_.size());
             for (auto &&[scope, newIterName] :
                  views::zip(orderedScopes_, newIterNames_)) {
-                auto &&idx2iter = scope2Idx2Iter.at(scope->id());
+                auto &&idx2iter = coalesce(scope2Idx2Iter_.at(scope->id()));
                 SimplePBFuncAST f;
                 try {
-                    f = parseSimplePBFunc(toString(PBFunc(idx2iter)));
+                    f = parseSimplePBFuncReconstructMinMax(presburger_,
+                                                           idx2iter);
                 } catch (const ParserError &e) {
                     throw InvalidSchedule(
                         FT_MSG << "Thread mapping is not a simple function: "
@@ -258,11 +261,19 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
         }
     }
 
-    AddParScopes adder{nest, orderedScopes, scope2Idx2Iter};
+    AddParScopes adder{nest, presburger, orderedScopes, scope2Idx2Iter};
     ast = adder(ast);
 
-    // Shrink original loops in `nest` according to the gaurds with just add
-    ast = shrinkFor(ast, adder.newNestId());
+    // Shrink original loops in `nest` according to the gaurds with just add. If
+    // the loop does not carry dependences, we can use a more aggressive
+    // "unordered" shrinking.
+    std::vector<FindDepsDir> dirs;
+    for (auto &&s : findAllStmt(ast, "(<For><<-" + toString(nest) + ")|" +
+                                         toString(nest))) {
+        dirs.push_back({{s->id(), DepDirection::Normal}});
+    }
+    bool unordered = !FindDeps().direction(dirs).filterSubAST(nest).exists(ast);
+    ast = shrinkFor(ast, nest, true, unordered);
 
     for (auto &&[id, scope] : views::zip(adder.newScopeIds(), orderedScopes)) {
         ast = parallelize(ast, id, scope->property_->parallel_, true);

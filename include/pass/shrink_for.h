@@ -27,6 +27,8 @@ class CheckSideEffect : public Visitor {
 class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     typedef CompTransientBounds<SymbolTable<Mutator>> BaseClass;
 
+    bool unordered_;
+
     ASTHashMap<Var, std::vector<Ref<CompUniqueBounds::Bound>>> newRange_;
     std::vector<Var> iterStack_;
     std::vector<std::unordered_set<std::string>> namesStack_;
@@ -36,6 +38,8 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
     bool inSubAST_ = false;
 
   public:
+    ShrinkFor(bool unordered = false) : unordered_(unordered) {}
+
     void setSubAST(const Stmt &subAST);
 
   protected:
@@ -63,13 +67,19 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
  * @param doSimplify : If true, run simplify before and after the tranformation.
  * Transformations are required to ensure the effectiveness of the shrinking.
  * Please do your own simplification if you want to set it to false.
+ * @param unordered : If true, shrink the loops aggressively which does NOT
+ * preserve the iterating order. The caller should guarantee the correctness.
+ * This is effective when the pattern of redundant iterations is complex. This
+ * may also split one loop into multiple loops.
  *
  * @{
  */
-Stmt shrinkFor(const Stmt &op, const ID &subAST = ID(), bool doSimplify = true);
+Stmt shrinkFor(const Stmt &op, const ID &subAST = ID(), bool doSimplify = true,
+               bool unordered = false);
 inline Stmt shrinkFor(const Stmt &op, const Stmt &subAST,
-                      bool doSimplify = true) {
-    return shrinkFor(op, subAST.isValid() ? subAST->id() : ID(), doSimplify);
+                      bool doSimplify = true, bool unordered = false) {
+    return shrinkFor(op, subAST.isValid() ? subAST->id() : ID(), doSimplify,
+                     unordered);
 }
 /** @} */
 
