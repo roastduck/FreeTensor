@@ -771,7 +771,8 @@ Expr SimplifyPass::visit(const IfExpr &_op) {
         } else if (op->thenCase_->nodeType() == ASTNodeType::Cast) {
             auto &&thenCase = op->thenCase_.as<CastNode>();
             auto &&elseCase = op->elseCase_.as<CastNode>();
-            if (thenCase->destType_ == elseCase->destType_) {
+            if (thenCase->destType_ == elseCase->destType_ &&
+                thenCase->expr_->dtype() == elseCase->expr_->dtype()) {
                 return makeCast(
                     makeIfExpr(op->cond_, thenCase->expr_, elseCase->expr_),
                     thenCase->destType_);
