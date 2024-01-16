@@ -892,6 +892,10 @@ template <PBMapRef T> PBMap coalesce(T &&map) {
     return isl_map_coalesce(PBRefTake<T>(map));
 }
 
+template <PBSetRef T, PBSetRef U> PBSet cartesianProduct(T &&lhs, U &&rhs) {
+    return isl_set_flat_product(PBRefTake<T>(lhs), PBRefTake<U>(rhs));
+}
+
 template <PBSetRef T> PBVal dimMaxVal(T &&set, int pos) {
     return isl_set_dim_max_val(PBRefTake<T>(set), pos);
 }

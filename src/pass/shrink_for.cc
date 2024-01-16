@@ -70,8 +70,8 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
     CompUniqueBoundsPBWithStride(const CompTransientBoundsInterface &transients)
         : CompUniqueBoundsPB(transients) {}
 
-    std::tuple<Expr /* lower */, Expr /* upper */, int64_t /* modulo */,
-               Expr /* offset */>
+    std::tuple<Expr /* lower */, Expr /* upper */, Expr /* upper - lower */,
+               int64_t /* modulo */, Expr /* offset */>
     unionBoundsAndGetStride(
         const std::vector<Ref<CompUniqueBounds::Bound>> &bounds,
         bool requireConst) {
@@ -79,23 +79,29 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
 
         // if no bound presented, return an empty range
         if (!bound.isValid()) {
-            return {makeIntConst(0), makeIntConst(-1), 1, makeIntConst(0)};
+            return {makeIntConst(0), makeIntConst(-1), makeIntConst(0), 1,
+                    makeIntConst(0)};
         }
 
         // translate the lower and upper bounds back to expression
-        auto l =
-            requireConst ? makeIntConst(bound->lowerInt()) : bound->lowerExpr();
-        auto u =
-            requireConst ? makeIntConst(bound->upperInt()) : bound->upperExpr();
+        Expr l, u, diff;
+        if (requireConst) {
+            l = makeIntConst(bound->lowerInt());
+            u = makeIntConst(bound->upperInt());
+            diff = makeIntConst(bound->upperInt() - bound->lowerInt());
+        } else {
+            std::tie(l, u, diff) = bound->lowerUpperDiffExpr();
+        }
 
         // Addition detction for strides
         auto [strideInt, offsetExpr] = getStride(bound, requireConst);
 
-        return {l, u, strideInt, offsetExpr};
+        return {l, u, diff, strideInt, offsetExpr};
     }
 
-    std::vector<std::tuple<Expr /* lower */, Expr /* upper */,
-                           int64_t /* modulo */, Expr /* offset */>>
+    std::vector<
+        std::tuple<Expr /* lower */, Expr /* upper */, Expr /* upper - lower */,
+                   int64_t /* modulo */, Expr /* offset */>>
     unionBoundsAndGetHighOrderStride(
         const std::vector<Ref<CompUniqueBounds::Bound>> &bounds,
         bool requireConst) {
@@ -119,24 +125,36 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
             isl_map_wrap(isl_map_reverse(isl_set_unwrap(set.move()))));
 
         ASSERT(set.nDims() >= 1);
-        std::vector<std::tuple<Expr, Expr, int64_t, Expr>> ret;
+        std::vector<std::tuple<Expr, Expr, Expr, int64_t, Expr>> ret;
         ret.reserve(set.nDims());
         auto demangleMap = *bound->demangleMap_;
-        for (int i = 0;; i++) {
+        int i = 0;
+        while (true) {
             // Project onto the loop we are checking
             PBSet thisLoopSet = projectOutDims(set, 1, set.nDims() - 1);
+            if (thisLoopSet.isSingleValued() && set.nDims() > 1) {
+                // This dimension has no contribution. But the last dim in `set`
+                // must no be skipped, because it is the target loop
+                set = projectOutDims(std::move(set), 0, 1);
+                continue;
+            }
 
             auto thisLoopBound = Ref<CompUniqueBoundsPB::Bound>::make(
                 bound->ctx_,
                 Ref<std::unordered_map<std::string, Expr>>::make(demangleMap),
                 thisLoopSet);
-            auto l = requireConst ? makeIntConst(bound->lowerInt())
-                                  : thisLoopBound->lowerExpr();
-            auto u = requireConst ? makeIntConst(bound->upperInt())
-                                  : thisLoopBound->upperExpr();
+            Expr l, u, diff;
+            if (requireConst) {
+                l = makeIntConst(thisLoopBound->lowerInt());
+                u = makeIntConst(thisLoopBound->upperInt());
+                diff = makeIntConst(thisLoopBound->upperInt() -
+                                    thisLoopBound->lowerInt());
+            } else {
+                std::tie(l, u, diff) = thisLoopBound->lowerUpperDiffExpr();
+            }
             auto [strideInt, offsetExpr] =
                 getStride(thisLoopBound, requireConst);
-            ret.emplace_back(l, u, strideInt, offsetExpr);
+            ret.emplace_back(l, u, diff, strideInt, offsetExpr);
 
             if (set.nDims() == 1) {
                 break;
@@ -145,7 +163,7 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
                 // dimensions to parameter dimensions, so inner loops will be
                 // represented by outer loops. The parameter name used here is
                 // temporary, and will be replaced later.
-                auto paramName = "ft_shrink_for_tmp_" + std::to_string(i);
+                auto paramName = "ft_shrink_for_tmp_" + std::to_string(i++);
                 set = moveDimToNamedParam(*bound->ctx_, std::move(set), 0,
                                           paramName);
                 demangleMap[paramName] = makeVar(paramName);
@@ -262,7 +280,8 @@ Stmt ShrinkFor::visit(const For &_op) {
         std::unordered_map<std::string, Expr> replace;
         Stmt ret = op->body_;
         for (auto &&[i, item] : views::reverse(views::enumerate(info))) {
-            auto &&[lower, upper, stride, offset] = item;
+            auto &&[lower, upper, diff, stride, offset] = item;
+            ASSERT(stride > 0);
 
             // The last (first before we reverse it) iter is the original iter.
             // Keep its name. The others are renamed.
@@ -274,17 +293,22 @@ Stmt ShrinkFor::visit(const For &_op) {
             replace["ft_shrink_for_tmp_" + std::to_string(i)] =
                 makeVar(thisIterName);
 
-            // Find the lowest integer after `lower` that remains `offset`
-            // modulo `stride`: lowerOnOffset = lower + ((offset - lower) %
-            // stride + stride) % stride
-            auto begin =
-                makeAdd(lower, makeMod(makeAdd(makeMod(makeSub(offset, lower),
-                                                       makeIntConst(stride)),
-                                               makeIntConst(stride)),
-                                       makeIntConst(stride)));
+            auto begin = lower;
             auto end = makeAdd(upper, makeIntConst(1));
+            auto len = makeAdd(diff, makeIntConst(1));
+            if (stride > 1) {
+                // Find the lowest integer after `lower` that remains `offset`
+                // modulo `stride`: lowerOnOffset = lower + ((offset - lower) %
+                // stride + stride) % stride
+                auto begin = makeAdd(
+                    lower, makeMod(makeAdd(makeMod(makeSub(offset, lower),
+                                                   makeIntConst(stride)),
+                                           makeIntConst(stride)),
+                                   makeIntConst(stride)));
+                len = makeAdd(makeFloorDiv(diff, makeIntConst(stride)),
+                              makeIntConst(1));
+            }
             auto step = makeIntConst(stride);
-            auto len = makeCeilDiv(makeSub(end, begin), step);
 
             ret = makeFor(thisIterName, std::move(begin), std::move(end),
                           std::move(step), std::move(len), op->property_,
@@ -299,8 +323,9 @@ Stmt ShrinkFor::visit(const For &_op) {
         return ret;
 
     } else {
-        auto [lower, upper, stride, offset] =
+        auto [lower, upper, diff, stride, offset] =
             bound.unionBoundsAndGetStride(newRange_[var], requireConst);
+        ASSERT(stride > 0);
 
         // Since we can't normalize the loops (see the comment in shrinkFor), we
         // have to handle step_ here.
@@ -319,19 +344,21 @@ Stmt ShrinkFor::visit(const For &_op) {
                                                     makeIntConst(stride)),
                                             makeIntConst(stride)),
                                     makeIntConst(stride)));
+                        op->len_ =
+                            makeAdd(makeFloorDiv(diff, makeIntConst(stride)),
+                                    makeIntConst(1));
                     } else {
                         op->begin_ = lower;
+                        op->len_ = makeAdd(diff, makeIntConst(1));
                     }
                 }
                 if (upper.isValid()) {
                     op->end_ = makeAdd(upper, makeIntConst(1));
                 }
                 op->step_ = makeIntConst(stride);
-                op->len_ =
-                    makeCeilDiv(makeSub(op->end_, op->begin_), op->step_);
             } else if (step < 0) {
                 if (upper.isValid()) {
-                    if (stride < -1) {
+                    if (stride > 1) {
                         // Find the highest integer before `upper` that remains
                         // `offset` modulo `stride`: upperOnOffset = upper -
                         // ((upper - offset) % stride + stride) % stride
@@ -341,16 +368,18 @@ Stmt ShrinkFor::visit(const For &_op) {
                                                     makeIntConst(stride)),
                                             makeIntConst(stride)),
                                     makeIntConst(stride)));
+                        op->len_ =
+                            makeAdd(makeFloorDiv(diff, makeIntConst(stride)),
+                                    makeIntConst(1));
                     } else {
                         op->begin_ = upper;
+                        op->len_ = makeAdd(diff, makeIntConst(1));
                     }
                 }
                 if (lower.isValid()) {
                     op->end_ = makeAdd(lower, makeIntConst(-1));
                 }
                 op->step_ = makeIntConst(-stride);
-                op->len_ =
-                    makeCeilDiv(makeSub(op->end_, op->begin_), op->step_);
             }
         }
 

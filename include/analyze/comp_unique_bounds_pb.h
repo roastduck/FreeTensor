@@ -45,6 +45,12 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
         Expr lowerExpr() const override;
         Expr upperExpr() const override;
 
+        /**
+         * Fused function returning `lowerExpr()`, `upperExpr()` and
+         * `upperExpr() - lowerExpr()`, with less redundant computation
+         */
+        std::tuple<Expr, Expr, Expr> lowerUpperDiffExpr() const;
+
         Ref<CompUniqueBounds::Bound> restrictScope(
             const std::unordered_set<std::string> &scope) const override;
 
