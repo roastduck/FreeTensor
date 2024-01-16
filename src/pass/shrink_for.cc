@@ -303,11 +303,11 @@ Stmt ShrinkFor::visit(const For &_op) {
                 // Find the lowest integer after `lower` that remains `offset`
                 // modulo `stride`: lowerOnOffset = lower + ((offset - lower) %
                 // stride + stride) % stride
-                auto begin = makeAdd(
-                    lower, makeMod(makeAdd(makeMod(makeSub(offset, lower),
-                                                   makeIntConst(stride)),
-                                           makeIntConst(stride)),
-                                   makeIntConst(stride)));
+                begin = makeAdd(lower,
+                                makeMod(makeAdd(makeMod(makeSub(offset, lower),
+                                                        makeIntConst(stride)),
+                                                makeIntConst(stride)),
+                                        makeIntConst(stride)));
                 len = makeAdd(makeFloorDiv(diff, makeIntConst(stride)),
                               makeIntConst(1));
             }
