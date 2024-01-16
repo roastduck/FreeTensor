@@ -657,14 +657,14 @@ void PrintVisitor::visit(const For &op) {
         os() << "@!prefer_libs" << std::endl;
     }
     makeIndent();
-    os() << prettyKeyword("for ") << prettyIterName(op->iter_)
-         << prettyKeyword(" in ");
+    os() << prettyKeyword("for") << " " << prettyIterName(op->iter_) << " "
+         << prettyKeyword("from") << " ";
     recur(op->begin_);
-    os() << " : ";
+    os() << " " << prettyKeyword("until") << " ";
     recur(op->end_);
-    os() << " : ";
+    os() << " " << prettyKeyword("step") << " ";
     recur(op->step_);
-    os() << " : ";
+    os() << " " << prettyKeyword("length") << " ";
     recur(op->len_);
     os() << " ";
     beginBlock();

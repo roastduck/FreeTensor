@@ -347,7 +347,7 @@ forProperty returns [Ref<ForProperty> property]
 
 for returns [Stmt node]
     : forProperty
-        FOR var IN begin=expr ':' end=expr ':' step=expr ':' len=expr
+        FOR var FROM begin=expr UNTIL end=expr STEP step=expr LENGTH len=expr
         LBRACE stmts RBRACE
       {
           $node = makeFor($var.name, $begin.node, $end.node, $step.node, $len.node,

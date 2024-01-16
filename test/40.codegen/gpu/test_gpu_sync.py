@@ -349,11 +349,11 @@ def test_syncthreads_between_cond_and_body_of_a_branch():
     # Already normalized AST:
     ast = ft.load_ast('''
 @!parallel : @threadIdx.y
-for `.threadIdx.y` in 0 : 8 : 1 : 8 {
+for `.threadIdx.y` from 0 until 8 step 1 length 8 {
   @!parallel : @threadIdx.x
-  for `.threadIdx.x` in 0 : 32 : 1 : 32 {
+  for `.threadIdx.x` from 0 until 32 step 1 length 32 {
     @inout @gpu/global x: float32[8] @!pinned {
-      for i in 0 : 5856 : 1 : 5856 {
+      for i from 0 until 5856 step 1 length 5856 {
         if x[`.threadIdx.y`] > 0 {
           if `.threadIdx.x` == 0 {
             x[`.threadIdx.y`] = 1
@@ -1012,13 +1012,13 @@ def test_reject_dependence_between_blocks():
   @cache @gpu/global t: float32[4, 4] {
     @output @gpu/global y: float32[4, 4] {
       @!parallel : @blockIdx.x
-      for i in 0 : 4 : 1 : 4 {
+      for i from 0 until 4 step 1 length 4 {
         @!parallel : @blockIdx.y
-        for j in 0 : 4 : 1 : 4 {
+        for j from 0 until 4 step 1 length 4 {
           t[i, j] = x[i, j] * 2
         }
         @!parallel : @blockIdx.y
-        for j_1 in 0 : 4 : 1 : 4 {
+        for j_1 from 0 until 4 step 1 length 4 {
           y[i, j_1] = t[i, (j_1 + 1) % 4]
         }
       }
@@ -1034,16 +1034,16 @@ def test_dont_reject_false_dependence_between_blocks():
 @input @gpu/global x: float32[4, 4, 4] {
   @cache @gpu/global t: float32[4, 4, 4] {
     @output @gpu/global y: float32[4, 4, 4] {
-      for p in 0 : 4 : 1 : 4 {
+      for p from 0 until 4 step 1 length 4 {
         @!parallel : @blockIdx.x
-        for i in 0 : 4 : 1 : 4 {
+        for i from 0 until 4 step 1 length 4 {
           @!parallel : @blockIdx.y
-          for j in 0 : 4 : 1 : 4 {
+          for j from 0 until 4 step 1 length 4 {
             t[p, i, j] = x[p, i, j] * 2
           }
           if p > 0 {
             @!parallel : @blockIdx.y
-            for j_1 in 0 : 4 : 1 : 4 {
+            for j_1 from 0 until 4 step 1 length 4 {
               y[p, i, j_1] = t[p - 1, i, (j_1 + 1) % 4]
             }
           }
