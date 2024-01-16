@@ -86,9 +86,11 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
         // translate the lower and upper bounds back to expression
         Expr l, u, diff;
         if (requireConst) {
-            l = makeIntConst(bound->lowerInt());
-            u = makeIntConst(bound->upperInt());
-            diff = makeIntConst(bound->upperInt() - bound->lowerInt());
+            auto ll = bound->lowerInt();
+            auto uu = bound->upperInt();
+            l = makeIntConst(ll);
+            u = makeIntConst(uu);
+            diff = makeIntConst(uu - ll);
         } else {
             std::tie(l, u, diff) = bound->lowerUpperDiffExpr();
         }
@@ -145,10 +147,11 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
                 thisLoopSet);
             Expr l, u, diff;
             if (requireConst) {
-                l = makeIntConst(thisLoopBound->lowerInt());
-                u = makeIntConst(thisLoopBound->upperInt());
-                diff = makeIntConst(thisLoopBound->upperInt() -
-                                    thisLoopBound->lowerInt());
+                auto ll = thisLoopBound->lowerInt();
+                auto uu = thisLoopBound->upperInt();
+                l = makeIntConst(ll);
+                u = makeIntConst(uu);
+                diff = makeIntConst(uu - ll);
             } else {
                 std::tie(l, u, diff) = thisLoopBound->lowerUpperDiffExpr();
             }
