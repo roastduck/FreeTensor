@@ -424,8 +424,10 @@ Additional Inherited Members</h2></td></tr>
 <ul>
 <li>It can only simplify boolean expressions (e.g. remove redundant branches), but it can NOT transform an expression to a simpler form (e.g. transform x + x - x to x)</li>
 <li>It can deal with some more complex expressions, such as Mod</li>
-<li>It may take some more time </li>
+<li>It may take some more time</li>
 </ul>
+<p><a class="el" href="classfreetensor_1_1Z3Simplify.html">Z3Simplify</a> can work on a root-less sub-AST, but in this case, it will not benefit from context from the missing ancestor nodes.</p>
+<p><a class="el" href="classfreetensor_1_1Z3Simplify.html">Z3Simplify</a> is conflict with <a class="el" href="classfreetensor_1_1SymbolTable.html">SymbolTable</a>. If you want to use these two classes together, please use <code><a class="el" href="classfreetensor_1_1Z3SimplifyWithSymbolTable.html">Z3SimplifyWithSymbolTable</a></code>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a0d040e0a8e73461b0cd4163b8c3cb5ab" name="a0d040e0a8e73461b0cd4163b8c3cb5ab"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0d040e0a8e73461b0cd4163b8c3cb5ab">&#9670;&#160;</a></span>Z3Simplify()</h2>

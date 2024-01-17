@@ -1286,6 +1286,8 @@ Functions</h2></td></tr>
 <tr class="separator:a3b8e8a590d723ae73af0162154d0ba86"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adf2ac3793a7239ead053c8acb5df32cb"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a>, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#adf2ac3793a7239ead053c8acb5df32cb">normalizeConditionalExpr</a> (const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;expr)</td></tr>
 <tr class="separator:adf2ac3793a7239ead053c8acb5df32cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49d95139dd5f0834ae67e57e726ef922"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a49d95139dd5f0834ae67e57e726ef922">normalizeConditionalExprList</a> (const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;exprs)</td></tr>
+<tr class="separator:a49d95139dd5f0834ae67e57e726ef922"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c1f048f611801fa66e32f223861ff41"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="structfreetensor_1_1NodeFeature.html">NodeFeature</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a3c1f048f611801fa66e32f223861ff41">structuralFeature</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;op)</td></tr>
 <tr class="separator:a3c1f048f611801fa66e32f223861ff41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae091398240e204f37128828d143d8678"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ae091398240e204f37128828d143d8678">operator&lt;&lt;</a> (std::ostream &amp;os, <a class="el" href="namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915f">ASTNodeType</a> type)</td></tr>
@@ -15606,6 +15608,33 @@ template&lt;PBSetRef T&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>: A vector of pairs, where the first element is the value of the expression, and the second element is the condition of the expression. The condition may be null, which means the expression is always true. </dd></dl>
+
+</div>
+</div>
+<a id="a49d95139dd5f0834ae67e57e726ef922" name="a49d95139dd5f0834ae67e57e726ef922"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49d95139dd5f0834ae67e57e726ef922">&#9670;&#160;</a></span>normalizeConditionalExprList()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::pair&lt; std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt;, <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &gt; freetensor::normalizeConditionalExprList </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>exprs</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Break a list of expressions into several conditional parts.</p>
+<p>This function is used for analyzing expressions with <code>IfExpr</code> inside. The result will be several parts with conditions, where each part is no longer with <code>IfExpr</code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">exprs</td><td>: The list of expressions to be analyzed. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>: A vector of pairs, where the first element is the value of the expression list, and the second element is the condition of the expression. The condition may be null, which means the expression is always true. </dd></dl>
 
 </div>
 </div>
