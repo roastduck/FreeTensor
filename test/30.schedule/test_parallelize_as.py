@@ -133,6 +133,38 @@ def test_reference_after_nest():
     assert std.match(ast)
 
 
+def test_choosing_vardef():
+    with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
+                    ("c", (8,), "int32", "output", "cpu")]) as (a, c):
+        ft.MarkLabel("Vb")
+        with ft.VarDef("b", (8,), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 4, label="L1") as i:
+                with ft.For("j", 0, 2) as j:
+                    b[i * 2 + j] = a[i * 2 + j] * 2
+            with ft.For("i", 0, 8, label="L2") as i:
+                c[i] = b[i] + a[0]
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast, verbose=1)
+    s.parallelize("L1", "openmp")
+    s.parallelize_as("L2", "L1", "Vb")
+    ast = s.ast()
+    assert ft.find_stmt(ast, "<For>->L2").property.parallel == "openmp"
+
+    with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
+                    ("c", (8,), "int32", "output", "cpu")]) as (a, c):
+        ft.MarkLabel("Vb")
+        with ft.VarDef("b", (8,), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 4, label="L1") as i:
+                with ft.For("j", 0, 2) as j:
+                    b[i * 2 + j] = a[i * 2 + j] * 2
+            with ft.For("i", 0, 4, label="L1") as i:
+                with ft.For("j", 0, 2) as j:
+                    c[i * 2 + j] = b[i * 2 + j] + a[0]
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_multiple_levels():
     with ft.VarDef([("a", (128, 128), "int32", "input", "cpu"),
