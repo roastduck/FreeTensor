@@ -1,37 +1,55 @@
 #ifdef FT_WITH_CUDA
 
+#include <analyze/all_uses.h>
+#include <container_utils.h>
 #include <pass/gpu/simplex_buffers.h>
+#include <pass/replace_iter.h>
 #include <pass/shrink_var.h>
 
 namespace freetensor {
 
 namespace gpu {
 
-void FindSimplexOffset::visit(const For &op) {
-    if (op->property_->parallel_ == serialScope) {
-        BaseClass::visit(op);
-    } else {
-        ASSERT(!var2para_.count(op->iter_));
-        var2para_[op->iter_] = op->property_->parallel_;
-        BaseClass::visit(op);
-        var2para_.erase(op->iter_);
+Ref<SimplexOffset> FindSimplexOffset::getSimplexOffset(
+    const std::unordered_set<ParallelScope> &filter, const Expr &expr) {
+    Ref<SimplexOffset> ret = Ref<SimplexOffset>::make();
+    analyzeLinear_(expr);
+    for (auto &&[k, a] : analyzeLinear_.result().at(expr).coeff_) {
+        if (allUses(a).empty()) {
+            std::unordered_map<std::string, Expr> replace;
+            for (auto &&iter : allIters(a)) {
+                auto &&para = loop(iter)->property_->parallel_;
+                if (!filter.count(para)) {
+                    goto fail;
+                }
+                replace[iter] = makeVar(".simplex_buffers." + toString(para));
+            }
+            auto expr = makeMul(makeIntConst(k), ReplaceIter{replace}(a));
+            ASSERT(!ret->offset_.count(expr));
+            ret->offset_.emplace(expr);
+        }
+    fail:;
     }
+    return ret;
 }
 
 Stmt ApplySimplexOffset::visit(const For &op) {
     if (op->property_->parallel_ == serialScope) {
         return BaseClass::visit(op);
-    } else if (!para2var_.count(op->property_->parallel_)) {
-        para2var_[op->property_->parallel_] = op->iter_;
-        auto ret = BaseClass::visit(op);
-        para2var_.erase(op->property_->parallel_);
-        return ret;
     } else {
-        auto oldVar = para2var_[op->property_->parallel_];
-        para2var_[op->property_->parallel_] = op->iter_;
-        auto ret = BaseClass::visit(op);
-        para2var_[op->property_->parallel_] = oldVar;
-        return ret;
+        auto tmpName = ".simplex_buffers." + toString(op->property_->parallel_);
+        if (!para2var_.count(tmpName)) {
+            para2var_[tmpName] = makeVar(op->iter_);
+            auto ret = BaseClass::visit(op);
+            para2var_.erase(tmpName);
+            return ret;
+        } else {
+            auto oldVar = para2var_[tmpName];
+            para2var_[tmpName] = makeVar(op->iter_);
+            auto ret = BaseClass::visit(op);
+            para2var_[tmpName] = oldVar;
+            return ret;
+        }
     }
 }
 

@@ -113,6 +113,37 @@ using ASTHashMap = std::unordered_map<K, V, Hasher, HashComparator>;
 template <class K>
 using ASTHashSet = std::unordered_set<K, Hasher, HashComparator>;
 
+// Default operator== on std::unordered_map and std::unordered_set does not work
+// when we use custom KeyEqual, so we need to define our own. See
+// https://stackoverflow.com/questions/36167764/can-not-compare-stdunorded-set-with-custom-keyequal
+
+template <class K, class V>
+inline bool operator==(const ASTHashMap<K, V> &lhs,
+                       const ASTHashMap<K, V> &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    for (auto &&[k, v] : lhs) {
+        if (!rhs.count(k) || rhs.at(k) != v) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <class K>
+inline bool operator==(const ASTHashSet<K> &lhs, const ASTHashSet<K> &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    for (auto &&k : lhs) {
+        if (!rhs.count(k)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace freetensor
 
 namespace std {

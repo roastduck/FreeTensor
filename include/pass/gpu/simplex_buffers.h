@@ -9,7 +9,9 @@
 #include <analyze/symbol_table.h>
 #include <container_utils.h>
 #include <func.h>
+#include <hash.h>
 #include <mutator.h>
+#include <pass/replace_iter.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -17,7 +19,7 @@ namespace freetensor {
 namespace gpu {
 
 struct SimplexOffset {
-    std::unordered_map<ParallelScope, int> offset_; // parallel scope -> offset
+    ASTHashSet<Expr> offset_;
 };
 
 class FindSimplexOffset : public SymbolTable<Visitor> {
@@ -26,7 +28,6 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
     ID defId_;
     std::unordered_map<ID, std::vector<Ref<SimplexOffset>>>
         offsets_; // def ID -> [offset for each index]
-    std::unordered_map<std::string, ParallelScope> var2para_;
     AnalyzeLinear analyzeLinear_;
 
   public:
@@ -40,21 +41,7 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
   private:
     Ref<SimplexOffset>
     getSimplexOffset(const std::unordered_set<ParallelScope> &filter,
-                     const Expr &expr) {
-        Ref<SimplexOffset> ret = Ref<SimplexOffset>::make();
-        analyzeLinear_(expr);
-        for (auto &&[k, a] : analyzeLinear_.result().at(expr).coeff_) {
-            if (a->nodeType() == ASTNodeType::Var) {
-                auto var = a.as<VarNode>();
-                if (var2para_.count(var->name_) &&
-                    filter.count(var2para_.at(var->name_))) {
-                    ASSERT(!ret->offset_.count(var2para_.at(var->name_)));
-                    ret->offset_[var2para_.at(var->name_)] = k;
-                }
-            }
-        }
-        return ret;
-    }
+                     const Expr &expr);
 
     template <class T> void visitMemAcc(const T &op) {
         BaseClass::visit(op);
@@ -100,7 +87,6 @@ class FindSimplexOffset : public SymbolTable<Visitor> {
 
   protected:
     using BaseClass::visit;
-    void visit(const For &op) override;
     void visit(const Load &op) override { visitMemAcc(op); }
     void visit(const Store &op) override { visitMemAcc(op); }
     void visit(const ReduceTo &op) override { visitMemAcc(op); }
@@ -111,7 +97,7 @@ class ApplySimplexOffset : public SymbolTable<Mutator> {
 
     const std::unordered_map<ID, std::vector<Ref<SimplexOffset>>>
         &offsets_; // def ID -> [offset for each index]
-    std::unordered_map<ParallelScope, std::string> para2var_;
+    std::unordered_map<std::string, Expr> para2var_;
 
   public:
     ApplySimplexOffset(
@@ -130,10 +116,8 @@ class ApplySimplexOffset : public SymbolTable<Mutator> {
             ASSERT(offset.size() == op->indices_.size());
             for (auto &&[off, idx] : views::zip(offset, op->indices_)) {
                 if (off.isValid()) {
-                    for (auto &&[scope, k] : off->offset_) {
-                        idx =
-                            makeSub(idx, makeMul(makeIntConst(k),
-                                                 makeVar(para2var_.at(scope))));
+                    for (auto &&expr : off->offset_) {
+                        idx = makeSub(idx, ReplaceIter{para2var_}(expr));
                     }
                 }
             }
