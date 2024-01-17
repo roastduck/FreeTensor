@@ -477,3 +477,21 @@ def test_no_merge_if_outer_iter_var_is_used_in_inner():
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
         s.reorder(["L2", "L1"])
+
+
+def test_if_expr():
+    with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                y[i * 8 + j + ft.if_then_else(i <= 1, 16, -16)] = i + j
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
+        with ft.For("j", 0, 8, label="L2") as j:
+            with ft.For("i", 0, 4, label="L1") as i:
+                y[i * 8 + j + ft.if_then_else(i <= 1, 16, -16)] = i + j
+    std = ft.pop_ast()
+
+    assert std.match(ast)

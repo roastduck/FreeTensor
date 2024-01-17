@@ -361,10 +361,10 @@ class AnalyzeDeps {
     static std::string makeIterList(const std::vector<IterAxis> &list, int n);
     static std::string makeNegIterMap(const std::vector<IterAxis> &list, int n);
     static std::string makeNdList(const std::string &name, int n);
-    static std::string makeAccList(GenPBExpr &genPBExpr,
-                                   const std::vector<Expr> &list,
-                                   RelaxMode relax,
-                                   GenPBExpr::VarMap &externals);
+    static std::vector<
+        std::pair<std::string /* list */, std::string /* cond */>>
+    makeAccList(GenPBExpr &genPBExpr, const std::vector<Expr> &list,
+                RelaxMode relax, GenPBExpr::VarMap &externals);
     static std::string makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
                                 GenPBExpr::VarMap &externals,
                                 bool eraseOutsideVarDef, const AccessPoint &ap);

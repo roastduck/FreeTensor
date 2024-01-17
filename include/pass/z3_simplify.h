@@ -25,6 +25,12 @@ namespace freetensor {
  * x - x to x)
  * - It can deal with some more complex expressions, such as Mod
  * - It may take some more time
+ *
+ * Z3Simplify can work on a root-less sub-AST, but in this case, it will not
+ * benefit from context from the missing ancestor nodes.
+ *
+ * Z3Simplify is conflict with SymbolTable. If you want to use these two classes
+ * together, please use `Z3SimplifyWithSymbolTable`.
  */
 class Z3Simplify : public Mutator {
     typedef Mutator BaseClass;
@@ -103,6 +109,9 @@ class Z3Simplify : public Mutator {
     Stmt visit(const For &op) override;
 };
 
+/**
+ * Compatible inheritence of both Z3Simplify and SymbolTable
+ */
 class Z3SimplifyWithSymbolTable : public Z3Simplify,
                                   public SymbolTableInterface {
     SymbolTableData symbols_;

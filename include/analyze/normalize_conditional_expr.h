@@ -22,6 +22,22 @@ namespace freetensor {
 std::vector<std::pair<Expr /* value */, Expr /* condition, maybe null */>>
 normalizeConditionalExpr(const Expr &expr);
 
+/**
+ * Break a list of expressions into several conditional parts.
+ *
+ * This function is used for analyzing expressions with `IfExpr` inside. The
+ * result will be several parts with conditions, where each part is no longer
+ * with `IfExpr`.
+ *
+ * @param exprs : The list of expressions to be analyzed.
+ * @return : A vector of pairs, where the first element is the value of the
+ * expression list, and the second element is the condition of the expression.
+ * The condition may be null, which means the expression is always true.
+ */
+std::vector<
+    std::pair<std::vector<Expr> /* values */, Expr /* condition, maybe null */>>
+normalizeConditionalExprList(const std::vector<Expr> &exprs);
+
 } // namespace freetensor
 
 #endif // FREE_TENSOR_NORMALIZE_CONDITIONAL_EXPR_H

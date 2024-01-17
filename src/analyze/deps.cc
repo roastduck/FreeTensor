@@ -4,6 +4,7 @@
 #include <analyze/all_uses.h>
 #include <analyze/deps.h>
 #include <analyze/find_stmt.h>
+#include <analyze/normalize_conditional_expr.h>
 #include <container_utils.h>
 #include <disjoint_set.h>
 #include <except.h>
@@ -316,24 +317,36 @@ std::string AnalyzeDeps::makeNegIterMap(const std::vector<IterAxis> &list,
     return "{[" + lhs + "] -> [" + rhs + "]}";
 }
 
-std::string AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr,
-                                     const std::vector<Expr> &list,
-                                     RelaxMode relax,
-                                     GenPBExpr::VarMap &externals) {
-    std::string ret;
-    for (int i = 0, iEnd = list.size(); i < iEnd; i++) {
-        auto &&[linstr, vars] = genPBExpr.gen(list[i]);
-        ret += linstr;
-        for (auto &&[expr, str] : vars) {
-            if (expr->nodeType() != ASTNodeType::Var) {
-                externals[expr] = str;
+std::vector<std::pair<std::string /* list */, std::string /* cond */>>
+AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr, const std::vector<Expr> &list,
+                         RelaxMode relax, GenPBExpr::VarMap &externals) {
+    std::vector<std::pair<std::string, std::string>> ret;
+    for (auto &&[l, c] : normalizeConditionalExprList(list)) {
+        std::ostringstream os;
+        os << "[";
+        for (auto &&[i, item] : views::enumerate(l)) {
+            auto &&[linstr, vars] = genPBExpr.gen(item);
+            os << (i > 0 ? ", " : "") << linstr;
+            for (auto &&[expr, str] : vars) {
+                if (expr->nodeType() != ASTNodeType::Var) {
+                    externals[expr] = str;
+                }
             }
         }
-        if (i < iEnd - 1) {
-            ret += ", ";
+        os << "]";
+        std::string condStr;
+        if (c.isValid()) {
+            GenPBExpr::VarMap condVars;
+            std::tie(condStr, condVars) = genPBExpr.gen(c);
+            for (auto &&[expr, str] : condVars) {
+                if (expr->nodeType() != ASTNodeType::Var) {
+                    externals[expr] = str;
+                }
+            }
         }
+        ret.emplace_back(os.str(), condStr);
     }
-    return "[" + ret + "]";
+    return ret;
 }
 
 std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
@@ -424,11 +437,20 @@ PBMap AnalyzeDeps::makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
                                     const ASTHashSet<Expr> &noNeedToBeVars,
                                     bool eraseOutsideVarDef) {
     GenPBExpr genPBExpr(extSuffix, noNeedToBeVars);
-    auto ret = makeIterList(p.iter_, iterDim) + " -> " +
-               makeAccList(genPBExpr, p.access_, relax, externals);
-    if (auto str = makeCond(genPBExpr, relax, externals, eraseOutsideVarDef, p);
-        !str.empty()) {
-        ret += ": " + str;
+    auto iterList = makeIterList(p.iter_, iterDim);
+    auto condStr = makeCond(genPBExpr, relax, externals, eraseOutsideVarDef, p);
+    auto accListFactors = makeAccList(genPBExpr, p.access_, relax, externals);
+    std::ostringstream os;
+    for (auto &&[i, factor] : views::enumerate(accListFactors)) {
+        auto &&[accList, accCond] = factor;
+        os << (i > 0 ? "; " : "") << iterList << " -> " << accList;
+        auto cond = !condStr.empty() && !accCond.empty()
+                        ? condStr + " and " + accCond
+                    : !condStr.empty() ? condStr
+                                       : accCond;
+        if (!cond.empty()) {
+            os << ": " << cond;
+        }
     }
     std::string ext;
     if (!externals.empty()) {
@@ -439,7 +461,7 @@ PBMap AnalyzeDeps::makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
         }
         ext = "[" + ext + "] -> ";
     }
-    ret = ext + "{" + ret + "}";
+    auto ret = ext + "{" + os.str() + "}";
     auto unordered = PBMap(presburger, ret);
     auto negIterMap = PBMap(presburger, makeNegIterMap(p.iter_, iterDim));
     auto ordered = applyDomain(std::move(unordered), std::move(negIterMap));
