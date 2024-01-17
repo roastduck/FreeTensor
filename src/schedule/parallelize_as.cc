@@ -119,7 +119,7 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
     Stmt visitStmt(const Stmt &s) override {
         if (s->id() == nest_) {
             auto usedNames = uni(names(), allNames(s));
-            for (auto &&scope : views::reverse(orderedScopes_)) {
+            for (auto &&scope : orderedScopes_) {
                 auto newIterName = getNewName(scope->iter_, usedNames);
                 usedNames.emplace(newIterName);
                 newIterNames_.emplace_back(newIterName);

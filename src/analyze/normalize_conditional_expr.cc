@@ -181,4 +181,27 @@ normalizeConditionalExpr(const Expr &expr) {
     return ret;
 }
 
+std::vector<
+    std::pair<std::vector<Expr> /* values */, Expr /* condition, maybe null */>>
+normalizeConditionalExprList(const std::vector<Expr> &exprs) {
+    std::vector<std::pair<std::vector<Expr>, Expr>> result;
+    std::vector<Expr> items, conds;
+    std::function<void()> recurse = [&]() {
+        if (items.size() == exprs.size()) {
+            result.emplace_back(items, combineCond(conds));
+        } else {
+            for (const auto &kv :
+                 normalizeConditionalExpr(exprs[items.size()])) {
+                items.emplace_back(kv.first);
+                conds.emplace_back(kv.second);
+                recurse();
+                items.pop_back();
+                conds.pop_back();
+            }
+        }
+    };
+    recurse();
+    return result;
+}
+
 } // namespace freetensor
