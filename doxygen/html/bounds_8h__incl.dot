@@ -44,11 +44,14 @@ digraph "include/math/bounds.h"
   Node17 [label="source_location",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node14 -> Node10 [color="steelblue1",style="solid"];
   Node14 -> Node18 [color="steelblue1",style="solid"];
-  Node18 [label="id.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$id_8h.html",tooltip=" "];
+  Node18 [label="id.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$id_8h.html",tooltip=" "];
   Node18 -> Node15 [color="steelblue1",style="solid"];
   Node18 -> Node16 [color="steelblue1",style="solid"];
   Node18 -> Node2 [color="steelblue1",style="solid"];
   Node18 -> Node3 [color="steelblue1",style="solid"];
+  Node18 -> Node19 [color="steelblue1",style="solid"];
+  Node19 [label="serialize/stream_utils.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$stream__utils_8h.html",tooltip=" "];
+  Node19 -> Node2 [color="steelblue1",style="solid"];
   Node14 -> Node20 [color="steelblue1",style="solid"];
   Node20 [label="metadata.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$metadata_8h.html",tooltip=" "];
   Node20 -> Node15 [color="steelblue1",style="solid"];
@@ -61,8 +64,6 @@ digraph "include/math/bounds.h"
   Node20 -> Node22 [color="steelblue1",style="solid"];
   Node22 [label="ref.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$ref_8h.html",tooltip=" "];
   Node22 -> Node16 [color="steelblue1",style="solid"];
-  Node22 -> Node24 [color="steelblue1",style="solid"];
-  Node24 [label="type_traits",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node22 -> Node28 [color="steelblue1",style="solid"];
   Node28 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
   Node28 -> Node17 [color="steelblue1",style="solid"];
@@ -169,10 +170,12 @@ digraph "include/math/bounds.h"
   Node58 -> Node10 [color="steelblue1",style="solid"];
   Node58 -> Node14 [color="steelblue1",style="solid"];
   Node58 -> Node59 [color="steelblue1",style="solid"];
-  Node59 [label="debug/logger.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$logger_8h.html",tooltip=" "];
+  Node59 [label="debug/logger.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$logger_8h.html",tooltip=" "];
   Node59 -> Node2 [color="steelblue1",style="solid"];
   Node59 -> Node60 [color="steelblue1",style="solid"];
   Node60 [label="mutex",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node59 -> Node61 [color="steelblue1",style="solid"];
+  Node61 [label="thread",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node57 -> Node43 [color="steelblue1",style="solid"];
   Node57 -> Node9 [color="steelblue1",style="solid"];
   Node57 -> Node50 [color="steelblue1",style="solid"];
@@ -188,10 +191,5 @@ digraph "include/math/bounds.h"
   Node63 [label="math/rational.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$rational_8h.html",tooltip=" "];
   Node63 -> Node2 [color="steelblue1",style="solid"];
   Node63 -> Node64 [color="steelblue1",style="solid"];
-  Node64 [label="math/utils.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$utils_8h.html",tooltip=" "];
-  Node64 -> Node65 [color="steelblue1",style="solid"];
-  Node65 [label="cmath",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node64 -> Node27 [color="steelblue1",style="solid"];
-  Node64 -> Node24 [color="steelblue1",style="solid"];
-  Node64 -> Node12 [color="steelblue1",style="solid"];
+  Node64 [label="numeric",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
 }

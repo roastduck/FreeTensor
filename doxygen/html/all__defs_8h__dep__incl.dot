@@ -16,9 +16,11 @@ digraph "include/analyze/all_defs.h"
   Node1 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node6 [label="src/pass/hoist_var\l_over_stmt_seq.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$hoist__var__over__stmt__seq_8cc.html",tooltip=" "];
   Node1 -> Node7 [dir="back",color="steelblue1",style="solid"];
-  Node7 [label="src/pass/shrink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__var_8cc.html",tooltip=" "];
+  Node7 [label="src/pass/shrink_linear\l_indices.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__linear__indices_8cc.html",tooltip=" "];
   Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
-  Node8 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
+  Node8 [label="src/pass/shrink_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__var_8cc.html",tooltip=" "];
   Node1 -> Node9 [dir="back",color="steelblue1",style="solid"];
-  Node9 [label="src/schedule/auto_use\l_lib.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__use__lib_8cc.html",tooltip=" "];
+  Node9 [label="src/schedule/auto_set\l_mem_type.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__set__mem__type_8cc.html",tooltip=" "];
+  Node1 -> Node10 [dir="back",color="steelblue1",style="solid"];
+  Node10 [label="src/schedule/auto_use\l_lib.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$auto__use__lib_8cc.html",tooltip=" "];
 }

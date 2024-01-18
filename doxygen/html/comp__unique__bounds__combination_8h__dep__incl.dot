@@ -60,5 +60,7 @@ digraph "include/analyze/comp_unique_bounds_combination.h"
   Node1 -> Node8 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node9 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node28 [dir="back",color="steelblue1",style="solid"];
-  Node28 [label="src/pass/use_builtin\l_div.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$use__builtin__div_8cc.html",tooltip=" "];
+  Node28 [label="src/pass/shrink_linear\l_indices.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$shrink__linear__indices_8cc.html",tooltip=" "];
+  Node1 -> Node29 [dir="back",color="steelblue1",style="solid"];
+  Node29 [label="src/pass/use_builtin\l_div.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$use__builtin__div_8cc.html",tooltip=" "];
 }
