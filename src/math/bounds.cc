@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <climits>
 #include <functional>
+#include <numeric>
 #include <type_traits>
 
 #include <analyze/all_uses.h>
@@ -14,7 +15,7 @@ commonDenominator(const LinearExpr<Rational<int64_t>> &_lin) {
     auto lin = _lin;
     auto common = lin.bias_.q_;
     for (auto &&[k, a] : lin.coeff_) {
-        common = lcm(common, k.q_);
+        common = std::lcm(common, k.q_);
     }
     lin.bias_.p_ *= common / lin.bias_.q_;
     lin.bias_.q_ = common;

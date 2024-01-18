@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <numeric>
 #include <unordered_map>
 
 #include <analyze/all_defs.h>
@@ -6,7 +7,6 @@
 #include <analyze/comp_transient_bounds.h>
 #include <analyze/comp_unique_bounds_combination.h>
 #include <container_utils.h>
-#include <math/utils.h>
 #include <mutator.h>
 #include <pass/shrink_linear_indices.h>
 #include <visitor.h>
@@ -158,18 +158,27 @@ Stmt shrinkLinearIndices(const Stmt &_ast, const ID &vardef) {
         for (size_t n = bound.size(), i = n - 1; ~i; i--) {
             int g = newCoeff[0];
             for (size_t j = 1; j <= i; j++) {
-                g = gcd(g, newCoeff[j]);
+                g = std::gcd(g, newCoeff[j]);
             }
             int64_t l = LLONG_MAX, u = LLONG_MIN;
-            if (i + 1 < n) {
-                for (size_t j = i + 1; j < n; j++) {
-                    l = std::min(l, newCoeff[j] * bound[j].second.lower_);
-                    u = std::max(u, newCoeff[j] * bound[j].second.upper_);
+            // TODO: Use saturation arithmetic when C++26 is available for safer
+            // code when there may be overflow
+            for (size_t j = i + 1; j < n; j++) {
+                if (auto x = bound[j].second.lower_; x > LLONG_MIN) {
+                    l = std::min(l, newCoeff[j] * x);
+                } else {
+                    l = LLONG_MIN;
                 }
-            } else {
+                if (auto x = bound[j].second.upper_; x < LLONG_MAX) {
+                    u = std::max(u, newCoeff[j] * x);
+                } else {
+                    u = LLONG_MAX;
+                }
+            }
+            if (l > u) {
                 l = u = 0;
             }
-            if (u - l + 1 < g) {
+            if (l > LLONG_MIN && u < LLONG_MAX && u - l + 1 < g) {
                 for (size_t j = 0; j <= i; j++) {
                     newCoeff[j] = newCoeff[j] / g * (u - l + 1);
                 }

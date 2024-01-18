@@ -9,6 +9,7 @@
 #include <container_utils.h>
 #include <math/bounds.h>
 #include <math/min_max.h>
+#include <math/utils.h>
 
 namespace freetensor {
 

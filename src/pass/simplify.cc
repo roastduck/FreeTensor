@@ -822,7 +822,8 @@ Expr SimplifyPass::visit(const IfExpr &_op) {
         if (thenLin.coeff_[i].k_ == elseLin.coeff_[j].k_ &&
             HashComparator{}(thenLin.coeff_[i].a_, elseLin.coeff_[j].a_)) {
             common.coeff_.emplace_back(thenLin.coeff_[i]);
-            thenLin.coeff_[i++].k_ = elseLin.coeff_[j++].k_ = 0;
+            thenLin.coeff_[i].k_ = elseLin.coeff_[j].k_ = 0;
+            j++;
         }
     }
     if (thenLin.bias_ == elseLin.bias_) {
