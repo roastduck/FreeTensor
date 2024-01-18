@@ -937,6 +937,27 @@ def test_if_expr_in_cond(p):
     assert std.match(ast)
 
 
+@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
+def test_sink_if_expr_into_linear_expression(p):
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (a, b, c, y):
+        y[...] = ft.if_then_else(c < 0, 3 * a, 3 * a + 2 * b)
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef([("a", (), "int32", "input", "cpu"),
+                    ("b", (), "int32", "input", "cpu"),
+                    ("c", (), "int32", "input", "cpu"),
+                    ("y", (), "int32", "output", "cpu")]) as (a, b, c, y):
+        y[...] = 3 * a + ft.if_then_else(c < 0, 0, 2 * b)
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_accessible_after_writing_if(p):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
