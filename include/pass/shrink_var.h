@@ -10,6 +10,13 @@
 
 namespace freetensor {
 
+/**
+ * Main mutator for shrinking variables
+ *
+ * This mutator modifies the shape of each variable to be the upper bound
+ * expression minus the lower bound expression plus one, with respect to each
+ * access of the variable.
+ */
 class ShrinkVar : public Mutator {
     // Bound considering the old shape. Used for preventing make the shape even
     // larger after shrinking

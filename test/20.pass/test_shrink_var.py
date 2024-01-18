@@ -252,3 +252,34 @@ def test_const_in_branch_2():
     std = ft.pop_ast()
 
     assert std.match(ast)
+
+
+def test_over_relaxed_linear():
+    with ft.VarDef([("x", (12,), "int32", "input", "cpu"),
+                    ("y1", (12,), "int32", "output", "cpu"),
+                    ("y2", (12,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.VarDef("b", (1000,), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 3) as i:
+                with ft.For("j", 0, 4) as j:
+                    b[i * 100 + j * 10] = x[i * 4 + j]
+            with ft.For("i", 0, 3) as i:
+                with ft.For("j", 0, 4) as j:
+                    y1[i * 4 + j] = b[i * 100 + j * 10] * i
+                    y2[i * 4 + j] = b[i * 100 + j * 10] + i
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.VarDef([("x", (12,), "int32", "input", "cpu"),
+                    ("y1", (12,), "int32", "output", "cpu"),
+                    ("y2", (12,), "int32", "output", "cpu")]) as (x, y1, y2):
+        with ft.VarDef("b", (12,), "int32", "cache", "cpu") as b:
+            with ft.For("i", 0, 3) as i:
+                with ft.For("j", 0, 4) as j:
+                    b[i * 4 + j] = x[i * 4 + j]
+            with ft.For("i", 0, 3) as i:
+                with ft.For("j", 0, 4) as j:
+                    y1[i * 4 + j] = b[i * 4 + j] * i
+                    y2[i * 4 + j] = b[i * 4 + j] + i
+    std = ft.pop_ast()
+
+    assert std.match(ast)

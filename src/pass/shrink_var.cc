@@ -2,6 +2,7 @@
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <pass/remove_dead_var.h>
+#include <pass/shrink_linear_indices.h>
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
@@ -101,6 +102,8 @@ Stmt ShrinkVar::visit(const ReduceTo &_op) {
 Stmt shrinkVar(const Stmt &_op) {
     auto op = removeDeadVar(_op);
 
+    op = shrinkLinearIndices(op);
+
     // Algorithm:
     // (1) Represent the bounds of each vars with min / max expressions
     // (2) Modify var definitions
@@ -124,6 +127,8 @@ Stmt shrinkVar(const Stmt &_op) {
 
 Stmt shrinkSingleVar(const Stmt &_op, const ID &varDefId) {
     auto op = removeDeadVar(_op);
+
+    op = shrinkLinearIndices(op, varDefId);
 
     // (1)
     std::unordered_map<ID, AccessBound> boundsWithShape, boundsWithoutShape;
