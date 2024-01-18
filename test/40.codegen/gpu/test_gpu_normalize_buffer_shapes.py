@@ -457,3 +457,47 @@ def test_simplex_local_2():
                     with ft.For("j$2", 0, 10) as j:
                         y[b, i, j] = t[0, j] + 1
     assert ft.pop_ast().match(func.body)
+
+
+def test_simplex_local_with_expressions_on_thread_idx():
+
+    @ft.transform
+    def test(x, y, z):
+        x: ft.Var[(10, 10, 10), "int32", "input", "gpu/global"]
+        y: ft.Var[(10, 10, 10), "int32", "output", "gpu/global"]
+        #! label: Lb
+        for b in range(10):
+            #! label: t
+            t = ft.empty((10, 10), "int32", "gpu/global")
+            #! label: L0
+            for i in range(10):
+                for j in range(10):
+                    t[(i + 1) % 10, j] = x[b, i, j] * 2
+            #! label: L1
+            for i in range(10):
+                for j in range(10):
+                    y[b, i, j] = t[(i + 1) % 10, j] + 1
+
+    s = ft.Schedule(test)
+    s.parallelize("Lb", "blockIdx.x")
+    s.parallelize("L0", "threadIdx.x")
+    s.parallelize("L1", "threadIdx.x")
+    s.set_mem_type("t", "gpu/local")
+    func = ft.lower(s.func(),
+                    target,
+                    verbose=1,
+                    skip_passes=['prop_one_time_use'])
+
+    with ft.VarDef([
+        ("x", (10, 10, 10), "int32", "input", "gpu/global"),
+        ("y", (10, 10, 10), "int32", "output", "gpu/global"),
+    ]) as (x, y):
+        with ft.For(".blockIdx", 0, 10) as b:
+            with ft.For(".threadIdx.x", 0, 10) as i:
+                with ft.VarDef("t", (1, 10), "int32", "cache",
+                               "gpu/local") as t:
+                    with ft.For("j", 0, 10) as j:
+                        t[0, j] = x[b, i, j] * 2
+                    with ft.For("j", 0, 10) as j:
+                        y[b, i, j] = t[0, j] + 1
+    assert ft.pop_ast().match(func.body)

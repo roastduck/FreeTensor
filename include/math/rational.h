@@ -2,8 +2,7 @@
 #define FREE_TENSOR_RATIONAL_H
 
 #include <iostream>
-
-#include <math/utils.h>
+#include <numeric>
 
 namespace freetensor {
 
@@ -14,7 +13,7 @@ template <class T> struct Rational {
         if (p == 0) {
             q_ = 1;
         } else {
-            T g = gcd(p, q);
+            T g = std::gcd(p, q);
             p_ /= g, q_ /= g;
             if (q_ < 0) {
                 p_ = -p_, q_ = -q_;
@@ -27,14 +26,14 @@ template <class T> struct Rational {
     }
 
     friend Rational operator+(const Rational<T> &lhs, const Rational<T> &rhs) {
-        T g = gcd(lhs.q_, rhs.q_);
+        T g = std::gcd(lhs.q_, rhs.q_);
         T p = rhs.q_ / g * lhs.p_ + lhs.q_ / g * rhs.p_;
         T q = lhs.q_ / g * rhs.q_;
         return Rational<T>{p, q};
     }
 
     friend Rational operator-(const Rational<T> &lhs, const Rational<T> &rhs) {
-        T g = gcd(lhs.q_, rhs.q_);
+        T g = std::gcd(lhs.q_, rhs.q_);
         T p = rhs.q_ / g * lhs.p_ - lhs.q_ / g * rhs.p_;
         T q = lhs.q_ / g * rhs.q_;
         return Rational<T>{p, q};
@@ -58,7 +57,7 @@ template <class T> struct Rational {
     }
 
     friend auto operator<=>(const Rational<T> &lhs, const Rational<T> &rhs) {
-        T g = gcd(lhs.q_, rhs.q_);
+        T g = std::gcd(lhs.q_, rhs.q_);
         return rhs.q_ / g * lhs.p_ <=> lhs.q_ / g * rhs.p_;
     }
 

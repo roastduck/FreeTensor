@@ -25,7 +25,7 @@ template <class T> struct LinearExpr {
     // `LinearExpr`s are the same, but std::map is too slow. So, we are using
     // std::vector and sort each factor by its hash
     std::vector<Scale<T>> coeff_;
-    T bias_;
+    T bias_ = 0;
 
     bool isConst() const { return coeff_.empty(); }
 
@@ -126,8 +126,8 @@ bool hasIdenticalCoeff(const LinearExpr<T> &lhs, const LinearExpr<T> &rhs) {
  * directinos
  */
 template <class T>
-requires std::integral<T> || std::floating_point<T>
-    Expr lin2expr(const LinearExpr<T> &lin) {
+    requires std::integral<T> || std::floating_point<T>
+Expr lin2expr(const LinearExpr<T> &lin) {
     Expr b = makeIntConst(lin.bias_);
 
     for (auto &&item : lin.coeff_) {

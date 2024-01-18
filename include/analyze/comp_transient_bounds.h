@@ -1,11 +1,13 @@
 #ifndef FREE_TENSOR_COMP_TRANSIENT_BOUNDS_H
 #define FREE_TENSOR_COMP_TRANSIENT_BOUNDS_H
 
+#include <type_traits>
 #include <unordered_set>
 
 #include <analyze/all_uses.h>
 #include <analyze/analyze_linear.h>
 #include <analyze/as_dnf.h>
+#include <analyze/symbol_table.h>
 #include <container_utils.h>
 #include <hash.h>
 #include <math/bounds.h>
@@ -148,9 +150,13 @@ class CompTransientBounds : public BaseClass,
                 conds_.emplace_back(makeEQ(var, op->begin_));
             }
         }
-        this->pushFor(op);
+        if constexpr (std::is_base_of_v<SymbolTableInterface, BaseClass>) {
+            this->pushFor(op);
+        }
         MAYBE_VOID(body, (*this)(op->body_));
-        this->popFor(op);
+        if constexpr (std::is_base_of_v<SymbolTableInterface, BaseClass>) {
+            this->popFor(op);
+        }
         conds_.resize(oldCondsSize);
         transients_.erase(var);
 

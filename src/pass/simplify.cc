@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <unordered_set>
 
+#include <analyze/analyze_linear.h>
 #include <analyze/as_dnf.h>
 #include <except.h>
 #include <math/min_max.h>
@@ -806,6 +807,33 @@ Expr SimplifyPass::visit(const IfExpr &_op) {
         // TODO: We can also handle `Intrinsic`, but we must properly deal with
         // `hasSideEffect_`, and check for data type in case of `... ?
         // intrinsic(..., type_a) : intrinsic(..., type_b)`.
+    }
+
+    auto thenLin = linear(op->thenCase_), elseLin = linear(op->elseCase_);
+    LinearExpr<int64_t> common;
+    for (size_t i = 0, j = 0, m = thenLin.coeff_.size(),
+                n = elseLin.coeff_.size();
+         i < m && j < n; i++) {
+        // LinearExpr<...>::coeff_ is sorted by hash
+        while (j < n &&
+               elseLin.coeff_[j].a_->hash() < thenLin.coeff_[i].a_->hash()) {
+            j++;
+        }
+        if (thenLin.coeff_[i].k_ == elseLin.coeff_[j].k_ &&
+            HashComparator{}(thenLin.coeff_[i].a_, elseLin.coeff_[j].a_)) {
+            common.coeff_.emplace_back(thenLin.coeff_[i]);
+            thenLin.coeff_[i].k_ = elseLin.coeff_[j].k_ = 0;
+            j++;
+        }
+    }
+    if (thenLin.bias_ == elseLin.bias_) {
+        common.bias_ = thenLin.bias_;
+        thenLin.bias_ = elseLin.bias_ = 0;
+    }
+    if (!common.coeff_.empty() || common.bias_ != 0) {
+        return makeAdd(
+            lin2expr(common),
+            makeIfExpr(op->cond_, lin2expr(thenLin), lin2expr(elseLin)));
     }
 
     return op;
