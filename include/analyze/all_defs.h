@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include <analyze/find_stmt.h>
+#include <container_utils.h>
 
 namespace freetensor {
 
@@ -12,9 +13,8 @@ namespace freetensor {
  */
 inline std::vector<std::pair<ID, std::string>>
 allDefs(const Stmt &op,
-        const std::unordered_set<AccessType> &atypes = {
-            AccessType::Input, AccessType::Bypass, AccessType::Output,
-            AccessType::InOut, AccessType::InputMutable, AccessType::Cache}) {
+        const std::unordered_set<AccessType> &atypes =
+            allAccessTypes | ranges::to<std::unordered_set>() {
     std::vector<std::pair<ID, std::string>> ret;
     for (auto &&node : findAllStmt(op, [&](const Stmt &s) {
              return s->nodeType() == ASTNodeType::VarDef &&

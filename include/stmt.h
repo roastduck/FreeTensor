@@ -6,6 +6,8 @@
 
 #include <ast.h>
 #include <buffer.h>
+#include <container_utils.h>
+#include <except.h>
 #include <for_property.h>
 #include <reduce_op.h>
 
@@ -485,13 +487,9 @@ inline MatMulBackend parseMatMulBackend(const std::string &_str) {
             return (MatMulBackend)i;
         }
     }
-    std::string msg = "Unrecognized MatMul backend \"" + _str +
-                      "\". Candidates are (case-insensitive): ";
-    for (auto &&[i, s] : views::enumerate(matMulBackendNames)) {
-        msg += (i > 0 ? ", " : "");
-        msg += s;
-    }
-    ERROR(msg);
+    ERROR(FT_MSG << "Unrecognized MatMul backend \"" << _str
+                 << "\". Candidates are (case-insensitive): "
+                 << (matMulBackendNames | join(", ")));
 }
 
 /**
