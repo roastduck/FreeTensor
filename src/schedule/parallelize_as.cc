@@ -193,8 +193,8 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
          views::concat(finder.reads(), finder.writes())) {
         GenPBExpr::VarMap externals;
         auto iter2idx = AnalyzeDeps::makeAccMapStatic(
-            presburger, *acc, acc->iter_.size(), acc->access_.size(),
-            RelaxMode::Possible, "", externals, {}, true);
+            presburger, *acc, acc->iter_.size(), acc->access_.size(), "",
+            externals, {}, true);
         if (!externals.empty()) {
             throw InvalidSchedule(
                 FT_MSG << "Indirect thread mapping in reference loop nest "

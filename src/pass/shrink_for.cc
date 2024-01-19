@@ -123,8 +123,7 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
         // dimension by local dimensions, instead of representing local
         // dimensions by the target dimension. The set returned by isl_set_lift
         // is a wrapped set, so we can simply unwrap it and then reverse it.
-        set = isl_set_flatten(
-            isl_map_wrap(isl_map_reverse(isl_set_unwrap(set.move()))));
+        set = flatten(wrap(reverse(unwrap(std::move(set)))));
 
         ASSERT(set.nDims() >= 1);
         std::vector<std::tuple<Expr, Expr, Expr, int64_t, Expr>> ret;

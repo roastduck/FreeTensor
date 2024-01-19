@@ -101,8 +101,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     std::vector<std::pair<Expr, ID>>
         conds_; // FIXME: There may be out-dated conditions, and we must check
                 // allReads(cond) against allWrites(body) for each If or For
-                // nodes. See pass/simplify. If the condition violates, we may
-                // need to push a null condition according to RelaxMode
+                // nodes. See pass/simplify.
     std::vector<Ref<AccessPoint>> reads_, writes_;
 
     // For or StmtSeq -> coordinate in iteration space
@@ -268,7 +267,6 @@ struct Dependence {
 
 typedef SyncFunc<void(const Dependence &)> FindDepsCallback;
 
-enum class RelaxMode : int { Possible, Necessary };
 enum class FindDepsMode : int {
     Dep,         // Dependence may happen between `earlier` and `later`
     KillEarlier, // At any point in the space of `earlier`, it is dependent by
@@ -297,7 +295,6 @@ class AnalyzeDeps {
     const FindDepsFilter &filter_;
 
     const FindDepsMode mode_;
-    const RelaxMode earlierRelax_, laterRelax_;
     const DepType depType_;
     const bool ignoreReductionWAW_;
     const bool eraseOutsideVarDef_;
@@ -321,16 +318,8 @@ class AnalyzeDeps {
         : scope2coord_(scope2coord), noDepsLists_(noDepsLists),
           variantExpr_(variantExpr), direction_(direction), found_(found),
           earlierFilter_(earlierFilter), laterFilter_(laterFilter),
-          filter_(filter), mode_(mode),
-          earlierRelax_(mode_ == FindDepsMode::KillLater ||
-                                mode_ == FindDepsMode::KillBoth
-                            ? RelaxMode::Necessary
-                            : RelaxMode::Possible),
-          laterRelax_(mode_ == FindDepsMode::KillEarlier ||
-                              mode_ == FindDepsMode::KillBoth
-                          ? RelaxMode::Necessary
-                          : RelaxMode::Possible),
-          depType_(depType), ignoreReductionWAW_(ignoreReductionWAW),
+          filter_(filter), mode_(mode), depType_(depType),
+          ignoreReductionWAW_(ignoreReductionWAW),
           eraseOutsideVarDef_(eraseOutsideVarDef),
           noProjectOutPrivateAxis_(noProjectOutPrivateAxis) {
         readsAsEarlier_ =
@@ -364,12 +353,12 @@ class AnalyzeDeps {
     static std::vector<
         std::pair<std::string /* list */, std::string /* cond */>>
     makeAccList(GenPBExpr &genPBExpr, const std::vector<Expr> &list,
-                RelaxMode relax, GenPBExpr::VarMap &externals);
-    static std::string makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
+                GenPBExpr::VarMap &externals);
+    static std::string makeCond(GenPBExpr &genPBExpr,
                                 GenPBExpr::VarMap &externals,
                                 bool eraseOutsideVarDef, const AccessPoint &ap);
     static PBMap makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
-                                  int iterDim, int accDim, RelaxMode relax,
+                                  int iterDim, int accDim,
                                   const std::string &extSuffix,
                                   GenPBExpr::VarMap &externals,
                                   const ASTHashSet<Expr> &noNeedToBeVars,
@@ -377,12 +366,11 @@ class AnalyzeDeps {
 
   private:
     PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
-                     int accDim, RelaxMode relax, const std::string &extSuffix,
+                     int accDim, const std::string &extSuffix,
                      GenPBExpr::VarMap &externals,
                      const ASTHashSet<Expr> &noNeedToBeVars) {
-        return makeAccMapStatic(presburger, p, iterDim, accDim, relax,
-                                extSuffix, externals, noNeedToBeVars,
-                                eraseOutsideVarDef_);
+        return makeAccMapStatic(presburger, p, iterDim, accDim, extSuffix,
+                                externals, noNeedToBeVars, eraseOutsideVarDef_);
     }
 
     PBMap makeEqForBothOps(PBCtx &presburger,

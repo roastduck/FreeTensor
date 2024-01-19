@@ -319,7 +319,7 @@ std::string AnalyzeDeps::makeNegIterMap(const std::vector<IterAxis> &list,
 
 std::vector<std::pair<std::string /* list */, std::string /* cond */>>
 AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr, const std::vector<Expr> &list,
-                         RelaxMode relax, GenPBExpr::VarMap &externals) {
+                         GenPBExpr::VarMap &externals) {
     std::vector<std::pair<std::string, std::string>> ret;
     for (auto &&[l, c] : normalizeConditionalExprList(list)) {
         std::ostringstream os;
@@ -349,7 +349,7 @@ AnalyzeDeps::makeAccList(GenPBExpr &genPBExpr, const std::vector<Expr> &list,
     return ret;
 }
 
-std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
+std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
                                   GenPBExpr::VarMap &externals,
                                   bool eraseOutsideVarDef,
                                   const AccessPoint &ap) {
@@ -431,15 +431,15 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr, RelaxMode relax,
 }
 
 PBMap AnalyzeDeps::makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
-                                    int iterDim, int accDim, RelaxMode relax,
+                                    int iterDim, int accDim,
                                     const std::string &extSuffix,
                                     GenPBExpr::VarMap &externals,
                                     const ASTHashSet<Expr> &noNeedToBeVars,
                                     bool eraseOutsideVarDef) {
     GenPBExpr genPBExpr(extSuffix, noNeedToBeVars);
     auto iterList = makeIterList(p.iter_, iterDim);
-    auto condStr = makeCond(genPBExpr, relax, externals, eraseOutsideVarDef, p);
-    auto accListFactors = makeAccList(genPBExpr, p.access_, relax, externals);
+    auto condStr = makeCond(genPBExpr, externals, eraseOutsideVarDef, p);
+    auto accListFactors = makeAccList(genPBExpr, p.access_, externals);
     std::ostringstream os;
     for (auto &&[i, factor] : views::enumerate(accListFactors)) {
         auto &&[accList, accCond] = factor;
@@ -1053,7 +1053,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 
     GenPBExpr::VarMap laterExternals;
     PBMap laterMap =
-        makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
+        makeAccMap(presburger, *later, iterDim, accDim,
                    "later" + std::to_string((uint64_t)later->stmt_->id()),
                    laterExternals, noNeedToBeVars);
     if (laterMap.empty()) {
@@ -1070,7 +1070,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
          views::zip(views::ints(0, ranges::unreachable), earlierList,
                     earlierMapList, earlierExternalsList)) {
         earlierMap = makeAccMap(
-            presburger, *earlier, iterDim, accDim, earlierRelax_,
+            presburger, *earlier, iterDim, accDim,
             "earlier" + std::to_string((uint64_t)earlier->stmt_->id()),
             earlierExternals, noNeedToBeVars);
     }
@@ -1165,7 +1165,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
 
     GenPBExpr::VarMap earlierExternals;
     PBMap earlierMap =
-        makeAccMap(presburger, *earlier, iterDim, accDim, earlierRelax_,
+        makeAccMap(presburger, *earlier, iterDim, accDim,
                    "earlier" + std::to_string((uint64_t)earlier->stmt_->id()),
                    earlierExternals, noNeedToBeVars);
     if (earlierMap.empty()) {
@@ -1181,7 +1181,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
          views::zip(views::ints(0, ranges::unreachable), laterList,
                     laterMapList, laterExternalsList)) {
         laterMap =
-            makeAccMap(presburger, *later, iterDim, accDim, laterRelax_,
+            makeAccMap(presburger, *later, iterDim, accDim,
                        "later" + std::to_string((uint64_t)later->stmt_->id()),
                        laterExternals, noNeedToBeVars);
     }
