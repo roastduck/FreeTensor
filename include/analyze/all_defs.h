@@ -12,9 +12,8 @@ namespace freetensor {
  * Collect IDs of all `VarDef` nodes of specific `AccessType`s
  */
 inline std::vector<std::pair<ID, std::string>>
-allDefs(const Stmt &op,
-        const std::unordered_set<AccessType> &atypes =
-            allAccessTypes | ranges::to<std::unordered_set>() {
+allDefs(const Stmt &op, const std::unordered_set<AccessType> &atypes =
+                            allAccessTypes | ranges::to<std::unordered_set>()) {
     std::vector<std::pair<ID, std::string>> ret;
     for (auto &&node : findAllStmt(op, [&](const Stmt &s) {
              return s->nodeType() == ASTNodeType::VarDef &&
