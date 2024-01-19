@@ -991,10 +991,6 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#a814262c5e3a8f58a762fdf9c4c0670ada10989754eb9c7a4dfb1092f693ed9e69">Different</a>
  }</td></tr>
 <tr class="separator:a814262c5e3a8f58a762fdf9c4c0670ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80560a57b432656df642136e27321cad"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cad">RelaxMode</a> : int { <a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cada7ed6c322b81093217dd80a7d098736eb">Possible</a>
-, <a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cada5bd00e474b7ae27b8fa2e5cb77bb66f8">Necessary</a>
- }</td></tr>
-<tr class="separator:a80560a57b432656df642136e27321cad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b8940bf52e4cbe1737bf81df8692e61"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61">FindDepsMode</a> : int { <a class="el" href="namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61a5c00f1ed626c46316b293c2ce1df0e78">Dep</a>
 , <a class="el" href="namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61aa377c1ea75256c2e2b00567dec810cf0">KillEarlier</a>
 , <a class="el" href="namespacefreetensor.html#a9b8940bf52e4cbe1737bf81df8692e61a951b03cc1ebd46b37fdd0d48997431b4">KillLater</a>
@@ -1905,6 +1901,21 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="memitem:a7c66105c843469e658a3948466a71094"><td class="memTemplParams" colspan="2">template&lt;PBSpaceRef T&gt; </td></tr>
 <tr class="memitem:a7c66105c843469e658a3948466a71094"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSpace.html">PBSpace</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a7c66105c843469e658a3948466a71094">spaceMapFromSet</a> (T &amp;&amp;space)</td></tr>
 <tr class="separator:a7c66105c843469e658a3948466a71094"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a761b3b57dc273788d2310449db9111b6"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a761b3b57dc273788d2310449db9111b6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a761b3b57dc273788d2310449db9111b6">wrap</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:a761b3b57dc273788d2310449db9111b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1198ddee0f4902452d045c1fe3192e3a"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a1198ddee0f4902452d045c1fe3192e3a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a1198ddee0f4902452d045c1fe3192e3a">unwrap</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:a1198ddee0f4902452d045c1fe3192e3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f3eb00c36d17d4a84ec8d9834002580"><td class="memTemplParams" colspan="2">template&lt;PBSetRef T&gt; </td></tr>
+<tr class="memitem:a5f3eb00c36d17d4a84ec8d9834002580"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5f3eb00c36d17d4a84ec8d9834002580">flatten</a> (T &amp;&amp;set)</td></tr>
+<tr class="separator:a5f3eb00c36d17d4a84ec8d9834002580"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4626e918448ac654a5cbdc2717b53427"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a4626e918448ac654a5cbdc2717b53427"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a4626e918448ac654a5cbdc2717b53427">flattenDomain</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:a4626e918448ac654a5cbdc2717b53427"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6872c838a9a8a6d60f49f8a2d282b15d"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
+<tr class="memitem:a6872c838a9a8a6d60f49f8a2d282b15d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6872c838a9a8a6d60f49f8a2d282b15d">flattenRange</a> (T &amp;&amp;map)</td></tr>
+<tr class="separator:a6872c838a9a8a6d60f49f8a2d282b15d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ca3df7897873f9c126e1616bd03adc3"><td class="memTemplParams" colspan="2">template&lt;PBMapRef T&gt; </td></tr>
 <tr class="memitem:a6ca3df7897873f9c126e1616bd03adc3"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a6ca3df7897873f9c126e1616bd03adc3">flattenMapToSet</a> (T &amp;&amp;map)</td></tr>
 <tr class="separator:a6ca3df7897873f9c126e1616bd03adc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -4422,32 +4433,6 @@ template&lt;class K &gt; </div>
 <tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3a6a061313d22e51e0f25b7cd4dc065233" name="aa6c382c26df3486888425f7cc54de5c3a6a061313d22e51e0f25b7cd4dc065233"></a>Max&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3a97491c07168f35f5ad8a87122e45d85c" name="aa6c382c26df3486888425f7cc54de5c3a97491c07168f35f5ad8a87122e45d85c"></a>LAnd&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa6c382c26df3486888425f7cc54de5c3ae02dc30ef38a2f4cdaf9357ae6afcaa6" name="aa6c382c26df3486888425f7cc54de5c3ae02dc30ef38a2f4cdaf9357ae6afcaa6"></a>LOr&#160;</td><td class="fielddoc"></td></tr>
-</table>
-
-</div>
-</div>
-<a id="a80560a57b432656df642136e27321cad" name="a80560a57b432656df642136e27321cad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a80560a57b432656df642136e27321cad">&#9670;&#160;</a></span>RelaxMode</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum class <a class="el" href="namespacefreetensor.html#a80560a57b432656df642136e27321cad">freetensor::RelaxMode</a> : int</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a80560a57b432656df642136e27321cada7ed6c322b81093217dd80a7d098736eb" name="a80560a57b432656df642136e27321cada7ed6c322b81093217dd80a7d098736eb"></a>Possible&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a80560a57b432656df642136e27321cada5bd00e474b7ae27b8fa2e5cb77bb66f8" name="a80560a57b432656df642136e27321cada5bd00e474b7ae27b8fa2e5cb77bb66f8"></a>Necessary&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -8061,6 +8046,46 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
+<a id="a5f3eb00c36d17d4a84ec8d9834002580" name="a5f3eb00c36d17d4a84ec8d9834002580"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f3eb00c36d17d4a84ec8d9834002580">&#9670;&#160;</a></span>flatten()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::flatten </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>set</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4626e918448ac654a5cbdc2717b53427" name="a4626e918448ac654a5cbdc2717b53427"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4626e918448ac654a5cbdc2717b53427">&#9670;&#160;</a></span>flattenDomain()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::flattenDomain </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a6ca3df7897873f9c126e1616bd03adc3" name="a6ca3df7897873f9c126e1616bd03adc3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6ca3df7897873f9c126e1616bd03adc3">&#9670;&#160;</a></span>flattenMapToSet()</h2>
 
@@ -8071,6 +8096,26 @@ template&lt;PBMapRef T&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::flattenMapToSet </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a6872c838a9a8a6d60f49f8a2d282b15d" name="a6872c838a9a8a6d60f49f8a2d282b15d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6872c838a9a8a6d60f49f8a2d282b15d">&#9670;&#160;</a></span>flattenRange()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::flattenRange </td>
           <td>(</td>
           <td class="paramtype">T &amp;&amp;&#160;</td>
           <td class="paramname"><em>map</em></td><td>)</td>
@@ -20613,6 +20658,26 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a1198ddee0f4902452d045c1fe3192e3a" name="a1198ddee0f4902452d045c1fe3192e3a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1198ddee0f4902452d045c1fe3192e3a">&#9670;&#160;</a></span>unwrap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBSetRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBMap.html">PBMap</a> freetensor::unwrap </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>set</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ac25770e9037860482bddbd0e2189b7b7" name="ac25770e9037860482bddbd0e2189b7b7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac25770e9037860482bddbd0e2189b7b7">&#9670;&#160;</a></span>upCast() <span class="overload">[1/3]</span></h2>
 
@@ -20976,6 +21041,26 @@ template&lt;PBMapRef T&gt; </div>
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a761b3b57dc273788d2310449db9111b6" name="a761b3b57dc273788d2310449db9111b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a761b3b57dc273788d2310449db9111b6">&#9670;&#160;</a></span>wrap()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;PBMapRef T&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1PBSet.html">PBSet</a> freetensor::wrap </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&amp;&#160;</td>
+          <td class="paramname"><em>map</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
