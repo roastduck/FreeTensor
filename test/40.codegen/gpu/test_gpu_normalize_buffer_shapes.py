@@ -429,7 +429,7 @@ def test_simplex_local_2():
                     t[i, j] = x[b, i, j] * 2
                 for j in range(10):
                     t[i, j] += t[i, i]
-                    # The last dimension can be removed although accessed with i
+                    # The last dimension can not be removed although accessed with i
             #! label: L1
             for i in range(10):
                 for j in range(10):

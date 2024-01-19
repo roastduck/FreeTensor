@@ -6,6 +6,7 @@
 #include <string>
 
 #include <container_utils.h>
+#include <except.h>
 #include <serialize/to_string.h>
 
 namespace freetensor {
@@ -55,6 +56,18 @@ constexpr std::array accessTypeNames = {
 };
 static_assert(accessTypeNames.size() == (size_t)AccessType::NumTypes);
 
+namespace detail {
+
+template <typename T, T... i>
+constexpr auto createAllAccessTypes(std::integer_sequence<T, i...>) {
+    return std::array{(AccessType)i...};
+}
+
+} // namespace detail
+
+constexpr auto allAccessTypes = detail::createAllAccessTypes(
+    std::make_index_sequence<(size_t)AccessType::NumTypes>{});
+
 inline std::ostream &operator<<(std::ostream &os, AccessType atype) {
     return os << accessTypeNames.at((size_t)atype);
 }
@@ -66,13 +79,9 @@ inline AccessType parseAType(const std::string &_str) {
             return (AccessType)i;
         }
     }
-    std::string msg = "Unrecognized access type \"" + _str +
-                      "\". Candidates are (case-insensitive): ";
-    for (auto &&[i, s] : views::enumerate(accessTypeNames)) {
-        msg += (i > 0 ? ", " : "");
-        msg += s;
-    }
-    ERROR(msg);
+    ERROR(FT_MSG << "Unrecognized access type \"" << _str
+                 << "\". Candidates are (case-insensitive): "
+                 << (accessTypeNames | join(", ")));
 }
 
 inline bool isWritable(AccessType atype) {

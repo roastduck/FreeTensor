@@ -310,6 +310,11 @@ PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
     // implemented by a statement in multiple branches. We can recover Expr from
     // the statement and the branches' conditions.
 
+    if (set.empty()) {
+        // It will result in empty block node in isl, which we cannot parse
+        return {};
+    }
+
     ASSERT(set.isSingleValued());
 
     std::vector<std::string> params =

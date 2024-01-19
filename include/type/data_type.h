@@ -30,6 +30,18 @@ constexpr std::array baseDataTypeNames = {
 };
 static_assert(baseDataTypeNames.size() == (size_t)BaseDataType::NumTypes);
 
+namespace detail {
+
+template <typename T, T... i>
+constexpr auto createAllBaseDataTypes(std::integer_sequence<T, i...>) {
+    return std::array{(BaseDataType)i...};
+}
+
+} // namespace detail
+
+constexpr auto allBaseDataTypes = detail::createAllBaseDataTypes(
+    std::make_index_sequence<(size_t)BaseDataType::NumTypes>{});
+
 inline std::ostream &operator<<(std::ostream &os, BaseDataType dtype) {
     return os << baseDataTypeNames.at((size_t)dtype);
 }
@@ -41,13 +53,9 @@ inline BaseDataType parseBaseDataType(const std::string &_str) {
             return (BaseDataType)i;
         }
     }
-    std::string msg = "Unrecognized base data type \"" + _str +
-                      "\". Candidates are (case-insensitive): ";
-    for (auto &&[i, s] : views::enumerate(baseDataTypeNames)) {
-        msg += (i > 0 ? ", " : "");
-        msg += s;
-    }
-    ERROR(msg);
+    ERROR(FT_MSG << "Unrecognized base data type \"" << _str
+                 << "\". Candidates are (case-insensitive): "
+                 << (baseDataTypeNames | join(", ")));
 }
 
 enum class SignDataType : size_t {
@@ -69,6 +77,18 @@ constexpr std::array signDataTypeNames = {
 };
 static_assert(signDataTypeNames.size() == (size_t)SignDataType::NumTypes);
 
+namespace detail {
+
+template <typename T, T... i>
+constexpr auto createAllSignDataTypes(std::integer_sequence<T, i...>) {
+    return std::array{(SignDataType)i...};
+}
+
+} // namespace detail
+
+constexpr auto allSignDataTypes = detail::createAllSignDataTypes(
+    std::make_index_sequence<(size_t)SignDataType::NumTypes>{});
+
 inline std::ostream &operator<<(std::ostream &os, SignDataType dtype) {
     return os << signDataTypeNames.at((size_t)dtype);
 }
@@ -79,13 +99,8 @@ inline SignDataType parseSignDataType(const std::string &str) {
             return (SignDataType)i;
         }
     }
-    std::string msg =
-        "Unrecognized sign data type \"" + str + "\". Candidates are: ";
-    for (auto &&[i, s] : views::enumerate(signDataTypeNames)) {
-        msg += (i > 0 ? ", " : "");
-        msg += s;
-    }
-    ERROR(msg);
+    ERROR(FT_MSG << "Unrecognized sign data type \"" << str
+                 << "\". Candidates are: " << (signDataTypeNames | join(", ")));
 }
 
 class DataType {
