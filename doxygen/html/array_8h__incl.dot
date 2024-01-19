@@ -130,6 +130,7 @@ digraph "include/driver/array.h"
   Node41 -> Node5 [color="steelblue1",style="solid"];
   Node41 -> Node7 [color="steelblue1",style="solid"];
   Node41 -> Node33 [color="steelblue1",style="solid"];
+  Node41 -> Node17 [color="steelblue1",style="solid"];
   Node41 -> Node30 [color="steelblue1",style="solid"];
   Node8 -> Node42 [color="steelblue1",style="solid"];
   Node42 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -137,6 +138,7 @@ digraph "include/driver/array.h"
   Node42 -> Node5 [color="steelblue1",style="solid"];
   Node42 -> Node7 [color="steelblue1",style="solid"];
   Node42 -> Node33 [color="steelblue1",style="solid"];
+  Node42 -> Node17 [color="steelblue1",style="solid"];
   Node42 -> Node30 [color="steelblue1",style="solid"];
   Node6 -> Node43 [color="steelblue1",style="solid"];
   Node43 [label="driver/target_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$target__type_8h.html",tooltip=" "];

@@ -74,6 +74,8 @@ digraph "src/pass/normalize_loops.cc"
   Node43 -> Node13 [color="steelblue1",style="solid"];
   Node43 -> Node32 [color="steelblue1",style="solid"];
   Node42 -> Node32 [color="steelblue1",style="solid"];
+  Node10 -> Node34 [color="steelblue1",style="solid"];
+  Node10 -> Node27 [color="steelblue1",style="solid"];
   Node10 -> Node46 [color="steelblue1",style="solid"];
   Node46 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node46 -> Node43 [color="steelblue1",style="solid"];

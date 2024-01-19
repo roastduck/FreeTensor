@@ -44,6 +44,7 @@ digraph "src/schedule/cache.cc"
   Node19 [label="stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$stmt_8h.html",tooltip=" "];
   Node19 -> Node10 [color="steelblue1",style="solid"];
   Node19 -> Node14 [color="steelblue1",style="solid"];
+  Node19 -> Node4 [color="steelblue1",style="solid"];
   Node1 -> Node50 [color="steelblue1",style="solid"];
   Node50 [label="pass/remove_writes.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$remove__writes_8h.html",tooltip=" "];
   Node50 -> Node12 [color="steelblue1",style="solid"];

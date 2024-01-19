@@ -118,6 +118,7 @@ digraph "src/frontend/frontend_var.cc"
   Node43 -> Node6 [color="steelblue1",style="solid"];
   Node43 -> Node7 [color="steelblue1",style="solid"];
   Node43 -> Node33 [color="steelblue1",style="solid"];
+  Node43 -> Node26 [color="steelblue1",style="solid"];
   Node43 -> Node29 [color="steelblue1",style="solid"];
   Node40 -> Node44 [color="steelblue1",style="solid"];
   Node44 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -125,6 +126,7 @@ digraph "src/frontend/frontend_var.cc"
   Node44 -> Node6 [color="steelblue1",style="solid"];
   Node44 -> Node7 [color="steelblue1",style="solid"];
   Node44 -> Node33 [color="steelblue1",style="solid"];
+  Node44 -> Node26 [color="steelblue1",style="solid"];
   Node44 -> Node29 [color="steelblue1",style="solid"];
   Node5 -> Node45 [color="steelblue1",style="solid"];
   Node45 [label="driver/array.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$array_8h.html",tooltip=" "];
@@ -136,6 +138,8 @@ digraph "src/frontend/frontend_var.cc"
   Node49 -> Node10 [color="steelblue1",style="solid"];
   Node49 -> Node11 [color="steelblue1",style="solid"];
   Node49 -> Node40 [color="steelblue1",style="solid"];
+  Node49 -> Node33 [color="steelblue1",style="solid"];
+  Node49 -> Node26 [color="steelblue1",style="solid"];
   Node49 -> Node50 [color="steelblue1",style="solid"];
   Node50 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node50 -> Node42 [color="steelblue1",style="solid"];

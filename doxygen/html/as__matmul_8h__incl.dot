@@ -113,6 +113,8 @@ digraph "include/schedule/as_matmul.h"
   Node40 -> Node41 [color="steelblue1",style="solid"];
   Node41 [label="buffer.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$buffer_8h.html",tooltip=" "];
   Node41 -> Node29 [color="steelblue1",style="solid"];
+  Node40 -> Node32 [color="steelblue1",style="solid"];
+  Node40 -> Node26 [color="steelblue1",style="solid"];
   Node40 -> Node45 [color="steelblue1",style="solid"];
   Node45 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node45 -> Node8 [color="steelblue1",style="solid"];

@@ -54,13 +54,13 @@ digraph "src/analyze/normalize_conditional_expr.cc"
   Node15 -> Node18 [color="steelblue1",style="solid"];
   Node18 [label="ref.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$ref_8h.html",tooltip=" "];
   Node18 -> Node2 [color="steelblue1",style="solid"];
-  Node18 -> Node19 [color="steelblue1",style="solid"];
-  Node19 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node18 -> Node24 [color="steelblue1",style="solid"];
-  Node24 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
+  Node24 [label="except.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8h.html",tooltip=" "];
   Node24 -> Node12 [color="steelblue1",style="solid"];
   Node24 -> Node25 [color="steelblue1",style="solid"];
   Node25 [label="sstream",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node24 -> Node26 [color="steelblue1",style="solid"];
+  Node26 [label="stdexcept",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node24 -> Node7 [color="steelblue1",style="solid"];
   Node8 -> Node18 [color="steelblue1",style="solid"];
   Node8 -> Node27 [color="steelblue1",style="solid"];
@@ -139,6 +139,7 @@ digraph "src/analyze/normalize_conditional_expr.cc"
   Node47 -> Node10 [color="steelblue1",style="solid"];
   Node47 -> Node7 [color="steelblue1",style="solid"];
   Node47 -> Node31 [color="steelblue1",style="solid"];
+  Node47 -> Node24 [color="steelblue1",style="solid"];
   Node47 -> Node27 [color="steelblue1",style="solid"];
   Node45 -> Node48 [color="steelblue1",style="solid"];
   Node48 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -146,6 +147,7 @@ digraph "src/analyze/normalize_conditional_expr.cc"
   Node48 -> Node10 [color="steelblue1",style="solid"];
   Node48 -> Node7 [color="steelblue1",style="solid"];
   Node48 -> Node31 [color="steelblue1",style="solid"];
+  Node48 -> Node24 [color="steelblue1",style="solid"];
   Node48 -> Node27 [color="steelblue1",style="solid"];
   Node43 -> Node49 [color="steelblue1",style="solid"];
   Node49 [label="driver/array.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$array_8h.html",tooltip=" "];
@@ -163,6 +165,8 @@ digraph "src/analyze/normalize_conditional_expr.cc"
   Node53 -> Node5 [color="steelblue1",style="solid"];
   Node53 -> Node8 [color="steelblue1",style="solid"];
   Node53 -> Node45 [color="steelblue1",style="solid"];
+  Node53 -> Node31 [color="steelblue1",style="solid"];
+  Node53 -> Node24 [color="steelblue1",style="solid"];
   Node53 -> Node54 [color="steelblue1",style="solid"];
   Node54 [label="for_property.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node54 -> Node6 [color="steelblue1",style="solid"];

@@ -140,6 +140,7 @@ digraph "src/pass/replace_uses.cc"
   Node46 -> Node10 [color="steelblue1",style="solid"];
   Node46 -> Node6 [color="steelblue1",style="solid"];
   Node46 -> Node32 [color="steelblue1",style="solid"];
+  Node46 -> Node25 [color="steelblue1",style="solid"];
   Node46 -> Node28 [color="steelblue1",style="solid"];
   Node44 -> Node47 [color="steelblue1",style="solid"];
   Node47 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -147,7 +148,10 @@ digraph "src/pass/replace_uses.cc"
   Node47 -> Node10 [color="steelblue1",style="solid"];
   Node47 -> Node6 [color="steelblue1",style="solid"];
   Node47 -> Node32 [color="steelblue1",style="solid"];
+  Node47 -> Node25 [color="steelblue1",style="solid"];
   Node47 -> Node28 [color="steelblue1",style="solid"];
+  Node43 -> Node32 [color="steelblue1",style="solid"];
+  Node43 -> Node25 [color="steelblue1",style="solid"];
   Node43 -> Node48 [color="steelblue1",style="solid"];
   Node48 [label="for_property.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node48 -> Node42 [color="steelblue1",style="solid"];

@@ -73,6 +73,7 @@ digraph "src/schedule/auto_unroll.cc"
   Node45 -> Node15 [color="steelblue1",style="solid"];
   Node45 -> Node10 [color="steelblue1",style="solid"];
   Node45 -> Node34 [color="steelblue1",style="solid"];
+  Node9 -> Node34 [color="steelblue1",style="solid"];
   Node2 -> Node50 [color="steelblue1",style="solid"];
   Node50 [label="visitor.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$visitor_8h.html",tooltip=" "];
   Node50 -> Node51 [color="steelblue1",style="solid"];

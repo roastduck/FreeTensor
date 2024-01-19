@@ -51,6 +51,14 @@ digraph "src/schedule/unroll.cc"
   Node44 -> Node12 [color="steelblue1",style="solid"];
   Node44 -> Node6 [color="steelblue1",style="solid"];
   Node44 -> Node13 [color="steelblue1",style="solid"];
+  Node11 -> Node35 [color="steelblue1",style="solid"];
+  Node35 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
+  Node35 -> Node16 [color="steelblue1",style="solid"];
+  Node35 -> Node12 [color="steelblue1",style="solid"];
+  Node35 -> Node3 [color="steelblue1",style="solid"];
+  Node35 -> Node4 [color="steelblue1",style="solid"];
+  Node35 -> Node6 [color="steelblue1",style="solid"];
+  Node11 -> Node28 [color="steelblue1",style="solid"];
   Node5 -> Node51 [color="steelblue1",style="solid"];
   Node51 [label="analyze/track_stmt.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
   Node51 -> Node6 [color="steelblue1",style="solid"];
@@ -116,12 +124,6 @@ digraph "src/schedule/unroll.cc"
   Node72 -> Node52 [color="steelblue1",style="solid"];
   Node65 -> Node7 [color="steelblue1",style="solid"];
   Node65 -> Node35 [color="steelblue1",style="solid"];
-  Node35 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
-  Node35 -> Node16 [color="steelblue1",style="solid"];
-  Node35 -> Node12 [color="steelblue1",style="solid"];
-  Node35 -> Node3 [color="steelblue1",style="solid"];
-  Node35 -> Node4 [color="steelblue1",style="solid"];
-  Node35 -> Node6 [color="steelblue1",style="solid"];
   Node65 -> Node73 [color="steelblue1",style="solid"];
   Node73 [label="math/bounds.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$bounds_8h.html",tooltip=" "];
   Node73 -> Node16 [color="steelblue1",style="solid"];

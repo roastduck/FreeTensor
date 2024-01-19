@@ -46,8 +46,6 @@ digraph "include/analyze/structural_feature.h"
   Node16 [label="vector",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node13 -> Node17 [color="steelblue1",style="solid"];
   Node17 [label="ast.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$ast_8h.html",tooltip=" "];
-  Node17 -> Node18 [color="steelblue1",style="solid"];
-  Node18 [label="atomic",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node17 -> Node14 [color="steelblue1",style="solid"];
   Node17 -> Node7 [color="steelblue1",style="solid"];
   Node17 -> Node8 [color="steelblue1",style="solid"];
@@ -74,12 +72,17 @@ digraph "include/analyze/structural_feature.h"
   Node41 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node36 -> Node42 [color="steelblue1",style="solid"];
   Node42 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node34 -> Node29 [color="steelblue1",style="solid"];
+  Node29 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
+  Node29 -> Node30 [color="steelblue1",style="solid"];
+  Node29 -> Node8 [color="steelblue1",style="solid"];
   Node13 -> Node43 [color="steelblue1",style="solid"];
   Node43 [label="buffer.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$buffer_8h.html",tooltip=" "];
   Node43 -> Node44 [color="steelblue1",style="solid"];
-  Node44 [label="tensor.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$tensor_8h.html",tooltip=" "];
+  Node44 [label="tensor.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$tensor_8h.html",tooltip=" "];
   Node44 -> Node8 [color="steelblue1",style="solid"];
   Node44 -> Node16 [color="steelblue1",style="solid"];
+  Node44 -> Node29 [color="steelblue1",style="solid"];
   Node44 -> Node45 [color="steelblue1",style="solid"];
   Node45 [label="expr.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$expr_8h.html",tooltip=" "];
   Node45 -> Node8 [color="steelblue1",style="solid"];
@@ -97,6 +100,8 @@ digraph "include/analyze/structural_feature.h"
   Node52 -> Node16 [color="steelblue1",style="solid"];
   Node52 -> Node17 [color="steelblue1",style="solid"];
   Node52 -> Node43 [color="steelblue1",style="solid"];
+  Node52 -> Node36 [color="steelblue1",style="solid"];
+  Node52 -> Node29 [color="steelblue1",style="solid"];
   Node52 -> Node53 [color="steelblue1",style="solid"];
   Node53 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node53 -> Node45 [color="steelblue1",style="solid"];

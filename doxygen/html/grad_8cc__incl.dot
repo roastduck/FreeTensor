@@ -25,6 +25,13 @@ digraph "src/autograd/grad.cc"
   Node49 [label="stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$stmt_8h.html",tooltip=" "];
   Node49 -> Node7 [color="steelblue1",style="solid"];
   Node49 -> Node10 [color="steelblue1",style="solid"];
+  Node49 -> Node33 [color="steelblue1",style="solid"];
+  Node33 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
+  Node33 -> Node6 [color="steelblue1",style="solid"];
+  Node33 -> Node7 [color="steelblue1",style="solid"];
+  Node33 -> Node8 [color="steelblue1",style="solid"];
+  Node33 -> Node3 [color="steelblue1",style="solid"];
+  Node33 -> Node10 [color="steelblue1",style="solid"];
   Node4 -> Node55 [color="steelblue1",style="solid"];
   Node55 [label="selector.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$selector_8h.html",tooltip=" "];
   Node55 -> Node7 [color="steelblue1",style="solid"];
@@ -34,6 +41,7 @@ digraph "src/autograd/grad.cc"
   Node56 [label="visitor.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$visitor_8h.html",tooltip=" "];
   Node56 -> Node5 [color="steelblue1",style="solid"];
   Node56 -> Node49 [color="steelblue1",style="solid"];
+  Node2 -> Node33 [color="steelblue1",style="solid"];
   Node1 -> Node61 [color="steelblue1",style="solid"];
   Node61 [label="analyze/all_uses.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$all__uses_8h.html",tooltip=" "];
   Node61 -> Node3 [color="steelblue1",style="solid"];
@@ -68,12 +76,6 @@ digraph "src/autograd/grad.cc"
   Node62 -> Node64 [color="steelblue1",style="solid"];
   Node62 -> Node66 [color="steelblue1",style="solid"];
   Node62 -> Node33 [color="steelblue1",style="solid"];
-  Node33 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
-  Node33 -> Node6 [color="steelblue1",style="solid"];
-  Node33 -> Node7 [color="steelblue1",style="solid"];
-  Node33 -> Node8 [color="steelblue1",style="solid"];
-  Node33 -> Node3 [color="steelblue1",style="solid"];
-  Node33 -> Node10 [color="steelblue1",style="solid"];
   Node62 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node67 -> Node13 [color="steelblue1",style="solid"];

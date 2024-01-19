@@ -89,6 +89,8 @@ digraph "src/pass/remove_dead_var.cc"
   Node30 -> Node11 [color="steelblue1",style="solid"];
   Node30 -> Node32 [color="steelblue1",style="solid"];
   Node32 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
+  Node32 -> Node33 [color="steelblue1",style="solid"];
+  Node33 [label="algorithm",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node32 -> Node4 [color="steelblue1",style="solid"];
   Node32 -> Node26 [color="steelblue1",style="solid"];
   Node32 -> Node5 [color="steelblue1",style="solid"];
@@ -118,6 +120,7 @@ digraph "src/pass/remove_dead_var.cc"
   Node42 -> Node4 [color="steelblue1",style="solid"];
   Node42 -> Node5 [color="steelblue1",style="solid"];
   Node42 -> Node32 [color="steelblue1",style="solid"];
+  Node42 -> Node25 [color="steelblue1",style="solid"];
   Node42 -> Node28 [color="steelblue1",style="solid"];
   Node39 -> Node43 [color="steelblue1",style="solid"];
   Node43 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -125,6 +128,7 @@ digraph "src/pass/remove_dead_var.cc"
   Node43 -> Node4 [color="steelblue1",style="solid"];
   Node43 -> Node5 [color="steelblue1",style="solid"];
   Node43 -> Node32 [color="steelblue1",style="solid"];
+  Node43 -> Node25 [color="steelblue1",style="solid"];
   Node43 -> Node28 [color="steelblue1",style="solid"];
   Node3 -> Node44 [color="steelblue1",style="solid"];
   Node44 [label="driver/array.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$array_8h.html",tooltip=" "];
@@ -147,18 +151,11 @@ digraph "src/pass/remove_dead_var.cc"
   Node48 -> Node8 [color="steelblue1",style="solid"];
   Node48 -> Node9 [color="steelblue1",style="solid"];
   Node48 -> Node39 [color="steelblue1",style="solid"];
+  Node48 -> Node32 [color="steelblue1",style="solid"];
+  Node48 -> Node25 [color="steelblue1",style="solid"];
   Node48 -> Node49 [color="steelblue1",style="solid"];
-  Node49 [label="for_property.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$for__property_8h.html",tooltip=" "];
+  Node49 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node49 -> Node41 [color="steelblue1",style="solid"];
-  Node49 -> Node50 [color="steelblue1",style="solid"];
-  Node50 [label="parallel_scope.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$parallel__scope_8h.html",tooltip=" "];
-  Node50 -> Node4 [color="steelblue1",style="solid"];
-  Node50 -> Node5 [color="steelblue1",style="solid"];
-  Node50 -> Node51 [color="steelblue1",style="solid"];
-  Node51 [label="variant",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node50 -> Node32 [color="steelblue1",style="solid"];
-  Node50 -> Node25 [color="steelblue1",style="solid"];
-  Node50 -> Node28 [color="steelblue1",style="solid"];
   Node49 -> Node53 [color="steelblue1",style="solid"];
   Node53 [label="reduce_op.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$reduce__op_8h.html",tooltip=" "];
   Node53 -> Node41 [color="steelblue1",style="solid"];
@@ -190,6 +187,7 @@ digraph "src/pass/remove_dead_var.cc"
   Node61 [label="maybe_void.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$maybe__void_8h.html",tooltip=" "];
   Node61 -> Node21 [color="steelblue1",style="solid"];
   Node61 -> Node51 [color="steelblue1",style="solid"];
+  Node51 [label="variant",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node60 -> Node48 [color="steelblue1",style="solid"];
   Node59 -> Node3 [color="steelblue1",style="solid"];
   Node59 -> Node54 [color="steelblue1",style="solid"];

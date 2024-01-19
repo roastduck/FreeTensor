@@ -91,6 +91,8 @@ digraph "src/pass/use_builtin_div.cc"
   Node51 -> Node14 [color="steelblue1",style="solid"];
   Node51 -> Node15 [color="steelblue1",style="solid"];
   Node51 -> Node42 [color="steelblue1",style="solid"];
+  Node51 -> Node35 [color="steelblue1",style="solid"];
+  Node51 -> Node28 [color="steelblue1",style="solid"];
   Node51 -> Node52 [color="steelblue1",style="solid"];
   Node52 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node52 -> Node44 [color="steelblue1",style="solid"];

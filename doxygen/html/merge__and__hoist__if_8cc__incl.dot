@@ -121,6 +121,8 @@ digraph "src/pass/merge_and_hoist_if.cc"
   Node49 -> Node11 [color="steelblue1",style="solid"];
   Node49 -> Node12 [color="steelblue1",style="solid"];
   Node49 -> Node40 [color="steelblue1",style="solid"];
+  Node49 -> Node34 [color="steelblue1",style="solid"];
+  Node49 -> Node27 [color="steelblue1",style="solid"];
   Node49 -> Node50 [color="steelblue1",style="solid"];
   Node50 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node50 -> Node42 [color="steelblue1",style="solid"];

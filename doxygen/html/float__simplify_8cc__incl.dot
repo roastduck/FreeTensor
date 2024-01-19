@@ -104,6 +104,8 @@ digraph "src/pass/float_simplify.cc"
   Node44 -> Node26 [color="steelblue1",style="solid"];
   Node44 -> Node30 [color="steelblue1",style="solid"];
   Node44 -> Node39 [color="steelblue1",style="solid"];
+  Node42 -> Node6 [color="steelblue1",style="solid"];
+  Node42 -> Node26 [color="steelblue1",style="solid"];
   Node42 -> Node47 [color="steelblue1",style="solid"];
   Node47 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node47 -> Node30 [color="steelblue1",style="solid"];

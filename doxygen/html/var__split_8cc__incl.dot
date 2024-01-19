@@ -78,6 +78,7 @@ digraph "src/schedule/var_split.cc"
   Node49 -> Node10 [color="steelblue1",style="solid"];
   Node49 -> Node11 [color="steelblue1",style="solid"];
   Node49 -> Node40 [color="steelblue1",style="solid"];
+  Node49 -> Node33 [color="steelblue1",style="solid"];
   Node6 -> Node41 [color="steelblue1",style="solid"];
   Node5 -> Node55 [color="steelblue1",style="solid"];
   Node55 [label="selector.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$selector_8h.html",tooltip=" "];

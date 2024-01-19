@@ -75,6 +75,8 @@ digraph "src/pass/simplify.cc"
   Node42 -> Node26 [color="steelblue1",style="solid"];
   Node42 -> Node8 [color="steelblue1",style="solid"];
   Node42 -> Node31 [color="steelblue1",style="solid"];
+  Node40 -> Node33 [color="steelblue1",style="solid"];
+  Node40 -> Node26 [color="steelblue1",style="solid"];
   Node4 -> Node49 [color="steelblue1",style="solid"];
   Node49 [label="math/linear.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$linear_8h.html",tooltip=" "];
   Node49 -> Node2 [color="steelblue1",style="solid"];

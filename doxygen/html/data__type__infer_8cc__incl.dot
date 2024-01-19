@@ -141,6 +141,7 @@ digraph "src/data_type_infer.cc"
   Node46 -> Node9 [color="steelblue1",style="solid"];
   Node46 -> Node4 [color="steelblue1",style="solid"];
   Node46 -> Node30 [color="steelblue1",style="solid"];
+  Node46 -> Node23 [color="steelblue1",style="solid"];
   Node46 -> Node26 [color="steelblue1",style="solid"];
   Node44 -> Node47 [color="steelblue1",style="solid"];
   Node47 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -148,7 +149,10 @@ digraph "src/data_type_infer.cc"
   Node47 -> Node9 [color="steelblue1",style="solid"];
   Node47 -> Node4 [color="steelblue1",style="solid"];
   Node47 -> Node30 [color="steelblue1",style="solid"];
+  Node47 -> Node23 [color="steelblue1",style="solid"];
   Node47 -> Node26 [color="steelblue1",style="solid"];
+  Node43 -> Node30 [color="steelblue1",style="solid"];
+  Node43 -> Node23 [color="steelblue1",style="solid"];
   Node39 -> Node52 [color="steelblue1",style="solid"];
   Node52 [label="codegen/native_code.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$native__code_8h.html",tooltip=" "];
   Node52 -> Node10 [color="steelblue1",style="solid"];

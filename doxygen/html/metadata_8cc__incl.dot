@@ -136,6 +136,7 @@ digraph "src/metadata.cc"
   Node42 -> Node6 [color="steelblue1",style="solid"];
   Node42 -> Node8 [color="steelblue1",style="solid"];
   Node42 -> Node3 [color="steelblue1",style="solid"];
+  Node42 -> Node32 [color="steelblue1",style="solid"];
   Node42 -> Node34 [color="steelblue1",style="solid"];
   Node40 -> Node43 [color="steelblue1",style="solid"];
   Node43 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -143,7 +144,10 @@ digraph "src/metadata.cc"
   Node43 -> Node6 [color="steelblue1",style="solid"];
   Node43 -> Node8 [color="steelblue1",style="solid"];
   Node43 -> Node3 [color="steelblue1",style="solid"];
+  Node43 -> Node32 [color="steelblue1",style="solid"];
   Node43 -> Node34 [color="steelblue1",style="solid"];
+  Node39 -> Node3 [color="steelblue1",style="solid"];
+  Node39 -> Node32 [color="steelblue1",style="solid"];
   Node39 -> Node44 [color="steelblue1",style="solid"];
   Node44 [label="for_property.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node44 -> Node16 [color="steelblue1",style="solid"];

@@ -115,12 +115,14 @@ digraph "src/autograd/propagate_defs_need_grad.cc"
   Node42 -> Node4 [color="steelblue1",style="solid"];
   Node42 -> Node5 [color="steelblue1",style="solid"];
   Node42 -> Node32 [color="steelblue1",style="solid"];
+  Node42 -> Node25 [color="steelblue1",style="solid"];
   Node42 -> Node28 [color="steelblue1",style="solid"];
   Node39 -> Node43 [color="steelblue1",style="solid"];
   Node43 [label="type/mem_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$mem__type_8h.html",tooltip=" "];
   Node43 -> Node4 [color="steelblue1",style="solid"];
   Node43 -> Node5 [color="steelblue1",style="solid"];
   Node43 -> Node32 [color="steelblue1",style="solid"];
+  Node43 -> Node25 [color="steelblue1",style="solid"];
   Node43 -> Node28 [color="steelblue1",style="solid"];
   Node3 -> Node44 [color="steelblue1",style="solid"];
   Node44 [label="driver/array.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$array_8h.html",tooltip=" "];
@@ -138,6 +140,8 @@ digraph "src/autograd/propagate_defs_need_grad.cc"
   Node48 -> Node8 [color="steelblue1",style="solid"];
   Node48 -> Node9 [color="steelblue1",style="solid"];
   Node48 -> Node39 [color="steelblue1",style="solid"];
+  Node48 -> Node32 [color="steelblue1",style="solid"];
+  Node48 -> Node25 [color="steelblue1",style="solid"];
   Node48 -> Node49 [color="steelblue1",style="solid"];
   Node49 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node49 -> Node41 [color="steelblue1",style="solid"];

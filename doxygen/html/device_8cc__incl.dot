@@ -130,6 +130,7 @@ digraph "src/driver/device.cc"
   Node42 -> Node4 [color="steelblue1",style="solid"];
   Node42 -> Node6 [color="steelblue1",style="solid"];
   Node42 -> Node34 [color="steelblue1",style="solid"];
+  Node42 -> Node18 [color="steelblue1",style="solid"];
   Node42 -> Node31 [color="steelblue1",style="solid"];
   Node7 -> Node43 [color="steelblue1",style="solid"];
   Node43 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -137,6 +138,7 @@ digraph "src/driver/device.cc"
   Node43 -> Node4 [color="steelblue1",style="solid"];
   Node43 -> Node6 [color="steelblue1",style="solid"];
   Node43 -> Node34 [color="steelblue1",style="solid"];
+  Node43 -> Node18 [color="steelblue1",style="solid"];
   Node43 -> Node31 [color="steelblue1",style="solid"];
   Node5 -> Node44 [color="steelblue1",style="solid"];
   Node44 [label="driver/target_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$target__type_8h.html",tooltip=" "];

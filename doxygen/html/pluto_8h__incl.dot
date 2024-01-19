@@ -126,6 +126,7 @@ digraph "include/schedule/pluto.h"
   Node40 -> Node8 [color="steelblue1",style="solid"];
   Node40 -> Node3 [color="steelblue1",style="solid"];
   Node40 -> Node29 [color="steelblue1",style="solid"];
+  Node40 -> Node22 [color="steelblue1",style="solid"];
   Node40 -> Node25 [color="steelblue1",style="solid"];
   Node37 -> Node41 [color="steelblue1",style="solid"];
   Node41 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -133,7 +134,10 @@ digraph "include/schedule/pluto.h"
   Node41 -> Node8 [color="steelblue1",style="solid"];
   Node41 -> Node3 [color="steelblue1",style="solid"];
   Node41 -> Node29 [color="steelblue1",style="solid"];
+  Node41 -> Node22 [color="steelblue1",style="solid"];
   Node41 -> Node25 [color="steelblue1",style="solid"];
+  Node2 -> Node29 [color="steelblue1",style="solid"];
+  Node2 -> Node22 [color="steelblue1",style="solid"];
   Node2 -> Node42 [color="steelblue1",style="solid"];
   Node42 [label="for_property.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node42 -> Node39 [color="steelblue1",style="solid"];

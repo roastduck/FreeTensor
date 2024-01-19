@@ -146,6 +146,8 @@ digraph "src/math/parse_pb_expr.cc"
   Node65 -> Node13 [color="steelblue1",style="solid"];
   Node65 -> Node17 [color="steelblue1",style="solid"];
   Node65 -> Node21 [color="steelblue1",style="solid"];
+  Node65 -> Node8 [color="steelblue1",style="solid"];
+  Node65 -> Node36 [color="steelblue1",style="solid"];
   Node1 -> Node75 [color="steelblue1",style="solid"];
   Node75 [label="pb_lexer.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node1 -> Node76 [color="steelblue1",style="solid"];

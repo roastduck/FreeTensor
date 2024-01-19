@@ -27,6 +27,16 @@ digraph "src/schedule/permute.cc"
   Node49 [label="stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$stmt_8h.html",tooltip=" "];
   Node49 -> Node8 [color="steelblue1",style="solid"];
   Node49 -> Node11 [color="steelblue1",style="solid"];
+  Node49 -> Node33 [color="steelblue1",style="solid"];
+  Node33 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
+  Node33 -> Node7 [color="steelblue1",style="solid"];
+  Node33 -> Node8 [color="steelblue1",style="solid"];
+  Node33 -> Node9 [color="steelblue1",style="solid"];
+  Node33 -> Node4 [color="steelblue1",style="solid"];
+  Node33 -> Node11 [color="steelblue1",style="solid"];
+  Node49 -> Node26 [color="steelblue1",style="solid"];
+  Node26 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
+  Node26 -> Node8 [color="steelblue1",style="solid"];
   Node5 -> Node55 [color="steelblue1",style="solid"];
   Node55 [label="selector.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$selector_8h.html",tooltip=" "];
   Node55 -> Node8 [color="steelblue1",style="solid"];
@@ -74,12 +84,6 @@ digraph "src/schedule/permute.cc"
   Node61 -> Node63 [color="steelblue1",style="solid"];
   Node61 -> Node65 [color="steelblue1",style="solid"];
   Node61 -> Node33 [color="steelblue1",style="solid"];
-  Node33 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
-  Node33 -> Node7 [color="steelblue1",style="solid"];
-  Node33 -> Node8 [color="steelblue1",style="solid"];
-  Node33 -> Node9 [color="steelblue1",style="solid"];
-  Node33 -> Node4 [color="steelblue1",style="solid"];
-  Node33 -> Node11 [color="steelblue1",style="solid"];
   Node61 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node2 [color="steelblue1",style="solid"];
@@ -104,8 +108,6 @@ digraph "src/schedule/permute.cc"
   Node69 -> Node11 [color="steelblue1",style="solid"];
   Node69 -> Node57 [color="steelblue1",style="solid"];
   Node69 -> Node26 [color="steelblue1",style="solid"];
-  Node26 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node26 -> Node8 [color="steelblue1",style="solid"];
   Node69 -> Node29 [color="steelblue1",style="solid"];
   Node29 [label="serialize/to_string.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node67 -> Node56 [color="steelblue1",style="solid"];

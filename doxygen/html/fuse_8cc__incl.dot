@@ -27,6 +27,14 @@ digraph "src/schedule/fuse.cc"
   Node49 [label="stmt.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$stmt_8h.html",tooltip=" "];
   Node49 -> Node8 [color="steelblue1",style="solid"];
   Node49 -> Node11 [color="steelblue1",style="solid"];
+  Node49 -> Node34 [color="steelblue1",style="solid"];
+  Node34 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
+  Node34 -> Node2 [color="steelblue1",style="solid"];
+  Node34 -> Node7 [color="steelblue1",style="solid"];
+  Node34 -> Node8 [color="steelblue1",style="solid"];
+  Node34 -> Node9 [color="steelblue1",style="solid"];
+  Node34 -> Node4 [color="steelblue1",style="solid"];
+  Node34 -> Node11 [color="steelblue1",style="solid"];
   Node5 -> Node55 [color="steelblue1",style="solid"];
   Node55 [label="selector.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$selector_8h.html",tooltip=" "];
   Node55 -> Node8 [color="steelblue1",style="solid"];
@@ -88,13 +96,6 @@ digraph "src/schedule/fuse.cc"
   Node65 -> Node62 [color="steelblue1",style="solid"];
   Node65 -> Node67 [color="steelblue1",style="solid"];
   Node65 -> Node34 [color="steelblue1",style="solid"];
-  Node34 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
-  Node34 -> Node2 [color="steelblue1",style="solid"];
-  Node34 -> Node7 [color="steelblue1",style="solid"];
-  Node34 -> Node8 [color="steelblue1",style="solid"];
-  Node34 -> Node9 [color="steelblue1",style="solid"];
-  Node34 -> Node4 [color="steelblue1",style="solid"];
-  Node34 -> Node11 [color="steelblue1",style="solid"];
   Node65 -> Node68 [color="steelblue1",style="solid"];
   Node68 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node68 -> Node14 [color="steelblue1",style="solid"];

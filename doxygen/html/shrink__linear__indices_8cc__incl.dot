@@ -71,6 +71,8 @@ digraph "src/pass/shrink_linear_indices.cc"
   Node50 -> Node12 [color="steelblue1",style="solid"];
   Node50 -> Node13 [color="steelblue1",style="solid"];
   Node50 -> Node41 [color="steelblue1",style="solid"];
+  Node50 -> Node35 [color="steelblue1",style="solid"];
+  Node50 -> Node28 [color="steelblue1",style="solid"];
   Node50 -> Node51 [color="steelblue1",style="solid"];
   Node51 [label="for_property.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$for__property_8h.html",tooltip=" "];
   Node51 -> Node43 [color="steelblue1",style="solid"];
@@ -102,6 +104,7 @@ digraph "src/pass/shrink_linear_indices.cc"
   Node57 -> Node43 [color="steelblue1",style="solid"];
   Node57 -> Node8 [color="steelblue1",style="solid"];
   Node57 -> Node50 [color="steelblue1",style="solid"];
+  Node5 -> Node35 [color="steelblue1",style="solid"];
   Node1 -> Node62 [color="steelblue1",style="solid"];
   Node62 [label="analyze/analyze_linear.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$analyze__linear_8h.html",tooltip=" "];
   Node62 -> Node16 [color="steelblue1",style="solid"];

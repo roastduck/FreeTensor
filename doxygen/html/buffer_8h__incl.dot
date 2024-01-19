@@ -119,6 +119,7 @@ digraph "include/buffer.h"
   Node38 -> Node20 [color="steelblue1",style="solid"];
   Node38 -> Node16 [color="steelblue1",style="solid"];
   Node38 -> Node30 [color="steelblue1",style="solid"];
+  Node38 -> Node12 [color="steelblue1",style="solid"];
   Node38 -> Node27 [color="steelblue1",style="solid"];
   Node1 -> Node39 [color="steelblue1",style="solid"];
   Node39 [label="type/mem_type.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$mem__type_8h.html",tooltip=" "];
@@ -126,5 +127,6 @@ digraph "include/buffer.h"
   Node39 -> Node20 [color="steelblue1",style="solid"];
   Node39 -> Node16 [color="steelblue1",style="solid"];
   Node39 -> Node30 [color="steelblue1",style="solid"];
+  Node39 -> Node12 [color="steelblue1",style="solid"];
   Node39 -> Node27 [color="steelblue1",style="solid"];
 }
