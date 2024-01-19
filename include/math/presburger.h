@@ -912,8 +912,26 @@ template <PBSpaceRef T> PBSpace spaceMapFromSet(T &&space) {
     return isl_space_map_from_set(PBRefTake<T>(space));
 }
 
+template <PBMapRef T> PBSet wrap(T &&map) {
+    return isl_map_wrap(PBRefTake<T>(map));
+}
+
+template <PBSetRef T> PBMap unwrap(T &&set) {
+    return isl_set_unwrap(PBRefTake<T>(set));
+}
+
+template <PBSetRef T> PBSet flatten(T &&set) {
+    return isl_set_flatten(PBRefTake<T>(set));
+}
+template <PBMapRef T> PBMap flattenDomain(T &&map) {
+    return isl_map_flatten_domain(PBRefTake<T>(map));
+}
+template <PBMapRef T> PBMap flattenRange(T &&map) {
+    return isl_map_flatten_range(PBRefTake<T>(map));
+}
+
 template <PBMapRef T> PBSet flattenMapToSet(T &&map) {
-    return isl_set_flatten(isl_map_wrap(PBRefTake<T>(map)));
+    return flatten(wrap(std::forward<T>(map)));
 }
 
 template <PBSetRef T> PBPoint sample(T &&set) {
