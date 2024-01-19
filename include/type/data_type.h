@@ -99,13 +99,8 @@ inline SignDataType parseSignDataType(const std::string &str) {
             return (SignDataType)i;
         }
     }
-    std::string msg =
-        "Unrecognized sign data type \"" + str + "\". Candidates are: ";
-    for (auto &&[i, s] : views::enumerate(signDataTypeNames)) {
-        msg += (i > 0 ? ", " : "");
-        msg += s;
-    }
-    ERROR(msg);
+    ERROR(FT_MSG << "Unrecognized sign data type \"" << str
+                 << "\". Candidates are: " << (signDataTypeNames | join(", ")));
 }
 
 class DataType {
