@@ -1149,18 +1149,21 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a2fad29e0a5a82301e7f715765b346688">VarMerge</a>
 , <br />
 &#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a915c13322a4b5e6989549f4cac8c8b63">VarReorder</a>
+, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8adf9aa193acfafade4cbd4ba8cbdf4164">VarUnsqueeze</a>
+, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a86780293c6dce8f19b5da78774aaf7ef">VarSqueeze</a>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a0125cf5f3ca38b312ca5d3b511c45a13">Inline</a>
-, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a0fe21b0f94673ecd304a362e81df7454">Parallelize</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a0fe21b0f94673ecd304a362e81df7454">Parallelize</a>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8abff4f71e66a6a2d5e4d726db7d651d66">ParallelizeAs</a>
-, <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a1f433dba35a8fceeac01a8a0745c210b">Unroll</a>
+, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a1f433dba35a8fceeac01a8a0745c210b">Unroll</a>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8ab8c3ff4276089f60a1f1820acc67bf60">Vectorize</a>
-, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8abd41b498d5a21166c2626a519b452141">SeparateTail</a>
-, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a3a9092b0d0f68da544f01b7535e742da">AsMatMul</a>
 , <br />
-&#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8afa662c6eb71caef475b2b981ce8eccd7">Permute</a>
+&#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8abd41b498d5a21166c2626a519b452141">SeparateTail</a>
+, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a3a9092b0d0f68da544f01b7535e742da">AsMatMul</a>
+, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8afa662c6eb71caef475b2b981ce8eccd7">Permute</a>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8af35c365032717c98cc64de2c968290f2">PlutoFuse</a>
-, <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8aca17d7402905048e1b4bd8e308338e96">PlutoPermute</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8aca17d7402905048e1b4bd8e308338e96">PlutoPermute</a>
 , <a class="el" href="namespacefreetensor.html#ac28eb3e0e6e276ccd7ffbe307afdaae8a86e30d8e0831512671e7ed103ad7c457">NumTypes</a>
 <br />
  }</td></tr>
@@ -2135,6 +2138,10 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:ae0daebab755627261041dd65164e2aad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1667b97261f7bf160f3fbbbba5df5fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ac1667b97261f7bf160f3fbbbba5df5fd">varSplit</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, int dim, <a class="el" href="namespacefreetensor.html#aa84a1eedb0880915c25c6ba5a2aa4db5">VarSplitMode</a> mode, int factor, int nparts)</td></tr>
 <tr class="separator:ac1667b97261f7bf160f3fbbbba5df5fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6c8b5789b52756c041905aff593f22b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa6c8b5789b52756c041905aff593f22b">varSqueeze</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, int dim)</td></tr>
+<tr class="separator:aa6c8b5789b52756c041905aff593f22b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8a9035e3617e9bf14819b8e3d77c3b7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa8a9035e3617e9bf14819b8e3d77c3b7">varUnsqueeze</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, int dim)</td></tr>
+<tr class="separator:aa8a9035e3617e9bf14819b8e3d77c3b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea5111a7980fc169f59a834ed9fdb814"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aea5111a7980fc169f59a834ed9fdb814">vectorize</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop)</td></tr>
 <tr class="separator:aea5111a7980fc169f59a834ed9fdb814"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a41eb380dcd84d033d62d228bf8f87d0c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1Selector.html">Selector</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a41eb380dcd84d033d62d228bf8f87d0c">parseSelector</a> (const std::string &amp;str)</td></tr>
@@ -4505,6 +4512,8 @@ template&lt;class K &gt; </div>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a5b8bc2766491271c74eca4c6a02a02e0" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a5b8bc2766491271c74eca4c6a02a02e0"></a>VarSplit&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a2fad29e0a5a82301e7f715765b346688" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a2fad29e0a5a82301e7f715765b346688"></a>VarMerge&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a915c13322a4b5e6989549f4cac8c8b63" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a915c13322a4b5e6989549f4cac8c8b63"></a>VarReorder&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8adf9aa193acfafade4cbd4ba8cbdf4164" name="ac28eb3e0e6e276ccd7ffbe307afdaae8adf9aa193acfafade4cbd4ba8cbdf4164"></a>VarUnsqueeze&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a86780293c6dce8f19b5da78774aaf7ef" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a86780293c6dce8f19b5da78774aaf7ef"></a>VarSqueeze&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a0125cf5f3ca38b312ca5d3b511c45a13" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a0125cf5f3ca38b312ca5d3b511c45a13"></a>Inline&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8a0fe21b0f94673ecd304a362e81df7454" name="ac28eb3e0e6e276ccd7ffbe307afdaae8a0fe21b0f94673ecd304a362e81df7454"></a>Parallelize&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ac28eb3e0e6e276ccd7ffbe307afdaae8abff4f71e66a6a2d5e4d726db7d651d66" name="ac28eb3e0e6e276ccd7ffbe307afdaae8abff4f71e66a6a2d5e4d726db7d651d66"></a>ParallelizeAs&#160;</td><td class="fielddoc"></td></tr>
@@ -21027,6 +21036,74 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
+<a id="aa6c8b5789b52756c041905aff593f22b" name="aa6c8b5789b52756c041905aff593f22b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6c8b5789b52756c041905aff593f22b">&#9670;&#160;</a></span>varSqueeze()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::varSqueeze </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>ast</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>def</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>dim</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa8a9035e3617e9bf14819b8e3d77c3b7" name="aa8a9035e3617e9bf14819b8e3d77c3b7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa8a9035e3617e9bf14819b8e3d77c3b7">&#9670;&#160;</a></span>varUnsqueeze()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::varUnsqueeze </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>ast</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>def</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>dim</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="aea5111a7980fc169f59a834ed9fdb814" name="aea5111a7980fc169f59a834ed9fdb814"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aea5111a7980fc169f59a834ed9fdb814">&#9670;&#160;</a></span>vectorize()</h2>
 
@@ -21548,14 +21625,15 @@ template&lt;PBMapRef T&gt; </div>
 </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">    <span class="stringliteral">&quot;split&quot;</span>,          <span class="stringliteral">&quot;reorder&quot;</span>,       <span class="stringliteral">&quot;merge&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;fission&quot;</span>,        <span class="stringliteral">&quot;fuse&quot;</span>,          <span class="stringliteral">&quot;swap&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;blend&quot;</span>,          <span class="stringliteral">&quot;cache&quot;</span>,         <span class="stringliteral">&quot;cache_reduction&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;set_mem_type&quot;</span>,   <span class="stringliteral">&quot;var_split&quot;</span>,     <span class="stringliteral">&quot;var_merge&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;var_reorder&quot;</span>,    <span class="stringliteral">&quot;inline&quot;</span>,        <span class="stringliteral">&quot;parallelize&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;parallelize_as&quot;</span>, <span class="stringliteral">&quot;unroll&quot;</span>,        <span class="stringliteral">&quot;vectorize&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;separate_tail&quot;</span>,  <span class="stringliteral">&quot;as_matmul&quot;</span>,     <span class="stringliteral">&quot;permute&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;pluto_fuse&quot;</span>,     <span class="stringliteral">&quot;pluto_permute&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;split&quot;</span>,         <span class="stringliteral">&quot;reorder&quot;</span>,       <span class="stringliteral">&quot;merge&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;fission&quot;</span>,       <span class="stringliteral">&quot;fuse&quot;</span>,          <span class="stringliteral">&quot;swap&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;blend&quot;</span>,         <span class="stringliteral">&quot;cache&quot;</span>,         <span class="stringliteral">&quot;cache_reduction&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;set_mem_type&quot;</span>,  <span class="stringliteral">&quot;var_split&quot;</span>,     <span class="stringliteral">&quot;var_merge&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;var_reorder&quot;</span>,   <span class="stringliteral">&quot;var_unsqueeze&quot;</span>, <span class="stringliteral">&quot;var_squeeze&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;inline&quot;</span>,        <span class="stringliteral">&quot;parallelize&quot;</span>,   <span class="stringliteral">&quot;parallelize_as&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;unroll&quot;</span>,        <span class="stringliteral">&quot;vectorize&quot;</span>,     <span class="stringliteral">&quot;separate_tail&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;as_matmul&quot;</span>,     <span class="stringliteral">&quot;permute&quot;</span>,       <span class="stringliteral">&quot;pluto_fuse&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;pluto_permute&quot;</span>,</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>

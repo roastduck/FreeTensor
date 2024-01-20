@@ -144,6 +144,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4afd2c54b5c306cea3ef02276278a638"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0527473deeef7e00524a5aa1887c974b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a0527473deeef7e00524a5aa1887c974b">varReorder</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, const std::vector&lt; int &gt; &amp;order)</td></tr>
 <tr class="separator:a0527473deeef7e00524a5aa1887c974b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac43da125550ae9eb0f91dc50357e54f1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#ac43da125550ae9eb0f91dc50357e54f1">varUnsqueeze</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, int dim)</td></tr>
+<tr class="separator:ac43da125550ae9eb0f91dc50357e54f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09352afbc2bb288a3e92b51683c5e191"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a09352afbc2bb288a3e92b51683c5e191">varSqueeze</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def, int dim)</td></tr>
+<tr class="separator:a09352afbc2bb288a3e92b51683c5e191"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e8f42786f010644795cac660b690b61"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classfreetensor_1_1ID.html">ID</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a6e8f42786f010644795cac660b690b61">moveTo</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;stmt, <a class="el" href="namespacefreetensor.html#ac490983b87e6acdba7919a1cf57245c3">MoveToSide</a> side, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;dst)</td></tr>
 <tr class="separator:a6e8f42786f010644795cac660b690b61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bfc2f98d42e75a3838eaa0166b802e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1Schedule.html#a9bfc2f98d42e75a3838eaa0166b802e2">inlining</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def)</td></tr>
@@ -2251,6 +2255,92 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
+<a id="a09352afbc2bb288a3e92b51683c5e191" name="a09352afbc2bb288a3e92b51683c5e191"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09352afbc2bb288a3e92b51683c5e191">&#9670;&#160;</a></span>varSqueeze()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Schedule::varSqueeze </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>def</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>dim</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Remove a singleton (1-lengthed) dimension from a variable</p>
+<p>This is a utility schedule, which can be used together with <code>varSplit</code>, <code>varMerge</code> and/or <code>varReorder</code> to transform a variable to a desired shape.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">def</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the VarDef statement of the specific variable </td></tr>
+    <tr><td class="paramname">dim</td><td>: Remove the <code>dim</code>-th dimension </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a></td><td>if the variable is not found or the dimension is illegal </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ac43da125550ae9eb0f91dc50357e54f1" name="ac43da125550ae9eb0f91dc50357e54f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac43da125550ae9eb0f91dc50357e54f1">&#9670;&#160;</a></span>varUnsqueeze()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void freetensor::Schedule::varUnsqueeze </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>def</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>dim</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Insert a singleton (1-lengthed) dimension to a variable</p>
+<p>This is a utility schedule, which can be used together with <code>varSplit</code>, <code>varMerge</code> and/or <code>varReorder</code> to transform a variable to a desired shape.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">def</td><td>: <a class="el" href="classfreetensor_1_1ID.html">ID</a> of the VarDef statement of the specific variable </td></tr>
+    <tr><td class="paramname">dim</td><td>: Insert a singleton dimension at the <code>dim</code>-th dimension </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classfreetensor_1_1InvalidSchedule.html">InvalidSchedule</a></td><td>if the variable is not found or the dimension is illegal </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ac1d9ada77583888471a8378d400daf49" name="ac1d9ada77583888471a8378d400daf49"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac1d9ada77583888471a8378d400daf49">&#9670;&#160;</a></span>vectorize()</h2>
 
@@ -2343,6 +2433,8 @@ template&lt;class T &gt; </div>
 <li>src/schedule/<a class="el" href="var__merge_8cc.html">var_merge.cc</a></li>
 <li>src/schedule/<a class="el" href="var__reorder_8cc.html">var_reorder.cc</a></li>
 <li>src/schedule/<a class="el" href="var__split_8cc.html">var_split.cc</a></li>
+<li>src/schedule/<a class="el" href="var__squeeze_8cc.html">var_squeeze.cc</a></li>
+<li>src/schedule/<a class="el" href="var__unsqueeze_8cc.html">var_unsqueeze.cc</a></li>
 <li>src/schedule/<a class="el" href="vectorize_8cc.html">vectorize.cc</a></li>
 </ul>
 </div><!-- contents -->

@@ -72,5 +72,9 @@ digraph "include/schedule.h"
   Node1 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node34 [label="src/schedule/var_split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8cc.html",tooltip=" "];
   Node1 -> Node35 [dir="back",color="steelblue1",style="solid"];
-  Node35 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
+  Node35 [label="src/schedule/var_squeeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__squeeze_8cc.html",tooltip=" "];
+  Node1 -> Node36 [dir="back",color="steelblue1",style="solid"];
+  Node36 [label="src/schedule/var_unsqueeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__unsqueeze_8cc.html",tooltip=" "];
+  Node1 -> Node37 [dir="back",color="steelblue1",style="solid"];
+  Node37 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
 }

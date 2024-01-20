@@ -76,9 +76,13 @@ digraph "include/probability/rand_var.h"
   Node3 -> Node36 [dir="back",color="steelblue1",style="solid"];
   Node36 [label="src/schedule/var_split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8cc.html",tooltip=" "];
   Node3 -> Node37 [dir="back",color="steelblue1",style="solid"];
-  Node37 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
-  Node2 -> Node38 [dir="back",color="steelblue1",style="solid"];
-  Node38 [label="src/probability/rand\l_ctx.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$rand__ctx_8cc.html",tooltip=" "];
-  Node1 -> Node39 [dir="back",color="steelblue1",style="solid"];
-  Node39 [label="src/probability/rand\l_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$rand__var_8cc.html",tooltip=" "];
+  Node37 [label="src/schedule/var_squeeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__squeeze_8cc.html",tooltip=" "];
+  Node3 -> Node38 [dir="back",color="steelblue1",style="solid"];
+  Node38 [label="src/schedule/var_unsqueeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__unsqueeze_8cc.html",tooltip=" "];
+  Node3 -> Node39 [dir="back",color="steelblue1",style="solid"];
+  Node39 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
+  Node2 -> Node40 [dir="back",color="steelblue1",style="solid"];
+  Node40 [label="src/probability/rand\l_ctx.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$rand__ctx_8cc.html",tooltip=" "];
+  Node1 -> Node41 [dir="back",color="steelblue1",style="solid"];
+  Node41 [label="src/probability/rand\l_var.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$rand__var_8cc.html",tooltip=" "];
 }

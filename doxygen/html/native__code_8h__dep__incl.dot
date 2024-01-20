@@ -25,10 +25,6 @@ digraph "include/codegen/native_code.h"
   Node8 -> Node10 [dir="back",color="steelblue1",style="solid"];
   Node10 [label="src/codegen/detail\l/code_gen.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$src_2codegen_2detail_2code__gen_8h.html",tooltip=" "];
   Node10 -> Node7 [dir="back",color="steelblue1",style="solid"];
-  Node8 -> Node12 [dir="back",color="steelblue1",style="solid"];
-  Node12 [label="src/data_type_infer.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$data__type__infer_8cc.html",tooltip=" "];
-  Node8 -> Node13 [dir="back",color="steelblue1",style="solid"];
-  Node13 [label="src/math/gen_pb_expr.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$gen__pb__expr_8cc.html",tooltip=" "];
   Node2 -> Node5 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node10 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node14 [dir="back",color="steelblue1",style="solid"];
@@ -107,7 +103,11 @@ digraph "include/codegen/native_code.h"
   Node17 -> Node49 [dir="back",color="steelblue1",style="solid"];
   Node49 [label="src/schedule/var_split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8cc.html",tooltip=" "];
   Node17 -> Node50 [dir="back",color="steelblue1",style="solid"];
-  Node50 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
-  Node1 -> Node51 [dir="back",color="steelblue1",style="solid"];
-  Node51 [label="src/codegen/native\l_code.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$native__code_8cc.html",tooltip=" "];
+  Node50 [label="src/schedule/var_squeeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__squeeze_8cc.html",tooltip=" "];
+  Node17 -> Node51 [dir="back",color="steelblue1",style="solid"];
+  Node51 [label="src/schedule/var_unsqueeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__unsqueeze_8cc.html",tooltip=" "];
+  Node17 -> Node52 [dir="back",color="steelblue1",style="solid"];
+  Node52 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
+  Node1 -> Node53 [dir="back",color="steelblue1",style="solid"];
+  Node53 [label="src/codegen/native\l_code.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$native__code_8cc.html",tooltip=" "];
 }

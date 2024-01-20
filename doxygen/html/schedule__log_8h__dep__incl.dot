@@ -74,8 +74,12 @@ digraph "include/schedule/schedule_log.h"
   Node2 -> Node35 [dir="back",color="steelblue1",style="solid"];
   Node35 [label="src/schedule/var_split.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8cc.html",tooltip=" "];
   Node2 -> Node36 [dir="back",color="steelblue1",style="solid"];
-  Node36 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
-  Node1 -> Node37 [dir="back",color="steelblue1",style="solid"];
-  Node37 [label="include/schedule/memoized\l_schedules.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$memoized__schedules_8h.html",tooltip=" "];
-  Node37 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node36 [label="src/schedule/var_squeeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__squeeze_8cc.html",tooltip=" "];
+  Node2 -> Node37 [dir="back",color="steelblue1",style="solid"];
+  Node37 [label="src/schedule/var_unsqueeze.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__unsqueeze_8cc.html",tooltip=" "];
+  Node2 -> Node38 [dir="back",color="steelblue1",style="solid"];
+  Node38 [label="src/schedule/vectorize.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vectorize_8cc.html",tooltip=" "];
+  Node1 -> Node39 [dir="back",color="steelblue1",style="solid"];
+  Node39 [label="include/schedule/memoized\l_schedules.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$memoized__schedules_8h.html",tooltip=" "];
+  Node39 -> Node2 [dir="back",color="steelblue1",style="solid"];
 }
