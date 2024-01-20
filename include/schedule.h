@@ -555,6 +555,34 @@ class Schedule {
     void varReorder(const ID &def, const std::vector<int> &order);
 
     /**
+     * Insert a singleton (1-lengthed) dimension to a variable
+     *
+     * This is a utility schedule, which can be used together with `varSplit`,
+     * `varMerge` and/or `varReorder` to transform a variable to a desired
+     * shape.
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param dim : Insert a singleton dimension at the `dim`-th dimension
+     * @throw InvalidSchedule if the variable is not found or the dimension is
+     * illegal
+     */
+    void varUnsqueeze(const ID &def, int dim);
+
+    /**
+     * Remove a singleton (1-lengthed) dimension from a variable
+     *
+     * This is a utility schedule, which can be used together with `varSplit`,
+     * `varMerge` and/or `varReorder` to transform a variable to a desired
+     * shape.
+     *
+     * @param def : ID of the VarDef statement of the specific variable
+     * @param dim : Remove the `dim`-th dimension
+     * @throw InvalidSchedule if the variable is not found or the dimension is
+     * illegal
+     */
+    void varSqueeze(const ID &def, int dim);
+
+    /**
      * Move a statement to a new position
      *
      * This is a composite schedule command, which is implemented with other

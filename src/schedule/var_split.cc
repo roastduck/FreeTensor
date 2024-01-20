@@ -7,7 +7,7 @@ Stmt VarSplit::visit(const VarDef &_op) {
     if (_op->id() == def_) {
         found_ = true;
 
-        if (dim_ >= (int)_op->buffer_->tensor()->shape().size()) {
+        if (dim_ < 0 || dim_ >= (int)_op->buffer_->tensor()->shape().size()) {
             throw InvalidSchedule("There is no dimension " +
                                   std::to_string(dim_) + " in variable " +
                                   _op->name_);
