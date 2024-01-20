@@ -127,6 +127,8 @@ void init_ffi_schedule(py::module_ &m) {
              "factor"_a = -1, "nparts"_a = -1)
         .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a)
         .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a)
+        .def("var_unsqueeze", &Schedule::varUnsqueeze, "vardef"_a, "dim"_a)
+        .def("var_squeeze", &Schedule::varSqueeze, "vardef"_a, "dim"_a)
         .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
         .def("inline", &Schedule::inlining, "vardef"_a)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a,

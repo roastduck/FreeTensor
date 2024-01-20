@@ -7,7 +7,8 @@ Stmt VarMerge::visit(const VarDef &_op) {
     if (_op->id() == def_) {
         found_ = true;
 
-        if (dim_ + 1 >= (int)_op->buffer_->tensor()->shape().size()) {
+        if (dim_ < 0 ||
+            dim_ + 1 >= (int)_op->buffer_->tensor()->shape().size()) {
             throw InvalidSchedule(FT_MSG << "There is no dimension " << dim_
                                          << " ~ " << (dim_ + 1)
                                          << " in variable " << _op->name_);

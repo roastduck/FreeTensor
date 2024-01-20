@@ -565,6 +565,50 @@ class Schedule(ffi.Schedule):
         """
         return super().var_reorder(self._lookup(vardef), order)
 
+    def var_unsqueeze(self, vardef, dim):
+        """
+        Insert a singleton (1-lengthed) dimension to a variable
+
+        This is a utility schedule, which can be used together with `varSplit`,
+        `varMerge` and/or `varReorder` to transform a variable to a desired
+        shape.
+
+        Parameters
+        ----------
+        vardef : str, ID or Stmt
+            ID of the VarDef statement of the specific variable
+        dim : int
+            Insert a singleton dimension at the `dim`-th dimension
+
+        Raises
+        ------
+        InvalidSchedule
+            if the variable is not found or the dimension is illegal
+        """
+        return super().var_unsqueeze(self._lookup(vardef), dim)
+
+    def var_squeeze(self, vardef, dim):
+        """
+        Remove a singleton (1-lengthed) dimension from a variable
+
+        This is a utility schedule, which can be used together with `varSplit`,
+        `varMerge` and/or `varReorder` to transform a variable to a desired
+        shape.
+
+        Parameters
+        ----------
+        vardef : str, ID or Stmt
+            ID of the VarDef statement of the specific variable
+        dim : int
+            Remove the `dim`-th dimension
+
+        Raises
+        ------
+        InvalidSchedule
+            if the variable is not found or the dimension is illegal
+        """
+        return super().var_squeeze(self._lookup(vardef), dim)
+
     def move_to(self, stmt, side, dst):
         """
         Move a statement to a new position
