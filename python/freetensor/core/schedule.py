@@ -569,8 +569,8 @@ class Schedule(ffi.Schedule):
         """
         Insert a singleton (1-lengthed) dimension to a variable
 
-        This is a utility schedule, which can be used together with `varSplit`,
-        `varMerge` and/or `varReorder` to transform a variable to a desired
+        This is a utility schedule, which can be used together with `var_split`,
+        `var_merge` and/or `var_reorder` to transform a variable to a desired
         shape.
 
         Parameters
@@ -591,8 +591,8 @@ class Schedule(ffi.Schedule):
         """
         Remove a singleton (1-lengthed) dimension from a variable
 
-        This is a utility schedule, which can be used together with `varSplit`,
-        `varMerge` and/or `varReorder` to transform a variable to a desired
+        This is a utility schedule, which can be used together with `var_split`,
+        `var_merge` and/or `var_reorder` to transform a variable to a desired
         shape.
 
         Parameters
