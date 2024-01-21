@@ -25,7 +25,7 @@ def test_const_fold(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_partial_fold(p):
+def test_partial_fold_1(p):
     # This is the case that we need a symbolic bound, instead
     # of using integers only
     with ft.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
@@ -40,6 +40,25 @@ def test_partial_fold(p):
         with ft.For("i", 0, 4) as i:
             with ft.For("j", 0, 4) as j:
                 y[i, j] = i
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.pb_simplify])
+def test_partial_fold_2(p):
+    with ft.VarDef("y", (32, 2), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 32) as i:
+            with ft.For("j", 0, 2) as j:
+                y[i, j] = i - 4 * (1 + ((2 * i + j) // 8)) + 4
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef("y", (32, 2), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 32) as i:
+            with ft.For("j", 0, 2) as j:
+                y[i, j] = i % 4
     std = ft.pop_ast()
 
     assert std.match(ast)

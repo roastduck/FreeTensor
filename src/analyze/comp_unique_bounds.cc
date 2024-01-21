@@ -33,9 +33,10 @@ int CompUniqueBounds::Bound::countHeavyOps(const Expr &op) {
 int CompUniqueBounds::Bound::countScope(
     const Expr &expr,
     const std::unordered_map<std::string, int> &orderedScope) {
-    int scope = 0;
-    for (auto &&use : allUses(expr))
+    int scope = -1; // 0 = first level var, -1 = no var
+    for (auto &&use : allNames(expr)) {
         scope = std::max(scope, orderedScope.at(use));
+    }
     return scope;
 }
 
