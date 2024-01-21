@@ -139,5 +139,6 @@ digraph "include/math/rational.h"
   Node2 -> Node35 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node50 [dir="back",color="steelblue1",style="solid"];
   Node50 [label="src/math/bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8cc.html",tooltip=" "];
+  Node2 -> Node25 [dir="back",color="steelblue1",style="solid"];
   Node2 -> Node32 [dir="back",color="steelblue1",style="solid"];
 }

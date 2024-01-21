@@ -137,5 +137,6 @@ digraph "include/math/bounds.h"
   Node1 -> Node34 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node49 [dir="back",color="steelblue1",style="solid"];
   Node49 [label="src/math/bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8cc.html",tooltip=" "];
+  Node1 -> Node24 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node31 [dir="back",color="steelblue1",style="solid"];
 }

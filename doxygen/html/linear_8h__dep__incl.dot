@@ -156,5 +156,6 @@ digraph "include/math/linear.h"
   Node78 -> Node35 [dir="back",color="steelblue1",style="solid"];
   Node78 -> Node79 [dir="back",color="steelblue1",style="solid"];
   Node79 [label="src/math/bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$bounds_8cc.html",tooltip=" "];
+  Node78 -> Node25 [dir="back",color="steelblue1",style="solid"];
   Node78 -> Node32 [dir="back",color="steelblue1",style="solid"];
 }
