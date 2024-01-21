@@ -486,7 +486,6 @@ def test_if_expr():
                 y[i * 8 + j + ft.if_then_else(i <= 1, 16, -16)] = i + j
     ast = ft.pop_ast(verbose=True)
     ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
-    ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("j", 0, 8, label="L2") as j:

@@ -844,31 +844,36 @@ Expr SimplifyPass::visit(const IfExpr &_op) {
             auto &&x = lc->first.coeff_[0].a_;
             auto xl = unique_->getIntLower(x);
             auto xu = unique_->getIntUpper(x);
-            auto &&[cl, cu] = lin2bounds(lc->first, lc->second, x);
-            if (cu.has_value()) {
-                ASSERT(cu->lin().coeff_.empty());
-                if (xu - xl < 2 * (cu->lin().bias_ - xl + 1)) {
-                    // x <= cu ? then : else === then + floor((x - xl) / (cu -
-                    // xl + 1)) * (else - then)
-                    return makeAdd(
-                        op->thenCase_,
-                        makeMul(makeFloorDiv(
+            // TODO: Use saturation arithmetic when C++26 is available to be
+            // safer
+            if (xl > LLONG_MIN && xu < LLONG_MAX) {
+                auto &&[cl, cu] = lin2bounds(lc->first, lc->second, x);
+                if (cu.has_value() && !cl.has_value()) {
+                    ASSERT(cu->lin().coeff_.empty());
+                    if (xu - xl < 2 * (cu->lin().bias_ - xl + 1)) {
+                        // x <= cu ? then : else === then + floor((x - xl) / (cu
+                        // - xl + 1)) * (else - then)
+                        return makeAdd(
+                            op->thenCase_,
+                            makeMul(
+                                makeFloorDiv(
                                     makeSub(x, makeIntConst(xl)),
                                     makeAdd(cu->expr(), makeIntConst(-xl + 1))),
                                 makeSub(op->elseCase_, op->thenCase_)));
+                    }
                 }
-            }
-            if (cl.has_value()) {
-                ASSERT(cl->lin().coeff_.empty());
-                if (xu - xl < 2 * cl->lin().bias_) {
-                    // x >= cl ? then : else === else + floor((x - xl) / (cl -
-                    // xl)) * (then - else)
-                    return makeAdd(
-                        op->elseCase_,
-                        makeMul(
-                            makeFloorDiv(makeSub(x, makeIntConst(xl)),
-                                         makeSub(cl->expr(), makeIntConst(xl))),
-                            makeSub(op->thenCase_, op->elseCase_)));
+                if (cl.has_value() && !cu.has_value()) {
+                    ASSERT(cl->lin().coeff_.empty());
+                    if (xu - xl < 2 * cl->lin().bias_) {
+                        // x >= cl ? then : else === else + floor((x - xl) / (cl
+                        // - xl)) * (then - else)
+                        return makeAdd(
+                            op->elseCase_,
+                            makeMul(makeFloorDiv(
+                                        makeSub(x, makeIntConst(xl)),
+                                        makeSub(cl->expr(), makeIntConst(xl))),
+                                    makeSub(op->thenCase_, op->elseCase_)));
+                    }
                 }
             }
         }
