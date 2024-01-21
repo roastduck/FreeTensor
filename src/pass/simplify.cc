@@ -4,6 +4,7 @@
 #include <analyze/analyze_linear.h>
 #include <analyze/as_dnf.h>
 #include <except.h>
+#include <math/bounds.h>
 #include <math/min_max.h>
 #include <math/utils.h>
 #include <pass/annotate_conds.h>
@@ -834,6 +835,43 @@ Expr SimplifyPass::visit(const IfExpr &_op) {
         return makeAdd(
             lin2expr(common),
             makeIfExpr(op->cond_, lin2expr(thenLin), lin2expr(elseLin)));
+    }
+
+    if (op->thenCase_->nodeType() == ASTNodeType::IntConst &&
+        op->elseCase_->nodeType() == ASTNodeType::IntConst) {
+        if (auto lc = linearComp(op->cond_);
+            lc.has_value() && lc->first.coeff_.size() == 1) {
+            auto &&x = lc->first.coeff_[0].a_;
+            auto xl = unique_->getIntLower(x);
+            auto xu = unique_->getIntUpper(x);
+            auto &&[cl, cu] = lin2bounds(lc->first, lc->second, x);
+            if (cu.has_value()) {
+                ASSERT(cu->lin().coeff_.empty());
+                if (xu - xl < 2 * (cu->lin().bias_ - xl + 1)) {
+                    // x <= cu ? then : else === then + floor((x - xl) / (cu -
+                    // xl + 1)) * (else - then)
+                    return makeAdd(
+                        op->thenCase_,
+                        makeMul(makeFloorDiv(
+                                    makeSub(x, makeIntConst(xl)),
+                                    makeAdd(cu->expr(), makeIntConst(-xl + 1))),
+                                makeSub(op->elseCase_, op->thenCase_)));
+                }
+            }
+            if (cl.has_value()) {
+                ASSERT(cl->lin().coeff_.empty());
+                if (xu - xl < 2 * cl->lin().bias_) {
+                    // x >= cl ? then : else === else + floor((x - xl) / (cl -
+                    // xl)) * (then - else)
+                    return makeAdd(
+                        op->elseCase_,
+                        makeMul(
+                            makeFloorDiv(makeSub(x, makeIntConst(xl)),
+                                         makeSub(cl->expr(), makeIntConst(xl))),
+                            makeSub(op->thenCase_, op->elseCase_)));
+                }
+            }
+        }
     }
 
     return op;

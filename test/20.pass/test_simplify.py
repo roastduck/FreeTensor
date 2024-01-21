@@ -977,6 +977,40 @@ def test_sink_if_expr_into_linear_expression(p):
     assert std.match(ast)
 
 
+@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
+def test_convert_if_expr_to_floor_1(p):
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = ft.if_then_else(i < 2, 1, 5)
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = 1 + (i // 2) * 4
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
+def test_convert_if_expr_to_floor_2(p):
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = ft.if_then_else(i >= 3, 5, 1)
+    ast = ft.pop_ast(verbose=True)
+    ast = p(ast)
+    print(ast)
+
+    with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4) as i:
+            y[i] = 1 + (i // 3) * 4
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
 def test_accessible_after_writing_if(p):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
