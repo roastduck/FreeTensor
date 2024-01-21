@@ -1,3 +1,4 @@
+#include <pass/const_fold.h>
 #include <schedule.h>
 #include <schedule/var_merge.h>
 
@@ -71,7 +72,7 @@ Stmt varMerge(const Stmt &_ast, const ID &def, int dim) {
     if (!mutator.found()) {
         throw InvalidSchedule(FT_MSG << def << " not found");
     }
-    return ast;
+    return constFold(ast);
 }
 
 void Schedule::varMerge(const ID &def, int dim) {

@@ -5,6 +5,7 @@
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/as_matmul.h>
+#include <schedule/lower_cutlass_micro_block.h>
 
 namespace freetensor {
 
@@ -202,14 +203,16 @@ Stmt AsMatMul::visit(const For &op) {
         } else {
             beta = makeIntConst(1);
         }
-        ret = makeMatMul(backend_, a_, b_, c_, alpha, beta, m_, k_, n_, lda_,
-                         ldb_, ldc_, stridea_, strideb_, stridec_, batchSize_,
-                         aIsRowMajor_, bIsRowMajor_, cIsRowMajor_, ret);
+
+        ret = makeMatMul(backend_, nullptr, a_, b_, c_, alpha, beta, m_, k_, n_,
+                         lda_, ldb_, ldc_, stridea_, strideb_, stridec_,
+                         batchSize_, aIsRowMajor_, bIsRowMajor_, cIsRowMajor_,
+                         ret, makeMetadata("as_matmul", op));
+        resultId_ = ret->id();
         for (auto &&def : innerDefs_) {
             ret = makeVarDef(def->name_, def->buffer_, def->viewOf_, ret,
                              def->pinned_, def->metadata(), def->id());
         }
-        done_ = true;
         return ret;
     } else {
         ASSERT(!outerDefs_.count(op->iter_));
@@ -291,50 +294,52 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             nAxes[i] = !usedByA[i] && usedByB[i] && usedByC[i];
         }
 
-        ID idA = def(loadA->var_)->id();
-        ID idB = def(loadB->var_)->id();
-        ID idC = def(op->var_)->id();
+        defIdA_ = def(loadA->var_)->id();
+        defIdB_ = def(loadB->var_)->id();
+        defIdC_ = def(op->var_)->id();
 
-        checkSameOrderOrRetry(idA, orderA, batchAxes, idB, orderB, batchAxes,
+        checkSameOrderOrRetry(defIdA_, orderA, batchAxes, defIdB_, orderB,
+                              batchAxes,
                               "Order of each indices in the batch axis should "
                               "be the same in each matrices");
-        checkSameOrderOrRetry(idA, orderA, batchAxes, idC, orderC, batchAxes,
+        checkSameOrderOrRetry(defIdA_, orderA, batchAxes, defIdC_, orderC,
+                              batchAxes,
                               "Order of each indices in the batch axis should "
                               "be the same in each matrices");
-        checkSameOrderOrRetry(idA, orderA, mAxes, idC, orderC, mAxes,
+        checkSameOrderOrRetry(defIdA_, orderA, mAxes, defIdC_, orderC, mAxes,
                               "Order of each indices in the m axis should be "
                               "the same in each matrices");
-        checkSameOrderOrRetry(idA, orderA, kAxes, idB, orderB, kAxes,
+        checkSameOrderOrRetry(defIdA_, orderA, kAxes, defIdB_, orderB, kAxes,
                               "Order of each indices in the k axis should be "
                               "the same in each matrices");
-        checkSameOrderOrRetry(idB, orderB, nAxes, idC, orderC, nAxes,
+        checkSameOrderOrRetry(defIdB_, orderB, nAxes, defIdC_, orderC, nAxes,
                               "Order of each indices in the n axis should be "
                               "the same in each matrices");
         if (foundInit_) {
             checkSameOrderNoRetry(
-                idC, orderInit_, batchAxes, idC, orderC, batchAxes,
+                defIdC_, orderInit_, batchAxes, defIdC_, orderC, batchAxes,
                 "Order of each indices in the batch axis should be the same in "
                 "initialization and reduction");
             checkSameOrderNoRetry(
-                idC, orderInit_, mAxes, idC, orderC, mAxes,
+                defIdC_, orderInit_, mAxes, defIdC_, orderC, mAxes,
                 "Order of each indices in the m axis should be the same in "
                 "initialization and reduction");
             checkSameOrderNoRetry(
-                idC, orderInit_, nAxes, idC, orderC, nAxes,
+                defIdC_, orderInit_, nAxes, defIdC_, orderC, nAxes,
                 "Order of each indices in the n axis should be the same in "
                 "initialization and reduction");
         }
 
         // Find out which TENSOR DIMENSIONS are used
-        std::vector<bool> dimsABatch = findDimsUsed(loadA, batchAxes);
-        std::vector<bool> dimsBBatch = findDimsUsed(loadB, batchAxes);
-        std::vector<bool> dimsCBatch = findDimsUsed(op, batchAxes);
-        std::vector<bool> dimsAM = findDimsUsed(loadA, mAxes);
-        std::vector<bool> dimsAK = findDimsUsed(loadA, kAxes);
-        std::vector<bool> dimsBK = findDimsUsed(loadB, kAxes);
-        std::vector<bool> dimsBN = findDimsUsed(loadB, nAxes);
-        std::vector<bool> dimsCM = findDimsUsed(op, mAxes);
-        std::vector<bool> dimsCN = findDimsUsed(op, nAxes);
+        auto &dimsABatch = dimsABatch_ = findDimsUsed(loadA, batchAxes);
+        auto &dimsBBatch = dimsBBatch_ = findDimsUsed(loadB, batchAxes);
+        auto &dimsCBatch = dimsCBatch_ = findDimsUsed(op, batchAxes);
+        auto &dimsAM = dimsAM_ = findDimsUsed(loadA, mAxes);
+        auto &dimsAK = dimsAK_ = findDimsUsed(loadA, kAxes);
+        auto &dimsBK = dimsBK_ = findDimsUsed(loadB, kAxes);
+        auto &dimsBN = dimsBN_ = findDimsUsed(loadB, nAxes);
+        auto &dimsCM = dimsCM_ = findDimsUsed(op, mAxes);
+        auto &dimsCN = dimsCN_ = findDimsUsed(op, nAxes);
 
         Expr strideAM, strideAK, strideBK, strideBN, strideCM, strideCN;
         std::tie(batchSize_, stridea_) = findLenAndStride(loadA, dimsABatch);
@@ -354,7 +359,7 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             lda_ = strideAK;
         } else {
             retryReorderingBack(
-                idA, dimsAK,
+                defIdA_, dimsAK,
                 "Either m or k dimension of a should be 1-strided");
         }
         if (isIntConst1(strideBN)) {
@@ -365,7 +370,7 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             ldb_ = strideBN;
         } else {
             retryReorderingBack(
-                idB, dimsBN,
+                defIdB_, dimsBN,
                 "Either k or n dimension of b should be 1-strided");
         }
         if (isIntConst1(strideCN)) {
@@ -376,7 +381,7 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             ldc_ = strideCN;
         } else {
             retryReorderingBack(
-                idC, dimsCN,
+                defIdC_, dimsCN,
                 "Either m or n dimension of c should be 1-strided");
         }
 
@@ -401,17 +406,17 @@ Stmt AsMatMul::visit(const ReduceTo &_op) {
             stridec_ = makeMul(ldc_, cIsRowMajor_ ? m_ : n_);
         } else {
             if (!inOrder(dimsABatch, dimsAM) || !inOrder(dimsABatch, dimsAK)) {
-                retryReorderingFront(idA, dimsABatch,
+                retryReorderingFront(defIdA_, dimsABatch,
                                      "BLAS requires batch dimensions to be out "
                                      "of matrix dimensions in A");
             }
             if (!inOrder(dimsBBatch, dimsBK) || !inOrder(dimsABatch, dimsBN)) {
-                retryReorderingFront(idB, dimsBBatch,
+                retryReorderingFront(defIdB_, dimsBBatch,
                                      "BLAS requires batch dimensions to be out "
                                      "of matrix dimensions in B");
             }
             if (!inOrder(dimsCBatch, dimsCM) || !inOrder(dimsABatch, dimsCN)) {
-                retryReorderingFront(idC, dimsCBatch,
+                retryReorderingFront(defIdC_, dimsCBatch,
                                      "BLAS requires batch dimensions to be out "
                                      "of matrix dimensions in C");
             }
@@ -442,11 +447,25 @@ Stmt asMatMul(const Stmt &_ast, const ID &loop, MatMulBackend backend) {
     if (!mutator.done()) {
         throw InvalidSchedule(FT_MSG << loop << " not found");
     }
+
+    if (backend == MatMulBackend::CutlassMicroBlock) {
+        ast = lowerCutlassMicroBlock(ast, mutator.resultId(), mutator.defIdC(),
+                                     mutator.dimsCBatch(), mutator.dimsCM(),
+                                     mutator.dimsCN());
+    }
+
     return ast;
 }
 
 void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
                         const Ref<Target> &target, MatMulBackend backend) {
+    if (backend == MatMulBackend::CutlassMicroBlock &&
+        mode != AsMatMulMode::TryVarReorder) {
+        throw InvalidSchedule(
+            ast(),
+            FT_MSG << "cutlass_micro_block backend of as_matmul requires "
+                      "TryVarReorder mode");
+    }
     beginTransaction();
     while (true) {
         auto log = appendLog(

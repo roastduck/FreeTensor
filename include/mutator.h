@@ -338,8 +338,20 @@ class Mutator {
     }
 
     virtual Stmt visit(const MatMul &op) {
+        Ref<CutlassMicroKernelProperty> cutlassMicroKernelProperty = nullptr;
+        if (op->cutlassMicroKernelProperty_.isValid()) {
+            cutlassMicroKernelProperty = Ref<CutlassMicroKernelProperty>::make(
+                op->cutlassMicroKernelProperty_->nWarpBatch_,
+                op->cutlassMicroKernelProperty_->nWarpM_,
+                op->cutlassMicroKernelProperty_->nWarpN_,
+                (*this)(op->cutlassMicroKernelProperty_->warpIdBatch_),
+                (*this)(op->cutlassMicroKernelProperty_->warpIdM_),
+                (*this)(op->cutlassMicroKernelProperty_->warpIdN_),
+                (*this)(op->cutlassMicroKernelProperty_->laneId_));
+        }
         return makeMatMul(
-            op->backend_, (*this)(op->a_), (*this)(op->b_), (*this)(op->c_),
+            op->backend_, std::move(cutlassMicroKernelProperty),
+            (*this)(op->a_), (*this)(op->b_), (*this)(op->c_),
             (*this)(op->alpha_), (*this)(op->beta_), (*this)(op->m_),
             (*this)(op->k_), (*this)(op->n_), (*this)(op->lda_),
             (*this)(op->ldb_), (*this)(op->ldc_), (*this)(op->stridea_),

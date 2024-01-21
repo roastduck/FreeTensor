@@ -85,10 +85,10 @@ std::tuple<Expr, Expr, Expr>
 CompUniqueBoundsPB::Bound::lowerUpperDiffExpr() const {
     PBSet l = bound_.hasLowerBound(0) ? lexmin(bound_) : PBSet();
     PBSet u = bound_.hasUpperBound(0) ? lexmax(bound_) : PBSet();
-    PBSet diff =
-        l.isValid() && u.isValid()
-            ? apply(cartesianProduct(u, l), PBMap(*ctx_, "{[u, l] -> [u - l]}"))
-            : PBSet();
+    PBSet diff = l.isValid() && u.isValid()
+                     ? coalesce(apply(cartesianProduct(u, l),
+                                      PBMap(*ctx_, "{[u, l] -> [u - l]}")))
+                     : PBSet();
     return {l.isValid() ? translateBoundFunc(*ctx_, l, *demangleMap_) : nullptr,
             u.isValid() ? translateBoundFunc(*ctx_, u, *demangleMap_) : nullptr,
             diff.isValid() ? translateBoundFunc(*ctx_, diff, *demangleMap_)

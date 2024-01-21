@@ -103,6 +103,7 @@ expr returns [Expr node]
       {int ty;} (
         '*' {ty = 1;}
         | ('%' | MOD) {ty = 2;}
+        | '/' {ty = 3;} // Exact integer division. We currently use FloorDiv for it.
       )
       expr1=expr
       {
@@ -110,6 +111,7 @@ expr returns [Expr node]
         {
           case 1: $node = makeMul($expr0.node, $expr1.node); break;
           case 2: $node = makeMod($expr0.node, $expr1.node); break;
+          case 3: $node = makeFloorDiv($expr0.node, $expr1.node); break;
         }
       }
     | '-' expr0=expr

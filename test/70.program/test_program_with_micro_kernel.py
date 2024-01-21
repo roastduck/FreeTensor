@@ -1,0 +1,87 @@
+import pytest
+
+import freetensor as ft
+
+
+@pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
+                    reason="requires PyTorch and CUDA")
+def test_matmul():
+
+    m = n = k = 5000
+    block_n = block_m = 128
+    block_k = 32
+    n_warps = 4
+
+    device = ft.GPU()
+    target = device.target()
+    with target:
+
+        @ft.transform
+        def matmul(a: ft.Var[(m, k), "float16"], b: ft.Var[(k, n), "float16"]):
+            c = ft.empty((m, n), "float16")
+            #! label: blk_m
+            for i in range(0, m, block_m):
+                #! label: blk_n
+                for j in range(0, n, block_n):
+                    #! label: aa
+                    aa = ft.empty((block_m, block_k), "float16")
+                    #! label: bb
+                    bb = ft.empty((block_k, block_n), "float16")
+                    #! label: cc
+                    cc = ft.empty((block_m, block_n), "float16")
+                    #! label: load_aa
+                    for ii in range(block_m):
+                        for jj in range(block_k):
+                            if i + ii < m and j + jj < k:
+                                aa[ii, jj] = a[i + ii, j + jj]
+                    #! label: load_bb
+                    for ii in range(block_k):
+                        for jj in range(block_n):
+                            if i + ii < k and j + jj < n:
+                                bb[ii, jj] = b[i + ii, j + jj]
+                    #! label: micro_kernel
+                    for ii in range(block_m):
+                        for jj in range(block_n):
+                            cc[ii, jj] = 0
+                            for kk in range(block_k):
+                                cc[ii, jj] += aa[ii, kk] * bb[kk, jj]
+                    #! label: flush_cc
+                    for ii in range(block_m):
+                        for jj in range(block_n):
+                            # TODO: Can we avoid using `unbound`?
+                            if ft.unbound(i + ii < m and j + jj < n):
+                                c[i + ii, j + jj] = cc[ii, jj]
+            return c
+
+        s = ft.Schedule(matmul, verbose=2)
+        s.parallelize("blk_m", "blockIdx.y")
+        s.parallelize("blk_n", "blockIdx.x")
+        s.as_matmul("micro_kernel",
+                    target=target,
+                    backend="cutlass-micro-block",
+                    mode=ft.AsMatMulMode.TryVarReorder)
+        load_aa_warp, load_aa_thr = s.split(
+            s.split(s.merge("load_aa", "<For><-load_aa"), n_warps * 32)[1], 32)
+        s.parallelize(load_aa_warp, "threadIdx.y")
+        s.parallelize(load_aa_thr, "threadIdx.x")
+        load_bb_warp, load_bb_thr = s.split(
+            s.split(s.merge("load_bb", "<For><-load_bb"), n_warps * 32)[1], 32)
+        s.parallelize(load_bb_warp, "threadIdx.y")
+        s.parallelize(load_bb_thr, "threadIdx.x")
+        s.parallelize_as("flush_cc", "$as_matmul{micro_kernel}", "cc")
+        s.set_mem_type("aa", "gpu/shared")
+        s.set_mem_type("bb", "gpu/shared")
+        s.set_mem_type("cc", "gpu/local")
+        scheduled = s.func()
+        exe = ft.optimize(scheduled, verbose=2)
+
+        import torch
+
+        a_torch = torch.rand(5000, 5000, dtype=torch.float16).cuda()
+        b_torch = torch.rand(5000, 5000, dtype=torch.float16).cuda()
+        y_std = a_torch @ b_torch
+        a_arr = ft.array(a_torch)
+        b_arr = ft.array(b_torch)
+        y_arr = exe(a_arr, b_arr)
+        y_torch = y_arr.torch()
+        assert torch.all(torch.isclose(y_torch, y_std))

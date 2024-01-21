@@ -71,7 +71,17 @@ class CompTransientBounds : public BaseClass,
         auto dnf = asDNF(_cond);
 
         if (dnf.size() != 1) {
-            return; // Currently we cannot handle OR
+            // Currently `transients_` cannot handle OR, leave it as-is to
+            // `conds_`. But ignore if the condition is marked as `unbound`
+            for (auto &&item : dnf) {
+                for (auto &&sub : item) {
+                    if (sub->nodeType() == ASTNodeType::Unbound) {
+                        return;
+                    }
+                }
+            }
+            conds_.emplace_back(_cond);
+            return;
         }
 
         for (auto &&cond : dnf.front()) {

@@ -7,6 +7,7 @@
 #include <ast.h>
 #include <buffer.h>
 #include <container_utils.h>
+#include <cutlass_micro_kernel_property.h>
 #include <except.h>
 #include <for_property.h>
 #include <reduce_op.h>
@@ -465,14 +466,16 @@ enum class MatMulBackend : size_t {
     Mkl = 0,
     Cublas,
     Cutlass,
+    CutlassMicroBlock, // CUTLASS's micro kernel, invocable by a single
+                       // thread-block
+    // ------ THE FOLLOWING BACKENDS CAN ONLY BE LOWERED TO ------
+    CutlassMicroThread, // CUTLASS's micro kernel, invocable by a single thread
     // ----------------------------
     NumBackends
 };
 
 constexpr std::array matMulBackendNames = {
-    "mkl",
-    "cublas",
-    "cutlass",
+    "mkl", "cublas", "cutlass", "cutlass-micro-block", "cutlass-micro-thread",
 };
 static_assert(baseDataTypeNames.size() == (size_t)BaseDataType::NumTypes);
 
@@ -498,6 +501,8 @@ inline MatMulBackend parseMatMulBackend(const std::string &_str) {
 class MatMulNode : public StmtNode {
   public:
     MatMulBackend backend_;
+    SubTree<CutlassMicroKernelProperty, NullPolicy::Nullable>
+        cutlassMicroKernelProperty_ = ChildOf{this};
 
     // c_ = alpha_ * a_ * b_ + beta_ * c_
     // a_ is an m_ * k_ matrix
@@ -527,9 +532,11 @@ class MatMulNode : public StmtNode {
 };
 typedef Ref<MatMulNode> MatMul;
 inline Stmt
-makeMatMul(MatMulBackend backend, const Expr &a, const Expr &b, const Expr &c,
-           const Expr &alpha, const Expr &beta, const Expr &m, const Expr &k,
-           const Expr &n, const Expr &lda, const Expr &ldb, const Expr &ldc,
+makeMatMul(MatMulBackend backend,
+           const Ref<CutlassMicroKernelProperty> &cutlassMicroKernelProperty,
+           const Expr &a, const Expr &b, const Expr &c, const Expr &alpha,
+           const Expr &beta, const Expr &m, const Expr &k, const Expr &n,
+           const Expr &lda, const Expr &ldb, const Expr &ldc,
            const Expr &stridea, const Expr &strideb, const Expr &stridec,
            const Expr &batchSize, bool aIsRowMajor, bool bIsRowMajor,
            bool cIsRowMajor, const Stmt &equivalent,
@@ -539,6 +546,7 @@ makeMatMul(MatMulBackend backend, const Expr &a, const Expr &b, const Expr &c,
     s->metadata() = metadata;
     s->setId(id);
     s->backend_ = backend;
+    s->cutlassMicroKernelProperty_ = cutlassMicroKernelProperty;
     s->a_ = a;
     s->b_ = b;
     s->c_ = c;
