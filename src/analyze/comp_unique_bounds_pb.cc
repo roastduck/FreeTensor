@@ -135,9 +135,6 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
     int minScopeLevel = INT_MAX,
         oldScopeLevel = countScope(reference, orderedScope);
     for (auto &&[axis, scopeLevel] : axesScopeLevel) {
-        if (scopeLevel > oldScopeLevel) {
-            continue;
-        }
         auto newRestrictedBound =
             projectOutParamById(std::move(restrictedBound), axis);
         if (!newRestrictedBound.isSingleValued())
