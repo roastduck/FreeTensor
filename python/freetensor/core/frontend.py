@@ -3,6 +3,7 @@ A frontend transforming user Python functions to ASTs via staging.
 '''
 
 import sys
+import builtins
 import numpy as np
 import inspect
 import traceback
@@ -552,3 +553,12 @@ class dynamic_range(StagedIterable):
 
 
 static_range = range
+
+
+def reversed(rng):
+    if isinstance(rng, dynamic_range):
+        return dynamic_range(
+            rng.start + rng.step * ((rng.stop - rng.start - 1) // rng.step),
+            rng.start - rng.step, -rng.step)
+    else:
+        return builtins.reversed(rng)
