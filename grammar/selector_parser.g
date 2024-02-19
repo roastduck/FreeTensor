@@ -158,9 +158,15 @@ selectorImplicitAnd returns[Ref<Selector> s]
     | BeforeArrow following=selectorFactor {
         $s = Ref<BeforeSelector>::make($following.s);
     }
+    | DirectBeforeArrow LeftParen middle=selectorFactor DirectBeforeArrow RightParen Star following=selectorFactor {
+        $s = Ref<BeforeSelector>::make($following.s, $middle.s);
+    }
     | DirectAfterArrow leading=selectorFactor {
         $s = Ref<DirectAfterSelector>::make($leading.s);
     }
     | AfterArrow leading=selectorFactor {
         $s = Ref<AfterSelector>::make($leading.s);
+    }
+    | DirectAfterArrow LeftParen middle=selectorFactor DirectAfterArrow RightParen Star leading=selectorFactor {
+        $s = Ref<AfterSelector>::make($leading.s, $middle.s);
     };
