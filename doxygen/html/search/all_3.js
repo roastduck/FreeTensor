@@ -16,7 +16,7 @@ var searchData=
   ['batchsize_5f_13',['batchSize_',['../classfreetensor_1_1MatMulNode.html#a83217c8a568647814ff11f244a778f13',1,'freetensor::MatMulNode']]],
   ['before_14',['Before',['../namespacefreetensor.html#ac8b64d5eec8847ce588a725772a49ffba9060587edeb01a63e3d3edc959678d1e',1,'freetensor::Before()'],['../namespacefreetensor.html#a2b0728b023b746c7fb73d4f24a6bb15ea9060587edeb01a63e3d3edc959678d1e',1,'freetensor::Before()'],['../namespacefreetensor.html#ac490983b87e6acdba7919a1cf57245c3a9060587edeb01a63e3d3edc959678d1e',1,'freetensor::Before()']]],
   ['beforeid_15',['beforeId',['../classfreetensor_1_1FuseFor.html#a17bc78854da182fe2d4f6c4a57ea1d41',1,'freetensor::FuseFor']]],
-  ['beforeselector_16',['BeforeSelector',['../classfreetensor_1_1BeforeSelector.html#ac718da81da0c7bc51630ce7900898e64',1,'freetensor::BeforeSelector::BeforeSelector()'],['../classfreetensor_1_1BeforeSelector.html',1,'freetensor::BeforeSelector']]],
+  ['beforeselector_16',['BeforeSelector',['../classfreetensor_1_1BeforeSelector.html#a74b9764213ad480c0e90668b2cb78593',1,'freetensor::BeforeSelector::BeforeSelector()'],['../classfreetensor_1_1BeforeSelector.html',1,'freetensor::BeforeSelector']]],
   ['begin_17',['begin',['../classfreetensor_1_1SubTreeList.html#a55ce15bc8bcd027dcc2abc84552fdde1',1,'freetensor::SubTreeList::begin()'],['../classfreetensor_1_1SubTreeList.html#aa0fdb81bd0f946d88dd050b8ab3e9571',1,'freetensor::SubTreeList::begin() const']]],
   ['begin_5f_18',['begin_',['../classfreetensor_1_1ForNode.html#a75ba6356a10359ed8de9f991c70246ea',1,'freetensor::ForNode']]],
   ['beginblock_19',['beginBlock',['../classfreetensor_1_1CodeGen.html#a35269cedf4fcb5a4a84ce20f8128d8b2',1,'freetensor::CodeGen']]],

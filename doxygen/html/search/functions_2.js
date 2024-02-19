@@ -7,7 +7,7 @@ var searchData=
   ['backunroll_4',['BackUnroll',['../classfreetensor_1_1BackUnroll.html#afa738622aa6de19324fd238efc679bbd',1,'freetensor::BackUnroll']]],
   ['base_5',['base',['../classfreetensor_1_1DataType.html#a530a552af1092b26608a13ef92956dc0',1,'freetensor::DataType']]],
   ['beforeid_6',['beforeId',['../classfreetensor_1_1FuseFor.html#a17bc78854da182fe2d4f6c4a57ea1d41',1,'freetensor::FuseFor']]],
-  ['beforeselector_7',['BeforeSelector',['../classfreetensor_1_1BeforeSelector.html#ac718da81da0c7bc51630ce7900898e64',1,'freetensor::BeforeSelector']]],
+  ['beforeselector_7',['BeforeSelector',['../classfreetensor_1_1BeforeSelector.html#a74b9764213ad480c0e90668b2cb78593',1,'freetensor::BeforeSelector']]],
   ['begin_8',['begin',['../classfreetensor_1_1SubTreeList.html#a55ce15bc8bcd027dcc2abc84552fdde1',1,'freetensor::SubTreeList::begin()'],['../classfreetensor_1_1SubTreeList.html#aa0fdb81bd0f946d88dd050b8ab3e9571',1,'freetensor::SubTreeList::begin() const']]],
   ['beginblock_9',['beginBlock',['../classfreetensor_1_1CodeGen.html#a35269cedf4fcb5a4a84ce20f8128d8b2',1,'freetensor::CodeGen']]],
   ['begintransaction_10',['beginTransaction',['../classfreetensor_1_1Schedule.html#a37474d22958f1e5ce605d8ed1677fd95',1,'freetensor::Schedule']]],
