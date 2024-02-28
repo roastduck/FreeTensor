@@ -37,6 +37,7 @@ class PropagateRequires : public SymbolTable<Visitor> {
 
   protected:
     using BaseClass::visit;
+    void visitExpr(const Expr &e) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
@@ -71,6 +72,7 @@ class PropagateProvides : public SymbolTable<Visitor> {
 
   protected:
     using BaseClass::visit;
+    void visitExpr(const Expr &e) override;
     void visit(const Load &op) override;
     void visit(const Store &op) override;
     void visit(const ReduceTo &op) override;
