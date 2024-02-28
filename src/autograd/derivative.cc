@@ -116,6 +116,9 @@ void Derivative::setPartial(const Expr &expr, const Expr &partial) {
 }
 
 void Derivative::visitExpr(const Expr &expr) {
+    if (!isFloat(expr->dtype())) {
+        return;
+    }
     if (!rootExpr_.isValid()) {
         rootExpr_ = StmtOrExprID{expr, expr->parentStmt()};
         setPartial(expr, makeIntConst(1));
