@@ -79,7 +79,8 @@ class GemmTensorOp {
         GemmShape<Shape::kM / num_warp_m, Shape::kN / num_warp_n,
                   InstructionShape::kK>,
         A_type, SMemLayoutA, B_type, SMemLayoutB, C_type,
-        cutlass::layout::RowMajor, Policy>;
+        cutlass::layout::RowMajor, Policy, 1,
+        true /* accumulate in row major */>;
 
     using TensorRefA = typename MmaWarp::IteratorA::TensorRef;
     using TensorRefB = typename MmaWarp::IteratorB::TensorRef;
