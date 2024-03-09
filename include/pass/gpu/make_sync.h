@@ -78,7 +78,7 @@ class MakeSync : public Mutator {
     const std::unordered_map<ID, ThreadInfo> &loop2thread_;
     std::vector<CrossThreadDep> deps_;
     std::unordered_map<ID, std::pair<Stmt, bool /* isSyncWarp */>>
-        syncBeforeFor_, syncBeforeIf_;
+        syncBeforeFor_, syncBeforeIf_, syncBeforeLib_;
     std::unordered_map<ID, std::vector<Stmt>> branchSplittersThen_,
         branchSplittersElse_;
     LoopVariExprMap variantExprs_;
@@ -188,6 +188,7 @@ class MakeSync : public Mutator {
     Stmt visitStmt(const Stmt &op) override;
     Stmt visit(const For &op) override;
     Stmt visit(const If &op) override;
+    Stmt visit(const MatMul &op) override;
 };
 
 Stmt makeSync(const Stmt &op, const Ref<GPUTarget> &target);

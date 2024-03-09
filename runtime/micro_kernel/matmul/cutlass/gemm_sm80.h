@@ -138,14 +138,12 @@ CUTLASS_DEVICE void matmul_thread(const A_type *pA, const B_type *pB,
                                   int strideb, int stridec, double alpha,
                                   double beta, int warp_id_batch, int warp_id_m,
                                   int warp_id_n, int lane_id) {
-    __syncthreads(); // FIXME: remove this
     using MMA = GemmTensorOp<GemmShape<M, N, K>, num_warp_m, num_warp_n,
                              trans_A, trans_B, A_type, B_type, C_type>;
     using FragmentC = typename MMA::FragmentC;
     MMA::body(pA + warp_id_batch * stridea, pB + warp_id_batch * strideb,
               *(FragmentC *)(accum /* no thread offset */), lda, ldb, alpha,
               beta, warp_id_m, warp_id_n, lane_id);
-    __syncthreads(); // FIXME: remove this
 }
 
 #endif // MICRO_KERNEL_MATMUL_CUTLASS_GEMM_SM80_H
