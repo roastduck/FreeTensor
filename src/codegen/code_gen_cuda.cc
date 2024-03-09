@@ -1049,6 +1049,10 @@ void CodeGenCUDA::visit(const MatMul &op) {
         os() << ", ";
         (*this)(stridec);
         os() << ", ";
+        (*this)(op->alpha_);
+        os() << ", ";
+        (*this)(op->beta_);
+        os() << ", ";
         (*this)(prop->warpIdBatch_);
         os() << ", ";
         (*this)(prop->warpIdM_);

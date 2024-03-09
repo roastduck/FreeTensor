@@ -7,7 +7,7 @@ import freetensor as ft
                     reason="requires PyTorch and CUDA")
 def test_matmul():
 
-    m = n = k = 5000
+    M = N = K = 5000
     block_n = block_m = 128
     block_k = 32
     n_warps = 4
@@ -17,39 +17,47 @@ def test_matmul():
     with target:
 
         @ft.transform
-        def matmul(a: ft.Var[(m, k), "float16"], b: ft.Var[(k, n), "float16"]):
-            c = ft.empty((m, n), "float16")
+        def matmul(a: ft.Var[(M, K), "float64"], b: ft.Var[(K, N), "float64"]):
+            c = ft.empty((M, N), "float64")
             #! label: blk_m
-            for i in range(0, m, block_m):
+            for i in range(0, M, block_m):
                 #! label: blk_n
-                for j in range(0, n, block_n):
+                for j in range(0, N, block_n):
                     #! label: aa
-                    aa = ft.empty((block_m, block_k), "float16")
+                    aa = ft.empty((block_m, block_k), "float64")
                     #! label: bb
-                    bb = ft.empty((block_k, block_n), "float16")
+                    bb = ft.empty((block_k, block_n), "float64")
                     #! label: cc
-                    cc = ft.empty((block_m, block_n), "float16")
-                    #! label: load_aa
-                    for ii in range(block_m):
-                        for jj in range(block_k):
-                            if i + ii < m and j + jj < k:
-                                aa[ii, jj] = a[i + ii, j + jj]
-                    #! label: load_bb
-                    for ii in range(block_k):
-                        for jj in range(block_n):
-                            if i + ii < k and j + jj < n:
-                                bb[ii, jj] = b[i + ii, j + jj]
-                    #! label: micro_kernel
+                    cc = ft.empty((block_m, block_n), "float64")
+                    #! label: zero_cc
                     for ii in range(block_m):
                         for jj in range(block_n):
                             cc[ii, jj] = 0
+                    for k in range(0, K, block_k):
+                        #! label: load_aa
+                        for ii in range(block_m):
                             for kk in range(block_k):
-                                cc[ii, jj] += aa[ii, kk] * bb[kk, jj]
+                                if i + ii < M and k + kk < K:
+                                    aa[ii, kk] = a[i + ii, k + kk]
+                                else:
+                                    aa[ii, kk] = 0
+                        #! label: load_bb
+                        for kk in range(block_k):
+                            for jj in range(block_n):
+                                if k + kk < K and j + jj < N:
+                                    bb[kk, jj] = b[k + kk, j + jj]
+                                else:
+                                    bb[kk, jj] = 0
+                        #! label: micro_kernel
+                        for ii in range(block_m):
+                            for jj in range(block_n):
+                                for kk in range(block_k):
+                                    cc[ii, jj] += aa[ii, kk] * bb[kk, jj]
                     #! label: flush_cc
                     for ii in range(block_m):
                         for jj in range(block_n):
                             # TODO: Can we avoid using `unbound`?
-                            if ft.unbound(i + ii < m and j + jj < n):
+                            if ft.unbound(i + ii < M and j + jj < N):
                                 c[i + ii, j + jj] = cc[ii, jj]
             return c
 
@@ -68,6 +76,7 @@ def test_matmul():
             s.split(s.merge("load_bb", "<For><-load_bb"), n_warps * 32)[1], 32)
         s.parallelize(load_bb_warp, "threadIdx.y")
         s.parallelize(load_bb_thr, "threadIdx.x")
+        s.parallelize_as("zero_cc", "$as_matmul{micro_kernel}", "cc")
         s.parallelize_as("flush_cc", "$as_matmul{micro_kernel}", "cc")
         s.set_mem_type("aa", "gpu/shared")
         s.set_mem_type("bb", "gpu/shared")
@@ -77,8 +86,8 @@ def test_matmul():
 
         import torch
 
-        a_torch = torch.rand(5000, 5000, dtype=torch.float16).cuda()
-        b_torch = torch.rand(5000, 5000, dtype=torch.float16).cuda()
+        a_torch = torch.rand(M, K, dtype=torch.float64).cuda()
+        b_torch = torch.rand(K, N, dtype=torch.float64).cuda()
         y_std = a_torch @ b_torch
         a_arr = ft.array(a_torch)
         b_arr = ft.array(b_torch)

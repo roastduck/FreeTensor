@@ -95,6 +95,7 @@ class GemmTensorOp {
 
     static CUTLASS_DEVICE void body(const A_type_raw *pA, const B_type_raw *pB,
                                     FragmentC &accum, int lda, int ldb,
+                                    double alpha, double beta,
                                     const int warp_idx_m, const int warp_idx_n,
                                     const int lane_id) {
         MmaWarp mma_op;
@@ -107,10 +108,15 @@ class GemmTensorOp {
         iter_A.add_tile_offset({warp_idx_m, 0});
         iter_B.add_tile_offset({0, warp_idx_n});
 
-        // TODO: Optionally don't clear the fragment
-        CUTLASS_PRAGMA_UNROLL
-        for (int i = 0; i < FragmentC::kElements; i++) {
-            accum[i] = 0;
+        // TODO: Check all cases of alpha and beta
+        // TODO: Static checking of alpha and beta
+        if (beta == 0) {
+            CUTLASS_PRAGMA_UNROLL
+            for (int i = 0; i < FragmentC::kElements; i++) {
+                accum[i] = 0;
+            }
+        } else {
+            assert(beta == 1);
         }
 
         CUTLASS_PRAGMA_UNROLL
@@ -129,14 +135,17 @@ template <int M, int N, int K, int num_warp_batch, int num_warp_m,
           typename B_type, typename C_type>
 CUTLASS_DEVICE void matmul_thread(const A_type *pA, const B_type *pB,
                                   C_type *accum, int lda, int ldb, int stridea,
-                                  int strideb, int stridec, int warp_id_batch,
-                                  int warp_id_m, int warp_id_n, int lane_id) {
+                                  int strideb, int stridec, double alpha,
+                                  double beta, int warp_id_batch, int warp_id_m,
+                                  int warp_id_n, int lane_id) {
+    __syncthreads(); // FIXME: remove this
     using MMA = GemmTensorOp<GemmShape<M, N, K>, num_warp_m, num_warp_n,
                              trans_A, trans_B, A_type, B_type, C_type>;
     using FragmentC = typename MMA::FragmentC;
     MMA::body(pA + warp_id_batch * stridea, pB + warp_id_batch * strideb,
-              *(FragmentC *)(accum /* no thread offset */), lda, ldb, warp_id_m,
-              warp_id_n, lane_id);
+              *(FragmentC *)(accum /* no thread offset */), lda, ldb, alpha,
+              beta, warp_id_m, warp_id_n, lane_id);
+    __syncthreads(); // FIXME: remove this
 }
 
 #endif // MICRO_KERNEL_MATMUL_CUTLASS_GEMM_SM80_H

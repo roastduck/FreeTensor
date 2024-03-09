@@ -17,8 +17,9 @@ template <int M, int N, int K, int num_warp_batch, int num_warp_m,
           typename B_type, typename C_type>
 __device__ void matmul_thread(const A_type *pA, const B_type *pB, C_type *accum,
                               int lda, int ldb, int stridea, int strideb,
-                              int stridec, int warp_id_batch, int warp_id_m,
-                              int warp_id_n, int lane_id);
+                              int stridec, double alpha, double beta,
+                              int warp_id_batch, int warp_id_m, int warp_id_n,
+                              int lane_id);
 
 #endif
 
