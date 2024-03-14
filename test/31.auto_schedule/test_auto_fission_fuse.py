@@ -90,6 +90,7 @@ def test_stmt_in_between_2():
     assert logs == ["swap(L2, S1)", "fuse(L1, L2, true)"]
 
 
+@pytest.mark.performance_sensitive
 def test_tune_fuse():
     # We may fuse these loops. But fusing them will make it impossible to parallelize.
     # After tuning, we will end up in not fusing them
@@ -133,6 +134,7 @@ def test_tune_fuse():
         assert "fuse" not in log
 
 
+@pytest.mark.performance_sensitive
 def test_tune_fission():
     # The reverse schedule of `test_tune_fuse`
 
@@ -178,6 +180,7 @@ def test_tune_fission():
     assert "fission" in ", ".join(logs)
 
 
+@pytest.mark.performance_sensitive
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_tune_with_cond():
     # Fuse loops that can parallelize. Don't fuse loops that can't

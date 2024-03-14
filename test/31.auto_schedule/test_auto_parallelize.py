@@ -51,10 +51,10 @@ def test_3_levels():
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
 def test_gpu_basic_static_small():
-    with ft.VarDef([("x", (10, 10, 2), "int32", "input", "cpu"),
-                    ("y", (10, 10, 2), "int32", "output", "cpu")]) as (x, y):
-        with ft.For("i", 0, 10, label="Li") as i:
-            with ft.For("j", 0, 10, label="Lj") as j:
+    with ft.VarDef([("x", (20, 20, 2), "int32", "input", "cpu"),
+                    ("y", (20, 20, 2), "int32", "output", "cpu")]) as (x, y):
+        with ft.For("i", 0, 20, label="Li") as i:
+            with ft.For("j", 0, 20, label="Lj") as j:
                 y[i, j, 0] = x[i, j, 0] + 1
 
     device = ft.GPU()
@@ -68,7 +68,7 @@ def test_gpu_basic_static_small():
     logs = list(map(str, s.logs()))
     print(logs)
     assert fnmatch_list(logs, [
-        f'split(Lj, -1, {num_sm // 10}, 0)', 'merge(Li, $split.0{Lj})',
+        f'split(Lj, -1, {num_sm // 20}, 0)', 'merge(Li, $split.0{Lj})',
         'parallelize($merge{Li, $split.0{Lj}}, blockIdx.x, *)',
         'parallelize($split.1{Lj}, threadIdx.y, *)'
     ])
