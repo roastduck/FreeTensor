@@ -72,13 +72,32 @@ class AsMatMul : public SymbolTable<Mutator> {
 
     AnalyzeLinear analyzeLinear_;
 
-    bool done_ = false;
+    ID resultId_;
+
+    // Public matching details
+    std::vector<bool> dimsABatch_, dimsBBatch_, dimsCBatch_, dimsAM_, dimsAK_,
+        dimsBK_, dimsBN_, dimsCM_, dimsCN_;
+    ID defIdA_, defIdB_, defIdC_;
 
   public:
     AsMatMul(const ID &loop, MatMulBackend backend)
         : loop_(loop), backend_(backend) {}
 
-    bool done() const { return done_; }
+    bool done() const { return resultId_.isValid(); }
+    const ID &resultId() const { return resultId_; }
+
+    const auto &dimsABatch() const { return dimsABatch_; }
+    const auto &dimsBBatch() const { return dimsBBatch_; }
+    const auto &dimsCBatch() const { return dimsCBatch_; }
+    const auto &dimsAM() const { return dimsAM_; }
+    const auto &dimsAK() const { return dimsAK_; }
+    const auto &dimsBK() const { return dimsBK_; }
+    const auto &dimsBN() const { return dimsBN_; }
+    const auto &dimsCM() const { return dimsCM_; }
+    const auto &dimsCN() const { return dimsCN_; }
+    const auto &defIdA() const { return defIdA_; }
+    const auto &defIdB() const { return defIdB_; }
+    const auto &defIdC() const { return defIdC_; }
 
   private:
     const LinearExpr<int64_t> &analyzeLinear(const Expr &expr);

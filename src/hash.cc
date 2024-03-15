@@ -1,7 +1,26 @@
+#include <optional>
+
 #include <container_utils.h>
 #include <hash.h>
 
 namespace freetensor {
+
+template <class T>
+static std::optional<bool> trivialCompare(const Ref<T> &lhs,
+                                          const Ref<T> &rhs) {
+    if (lhs == rhs) { // alias or nullptr
+        return true;
+    }
+    if (lhs.isValid() != rhs.isValid()) {
+        return false;
+    }
+
+    if (lhs->hash() != rhs->hash()) {
+        return false;
+    }
+
+    return std::nullopt;
+}
 
 size_t Hasher::compHash(const Tensor &t) {
     size_t h = (-1 * K1 + B1) % P;
@@ -45,6 +64,18 @@ size_t Hasher::compHash(const ForProperty &p) {
         h = ((h + std::hash<std::string>()(item)) * K2 + B2) % P;
     }
     h = ((h + std::hash<bool>()(p.preferLibs_)) * K2 + B2) % P;
+    return (h * K3 + B3) % P;
+}
+
+size_t Hasher::compHash(const CutlassMicroKernelProperty &p) {
+    size_t h = (-1 * K1 + B1) % P;
+    h = ((h + std::hash<int>{}(p.nWarpBatch_)) * K2 + B2) % P;
+    h = ((h + std::hash<int>{}(p.nWarpM_)) * K2 + B2) % P;
+    h = ((h + std::hash<int>{}(p.nWarpN_)) * K2 + B2) % P;
+    h = ((h + p.warpIdBatch_->hash()) * K2 + B2) % P;
+    h = ((h + p.warpIdM_->hash()) * K2 + B2) % P;
+    h = ((h + p.warpIdN_->hash()) * K2 + B2) % P;
+    h = ((h + p.laneId_->hash()) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
 
@@ -151,6 +182,9 @@ size_t Hasher::compHash(const EvalNode &op) {
 size_t Hasher::compHash(const MatMulNode &op) {
     size_t h = ((size_t)op.nodeType() * K1 + B1) % P;
     h = ((h + std::hash<MatMulBackend>()(op.backend_)) * K2 + B2) % P;
+    if (op.cutlassMicroKernelProperty_.isValid()) {
+        h = ((h + op.cutlassMicroKernelProperty_->hash()) * K2 + B2) % P;
+    }
     h = ((h + op.equivalent_->hash()) * K2 + B2) % P;
     return (h * K3 + B3) % P;
 }
@@ -416,6 +450,10 @@ bool HashComparator::compare(const MatMul &lhs, const MatMul &rhs) const {
     if (lhs->backend_ != rhs->backend_) {
         return false;
     }
+    if (!(*this)(lhs->cutlassMicroKernelProperty_,
+                 rhs->cutlassMicroKernelProperty_)) {
+        return false;
+    }
     return (*this)(lhs->equivalent_, rhs->equivalent_);
 }
 
@@ -536,6 +574,10 @@ bool HashComparator::compare(const LoadAtVersion &lhs,
 
 bool HashComparator::operator()(const Ref<Tensor> &lhs,
                                 const Ref<Tensor> &rhs) const {
+    if (auto &&flag = trivialCompare(lhs, rhs); flag.has_value()) {
+        return *flag;
+    }
+
     if (lhs->shape().size() != rhs->shape().size()) {
         return false;
     }
@@ -552,6 +594,10 @@ bool HashComparator::operator()(const Ref<Tensor> &lhs,
 
 bool HashComparator::operator()(const Ref<Buffer> &lhs,
                                 const Ref<Buffer> &rhs) const {
+    if (auto &&flag = trivialCompare(lhs, rhs); flag.has_value()) {
+        return *flag;
+    }
+
     if (!(*this)(lhs->tensor(), rhs->tensor())) {
         return false;
     }
@@ -566,6 +612,10 @@ bool HashComparator::operator()(const Ref<Buffer> &lhs,
 
 bool HashComparator::operator()(const Ref<ReductionItem> &lhs,
                                 const Ref<ReductionItem> &rhs) const {
+    if (auto &&flag = trivialCompare(lhs, rhs); flag.has_value()) {
+        return *flag;
+    }
+
     if (lhs->op_ != rhs->op_) {
         return false;
     }
@@ -593,6 +643,10 @@ bool HashComparator::operator()(const Ref<ReductionItem> &lhs,
 
 bool HashComparator::operator()(const Ref<ForProperty> &lhs,
                                 const Ref<ForProperty> &rhs) const {
+    if (auto &&flag = trivialCompare(lhs, rhs); flag.has_value()) {
+        return *flag;
+    }
+
     if (lhs->parallel_ != rhs->parallel_) {
         return false;
     }
@@ -624,16 +678,40 @@ bool HashComparator::operator()(const Ref<ForProperty> &lhs,
     return true;
 }
 
-bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
-    if (lhs == rhs) { // alias or nullptr
-        return true;
-    }
-    if (lhs.isValid() != rhs.isValid()) {
-        return false;
+bool HashComparator::operator()(
+    const Ref<CutlassMicroKernelProperty> &lhs,
+    const Ref<CutlassMicroKernelProperty> &rhs) const {
+    if (auto &&flag = trivialCompare(lhs, rhs); flag.has_value()) {
+        return *flag;
     }
 
-    if (lhs->hash() != rhs->hash()) {
+    if (lhs->nWarpBatch_ != rhs->nWarpBatch_) {
         return false;
+    }
+    if (lhs->nWarpM_ != rhs->nWarpM_) {
+        return false;
+    }
+    if (lhs->nWarpN_ != rhs->nWarpN_) {
+        return false;
+    }
+    if (!(*this)(lhs->warpIdBatch_, rhs->warpIdBatch_)) {
+        return false;
+    }
+    if (!(*this)(lhs->warpIdM_, rhs->warpIdM_)) {
+        return false;
+    }
+    if (!(*this)(lhs->warpIdN_, rhs->warpIdN_)) {
+        return false;
+    }
+    if (!(*this)(lhs->laneId_, rhs->laneId_)) {
+        return false;
+    }
+    return true;
+}
+
+bool HashComparator::operator()(const AST &lhs, const AST &rhs) const {
+    if (auto &&flag = trivialCompare(lhs, rhs); flag.has_value()) {
+        return *flag;
     }
 
     if (lhs->nodeType() != rhs->nodeType()) {

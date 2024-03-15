@@ -265,6 +265,8 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
                 // case, where we need the `then` case AND the `else` case to
                 // sync on ONE sync point
                 whereToInsert = ctx;
+            } else if (ctx->nodeType() == ASTNodeType::MatMul) {
+                whereToInsert = ctx;
             }
         }
         if (!whereToInsert.isValid()) {
@@ -276,12 +278,18 @@ Stmt MakeSync::visitStmt(const Stmt &op) {
                  syncBeforeFor_.at(whereToInsert->id()).second)) {
                 syncBeforeFor_[whereToInsert->id()] = {sync, !needSyncThreads};
             }
-        } else {
-            ASSERT(whereToInsert->nodeType() == ASTNodeType::If);
+        } else if (whereToInsert->nodeType() == ASTNodeType::If) {
             if (!syncBeforeIf_.count(whereToInsert->id()) ||
                 (needSyncThreads &&
                  syncBeforeIf_.at(whereToInsert->id()).second)) {
                 syncBeforeIf_[whereToInsert->id()] = {sync, !needSyncThreads};
+            }
+        } else {
+            ASSERT(whereToInsert->nodeType() == ASTNodeType::MatMul);
+            if (!syncBeforeLib_.count(whereToInsert->id()) ||
+                (needSyncThreads &&
+                 syncBeforeLib_.at(whereToInsert->id()).second)) {
+                syncBeforeLib_[whereToInsert->id()] = {sync, !needSyncThreads};
             }
         }
 
@@ -335,8 +343,8 @@ Stmt MakeSync::visit(const For &_op) {
             }
         }
     }
-    if (syncBeforeFor_.count(op->id())) {
-        auto &&[sync, isSyncWarp] = syncBeforeFor_.at(op->id());
+    if (auto it = syncBeforeFor_.find(op->id()); it != syncBeforeFor_.end()) {
+        auto &&[sync, isSyncWarp] = it->second;
         markSyncForSplitting(_op, sync, isSyncWarp);
         return makeStmtSeq({sync, op});
     }
@@ -398,12 +406,21 @@ Stmt MakeSync::visit(const If &op) {
                      op->metadata(), op->id(), op->debugBlame());
     }
 
-    if (syncBeforeIf_.count(op->id())) {
-        auto &&[sync, isSyncWarp] = syncBeforeIf_.at(op->id());
+    if (auto it = syncBeforeIf_.find(op->id()); it != syncBeforeIf_.end()) {
+        auto &&[sync, isSyncWarp] = it->second;
         markSyncForSplitting(op, sync, isSyncWarp);
         return makeStmtSeq({sync, ret});
     }
 
+    return ret;
+}
+
+Stmt MakeSync::visit(const MatMul &op) {
+    auto ret = BaseClass::visit(op);
+    if (auto it = syncBeforeLib_.find(op->id()); it != syncBeforeLib_.end()) {
+        auto &&[sync, isSyncWarp] = it->second;
+        return makeStmtSeq({sync, ret});
+    }
     return ret;
 }
 

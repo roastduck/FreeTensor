@@ -26,6 +26,7 @@ class Hasher {
     static size_t compHash(const Buffer &b);
     static size_t compHash(const ReductionItem &r);
     static size_t compHash(const ForProperty &p);
+    static size_t compHash(const CutlassMicroKernelProperty &p);
 
     // stmt
     static size_t compHash(const AnyNode &op);
@@ -104,6 +105,8 @@ class HashComparator {
                     const Ref<ReductionItem> &rhs) const;
     bool operator()(const Ref<ForProperty> &lhs,
                     const Ref<ForProperty> &rhs) const;
+    bool operator()(const Ref<CutlassMicroKernelProperty> &lhs,
+                    const Ref<CutlassMicroKernelProperty> &rhs) const;
     bool operator()(const AST &lhs, const AST &rhs) const;
 };
 

@@ -276,7 +276,15 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
     ast = shrinkFor(ast, nest, true, unordered);
 
     for (auto &&[id, scope] : views::zip(adder.newScopeIds(), orderedScopes)) {
-        ast = parallelize(ast, id, scope->property_->parallel_, true);
+        try {
+            ast = parallelize(ast, id, scope->property_->parallel_, true);
+        } catch (const InvalidSchedule &e) {
+            throw InvalidSchedule(
+                FT_MSG << "Failed to create a new parallel scope " << id
+                       << " in loop nest " << nest << " as " << scope->id()
+                       << " in the reference loop nest " << reference << ": "
+                       << e.what());
+        }
     }
 
     return ast;

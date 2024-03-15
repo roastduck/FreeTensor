@@ -1,3 +1,4 @@
+#include <pass/const_fold.h>
 #include <schedule.h>
 #include <schedule/var_split.h>
 
@@ -89,7 +90,7 @@ Stmt varSplit(const Stmt &_ast, const ID &def, int dim, VarSplitMode mode,
     if (!mutator.found()) {
         throw InvalidSchedule(FT_MSG << def << " not found");
     }
-    return ast;
+    return constFold(ast);
 }
 
 void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,

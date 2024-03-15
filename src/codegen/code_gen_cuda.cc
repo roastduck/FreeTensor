@@ -1010,6 +1010,65 @@ void CodeGenCUDA::visit(const MatMul &op) {
         break;
     }
 
+    case MatMulBackend::CutlassMicroThread: {
+        if (!thisOpInKernel) {
+            throw InvalidProgram(
+                "A MatMul's micro kernel can only be called inside a kernel");
+        }
+
+        ASSERT(op->cIsRowMajor_);
+
+        auto &&prop = op->cutlassMicroKernelProperty_;
+
+        makeIndent();
+        os() << "matmul_thread<";
+        (*this)(m);
+        os() << ", ";
+        (*this)(n);
+        os() << ", ";
+        (*this)(k);
+        os() << ", " << prop->nWarpBatch_ << ", " << prop->nWarpM_ << ", "
+             << prop->nWarpN_ << ", " << (transA ? "true" : "false") << ", "
+             << (transB ? "true" : "false") << ", "
+             << genCUTLASSType(a->dtype()) << ", " << genCUTLASSType(b->dtype())
+             << ", " << genCUTLASSType(c->dtype()) << ">((const "
+             << genCUTLASSType(a->dtype()) << "*)&(";
+        (*this)(a);
+        os() << "), (const " << genCUTLASSType(b->dtype()) << "*)&(";
+        (*this)(b);
+        os() << "), (" << genCUTLASSType(c->dtype()) << "*)&(";
+        (*this)(c);
+        os() << "), ";
+        (*this)(lda);
+        os() << ", ";
+        (*this)(ldb);
+        os() << ", ";
+        (*this)(stridea);
+        os() << ", ";
+        (*this)(strideb);
+        os() << ", ";
+        (*this)(stridec);
+        os() << ", ";
+        (*this)(op->alpha_);
+        os() << ", ";
+        (*this)(op->beta_);
+        os() << ", ";
+        (*this)(prop->warpIdBatch_);
+        os() << ", ";
+        (*this)(prop->warpIdM_);
+        os() << ", ";
+        (*this)(prop->warpIdN_);
+        os() << ", ";
+        (*this)(prop->laneId_);
+        os() << ");" << std::endl;
+
+        neededMicroKernels_.emplace_back("matmul/cutlass/gemm.h");
+        break;
+    }
+
+    case MatMulBackend::CutlassMicroBlock:
+        ERROR("CutlassMicroBlock should be lowered before codegen");
+
     default:
         inMatmul_ = false;
         throw InvalidProgram("MatMul backend " +
@@ -1033,16 +1092,20 @@ NativeCode codeGenCUDA(const Func &func, const Ref<Target> &_target) {
     visitor(op);
     visitor.endBlock();
 
-    const char *header = R"~~~(
+    std::string header = R"~~~(
 #include <gpu_runtime.h>
 
 extern __shared__ uint8_t __shmem[];
 
 extern "C" {
 )~~~";
-    const char *tailer = R"~~~(
+    std::string tailer = R"~~~(
 }
 )~~~";
+
+    for (auto &&item : visitor.neededMicroKernels()) {
+        header = "#include \"micro_kernel/" + item + "\"\n" + header;
+    }
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {

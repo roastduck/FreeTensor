@@ -30,6 +30,7 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     Expr globalSize_ = makeIntConst(0);
     std::unordered_set<Stmt> streamScopes_;
     bool inMatmul_ = false;
+    std::vector<std::string> neededMicroKernels_;
 
   public:
     CodeGenCUDA(const std::vector<FuncParam> &params,
@@ -48,6 +49,8 @@ class CodeGenCUDA : public CodeGenC<CodeGenCUDAStream> {
     Expr globalSize() const { return globalSize_; }
 
     std::string gen(const DataType &dtype) override;
+
+    const auto &neededMicroKernels() const { return neededMicroKernels_; }
 
   private:
     bool inKernel() const;
