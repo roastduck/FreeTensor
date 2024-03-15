@@ -124,13 +124,15 @@ class DirectBeforeSelector : public Selector {
 };
 
 class BeforeSelector : public Selector {
-    Ref<Selector> following_;
+    Ref<Selector> following_, middle_;
 
   protected:
     bool matchImpl(const Stmt &stmt) override;
 
   public:
-    BeforeSelector(const Ref<Selector> &following) : following_(following) {}
+    BeforeSelector(const Ref<Selector> &following,
+                   const Ref<Selector> &middle = nullptr)
+        : following_(following), middle_(middle) {}
 };
 
 class DirectAfterSelector : public Selector {
@@ -144,13 +146,15 @@ class DirectAfterSelector : public Selector {
 };
 
 class AfterSelector : public Selector {
-    Ref<Selector> leading_;
+    Ref<Selector> leading_, middle_;
 
   protected:
     bool matchImpl(const Stmt &stmt) override;
 
   public:
-    AfterSelector(const Ref<Selector> &leading) : leading_(leading) {}
+    AfterSelector(const Ref<Selector> &leading,
+                  const Ref<Selector> &middle = nullptr)
+        : leading_(leading), middle_(middle) {}
 };
 
 class RootNodeSelector : public Selector {

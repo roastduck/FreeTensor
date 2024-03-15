@@ -89,6 +89,9 @@ bool BeforeSelector::matchImpl(const Stmt &stmt) {
             following_->match(next)) {
             return true;
         }
+        if (middle_.isValid() && !middle_->match(next)) {
+            return false;
+        }
     }
     return false;
 }
@@ -111,6 +114,9 @@ bool AfterSelector::matchImpl(const Stmt &stmt) {
         if (!stmt->isAncestorOf(prev) && !prev->isAncestorOf(stmt) &&
             leading_->match(prev)) {
             return true;
+        }
+        if (middle_.isValid() && !middle_->match(prev)) {
+            return false;
         }
     }
     return false;

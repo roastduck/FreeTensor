@@ -967,6 +967,24 @@ def test_must_attach_backward_when_used_as_decorator():
             return ft.libop.matmul(a, b)
 
 
+def test_no_grad_integer():
+    # Should not report error on intrinsic because it is integer
+    with ft.VarDef([("x", (), "float32", "input", "cpu"),
+                    ("y", (), "float32", "output", "cpu")]) as (x, y):
+        y[...] = ft.intrinsic("(%)", ft.cast(x[...], "int32"), ret_type="int32")
+    ast = ft.pop_ast(verbose=True)
+    _, ast, _, _, _ = ft.grad_body(ast, ["x"], ["y"],
+                                   set(),
+                                   reset_provided_grad=False)
+    print(ast)
+
+    with ft.VarDef("d_x", (), "float32", "output", "cpu") as d_x:
+        d_x[...] = 0
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
 def test_error_input_not_found():
 
     @ft.transform

@@ -547,6 +547,44 @@ def test_tuple_for():
     assert test.body.match(test_expected.body)
 
 
+def test_reversed_dynamic_range_1():
+
+    @ft.transform(verbose=2)
+    def test(x, y):
+        x: ft.Var[(16,), "int32", "input"]
+        y: ft.Var[(16,), "int32", "output"]
+        for i in reversed(range(0, 16, 2)):
+            y[i] = x[i] + 1
+
+    @ft.transform
+    def test_expected(x, y):
+        x: ft.Var[(16,), "int32", "input"]
+        y: ft.Var[(16,), "int32", "output"]
+        for i in range(14, -2, -2):
+            y[i] = x[i] + 1
+
+    assert test.body.match(test_expected.body)
+
+
+def test_reversed_dynamic_range_2():
+
+    @ft.transform(verbose=2)
+    def test(x, y):
+        x: ft.Var[(16,), "int32", "input"]
+        y: ft.Var[(16,), "int32", "output"]
+        for i in reversed(range(0, 15, 2)):
+            y[i] = x[i] + 1
+
+    @ft.transform
+    def test_expected(x, y):
+        x: ft.Var[(16,), "int32", "input"]
+        y: ft.Var[(16,), "int32", "output"]
+        for i in range(14, -2, -2):
+            y[i] = x[i] + 1
+
+    assert test.body.match(test_expected.body)
+
+
 @dataclass
 class DummyAssigned:
     attr = None

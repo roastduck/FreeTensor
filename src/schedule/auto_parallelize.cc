@@ -570,7 +570,7 @@ void Schedule::autoParallelize(const Ref<Target> &target) {
                 });
 
             // III b. Reduction
-            if (!needParRed) {
+            if (localParaAll.size() == localParaNoRed.size() || !needParRed) {
                 commitTransaction();
             } else {
                 abortTransaction();

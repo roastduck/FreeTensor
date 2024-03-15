@@ -37,9 +37,7 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.12%gcc@10.2.1 cuda@11.8.0/ehz25ml cudnn@8.7.0.84-11.8/uopt2y4 intel-mkl@2020.4.304 java@11 gcc@11.3.0
           source ci-script/prepare-python-environment.sh
-          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
-          # Setting OMP_NUM_THREADS=256 seems to work around the conflict of PyTorch
-          OMP_NUM_THREADS=256 OMP_PROC_BIND=true srun --exclusive -N 1 -p ja --gres=gpu:v100:1 pytest --color=yes test
+          srun -N 1 -c 64 -p octave --gres=gpu:a100:1 pytest --color=yes -m "not performance_sensitive" test
   build-and-test-gcc-minimal-run_in_tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
@@ -65,8 +63,7 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.12%gcc@10.2.1 java@11 gcc@12.1.0
           source ci-script/prepare-python-environment.sh
-          # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
-          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p ja pytest --color=yes test
+          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -c 64 -p ja pytest --color=yes -m "not performance_sensitive" test
   build-and-test-clang-run-in-tree:
     runs-on: self-hosted
     if: github.event.pull_request.draft == false
@@ -92,5 +89,30 @@ jobs:
           source /opt/spack/share/spack/setup-env.sh
           spack load python~debug@3.9.12%gcc@10.2.1 java@11 llvm@16%gcc@12
           source ci-script/prepare-python-environment.sh
+          PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -c 64 -p ja pytest --color=yes -m "not performance_sensitive" test
+  build-and-test-gcc-cuda-mkl-exclusively:
+    runs-on: self-hosted
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: roastduck/checkout@main
+        with:
+          ssh-key: ${{ secrets.CI }}
+          submodules: true
+          fetch-depth: 0
+      - name: Build ffi module in Release
+        run: |
+          git submodule foreach --recursive git clean -ffdx
+          git submodule foreach --recursive git reset --hard
+          source /opt/spack/share/spack/setup-env.sh
+          spack load python~debug@3.9.12%gcc@10.2.1 cuda@11.8.0/ehz25ml cudnn@8.7.0.84-11.8/uopt2y4 intel-mkl@2020.4.304 java@11 gcc@11.3.0
+          source ci-script/prepare-python-environment.sh
+          # -C requires a new enough pip
+          pip3 install --upgrade pip
+          pip3 install . -C--local=with-cuda.toml -C--local=ci-script/with-spack-mkl.toml
+      - name: Run PyTest
+        run: |
+          source /opt/spack/share/spack/setup-env.sh
+          spack load python~debug@3.9.12%gcc@10.2.1 cuda@11.8.0/ehz25ml cudnn@8.7.0.84-11.8/uopt2y4 intel-mkl@2020.4.304 java@11 gcc@11.3.0
+          source ci-script/prepare-python-environment.sh
           # Set OMP_PROC_BIND to make OpenMP happy for 30.schedule/test_auto_fission_fuse.py::test_tune_fission
-          OMP_PROC_BIND=true PYTHONPATH=build:python:$PYTHONPATH srun --exclusive -N 1 -p ja pytest --color=yes test
+          OMP_PROC_BIND=true srun --exclusive=user -N 1 -c 256 -p ja --gres=gpu:v100:1 pytest --color=yes -m "performance_sensitive" test

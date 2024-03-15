@@ -25,7 +25,6 @@ numpy==1.24.3
 packaging==23.1
 pluggy==1.0.0
 py_build_cmake==0.1.8
-pybind11-stubgen==0.13.0
 Pygments==2.15.1
 pymdown-extensions==10.0
 pytest==7.3.1

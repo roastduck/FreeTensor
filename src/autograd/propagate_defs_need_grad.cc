@@ -3,9 +3,14 @@
 
 namespace freetensor {
 
+void PropagateRequires::visitExpr(const Expr &e) {
+    if (isFloat(e->dtype())) {
+        BaseClass::visitExpr(e);
+    }
+}
+
 void PropagateRequires::visit(const Load &op) {
-    if (isFloat(op->dtype()) && curTarget_.isValid() &&
-        affectedDefs_.count(def(op->var_)->id())) {
+    if (curTarget_.isValid() && affectedDefs_.count(def(op->var_)->id())) {
         affectedDefs_.insert(curTarget_);
         // No need to recurse deeper
     }
@@ -71,8 +76,14 @@ std::unordered_set<ID> PropagateRequires::propagateUntilConverge(
     return propagator.affectedDefs();
 }
 
+void PropagateProvides::visitExpr(const Expr &e) {
+    if (isFloat(e->dtype())) {
+        BaseClass::visitExpr(e);
+    }
+}
+
 void PropagateProvides::visit(const Load &op) {
-    if (isFloat(op->dtype()) && curTarget_.isValid() &&
+    if (curTarget_.isValid() &&
         buffer(op->var_)->atype() == AccessType::Cache) {
         affectedDefs_.insert(def(op->var_)->id());
         // No need to recurse deeper

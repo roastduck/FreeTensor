@@ -10,6 +10,7 @@ from . import config
 from .expr import UndeclaredParam
 from .stmt import VarRef
 from .func import Func
+from . import frontend
 from .frontend import lang_overload, staged_callable, LifetimeScope, dynamic_range
 from .context import pop_ast_and_user_grads, ctx_stack
 from .staging import StagingError, TransformError
@@ -19,7 +20,10 @@ from .utils import as_decorator
 
 
 def _prepare_extra_locals(default_dynamic_range):
-    extra_locals = {'__ft__': sys.modules['freetensor']}
+    extra_locals = {
+        '__ft__': sys.modules['freetensor'],
+        'reversed': frontend.reversed,
+    }
     if default_dynamic_range:
         extra_locals['range'] = dynamic_range
     return extra_locals
