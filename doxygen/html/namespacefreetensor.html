@@ -238,6 +238,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CUDAStreamScope.html">CUDAStreamScope</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfreetensor_1_1CutlassMicroKernelProperty.html">CutlassMicroKernelProperty</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DataType.html">DataType</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1DataTypeInfer.html">DataTypeInfer</a></td></tr>
@@ -1172,10 +1174,15 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespacefreetensor.html#aa84a1eedb0880915c25c6ba5a2aa4db5ab3326e4cf25ac45c0c0a539899da43a9">RelaxedSize</a>
  }</td></tr>
 <tr class="separator:aa84a1eedb0880915c25c6ba5a2aa4db5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">MatMulBackend</a> : size_t { <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea08797202751e7c607276dacf426f08bf">Mkl</a> = 0
+<tr class="memitem:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">MatMulBackend</a> : size_t { <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea08797202751e7c607276dacf426f08bf">Mkl</a> = 0
 , <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ead49c5405e85df5104c4fa7bb5aa6857b">Cublas</a>
 , <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea00b6b70a6b6f0d1ae23c31dbeef3b3bc">Cutlass</a>
+, <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea38dcca34fa584c4c953a3788977850ad">CutlassMicroBlock</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3eaacc120359cac95d5b3137e34dec0d7d4">CutlassMicroThread</a>
 , <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea6b5bb2cc14edd3e3a1b68aeef69b74b8">NumBackends</a>
+<br />
  }</td></tr>
 <tr class="separator:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af95889187755480d15e840d24f445312"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#af95889187755480d15e840d24f445312">NullPolicy</a> : int { <a class="el" href="namespacefreetensor.html#af95889187755480d15e840d24f445312a493ee14cd89fab9eafecae430e90fd14">NotNull</a>
@@ -1391,6 +1398,8 @@ requires std::ranges::range&lt;T&gt; &amp;&amp; (!std::convertible_to&lt;T, std:
 <tr class="memitem:afa91651176f63d4a2e9fbbcffc1c6c0a"><td class="memTemplParams" colspan="2">template&lt;std::ranges::range Container&gt; </td></tr>
 <tr class="memitem:afa91651176f63d4a2e9fbbcffc1c6c0a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afa91651176f63d4a2e9fbbcffc1c6c0a">operator|</a> (Container &amp;&amp;c, const <a class="el" href="structfreetensor_1_1__Join.html">_Join</a> &amp;joiner)</td></tr>
 <tr class="separator:afa91651176f63d4a2e9fbbcffc1c6c0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad230978d3f81958ec747861c79d2630c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="structfreetensor_1_1CutlassMicroKernelProperty.html">CutlassMicroKernelProperty</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad230978d3f81958ec747861c79d2630c">deepCopy</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="structfreetensor_1_1CutlassMicroKernelProperty.html">CutlassMicroKernelProperty</a> &gt; &amp;p)</td></tr>
+<tr class="separator:ad230978d3f81958ec747861c79d2630c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69b12235146ab210071e589e98530649"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a69b12235146ab210071e589e98530649">operator&lt;&lt;</a> (std::ostream &amp;os, const <a class="el" href="namespacefreetensor.html#a694935ddfd9f4e178ba59d9aef4d532a">AST</a> &amp;op)</td></tr>
 <tr class="separator:a69b12235146ab210071e589e98530649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a6ae19f9b43a1565df544e305ddf209"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8a6ae19f9b43a1565df544e305ddf209">match</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;pattern, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;instance)</td></tr>
@@ -2091,6 +2100,8 @@ requires std::integral&lt;T&gt; || std::floating_point&lt;T&gt;</td></tr>
 <tr class="separator:ab11e11478ab8ed7d1ceebc5cfe98aa12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0611eaa53154125f43b7c1660fc35d7d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a0611eaa53154125f43b7c1660fc35d7d">inlining</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;def)</td></tr>
 <tr class="separator:a0611eaa53154125f43b7c1660fc35d7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afeeadedcced385b9d66f09c420ad21cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#afeeadedcced385b9d66f09c420ad21cb">lowerCutlassMicroBlock</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;matMulId, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;defIdC, const std::vector&lt; bool &gt; &amp;dimsCBatch, const std::vector&lt; bool &gt; &amp;dimsCM, const std::vector&lt; bool &gt; &amp;dimsCN)</td></tr>
+<tr class="separator:afeeadedcced385b9d66f09c420ad21cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65d3836e5ccb5e88c9ed7b363297acf9"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>, <a class="el" href="classfreetensor_1_1ID.html">ID</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a65d3836e5ccb5e88c9ed7b363297acf9">merge</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop1, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop2)</td></tr>
 <tr class="separator:a65d3836e5ccb5e88c9ed7b363297acf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02e429b75c6200ee7060d8c0e8403758"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a02e429b75c6200ee7060d8c0e8403758">parallelize</a> (const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;ast, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;loop, const <a class="el" href="namespacefreetensor.html#a6d19bf2262d0cd0af3903283c9722088">ParallelScope</a> &amp;parallel, bool allowReduction)</td></tr>
@@ -2223,8 +2234,8 @@ requires requires(const T &amp;obj) { requires HasStreamOutput&lt;T&gt;; require
 <tr class="separator:a583db4bd7dd11870992fe58be17e80eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7720b3ead9944080e84174b403669d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">MatMulBackend</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad7720b3ead9944080e84174b403669d0">parseMatMulBackend</a> (const std::string &amp;_str)</td></tr>
 <tr class="separator:ad7720b3ead9944080e84174b403669d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a35a2be77e5b97b13edf14b58ec53db83"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35a2be77e5b97b13edf14b58ec53db83">makeMatMul</a> (<a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">MatMulBackend</a> backend, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;a, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;b, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;c, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;alpha, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;beta, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;m, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;k, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;<a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;lda, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;ldb, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;ldc, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;stridea, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;strideb, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;stridec, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;batchSize, bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;equivalent, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
-<tr class="separator:a35a2be77e5b97b13edf14b58ec53db83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f13c535f1275669bdd847dad0f26efb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8f13c535f1275669bdd847dad0f26efb">makeMatMul</a> (<a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">MatMulBackend</a> backend, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="structfreetensor_1_1CutlassMicroKernelProperty.html">CutlassMicroKernelProperty</a> &gt; &amp;cutlassMicroKernelProperty, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;a, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;b, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;c, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;alpha, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;beta, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;m, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;k, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;<a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;lda, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;ldb, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;ldc, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;stridea, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;strideb, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;stridec, const <a class="el" href="namespacefreetensor.html#acfa6f07a5497b3d187fe112708aa335b">Expr</a> &amp;batchSize, bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor, const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;equivalent, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
+<tr class="separator:a8f13c535f1275669bdd847dad0f26efb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa106c604eb53be4f5777d5dbc91df4ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa106c604eb53be4f5777d5dbc91df4ef">makeMarkVersion</a> (const std::string &amp;tapeName, const std::string &amp;var, const <a class="el" href="namespacefreetensor.html#a3a7899400090777d4ec968aa9913c379">Metadata</a> &amp;metadata=nullptr, const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
 <tr class="separator:aa106c604eb53be4f5777d5dbc91df4ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5db63f7bf03f222fe179fba623f3c779"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ASTPart.html">ASTPart</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5db63f7bf03f222fe179fba623f3c779">lca</a> (const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ASTPart.html">ASTPart</a> &gt; &amp;<a class="el" href="namespacefreetensor.html#a192b70d1972bcd73d5ff58f30fad21a2">lhs</a>, const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="classfreetensor_1_1ASTPart.html">ASTPart</a> &gt; &amp;<a class="el" href="namespacefreetensor.html#ab90fc5289b6bee7e0a9b9c204290e005">rhs</a>)</td></tr>
@@ -4276,6 +4287,8 @@ template&lt;class K &gt; </div>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5dd63b387e5c735ae0253d59b55fcf3ea08797202751e7c607276dacf426f08bf" name="a5dd63b387e5c735ae0253d59b55fcf3ea08797202751e7c607276dacf426f08bf"></a>Mkl&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a5dd63b387e5c735ae0253d59b55fcf3ead49c5405e85df5104c4fa7bb5aa6857b" name="a5dd63b387e5c735ae0253d59b55fcf3ead49c5405e85df5104c4fa7bb5aa6857b"></a>Cublas&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a5dd63b387e5c735ae0253d59b55fcf3ea00b6b70a6b6f0d1ae23c31dbeef3b3bc" name="a5dd63b387e5c735ae0253d59b55fcf3ea00b6b70a6b6f0d1ae23c31dbeef3b3bc"></a>Cutlass&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a5dd63b387e5c735ae0253d59b55fcf3ea38dcca34fa584c4c953a3788977850ad" name="a5dd63b387e5c735ae0253d59b55fcf3ea38dcca34fa584c4c953a3788977850ad"></a>CutlassMicroBlock&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a5dd63b387e5c735ae0253d59b55fcf3eaacc120359cac95d5b3137e34dec0d7d4" name="a5dd63b387e5c735ae0253d59b55fcf3eaacc120359cac95d5b3137e34dec0d7d4"></a>CutlassMicroThread&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a5dd63b387e5c735ae0253d59b55fcf3ea6b5bb2cc14edd3e3a1b68aeef69b74b8" name="a5dd63b387e5c735ae0253d59b55fcf3ea6b5bb2cc14edd3e3a1b68aeef69b74b8"></a>NumBackends&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -6797,7 +6810,7 @@ template&lt;class FromMap , class ToMap &gt; </div>
 </div>
 </div>
 <a id="a83655335f80dfe407b6c7e05c025a43b" name="a83655335f80dfe407b6c7e05c025a43b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a83655335f80dfe407b6c7e05c025a43b">&#9670;&#160;</a></span>deepCopy() <span class="overload">[1/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a83655335f80dfe407b6c7e05c025a43b">&#9670;&#160;</a></span>deepCopy() <span class="overload">[1/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6815,7 +6828,7 @@ template&lt;class FromMap , class ToMap &gt; </div>
 </div>
 </div>
 <a id="a8e7757ebdcaf7f998913716b135b7182" name="a8e7757ebdcaf7f998913716b135b7182"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8e7757ebdcaf7f998913716b135b7182">&#9670;&#160;</a></span>deepCopy() <span class="overload">[2/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8e7757ebdcaf7f998913716b135b7182">&#9670;&#160;</a></span>deepCopy() <span class="overload">[2/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6833,7 +6846,7 @@ template&lt;class FromMap , class ToMap &gt; </div>
 </div>
 </div>
 <a id="a97a466dfc5df7c4515c39dfe8c813c24" name="a97a466dfc5df7c4515c39dfe8c813c24"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a97a466dfc5df7c4515c39dfe8c813c24">&#9670;&#160;</a></span>deepCopy() <span class="overload">[3/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a97a466dfc5df7c4515c39dfe8c813c24">&#9670;&#160;</a></span>deepCopy() <span class="overload">[3/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6858,8 +6871,34 @@ template&lt;class FromMap , class ToMap &gt; </div>
 
 </div>
 </div>
+<a id="ad230978d3f81958ec747861c79d2630c" name="ad230978d3f81958ec747861c79d2630c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad230978d3f81958ec747861c79d2630c">&#9670;&#160;</a></span>deepCopy() <span class="overload">[4/8]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="structfreetensor_1_1CutlassMicroKernelProperty.html">CutlassMicroKernelProperty</a> &gt; freetensor::deepCopy </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="structfreetensor_1_1CutlassMicroKernelProperty.html">CutlassMicroKernelProperty</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>p</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a8537144aba77f76d3d06cad68a7a2ff3" name="a8537144aba77f76d3d06cad68a7a2ff3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8537144aba77f76d3d06cad68a7a2ff3">&#9670;&#160;</a></span>deepCopy() <span class="overload">[4/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8537144aba77f76d3d06cad68a7a2ff3">&#9670;&#160;</a></span>deepCopy() <span class="overload">[5/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6885,7 +6924,7 @@ template&lt;class FromMap , class ToMap &gt; </div>
 </div>
 </div>
 <a id="ad19c6e9e7174cb3cf85eccd0bc158286" name="ad19c6e9e7174cb3cf85eccd0bc158286"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad19c6e9e7174cb3cf85eccd0bc158286">&#9670;&#160;</a></span>deepCopy() <span class="overload">[5/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ad19c6e9e7174cb3cf85eccd0bc158286">&#9670;&#160;</a></span>deepCopy() <span class="overload">[6/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6911,7 +6950,7 @@ template&lt;class FromMap , class ToMap &gt; </div>
 </div>
 </div>
 <a id="a386180ba6a8ac3e4cccbf7edeb1b8e5b" name="a386180ba6a8ac3e4cccbf7edeb1b8e5b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a386180ba6a8ac3e4cccbf7edeb1b8e5b">&#9670;&#160;</a></span>deepCopy() <span class="overload">[6/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a386180ba6a8ac3e4cccbf7edeb1b8e5b">&#9670;&#160;</a></span>deepCopy() <span class="overload">[7/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -6937,7 +6976,7 @@ template&lt;class FromMap , class ToMap &gt; </div>
 </div>
 </div>
 <a id="af8f78d485b03e8a545ddc67fcd90d4b6" name="af8f78d485b03e8a545ddc67fcd90d4b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af8f78d485b03e8a545ddc67fcd90d4b6">&#9670;&#160;</a></span>deepCopy() <span class="overload">[7/7]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#af8f78d485b03e8a545ddc67fcd90d4b6">&#9670;&#160;</a></span>deepCopy() <span class="overload">[8/8]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -10980,6 +11019,58 @@ template&lt;PBMapRef T&gt; </div>
 
 </div>
 </div>
+<a id="afeeadedcced385b9d66f09c420ad21cb" name="afeeadedcced385b9d66f09c420ad21cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afeeadedcced385b9d66f09c420ad21cb">&#9670;&#160;</a></span>lowerCutlassMicroBlock()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> freetensor::lowerCutlassMicroBlock </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="namespacefreetensor.html#a8b7e165b3601cc722c7b357347dc6de9">Stmt</a> &amp;&#160;</td>
+          <td class="paramname"><em>ast</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>matMulId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;&#160;</td>
+          <td class="paramname"><em>defIdC</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; bool &gt; &amp;&#160;</td>
+          <td class="paramname"><em>dimsCBatch</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; bool &gt; &amp;&#160;</td>
+          <td class="paramname"><em>dimsCM</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; bool &gt; &amp;&#160;</td>
+          <td class="paramname"><em>dimsCN</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a7551582cd50998a447eef65b52d8cbed" name="a7551582cd50998a447eef65b52d8cbed"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7551582cd50998a447eef65b52d8cbed">&#9670;&#160;</a></span>makeAbs()</h2>
 
@@ -12757,8 +12848,8 @@ template&lt;class T , class U &gt; </div>
 
 </div>
 </div>
-<a id="a35a2be77e5b97b13edf14b58ec53db83" name="a35a2be77e5b97b13edf14b58ec53db83"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a35a2be77e5b97b13edf14b58ec53db83">&#9670;&#160;</a></span>makeMatMul()</h2>
+<a id="a8f13c535f1275669bdd847dad0f26efb" name="a8f13c535f1275669bdd847dad0f26efb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f13c535f1275669bdd847dad0f26efb">&#9670;&#160;</a></span>makeMatMul()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -12771,6 +12862,12 @@ template&lt;class T , class U &gt; </div>
           <td>(</td>
           <td class="paramtype"><a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">MatMulBackend</a>&#160;</td>
           <td class="paramname"><em>backend</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classfreetensor_1_1Ref.html">Ref</a>&lt; <a class="el" href="structfreetensor_1_1CutlassMicroKernelProperty.html">CutlassMicroKernelProperty</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>cutlassMicroKernelProperty</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -21520,9 +21617,7 @@ template&lt;PBMapRef T&gt; </div>
 </table>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">= {</div>
-<div class="line">    <span class="stringliteral">&quot;mkl&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;cublas&quot;</span>,</div>
-<div class="line">    <span class="stringliteral">&quot;cutlass&quot;</span>,</div>
+<div class="line">    <span class="stringliteral">&quot;mkl&quot;</span>, <span class="stringliteral">&quot;cublas&quot;</span>, <span class="stringliteral">&quot;cutlass&quot;</span>, <span class="stringliteral">&quot;cutlass-micro-block&quot;</span>, <span class="stringliteral">&quot;cutlass-micro-thread&quot;</span>,</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>

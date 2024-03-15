@@ -11,5 +11,7 @@ var searchData=
   ['cpuheap_8',['CPUHeap',['../namespacefreetensor.html#af577e754b8b16f492893f80ae9d2b150a7245cc5f5bb9ad69fd022fb9bfb75436',1,'freetensor']]],
   ['cublas_9',['Cublas',['../namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ead49c5405e85df5104c4fa7bb5aa6857b',1,'freetensor']]],
   ['custom_10',['Custom',['../namespacefreetensor.html#af346f9de09dc96bd110e29ff9af378c3a90589c47f06eb971d548591f23c285af',1,'freetensor']]],
-  ['cutlass_11',['Cutlass',['../namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea00b6b70a6b6f0d1ae23c31dbeef3b3bc',1,'freetensor']]]
+  ['cutlass_11',['Cutlass',['../namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea00b6b70a6b6f0d1ae23c31dbeef3b3bc',1,'freetensor']]],
+  ['cutlassmicroblock_12',['CutlassMicroBlock',['../namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea38dcca34fa584c4c953a3788977850ad',1,'freetensor']]],
+  ['cutlassmicrothread_13',['CutlassMicroThread',['../namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3eaacc120359cac95d5b3137e34dec0d7d4',1,'freetensor']]]
 ];

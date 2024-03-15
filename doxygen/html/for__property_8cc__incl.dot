@@ -163,6 +163,10 @@ digraph "src/for_property.cc"
   Node47 -> Node23 [color="steelblue1",style="solid"];
   Node47 -> Node26 [color="steelblue1",style="solid"];
   Node43 -> Node30 [color="steelblue1",style="solid"];
+  Node43 -> Node48 [color="steelblue1",style="solid"];
+  Node48 [label="cutlass_micro_kernel\l_property.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$cutlass__micro__kernel__property_8h.html",tooltip=" "];
+  Node48 -> Node3 [color="steelblue1",style="solid"];
+  Node48 -> Node27 [color="steelblue1",style="solid"];
   Node43 -> Node23 [color="steelblue1",style="solid"];
   Node43 -> Node2 [color="steelblue1",style="solid"];
   Node43 -> Node41 [color="steelblue1",style="solid"];

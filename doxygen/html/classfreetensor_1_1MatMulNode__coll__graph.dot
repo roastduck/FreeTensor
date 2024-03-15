@@ -16,8 +16,10 @@ digraph "freetensor::MatMulNode"
   Node5 [label="freetensor::EnableSelf\l\< ASTPart \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1EnableSelf.html",tooltip=" "];
   Node6 -> Node5 [dir="back",color="steelblue1",style="solid"];
   Node6 [label="freetensor::EnableSelfBase",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1EnableSelfBase.html",tooltip=" "];
-  Node7 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" a_\nalpha_\nb_\nbatchSize_\nbeta_\nc_\nk_\nlda_\nldb_\nldc_\n..." ];
-  Node7 [label="freetensor::SubTree\l\< freetensor::ExprNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SubTree.html",tooltip=" "];
-  Node8 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" equivalent_" ];
-  Node8 [label="freetensor::SubTree\l\< freetensor::StmtNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SubTree.html",tooltip=" "];
+  Node7 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" cutlassMicroKernelProperty_" ];
+  Node7 [label="freetensor::SubTree\l\< freetensor::CutlassMicro\lKernelProperty, NullPolicy\l::Nullable \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SubTree.html",tooltip=" "];
+  Node8 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" a_\nalpha_\nb_\nbatchSize_\nbeta_\nc_\nk_\nlda_\nldb_\nldc_\n..." ];
+  Node8 [label="freetensor::SubTree\l\< freetensor::ExprNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SubTree.html",tooltip=" "];
+  Node9 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" equivalent_" ];
+  Node9 [label="freetensor::SubTree\l\< freetensor::StmtNode \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SubTree.html",tooltip=" "];
 }

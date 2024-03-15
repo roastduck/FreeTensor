@@ -145,11 +145,13 @@ digraph "Graphical Class Hierarchy"
   Node2 -> Node69 [dir="back",color="steelblue1",style="solid"];
   Node69 [label="freetensor::Buffer",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Buffer.html",tooltip=" "];
   Node2 -> Node70 [dir="back",color="steelblue1",style="solid"];
-  Node70 [label="freetensor::ForProperty",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ForProperty.html",tooltip=" "];
+  Node70 [label="freetensor::CutlassMicro\lKernelProperty",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1CutlassMicroKernelProperty.html",tooltip=" "];
   Node2 -> Node71 [dir="back",color="steelblue1",style="solid"];
-  Node71 [label="freetensor::ReductionItem",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ReductionItem.html",tooltip=" "];
+  Node71 [label="freetensor::ForProperty",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ForProperty.html",tooltip=" "];
   Node2 -> Node72 [dir="back",color="steelblue1",style="solid"];
-  Node72 [label="freetensor::Tensor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Tensor.html",tooltip=" "];
-  Node0 -> Node73 [dir="back",color="steelblue1",style="solid"];
-  Node73 [label="freetensor::EnableSelf\< T \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1EnableSelf.html",tooltip=" "];
+  Node72 [label="freetensor::ReductionItem",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ReductionItem.html",tooltip=" "];
+  Node2 -> Node73 [dir="back",color="steelblue1",style="solid"];
+  Node73 [label="freetensor::Tensor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Tensor.html",tooltip=" "];
+  Node0 -> Node74 [dir="back",color="steelblue1",style="solid"];
+  Node74 [label="freetensor::EnableSelf\< T \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1EnableSelf.html",tooltip=" "];
 }

@@ -99,16 +99,18 @@ digraph "include/analyze/comp_unique_bounds.h"
   Node39 -> Node6 [dir="back",color="steelblue1",style="solid"];
   Node39 -> Node21 [dir="back",color="steelblue1",style="solid"];
   Node39 -> Node40 [dir="back",color="steelblue1",style="solid"];
-  Node40 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
+  Node40 [label="src/schedule/lower\l_cutlass_micro_block.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lower__cutlass__micro__block_8cc.html",tooltip=" "];
   Node39 -> Node41 [dir="back",color="steelblue1",style="solid"];
-  Node41 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
+  Node41 [label="src/schedule/parallelize\l_as.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$parallelize__as_8cc.html",tooltip=" "];
+  Node39 -> Node42 [dir="back",color="steelblue1",style="solid"];
+  Node42 [label="src/schedule/permute.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$permute_8cc.html",tooltip=" "];
   Node39 -> Node28 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node14 [dir="back",color="steelblue1",style="solid"];
-  Node1 -> Node42 [dir="back",color="steelblue1",style="solid"];
-  Node42 [label="include/pass/use_builtin\l_div.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$use__builtin__div_8h.html",tooltip=" "];
-  Node42 -> Node6 [dir="back",color="steelblue1",style="solid"];
-  Node42 -> Node35 [dir="back",color="steelblue1",style="solid"];
   Node1 -> Node43 [dir="back",color="steelblue1",style="solid"];
-  Node43 [label="src/analyze/comp_unique\l_bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8cc.html",tooltip=" "];
+  Node43 [label="include/pass/use_builtin\l_div.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$use__builtin__div_8h.html",tooltip=" "];
+  Node43 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node43 -> Node35 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node44 [dir="back",color="steelblue1",style="solid"];
+  Node44 [label="src/analyze/comp_unique\l_bounds.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$comp__unique__bounds_8cc.html",tooltip=" "];
   Node1 -> Node32 [dir="back",color="steelblue1",style="solid"];
 }

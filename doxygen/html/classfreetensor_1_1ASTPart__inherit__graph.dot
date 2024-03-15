@@ -58,8 +58,6 @@ digraph "freetensor::ASTPart"
   Node45 [label="freetensor::LnNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1LnNode.html",tooltip=" "];
   Node38 -> Node46 [dir="back",color="steelblue1",style="solid"];
   Node46 [label="freetensor::SigmoidNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SigmoidNode.html",tooltip=" "];
-  Node38 -> Node47 [dir="back",color="steelblue1",style="solid"];
-  Node47 [label="freetensor::SinNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SinNode.html",tooltip=" "];
   Node5 -> Node53 [dir="back",color="steelblue1",style="solid"];
   Node53 [label="freetensor::VarNode",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1VarNode.html",tooltip=" "];
   Node4 -> Node54 [dir="back",color="steelblue1",style="solid"];
@@ -97,9 +95,11 @@ digraph "freetensor::ASTPart"
   Node1 -> Node70 [dir="back",color="steelblue1",style="solid"];
   Node70 [label="freetensor::Buffer",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Buffer.html",tooltip=" "];
   Node1 -> Node71 [dir="back",color="steelblue1",style="solid"];
-  Node71 [label="freetensor::ForProperty",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ForProperty.html",tooltip=" "];
+  Node71 [label="freetensor::CutlassMicro\lKernelProperty",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1CutlassMicroKernelProperty.html",tooltip=" "];
   Node1 -> Node72 [dir="back",color="steelblue1",style="solid"];
-  Node72 [label="freetensor::ReductionItem",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ReductionItem.html",tooltip=" "];
+  Node72 [label="freetensor::ForProperty",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ForProperty.html",tooltip=" "];
   Node1 -> Node73 [dir="back",color="steelblue1",style="solid"];
-  Node73 [label="freetensor::Tensor",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Tensor.html",tooltip=" "];
+  Node73 [label="freetensor::ReductionItem",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ReductionItem.html",tooltip=" "];
+  Node1 -> Node74 [dir="back",color="steelblue1",style="solid"];
+  Node74 [label="freetensor::Tensor",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1Tensor.html",tooltip=" "];
 }

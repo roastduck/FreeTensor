@@ -38,5 +38,6 @@ var searchData=
   ['countscopelen_35',['CountScopeLen',['../classfreetensor_1_1CountScopeLen.html',1,'freetensor']]],
   ['cputarget_36',['CPUTarget',['../classfreetensor_1_1CPUTarget.html',1,'freetensor']]],
   ['cudascope_37',['CUDAScope',['../structfreetensor_1_1CUDAScope.html',1,'freetensor']]],
-  ['cudastreamscope_38',['CUDAStreamScope',['../structfreetensor_1_1CUDAStreamScope.html',1,'freetensor']]]
+  ['cudastreamscope_38',['CUDAStreamScope',['../structfreetensor_1_1CUDAStreamScope.html',1,'freetensor']]],
+  ['cutlassmicrokernelproperty_39',['CutlassMicroKernelProperty',['../structfreetensor_1_1CutlassMicroKernelProperty.html',1,'freetensor']]]
 ];

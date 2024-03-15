@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [label="freetensor::SyncFunc\l\< R(Params...)\>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SyncFunc_3_01R_07Params_8_8_8_08_4.html",tooltip=" "];
+  Node0 [label="freetensor::SubTreeList\l\< T, POLICY \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classfreetensor_1_1SubTreeList.html",tooltip=" "];
 }

@@ -53,7 +53,7 @@ var searchData=
   ['makelorland_50',['makeLOrLAnd',['../namespacefreetensor.html#a59ed57966181c652bdf47622dd120c73',1,'freetensor']]],
   ['makelt_51',['makeLT',['../namespacefreetensor.html#a259772a52a9308f1b660f8be720dbfdf',1,'freetensor']]],
   ['makemarkversion_52',['makeMarkVersion',['../namespacefreetensor.html#aa106c604eb53be4f5777d5dbc91df4ef',1,'freetensor']]],
-  ['makematmul_53',['makeMatMul',['../namespacefreetensor.html#a35a2be77e5b97b13edf14b58ec53db83',1,'freetensor']]],
+  ['makematmul_53',['makeMatMul',['../namespacefreetensor.html#a8f13c535f1275669bdd847dad0f26efb',1,'freetensor']]],
   ['makemax_54',['makeMax',['../namespacefreetensor.html#afff27d413e98de65b3aa7ae29bad628c',1,'freetensor']]],
   ['makemaxmin_55',['makeMaxMin',['../namespacefreetensor.html#a78f54288603c6ed29ba9b0c091070e8e',1,'freetensor']]],
   ['makemaxminimpl_56',['makeMaxMinImpl',['../namespacefreetensor.html#a972780c9bbda02f9dff24ab3fcf43acc',1,'freetensor']]],

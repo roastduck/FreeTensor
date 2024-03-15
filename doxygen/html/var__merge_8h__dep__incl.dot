@@ -8,5 +8,7 @@ digraph "include/schedule/var_merge.h"
   Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
   Node2 [label="src/schedule.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$schedule_8cc.html",tooltip=" "];
   Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
-  Node3 [label="src/schedule/var_merge.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__merge_8cc.html",tooltip=" "];
+  Node3 [label="src/schedule/lower\l_cutlass_micro_block.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lower__cutlass__micro__block_8cc.html",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="src/schedule/var_merge.cc",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__merge_8cc.html",tooltip=" "];
 }

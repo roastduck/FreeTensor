@@ -88,6 +88,7 @@ $(function() {
 <code>#include &lt;<a class="el" href="ast_8h_source.html">ast.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="buffer_8h_source.html">buffer.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="container__utils_8h_source.html">container_utils.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="cutlass__micro__kernel__property_8h_source.html">cutlass_micro_kernel_property.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="except_8h_source.html">except.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="for__property_8h_source.html">for_property.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="reduce__op_8h_source.html">reduce_op.h</a>&gt;</code><br />
@@ -173,10 +174,15 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">freetensor::MatMulBackend</a> : size_t { <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea08797202751e7c607276dacf426f08bf">freetensor::Mkl</a> = 0
+<tr class="memitem:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3e">freetensor::MatMulBackend</a> : size_t { <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea08797202751e7c607276dacf426f08bf">freetensor::Mkl</a> = 0
 , <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ead49c5405e85df5104c4fa7bb5aa6857b">freetensor::Cublas</a>
 , <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea00b6b70a6b6f0d1ae23c31dbeef3b3bc">freetensor::Cutlass</a>
+, <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea38dcca34fa584c4c953a3788977850ad">freetensor::CutlassMicroBlock</a>
+, <br />
+&#160;&#160;<a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3eaacc120359cac95d5b3137e34dec0d7d4">freetensor::CutlassMicroThread</a>
 , <a class="el" href="namespacefreetensor.html#a5dd63b387e5c735ae0253d59b55fcf3ea6b5bb2cc14edd3e3a1b68aeef69b74b8">freetensor::NumBackends</a>
+<br />
  }</td></tr>
 <tr class="separator:a5dd63b387e5c735ae0253d59b55fcf3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -230,8 +236,8 @@ Functions</h2></td></tr>
 <tr class="separator:a583db4bd7dd11870992fe58be17e80eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7720b3ead9944080e84174b403669d0"><td class="memItemLeft" align="right" valign="top">MatMulBackend&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#ad7720b3ead9944080e84174b403669d0">freetensor::parseMatMulBackend</a> (const std::string &amp;_str)</td></tr>
 <tr class="separator:ad7720b3ead9944080e84174b403669d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a35a2be77e5b97b13edf14b58ec53db83"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a35a2be77e5b97b13edf14b58ec53db83">freetensor::makeMatMul</a> (MatMulBackend backend, const Expr &amp;a, const Expr &amp;b, const Expr &amp;c, const Expr &amp;alpha, const Expr &amp;beta, const Expr &amp;m, const Expr &amp;k, const Expr &amp;<a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, const Expr &amp;lda, const Expr &amp;ldb, const Expr &amp;ldc, const Expr &amp;stridea, const Expr &amp;strideb, const Expr &amp;stridec, const Expr &amp;batchSize, bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor, const Stmt &amp;equivalent, const Metadata &amp;metadata=nullptr, const ID &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
-<tr class="separator:a35a2be77e5b97b13edf14b58ec53db83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f13c535f1275669bdd847dad0f26efb"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#a8f13c535f1275669bdd847dad0f26efb">freetensor::makeMatMul</a> (MatMulBackend backend, const Ref&lt; CutlassMicroKernelProperty &gt; &amp;cutlassMicroKernelProperty, const Expr &amp;a, const Expr &amp;b, const Expr &amp;c, const Expr &amp;alpha, const Expr &amp;beta, const Expr &amp;m, const Expr &amp;k, const Expr &amp;<a class="el" href="metadata_8cc.html#a76f11d9a0a47b94f72c2d0e77fb32240">n</a>, const Expr &amp;lda, const Expr &amp;ldb, const Expr &amp;ldc, const Expr &amp;stridea, const Expr &amp;strideb, const Expr &amp;stridec, const Expr &amp;batchSize, bool aIsRowMajor, bool bIsRowMajor, bool cIsRowMajor, const Stmt &amp;equivalent, const Metadata &amp;metadata=nullptr, const ID &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
+<tr class="separator:a8f13c535f1275669bdd847dad0f26efb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa106c604eb53be4f5777d5dbc91df4ef"><td class="memItemLeft" align="right" valign="top">Stmt&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacefreetensor.html#aa106c604eb53be4f5777d5dbc91df4ef">freetensor::makeMarkVersion</a> (const std::string &amp;tapeName, const std::string &amp;var, const Metadata &amp;metadata=nullptr, const ID &amp;id={}, std::source_location loc=std::source_location::current())</td></tr>
 <tr class="separator:aa106c604eb53be4f5777d5dbc91df4ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">

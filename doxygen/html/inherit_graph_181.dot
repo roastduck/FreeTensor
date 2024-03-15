@@ -5,7 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [label="std::variant",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node0 -> Node1 [dir="back",color="steelblue1",style="solid"];
-  Node1 [label="freetensor::ScalarPropConst\l::ScalarIndex",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ScalarPropConst_1_1ScalarIndex.html",tooltip=" "];
+  Node0 [label="std::hash\< std::tuple\l\< Ts... \> \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classstd_1_1hash_3_01std_1_1tuple_3_01Ts_8_8_8_01_4_01_4.html",tooltip=" "];
 }
