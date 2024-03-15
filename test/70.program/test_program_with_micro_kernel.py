@@ -5,7 +5,7 @@ import freetensor as ft
 
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
-def test_matmul():
+def test_matmul_float64():
 
     M = N = K = 5000
     block_n = block_m = 128
