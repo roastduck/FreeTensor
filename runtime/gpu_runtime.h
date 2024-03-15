@@ -15,8 +15,6 @@
 #include <cutlass/gemm/device/gemm.h>
 #include <cutlass/numeric_types.h>
 
-#include "micro_kernel/matmul/cutlass/gemm.h"
-
 #include "gpu_context.h"
 
 #include "mdspan.h"

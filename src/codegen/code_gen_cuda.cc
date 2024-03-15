@@ -1061,6 +1061,8 @@ void CodeGenCUDA::visit(const MatMul &op) {
         os() << ", ";
         (*this)(prop->laneId_);
         os() << ");" << std::endl;
+
+        neededMicroKernels_.emplace_back("matmul/cutlass/gemm.h");
         break;
     }
 
@@ -1090,16 +1092,20 @@ NativeCode codeGenCUDA(const Func &func, const Ref<Target> &_target) {
     visitor(op);
     visitor.endBlock();
 
-    const char *header = R"~~~(
+    std::string header = R"~~~(
 #include <gpu_runtime.h>
 
 extern __shared__ uint8_t __shmem[];
 
 extern "C" {
 )~~~";
-    const char *tailer = R"~~~(
+    std::string tailer = R"~~~(
 }
 )~~~";
+
+    for (auto &&item : visitor.neededMicroKernels()) {
+        header = "#include \"micro_kernel/" + item + "\"\n" + header;
+    }
 
     auto body = visitor.toString([&](const CodeGenCUDA::Stream &stream) {
         if (stream.name_ == "default") {
