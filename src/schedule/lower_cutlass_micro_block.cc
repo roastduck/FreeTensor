@@ -16,16 +16,10 @@ bool isPowerOfTwo(int x) { return (x & (x - 1)) == 0; }
 
 class FixTransposeAndGetPartition : public Mutator {
     ID matMulId_;
-    std::vector<bool> &dimsCBatch_, &dimsCM_, &dimsCN_; // Mutable
     int64_t nWarpBatch_ = 0, nWarpM_ = 0, nWarpN_ = 0;
 
   public:
-    FixTransposeAndGetPartition(const ID &matMulId,
-                                std::vector<bool> &dimsCBatch,
-                                std::vector<bool> &dimsCM,
-                                std::vector<bool> &dimsCN)
-        : matMulId_(matMulId), dimsCBatch_(dimsCBatch), dimsCM_(dimsCM),
-          dimsCN_(dimsCN) {}
+    FixTransposeAndGetPartition(const ID &matMulId) : matMulId_(matMulId) {}
 
     auto nWarpBatch() const { return nWarpBatch_; }
     auto nWarpM() const { return nWarpM_; }
@@ -148,20 +142,15 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
 
     ID matMulId_;
     int64_t nWarpBatch_ = 0, nWarpM_ = 0, nWarpN_ = 0;
-    const std::vector<bool> &dimsCBatch_, dimsCM_, &dimsCN_;
 
     Ref<CutlassMicroKernelProperty> prop_;
     bool inMicroKernel_ = false;
 
   public:
     LowerCutlassMicroBlock(const ID &matMulId, int64_t nWarpBatch,
-                           int64_t nWarpM, int64_t nWarpN,
-                           const std::vector<bool> &dimsCBatch,
-                           const std::vector<bool> &dimsCM,
-                           const std::vector<bool> &dimsCN)
+                           int64_t nWarpM, int64_t nWarpN)
         : matMulId_(matMulId), nWarpBatch_(nWarpBatch), nWarpM_(nWarpM),
-          nWarpN_(nWarpN), dimsCBatch_(dimsCBatch), dimsCM_(dimsCM),
-          dimsCN_(dimsCN) {}
+          nWarpN_(nWarpN) {}
 
   private:
     template <typename T> Stmt guardWriteByPartition(const T &op) {
@@ -273,15 +262,11 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
 
 Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
                             const ID &defIdC,
-                            const std::vector<bool> &_dimsCBatch,
-                            const std::vector<bool> &_dimsCM,
-                            const std::vector<bool> &_dimsCN) {
+                            const std::vector<bool> &dimsCBatch,
+                            const std::vector<bool> &dimsCM,
+                            const std::vector<bool> &dimsCN) {
     // Get partition info
-    auto dimsCBatch = _dimsCBatch;
-    auto dimsCM = _dimsCM;
-    auto dimsCN = _dimsCN;
-    FixTransposeAndGetPartition fixTransposeAndGetPartition{
-        matMulId, dimsCBatch, dimsCM, dimsCN};
+    FixTransposeAndGetPartition fixTransposeAndGetPartition{matMulId};
     auto ast = fixTransposeAndGetPartition(_ast);
     auto nWarpBatch = fixTransposeAndGetPartition.nWarpBatch();
     auto nWarpM = fixTransposeAndGetPartition.nWarpM();
@@ -364,8 +349,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     // clang-format on
 
     // Lower to CutlassMicroThread
-    LowerCutlassMicroBlock lowerCutlassMicroBlock{
-        matMulId, nWarpBatch, nWarpM, nWarpN, dimsCBatch, dimsCM, dimsCN};
+    LowerCutlassMicroBlock lowerCutlassMicroBlock{matMulId, nWarpBatch, nWarpM,
+                                                  nWarpN};
     ast = lowerCutlassMicroBlock(ast);
 
     // Simplify the equivalent_ tree to help following passes
