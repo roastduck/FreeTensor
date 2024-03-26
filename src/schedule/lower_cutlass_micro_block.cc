@@ -5,6 +5,7 @@
 #include <pass/shrink_for.h>
 #include <schedule/lower_cutlass_micro_block.h>
 #include <schedule/var_merge.h>
+#include <schedule/var_reorder.h>
 #include <schedule/var_split.h>
 #include <schedule/var_unsqueeze.h>
 
@@ -162,11 +163,11 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             auto batchInWarpPartition =
                 makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
             auto mInWarpPartition =
-                makeEQ(op->indices_[nDimsCAll - 7], prop_->warpIdM_);
+                makeEQ(op->indices_[nDimsCAll - 4], prop_->warpIdM_);
             auto nInWarpPartition =
-                makeEQ(op->indices_[nDimsCAll - 4], prop_->warpIdN_);
+                makeEQ(op->indices_[nDimsCAll - 5], prop_->warpIdN_);
             auto mInThreadPartition =
-                makeEQ(op->indices_[nDimsCAll - 5],
+                makeEQ(op->indices_[nDimsCAll - 3],
                        makeFloorDiv(prop_->laneId_, makeIntConst(4)));
             auto nInThreadPartition =
                 makeEQ(op->indices_[nDimsCAll - 2],
@@ -222,10 +223,12 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
             c->indices_[nDimsCAll - 9] = warpIdBatch;
-            c->indices_[nDimsCAll - 7] = warpIdM;
-            c->indices_[nDimsCAll - 5] = makeFloorDiv(laneId, makeIntConst(4));
-            c->indices_[nDimsCAll - 4] = warpIdN;
-            c->indices_[nDimsCAll - 2] = makeMod(laneId, makeIntConst(4));
+            c->indices_[nDimsCAll - 4] = warpIdM; // m warps
+            c->indices_[nDimsCAll - 3] =
+                makeFloorDiv(laneId, makeIntConst(4)); // m threads
+            c->indices_[nDimsCAll - 5] = warpIdN;      // n warps
+            c->indices_[nDimsCAll - 2] =
+                makeMod(laneId, makeIntConst(4)); // n threads
 
             op->backend_ = MatMulBackend::CutlassMicroThread;
             op->cutlassMicroKernelProperty_ = prop_;
@@ -278,13 +281,13 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     //   ...: other leading dims,
     //   -9: batch warps,
     //   -8: batch serial,
-    //   -7: m warps,
-    //   -6: m 8-tiles,
-    //   -5: m threads,
-    //   -4: n warps,
-    //   -3: n 8-tiles,
+    //   -7: n 16-tiles,
+    //   -6: m 16-tiles,
+    //   -5: n warps
+    //   -4: m warps,
+    //   -3: m threads
     //   -2: n threads,
-    //   -1: n 2-tiles
+    //   -1: n 2-tiles,
     // ]
     //
     // See
@@ -333,19 +336,31 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     } else if (nDimsCBatch == 0) {
         ast = varUnsqueeze(ast, defIdC, nDimsCOthers);
     }
+
     // clang-format off
     ast = varSplit(
             ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize, -1, nWarpBatch);
+    ast  = varSplit(
+            ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize, 16, -1);
     ast = varSplit(
-            ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize, -1, nWarpM);
+            ast, defIdC, nDimsCOthers + 3, VarSplitMode::FixedSize, -1, nWarpM);
     ast = varSplit(
-            ast, defIdC, nDimsCOthers + 3, VarSplitMode::FixedSize, 8, -1);
+            ast, defIdC, nDimsCOthers + 5, VarSplitMode::FixedSize, 16, -1);
     ast = varSplit(
-            ast, defIdC, nDimsCOthers + 5, VarSplitMode::FixedSize, -1, nWarpN);
-    ast = varSplit(
-            ast, defIdC, nDimsCOthers + 6, VarSplitMode::FixedSize, 8, -1);
+            ast, defIdC, nDimsCOthers + 6, VarSplitMode::FixedSize, -1, nWarpN);
     ast = varSplit(
             ast, defIdC, nDimsCOthers + 7, VarSplitMode::FixedSize, 2, -1);
+    std::vector<int> vec;
+    for(int i=0; i<=nDimsCOthers+1; i++)
+        vec.push_back(i);
+    vec.push_back(nDimsCOthers+5); 
+    vec.push_back(nDimsCOthers+2);
+    vec.push_back(nDimsCOthers+6);
+    vec.push_back(nDimsCOthers+3);
+    vec.push_back(nDimsCOthers+4);
+    vec.push_back(nDimsCOthers+7);
+    vec.push_back(nDimsCOthers+8);
+    ast = varReorderImpl(ast, defIdC, vec, true);
     // clang-format on
 
     // Lower to CutlassMicroThread

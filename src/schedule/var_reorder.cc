@@ -62,21 +62,26 @@ Expr VarReorder::visit(const Load &_op) {
 }
 
 Stmt VarReorder::visit(const MatMul &op) {
-    if (!var_.empty() && (allReads(op->equivalent_).count(var_) ||
+    if (!var_.empty() && !forceReorderInMatMul_ && (allReads(op->equivalent_).count(var_) ||
                           allWrites(op->equivalent_).count(var_))) {
         throw InvalidSchedule("Please call var_reorder before as_matmul");
     }
     return BaseClass::visit(op);
 }
 
-Stmt varReorder(const Stmt &_ast, const ID &def,
-                const std::vector<int> &order) {
-    VarReorder mutator(def, order);
+Stmt varReorderImpl(const Stmt &_ast, const ID &def,
+                const std::vector<int> &order, bool forceReorderInMatMul) {
+    VarReorder mutator(def, order, forceReorderInMatMul);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
         throw InvalidSchedule(FT_MSG << def << " not found");
     }
     return ast;
+}
+
+Stmt varReorder(const Stmt &ast, const ID &def,
+                const std::vector<int> &order) {
+    return varReorderImpl(ast, def, order);
 }
 
 void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
