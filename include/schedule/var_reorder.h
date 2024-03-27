@@ -14,11 +14,14 @@ class VarReorder : public SymbolTable<Mutator> {
     ID def_;
     std::string var_;
     std::vector<int> order_;
+    bool forceReorderInMatMul_;
     bool found_ = false;
 
   public:
-    VarReorder(const ID &def, const std::vector<int> &order)
-        : def_(def), order_(order) {
+    VarReorder(const ID &def, const std::vector<int> &order,
+               bool forceReorderInMatMul)
+        : def_(def), order_(order),
+          forceReorderInMatMul_(forceReorderInMatMul) {
         std::vector<int> numbers;
         numbers.reserve(order.size());
         for (int i = 0, n = order.size(); i < n; i++) {
@@ -57,6 +60,10 @@ class VarReorder : public SymbolTable<Mutator> {
     Expr visit(const Load &op) override;
     Stmt visit(const MatMul &op) override;
 };
+
+Stmt varReorderImpl(const Stmt &ast, const ID &def,
+                    const std::vector<int> &order,
+                    bool forceReorderInMatMul = false);
 
 Stmt varReorder(const Stmt &ast, const ID &def, const std::vector<int> &order);
 
