@@ -95,8 +95,8 @@ Collaboration diagram for freetensor::VarReorder:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a1e9ac7700b9356408c96a6244f17302a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1VarReorder.html#a1e9ac7700b9356408c96a6244f17302a">VarReorder</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, const std::vector&lt; int &gt; &amp;order)</td></tr>
-<tr class="separator:a1e9ac7700b9356408c96a6244f17302a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad398e1f8cdce9f5c35342af960b0daf1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1VarReorder.html#ad398e1f8cdce9f5c35342af960b0daf1">VarReorder</a> (const <a class="el" href="classfreetensor_1_1ID.html">ID</a> &amp;<a class="el" href="classfreetensor_1_1SymbolTable.html#a822e9e26d00402a13826e2bd1f7d65a2">def</a>, const std::vector&lt; int &gt; &amp;order, bool forceReorderInMatMul)</td></tr>
+<tr class="separator:ad398e1f8cdce9f5c35342af960b0daf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a53ef0740264a6fb2ae7e824ea5e1c87d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1VarReorder.html#a53ef0740264a6fb2ae7e824ea5e1c87d">found</a> () const</td></tr>
 <tr class="separator:a53ef0740264a6fb2ae7e824ea5e1c87d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classfreetensor_1_1SymbolTable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classfreetensor_1_1SymbolTable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classfreetensor_1_1SymbolTable.html">freetensor::SymbolTable&lt; Mutator &gt;</a></td></tr>
@@ -306,8 +306,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:aef5cb3c76c36da35abf1a2ea364684a0 inherit pub_types_classfreetensor_1_1Mutator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a1e9ac7700b9356408c96a6244f17302a" name="a1e9ac7700b9356408c96a6244f17302a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1e9ac7700b9356408c96a6244f17302a">&#9670;&#160;</a></span>VarReorder()</h2>
+<a id="ad398e1f8cdce9f5c35342af960b0daf1" name="ad398e1f8cdce9f5c35342af960b0daf1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad398e1f8cdce9f5c35342af960b0daf1">&#9670;&#160;</a></span>VarReorder()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -325,7 +325,13 @@ Additional Inherited Members</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::vector&lt; int &gt; &amp;&#160;</td>
-          <td class="paramname"><em>order</em>&#160;</td>
+          <td class="paramname"><em>order</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>forceReorderInMatMul</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

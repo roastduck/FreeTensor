@@ -36,7 +36,7 @@ digraph "src/schedule/lower_cutlass_micro_block.cc"
   Node11 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="type/data_type.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$data__type_8h.html",tooltip=" "];
   Node31 -> Node33 [color="steelblue1",style="solid"];
-  Node33 [label="container_utils.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$container__utils_8h.html",tooltip=" "];
+  Node33 [label="container_utils.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$container__utils_8h.html",tooltip=" "];
   Node33 -> Node34 [color="steelblue1",style="solid"];
   Node34 [label="algorithm",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node33 -> Node35 [color="steelblue1",style="solid"];
@@ -54,8 +54,6 @@ digraph "src/schedule/lower_cutlass_micro_block.cc"
   Node33 -> Node10 [color="steelblue1",style="solid"];
   Node33 -> Node38 [color="steelblue1",style="solid"];
   Node38 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node33 -> Node39 [color="steelblue1",style="solid"];
-  Node39 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node31 -> Node26 [color="steelblue1",style="solid"];
   Node26 [label="except.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$except_8h.html",tooltip=" "];
   Node26 -> Node16 [color="steelblue1",style="solid"];
@@ -166,9 +164,14 @@ digraph "src/schedule/lower_cutlass_micro_block.cc"
   Node77 [label="schedule/var_merge.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__merge_8h.html",tooltip=" "];
   Node77 -> Node51 [color="steelblue1",style="solid"];
   Node1 -> Node78 [color="steelblue1",style="solid"];
-  Node78 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node78 [label="schedule/var_reorder.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__reorder_8h.html",tooltip=" "];
+  Node78 -> Node34 [color="steelblue1",style="solid"];
+  Node78 -> Node2 [color="steelblue1",style="solid"];
   Node78 -> Node51 [color="steelblue1",style="solid"];
   Node1 -> Node79 [color="steelblue1",style="solid"];
-  Node79 [label="schedule/var_unsqueeze.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__unsqueeze_8h.html",tooltip=" "];
-  Node79 -> Node8 [color="steelblue1",style="solid"];
+  Node79 [label="schedule/var_split.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__split_8h.html",tooltip=" "];
+  Node79 -> Node51 [color="steelblue1",style="solid"];
+  Node1 -> Node80 [color="steelblue1",style="solid"];
+  Node80 [label="schedule/var_unsqueeze.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$var__unsqueeze_8h.html",tooltip=" "];
+  Node80 -> Node8 [color="steelblue1",style="solid"];
 }
