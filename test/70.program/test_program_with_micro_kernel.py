@@ -22,7 +22,7 @@ def test_matmul(dtype, accum_type):
         @ft.transform
         def matmul(a: ft.Var[(M, K), dtype], b: ft.Var[(K, N), dtype]):
 
-            c = ft.empty((M, N), accum_type)
+            c = ft.empty((M, N), dtype)
 
             #! label: blk_m
             for i in range(0, M, block_m):
@@ -64,7 +64,7 @@ def test_matmul(dtype, accum_type):
                         for jj in range(block_n):
                             # TODO: Can we avoid using `unbound`?
                             if ft.unbound(i + ii < M and j + jj < N):
-                                c[i + ii, j + jj] = cc[ii, jj]
+                                c[i + ii, j + jj] = ft.cast(cc[ii, jj], dtype)
             return c
 
         s = ft.Schedule(matmul, verbose=2)
@@ -104,10 +104,7 @@ def test_matmul(dtype, accum_type):
         y_arr = exe(a_arr, b_arr)
         y_torch = y_arr.torch()
 
-        if dtype == 'float16':
-            if accum_type == 'float16':
-                assert torch.all(torch.isclose(y_torch, y_std, rtol=2e-2))
-            else:
-                assert torch.all(torch.isclose(y_torch.half(), y_std))
+        if dtype == 'float16' and accum_type == 'float16':
+            assert torch.all(torch.isclose(y_torch, y_std, rtol=2e-2))
         else:
             assert torch.all(torch.isclose(y_torch, y_std))

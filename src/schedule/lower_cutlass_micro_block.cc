@@ -175,8 +175,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             auto dtype = dtypeC_.base();
             ASSERT(dtypeA_.base() == dtypeB_.base());
 
-            switch (dtype) {
-            case DataType::Float64: {
+            if (dtype == DataType::Float64 && dtypeA == DataType::Float64) {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
                 auto mInWarpPartition =
@@ -195,10 +194,9 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                                  makeLAnd(mInWarpPartition, nInWarpPartition)),
                         makeLAnd(mInThreadPartition, nInThreadPartition)),
                     ret);
-                break;
-            }
-            case DataType::Float32:
-            case DataType::Float16: {
+            } else if ((dtype == DataType::Float32 ||
+                        dtype == DataType::Float16) &&
+                       dtypeA == DataType::Float16) {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 10], prop_->warpIdBatch_);
                 auto mInWarpPartition =
@@ -217,10 +215,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                                  makeLAnd(mInWarpPartition, nInWarpPartition)),
                         makeLAnd(mInThreadPartition, nInThreadPartition)),
                     ret);
-                break;
-            }
-
-            default:
+            } else {
                 throw InvalidSchedule(FT_MSG
                                       << "Unsupported data types: only Float16 "
                                          "and Float64 are supported.");
@@ -276,8 +271,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = c->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            switch (dtype) {
-            case DataType::Float64:
+            if (dtype == DataType::Float64 && dtypeA == DataType::Float64) {
                 c->indices_[nDimsCAll - 9] = warpIdBatch;
                 c->indices_[nDimsCAll - 4] = warpIdM; // m warps
                 c->indices_[nDimsCAll - 3] =
@@ -285,9 +279,9 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                 c->indices_[nDimsCAll - 5] = warpIdN;      // n warps
                 c->indices_[nDimsCAll - 2] =
                     makeMod(laneId, makeIntConst(4)); // n threads
-                break;
-            case DataType::Float32:
-            case DataType::Float16:
+            } else if ((dtype == DataType::Float32 ||
+                        dtype == DataType::Float16) &&
+                       dtypeA == DataType::Float16) {
                 c->indices_[nDimsCAll - 10] = warpIdBatch;
                 c->indices_[nDimsCAll - 5] = warpIdM; // m warps
                 c->indices_[nDimsCAll - 3] =
@@ -295,9 +289,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                 c->indices_[nDimsCAll - 6] = warpIdN;      // n warps
                 c->indices_[nDimsCAll - 1] =
                     makeMod(laneId, makeIntConst(4)); // n threads
-                break;
-
-            default:
+            } else {
                 throw InvalidSchedule(FT_MSG
                                       << "Unsupported data types: only Float16 "
                                          "and Float64 are supported.");
@@ -434,8 +426,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     std::vector<int> vec;
     for (int i = 0; i <= nDimsCOthers + 1; i++)
         vec.push_back(i);
-    switch (dtype) {
-    case DataType::Float64:
+
+    if (dtype == DataType::Float64 && dtypeA == DataType::Float64) {
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
         ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
@@ -456,9 +448,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         vec.push_back(nDimsCOthers + 7);
         vec.push_back(nDimsCOthers + 8);
         ast = varReorderImpl(ast, defIdC, vec, true);
-        break;
-    case DataType::Float32:
-    case DataType::Float16:
+    } else if ((dtype == DataType::Float32 || dtype == DataType::Float16) &&
+               dtypeA == DataType::Float16) {
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
         ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
@@ -482,13 +473,10 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         vec.push_back(nDimsCOthers + 9);
         vec.push_back(nDimsCOthers + 8);
         ast = varReorderImpl(ast, defIdC, vec, true);
-        break;
-
-    default:
+    } else {
         throw InvalidSchedule(FT_MSG << "Unsupported data types: only Float16 "
                                         "and Float64 are supported.");
     }
-
     // Lower to CutlassMicroThread
     LowerCutlassMicroBlock lowerCutlassMicroBlock{matMulId, nWarpBatch, nWarpM,
                                                   nWarpN};
