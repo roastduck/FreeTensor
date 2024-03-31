@@ -165,6 +165,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = op->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
+<<<<<<< HEAD
             switch (DType) {
             case BaseDataType::Float64: {
                 auto batchInWarpPartition =
@@ -215,6 +216,26 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                 break;
             }
             }
+=======
+            auto batchInWarpPartition =
+                makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
+            auto mInWarpPartition =
+                makeEQ(op->indices_[nDimsCAll - 4], prop_->warpIdM_);
+            auto nInWarpPartition =
+                makeEQ(op->indices_[nDimsCAll - 5], prop_->warpIdN_);
+            auto mInThreadPartition =
+                makeEQ(op->indices_[nDimsCAll - 3],
+                       makeFloorDiv(prop_->laneId_, makeIntConst(4)));
+            auto nInThreadPartition =
+                makeEQ(op->indices_[nDimsCAll - 2],
+                       makeMod(prop_->laneId_, makeIntConst(4)));
+
+            ret = makeIf(
+                makeLAnd(makeLAnd(batchInWarpPartition,
+                                  makeLAnd(mInWarpPartition, nInWarpPartition)),
+                         makeLAnd(mInThreadPartition, nInThreadPartition)),
+                ret);
+>>>>>>> master
         }
         return ret;
     }
@@ -259,6 +280,16 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = c->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
+<<<<<<< HEAD
+=======
+            c->indices_[nDimsCAll - 9] = warpIdBatch;
+            c->indices_[nDimsCAll - 4] = warpIdM; // m warps
+            c->indices_[nDimsCAll - 3] =
+                makeFloorDiv(laneId, makeIntConst(4)); // m threads
+            c->indices_[nDimsCAll - 5] = warpIdN;      // n warps
+            c->indices_[nDimsCAll - 2] =
+                makeMod(laneId, makeIntConst(4)); // n threads
+>>>>>>> master
 
             switch (DType) {
             case BaseDataType::Float64: {
@@ -346,6 +377,7 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     //   -3: m threads
     //   -2: n threads,
     //   -1: n 2-tiles,
+
     // ]
 
     // and for float16, resulting layout will be [
@@ -360,6 +392,7 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     //   -3: m threads,
     //   -2: n 2-tiles,
     //   -1: n threads,
+
     // ]
     //
     // See
@@ -470,6 +503,7 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         break;
     }
     }
+
 
     // Lower to CutlassMicroThread
     LowerCutlassMicroBlock lowerCutlassMicroBlock{matMulId, nWarpBatch, nWarpM,

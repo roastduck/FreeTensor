@@ -76,6 +76,7 @@ class GemmTensorOp {
         typename std::conditional<std::is_same<B_type_raw, float>::value,
                                   tfloat32_t, A_type_raw>::type;
     using C_type = C_type_raw;
+
     using Instruction = DispatchInstruction<A_type, B_type, C_type>;
 
     using OperandATraits =
@@ -95,6 +96,7 @@ class GemmTensorOp {
                                  C_type_raw *pC, int lda, int ldb, double alpha,
                                  double beta, int warp_id_m, int warp_id_n,
                                  int lane_id) {
+
         int tid = (warp_id_n * num_warp_m + warp_id_m) * 32 + lane_id;
         // change the layout!!!
         Tensor sA = make_tensor(make_smem_ptr((A_type *)(pA)), SmemLayoutA{});
