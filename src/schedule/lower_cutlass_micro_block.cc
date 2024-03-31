@@ -172,10 +172,9 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = op->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            auto dtype = dtypeC_.base();
             ASSERT(dtypeA_.base() == dtypeB_.base());
-
-            if (dtype == DataType::Float64 && dtypeA_ == DataType::Float64) {
+            if (dtypeC_.base() == DataType::Float64 &&
+                dtypeA_ == DataType::Float64) {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
                 auto mInWarpPartition =
@@ -194,8 +193,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                                  makeLAnd(mInWarpPartition, nInWarpPartition)),
                         makeLAnd(mInThreadPartition, nInThreadPartition)),
                     ret);
-            } else if ((dtype == DataType::Float32 ||
-                        dtype == DataType::Float16) &&
+            } else if ((dtypeC_.base() == DataType::Float32 ||
+                        dtypeC_.base() == DataType::Float16) &&
                        dtypeA_.base() == DataType::Float16) {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 10], prop_->warpIdBatch_);
@@ -237,9 +236,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             dtypeB_ = _op->b_->dtype();
             dtypeC_ = _op->c_->dtype();
 
-            auto dtype = dtypeC_.base();
             ASSERT(dtypeA_.base() == dtypeB_.base());
-
             // Here we use `threadIdx.x` for threads in a warp, and
             // `threadIdx.y` for warps, because putting everthing into a single
             // `threadIdx.x` will make the expressions to complicated to solve.
@@ -271,7 +268,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = c->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            if (dtype == DataType::Float64 && dtypeA_.base() == DataType::Float64) {
+            if (dtypeC_.base() == DataType::Float64 &&
+                dtypeA_.base() == DataType::Float64) {
                 c->indices_[nDimsCAll - 9] = warpIdBatch;
                 c->indices_[nDimsCAll - 4] = warpIdM; // m warps
                 c->indices_[nDimsCAll - 3] =
@@ -279,8 +277,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                 c->indices_[nDimsCAll - 5] = warpIdN;      // n warps
                 c->indices_[nDimsCAll - 2] =
                     makeMod(laneId, makeIntConst(4)); // n threads
-            } else if ((dtype == DataType::Float32 ||
-                        dtype == DataType::Float16) &&
+            } else if ((dtypeC_.base() == DataType::Float32 ||
+                        dtypeC_.base() == DataType::Float16) &&
                        dtypeA_.base() == DataType::Float16) {
                 c->indices_[nDimsCAll - 10] = warpIdBatch;
                 c->indices_[nDimsCAll - 5] = warpIdM; // m warps
@@ -341,7 +339,6 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     auto dtypeA = fixTransposeAndGetPartition.dtypeA();
     auto dtypeB = fixTransposeAndGetPartition.dtypeB();
     auto dtypeC = fixTransposeAndGetPartition.dtypeC();
-    auto dtype = dtypeC.base();
     ASSERT(dtypeA.base() == dtypeB.base());
 
     // Partition C to each threads by layout-manipulation schedules. We have
@@ -427,7 +424,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     for (int i = 0; i <= nDimsCOthers + 1; i++)
         vec.push_back(i);
 
-    if (dtype == DataType::Float64 && dtypeA.base() == DataType::Float64) {
+    if (dtypeC.base() == DataType::Float64 &&
+        dtypeA.base() == DataType::Float64) {
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
         ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
@@ -448,7 +446,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         vec.push_back(nDimsCOthers + 7);
         vec.push_back(nDimsCOthers + 8);
         ast = varReorderImpl(ast, defIdC, vec, true);
-    } else if ((dtype == DataType::Float32 || dtype == DataType::Float16) &&
+    } else if ((dtypeC.base() == DataType::Float32 ||
+                dtypeC.base() == DataType::Float16) &&
                dtypeA.base() == DataType::Float16) {
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
