@@ -33,18 +33,9 @@ struct OperandTraits {
 };
 
 template <int M, int N, int K, int num_warp_m, int num_warp_n, bool trans_A,
-          bool trans_B, typename A_type_raw, typename B_type_raw,
-          typename C_type_raw>
+          bool trans_B, typename A_type, typename B_type, typename C_type>
 class GemmTensorOp {
   public:
-    using A_type =
-        typename std::conditional<std::is_same<A_type_raw, float>::value,
-                                  tfloat32_t, A_type_raw>::type;
-    using B_type =
-        typename std::conditional<std::is_same<B_type_raw, float>::value,
-                                  tfloat32_t, A_type_raw>::type;
-    using C_type = C_type_raw;
-
     using Instruction = DispatchInstruction<A_type, B_type, C_type>;
 
     using OperandATraits =
@@ -56,15 +47,13 @@ class GemmTensorOp {
     using SmemCopyA = Copy_Atom<typename OperandATraits::Copy, A_type>;
     using SmemCopyB = Copy_Atom<typename OperandBTraits::Copy, B_type>;
 
-    using TileMma = TiledMMA<typename Instruction::MMA,
-                             Layout<Shape<Int<num_warp_m>, Int<num_warp_n>, _1>>
-                             /*,typename Instruction::MMA_Group*/>;
+    using TileMma =
+        TiledMMA<typename Instruction::MMA,
+                 Layout<Shape<Int<num_warp_m>, Int<num_warp_n>, _1>>>;
 
-    static CUTE_DEVICE void body(const A_type_raw *pA, const B_type_raw *pB,
-                                 C_type_raw *pC, int lda, int ldb, double alpha,
-                                 double beta, int warp_id_m, int warp_id_n,
-                                 int lane_id) {
-
+    static CUTE_DEVICE void body(const A_type *pA, const B_type *pB, C_type *pC,
+                                 int lda, int ldb, double alpha, double beta,
+                                 int warp_id_m, int warp_id_n, int lane_id) {
         int tid = (warp_id_n * num_warp_m + warp_id_m) * 32 + lane_id;
         // change the layout!!!
         Tensor sA = make_tensor(make_smem_ptr((A_type *)(pA)), SmemLayoutA{});

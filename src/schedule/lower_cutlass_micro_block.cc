@@ -227,7 +227,6 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             if (inMicroKernel_) {
                 throw InvalidSchedule("Micro kernels cannot nest each other");
             }
-
             // Here we use `threadIdx.x` for threads in a warp, and
             // `threadIdx.y` for warps, because putting everthing into a single
             // `threadIdx.x` will make the expressions to complicated to solve.
