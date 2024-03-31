@@ -22,6 +22,9 @@ template <> struct DispatchInstruction<half_t, half_t, half_t> {
 template <> struct DispatchInstruction<double, double, double> {
     using MMA = MMA_Atom<SM80_8x8x4_F64F64F64F64_TN>;
 };
+template <> struct DispatchInstruction<half_t, half_t, float> {
+    using MMA = MMA_Atom<SM80_16x8x16_F32F16F16F32_TN>;
+};
 
 template <int Bits, int N, int K, bool K_inner, typename Enable = void>
 struct OperandTraits {
@@ -55,7 +58,6 @@ class GemmTensorOp {
                                  int lda, int ldb, double alpha, double beta,
                                  int warp_id_m, int warp_id_n, int lane_id) {
         int tid = (warp_id_n * num_warp_m + warp_id_m) * 32 + lane_id;
-        // change the layout!!!
         Tensor sA = make_tensor(make_smem_ptr((A_type *)(pA)), SmemLayoutA{});
         Tensor sB = make_tensor(make_smem_ptr((B_type *)(pB)), SmemLayoutB{});
         TileMma tiled_mma;
