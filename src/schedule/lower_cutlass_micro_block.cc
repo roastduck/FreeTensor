@@ -8,10 +8,13 @@
 #include <schedule/var_reorder.h>
 #include <schedule/var_split.h>
 #include <schedule/var_unsqueeze.h>
+#include <type/data_type.h>
 
 namespace freetensor {
 
 namespace {
+
+BaseDataType DType;
 
 bool isPowerOfTwo(int x) { return (x & (x - 1)) == 0; }
 
@@ -78,6 +81,8 @@ class FixTransposeAndGetPartition : public Mutator {
 
         if (op->id() == matMulId_) {
             ASSERT(op->backend_ == MatMulBackend::CutlassMicroBlock);
+
+            DType = op->a_->dtype().base(); // BaseDataType enum
 
             // C is only supported for densely packed row-major layout in
             // registers
@@ -160,24 +165,56 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = op->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            auto batchInWarpPartition =
-                makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
-            auto mInWarpPartition =
-                makeEQ(op->indices_[nDimsCAll - 4], prop_->warpIdM_);
-            auto nInWarpPartition =
-                makeEQ(op->indices_[nDimsCAll - 5], prop_->warpIdN_);
-            auto mInThreadPartition =
-                makeEQ(op->indices_[nDimsCAll - 3],
-                       makeFloorDiv(prop_->laneId_, makeIntConst(4)));
-            auto nInThreadPartition =
-                makeEQ(op->indices_[nDimsCAll - 2],
-                       makeMod(prop_->laneId_, makeIntConst(4)));
-
-            ret = makeIf(
-                makeLAnd(makeLAnd(batchInWarpPartition,
-                                  makeLAnd(mInWarpPartition, nInWarpPartition)),
-                         makeLAnd(mInThreadPartition, nInThreadPartition)),
-                ret);
+            switch (DType) {
+            case BaseDataType::Float64: {
+                auto batchInWarpPartition =
+                    makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
+                auto mInWarpPartition =
+                    makeEQ(op->indices_[nDimsCAll - 4], prop_->warpIdM_);
+                auto nInWarpPartition =
+                    makeEQ(op->indices_[nDimsCAll - 5], prop_->warpIdN_);
+                auto mInThreadPartition =
+                    makeEQ(op->indices_[nDimsCAll - 3],
+                           makeFloorDiv(prop_->laneId_, makeIntConst(4)));
+                auto nInThreadPartition =
+                    makeEQ(op->indices_[nDimsCAll - 2],
+                           makeMod(prop_->laneId_, makeIntConst(4)));
+                ret = makeIf(
+                    makeLAnd(
+                        makeLAnd(batchInWarpPartition,
+                                 makeLAnd(mInWarpPartition, nInWarpPartition)),
+                        makeLAnd(mInThreadPartition, nInThreadPartition)),
+                    ret);
+                break;
+            }
+            case BaseDataType::Float16: {
+                auto batchInWarpPartition =
+                    makeEQ(op->indices_[nDimsCAll - 10], prop_->warpIdBatch_);
+                auto mInWarpPartition =
+                    makeEQ(op->indices_[nDimsCAll - 5], prop_->warpIdM_);
+                auto nInWarpPartition =
+                    makeEQ(op->indices_[nDimsCAll - 6], prop_->warpIdN_);
+                auto mInThreadPartition = makeEQ(
+                    op->indices_[nDimsCAll - 3],
+                    makeFloorDiv(prop_->laneId_, makeIntConst(4))); // m threads
+                auto nInThreadPartition = makeEQ(
+                    op->indices_[nDimsCAll - 1],
+                    makeMod(prop_->laneId_, makeIntConst(4))); // n threads
+                ret = makeIf(
+                    makeLAnd(
+                        makeLAnd(batchInWarpPartition,
+                                 makeLAnd(mInWarpPartition, nInWarpPartition)),
+                        makeLAnd(mInThreadPartition, nInThreadPartition)),
+                    ret);
+                break;
+            }
+            default: {
+                throw InvalidSchedule(FT_MSG
+                                      << "Unsupported data types: only Float16 "
+                                         "and Float64 are supported.");
+                break;
+            }
+            }
         }
         return ret;
     }
@@ -222,14 +259,35 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = c->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            c->indices_[nDimsCAll - 9] = warpIdBatch;
-            c->indices_[nDimsCAll - 4] = warpIdM; // m warps
-            c->indices_[nDimsCAll - 3] =
-                makeFloorDiv(laneId, makeIntConst(4)); // m threads
-            c->indices_[nDimsCAll - 5] = warpIdN;      // n warps
-            c->indices_[nDimsCAll - 2] =
-                makeMod(laneId, makeIntConst(4)); // n threads
 
+            switch (DType) {
+            case BaseDataType::Float64: {
+                c->indices_[nDimsCAll - 9] = warpIdBatch;
+                c->indices_[nDimsCAll - 4] = warpIdM; // m warps
+                c->indices_[nDimsCAll - 3] =
+                    makeFloorDiv(laneId, makeIntConst(4)); // m threads
+                c->indices_[nDimsCAll - 5] = warpIdN;      // n warps
+                c->indices_[nDimsCAll - 2] =
+                    makeMod(laneId, makeIntConst(4)); // n threads
+                break;
+            }
+            case BaseDataType::Float16: {
+                c->indices_[nDimsCAll - 10] = warpIdBatch;
+                c->indices_[nDimsCAll - 5] = warpIdM; // m warps
+                c->indices_[nDimsCAll - 3] =
+                    makeFloorDiv(laneId, makeIntConst(4)); // m threads
+                c->indices_[nDimsCAll - 6] = warpIdN;      // n warps
+                c->indices_[nDimsCAll - 1] =
+                    makeMod(laneId, makeIntConst(4)); // n threads
+                break;
+            }
+            default: {
+                throw InvalidSchedule(FT_MSG
+                                      << "Unsupported data types: only Float16 "
+                                         "and Float64 are supported.");
+                break;
+            }
+            }
             op->backend_ = MatMulBackend::CutlassMicroThread;
             op->cutlassMicroKernelProperty_ = prop_;
 
@@ -289,6 +347,20 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     //   -2: n threads,
     //   -1: n 2-tiles,
     // ]
+
+    // and for float16, resulting layout will be [
+    //   ...: other leading dims,
+    //   -10: batch warps,
+    //   -9: batch serial,
+    //   -8: n 16-tiles,
+    //   -7: m 32-tiles,
+    //   -6: n warps
+    //   -5: m warps,
+    //   -4: m 2-tiles,
+    //   -3: m threads,
+    //   -2: n 2-tiles,
+    //   -1: n threads,
+    // ]
     //
     // See
     // https://docs.nvidia.com/cuda/parallel-thread-execution/index.html
@@ -337,31 +409,67 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         ast = varUnsqueeze(ast, defIdC, nDimsCOthers);
     }
 
-    // clang-format off
-    ast = varSplit(
-            ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize, -1, nWarpBatch);
-    ast  = varSplit(
-            ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize, 16, -1);
-    ast = varSplit(
-            ast, defIdC, nDimsCOthers + 3, VarSplitMode::FixedSize, -1, nWarpM);
-    ast = varSplit(
-            ast, defIdC, nDimsCOthers + 5, VarSplitMode::FixedSize, 16, -1);
-    ast = varSplit(
-            ast, defIdC, nDimsCOthers + 6, VarSplitMode::FixedSize, -1, nWarpN);
-    ast = varSplit(
-            ast, defIdC, nDimsCOthers + 7, VarSplitMode::FixedSize, 2, -1);
+    // vector for reordering
     std::vector<int> vec;
-    for(int i=0; i<=nDimsCOthers+1; i++)
+    for (int i = 0; i <= nDimsCOthers + 1; i++)
         vec.push_back(i);
-    vec.push_back(nDimsCOthers+5); 
-    vec.push_back(nDimsCOthers+2);
-    vec.push_back(nDimsCOthers+6);
-    vec.push_back(nDimsCOthers+3);
-    vec.push_back(nDimsCOthers+4);
-    vec.push_back(nDimsCOthers+7);
-    vec.push_back(nDimsCOthers+8);
-    ast = varReorderImpl(ast, defIdC, vec, true);
-    // clang-format on
+    switch (DType) {
+    case BaseDataType::Float64: {
+        ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
+                       -1, nWarpBatch);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
+                       16, -1);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 3, VarSplitMode::FixedSize,
+                       -1, nWarpM);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 5, VarSplitMode::FixedSize,
+                       16, -1);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 6, VarSplitMode::FixedSize,
+                       -1, nWarpN);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 7, VarSplitMode::FixedSize,
+                       2, -1);
+        vec.push_back(nDimsCOthers + 5);
+        vec.push_back(nDimsCOthers + 2);
+        vec.push_back(nDimsCOthers + 6);
+        vec.push_back(nDimsCOthers + 3);
+        vec.push_back(nDimsCOthers + 4);
+        vec.push_back(nDimsCOthers + 7);
+        vec.push_back(nDimsCOthers + 8);
+        ast = varReorderImpl(ast, defIdC, vec, true);
+        break;
+    }
+
+    case BaseDataType::Float16: {
+        ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
+                       -1, nWarpBatch);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
+                       32, -1);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 3, VarSplitMode::FixedSize,
+                       -1, nWarpM);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 4, VarSplitMode::FixedSize,
+                       -1, 2);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 6, VarSplitMode::FixedSize,
+                       16, -1);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 7, VarSplitMode::FixedSize,
+                       -1, nWarpN);
+        ast = varSplit(ast, defIdC, nDimsCOthers + 8, VarSplitMode::FixedSize,
+                       2, -1);
+        vec.push_back(nDimsCOthers + 6);
+        vec.push_back(nDimsCOthers + 2);
+        vec.push_back(nDimsCOthers + 7);
+        vec.push_back(nDimsCOthers + 3);
+        vec.push_back(nDimsCOthers + 4);
+        vec.push_back(nDimsCOthers + 5);
+        vec.push_back(nDimsCOthers + 9);
+        vec.push_back(nDimsCOthers + 8);
+        ast = varReorderImpl(ast, defIdC, vec, true);
+        break;
+    }
+    default: {
+        throw InvalidSchedule(FT_MSG << "Unsupported data types: only Float16 "
+                                        "and Float64 are supported.");
+        break;
+    }
+    }
 
     // Lower to CutlassMicroThread
     LowerCutlassMicroBlock lowerCutlassMicroBlock{matMulId, nWarpBatch, nWarpM,

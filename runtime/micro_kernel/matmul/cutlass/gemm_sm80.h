@@ -16,23 +16,66 @@ using namespace cute;
 template <typename A_type, typename B_type, typename C_type>
 struct DispatchInstruction;
 
+#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800))
+template <> struct DispatchInstruction<half_t, half_t, half_t> {
+    using MMA = MMA_Atom<SM80_16x8x16_F16F16F16F16_TN>;
+};
 template <> struct DispatchInstruction<double, double, double> {
     using MMA = MMA_Atom<SM80_8x8x4_F64F64F64F64_TN>;
 };
+#endif
 
 template <int Bits, int N, int K, bool K_inner, typename Enable = void>
 struct OperandTraits {
+    // Primary template, use padded layout and default copy
     static constexpr int stride = K_inner ? K : N;
+    static constexpr int padded =
+        stride % (256 / Bits) == 0 ? stride + 128 / Bits : stride;
     using Layout = typename std::conditional<
-        K_inner, Layout<Shape<Int<N>, Int<K>>, Shape<Int<K>, _1>>,
-        Layout<Shape<Int<N>, Int<K>>, Shape<_1, Int<N>>>>::type;
+        K_inner, Layout<Shape<Int<N>, Int<K>>, Shape<Int<padded>, _1>>,
+        Layout<Shape<Int<N>, Int<K>>, Shape<_1, Int<padded>>>>::type;
+    using Copy = DefaultCopy;
+};
+template <int N, int K>
+struct OperandTraits<16, N, K, true,
+                     typename std::enable_if<K % 16 == 0>::type> {
+    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<Int<K>, _1>>;
+    using Copy = DefaultCopy;
+};
+
+template <int N, int K>
+struct OperandTraits<16, N, K, false,
+                     typename std::enable_if<N % 16 == 0>::type> {
+    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<_1, Int<N>>>;
+    using Copy = DefaultCopy;
+};
+
+template <int N, int K>
+struct OperandTraits<64, N, K, true,
+                     typename std::enable_if<K % 16 == 0>::type> {
+    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<Int<K>, _1>>;
+    using Copy = DefaultCopy;
+};
+
+template <int N, int K>
+struct OperandTraits<64, N, K, false,
+                     typename std::enable_if<N % 16 == 0>::type> {
+    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<_1, Int<N>>>;
     using Copy = DefaultCopy;
 };
 
 template <int M, int N, int K, int num_warp_m, int num_warp_n, bool trans_A,
-          bool trans_B, typename A_type, typename B_type, typename C_type>
+          bool trans_B, typename A_type_raw, typename B_type_raw,
+          typename C_type_raw>
 class GemmTensorOp {
   public:
+    using A_type =
+        typename std::conditional<std::is_same<A_type_raw, float>::value,
+                                  tfloat32_t, A_type_raw>::type;
+    using B_type =
+        typename std::conditional<std::is_same<B_type_raw, float>::value,
+                                  tfloat32_t, A_type_raw>::type;
+    using C_type = C_type_raw;
     using Instruction = DispatchInstruction<A_type, B_type, C_type>;
 
     using OperandATraits =
@@ -44,13 +87,14 @@ class GemmTensorOp {
     using SmemCopyA = Copy_Atom<typename OperandATraits::Copy, A_type>;
     using SmemCopyB = Copy_Atom<typename OperandBTraits::Copy, B_type>;
 
-    using TileMma =
-        TiledMMA<typename Instruction::MMA,
-                 Layout<Shape<Int<num_warp_m>, Int<num_warp_n>, _1>>>;
+    using TileMma = TiledMMA<typename Instruction::MMA,
+                             Layout<Shape<Int<num_warp_m>, Int<num_warp_n>, _1>>
+                             /*,typename Instruction::MMA_Group*/>;
 
-    static CUTE_DEVICE void body(const A_type *pA, const B_type *pB, C_type *pC,
-                                 int lda, int ldb, double alpha, double beta,
-                                 int warp_id_m, int warp_id_n, int lane_id) {
+    static CUTE_DEVICE void body(const A_type_raw *pA, const B_type_raw *pB,
+                                 C_type_raw *pC, int lda, int ldb, double alpha,
+                                 double beta, int warp_id_m, int warp_id_n,
+                                 int lane_id) {
         int tid = (warp_id_n * num_warp_m + warp_id_m) * 32 + lane_id;
         // change the layout!!!
         Tensor sA = make_tensor(make_smem_ptr((A_type *)(pA)), SmemLayoutA{});
