@@ -16,6 +16,9 @@ using namespace cute;
 template <typename A_type, typename B_type, typename C_type>
 struct DispatchInstruction;
 
+template <> struct DispatchInstruction<half_t, half_t, half_t> {
+    using MMA = MMA_Atom<SM80_16x8x16_F16F16F16F16_TN>;
+};
 template <> struct DispatchInstruction<double, double, double> {
     using MMA = MMA_Atom<SM80_8x8x4_F64F64F64F64_TN>;
 };
