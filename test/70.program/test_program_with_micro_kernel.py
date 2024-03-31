@@ -93,4 +93,4 @@ def test_matmul_float16():
         b_arr = ft.array(b_torch)
         y_arr = exe(a_arr, b_arr)
         y_torch = y_arr.torch()
-        assert torch.all(torch.isclose(y_torch, y_std, rtol = 2e-2))
+        assert torch.all(torch.isclose(y_torch, y_std, rtol=2e-2))

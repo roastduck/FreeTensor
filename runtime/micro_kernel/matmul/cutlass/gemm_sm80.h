@@ -16,51 +16,19 @@ using namespace cute;
 template <typename A_type, typename B_type, typename C_type>
 struct DispatchInstruction;
 
-#if (defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800))
 template <> struct DispatchInstruction<half_t, half_t, half_t> {
     using MMA = MMA_Atom<SM80_16x8x16_F16F16F16F16_TN>;
 };
 template <> struct DispatchInstruction<double, double, double> {
     using MMA = MMA_Atom<SM80_8x8x4_F64F64F64F64_TN>;
 };
-#endif
 
 template <int Bits, int N, int K, bool K_inner, typename Enable = void>
 struct OperandTraits {
-    // Primary template, use padded layout and default copy
     static constexpr int stride = K_inner ? K : N;
-    static constexpr int padded =
-        stride % (256 / Bits) == 0 ? stride + 128 / Bits : stride;
     using Layout = typename std::conditional<
-        K_inner, Layout<Shape<Int<N>, Int<K>>, Shape<Int<padded>, _1>>,
-        Layout<Shape<Int<N>, Int<K>>, Shape<_1, Int<padded>>>>::type;
-    using Copy = DefaultCopy;
-};
-template <int N, int K>
-struct OperandTraits<16, N, K, true,
-                     typename std::enable_if<K % 16 == 0>::type> {
-    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<Int<K>, _1>>;
-    using Copy = DefaultCopy;
-};
-
-template <int N, int K>
-struct OperandTraits<16, N, K, false,
-                     typename std::enable_if<N % 16 == 0>::type> {
-    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<_1, Int<N>>>;
-    using Copy = DefaultCopy;
-};
-
-template <int N, int K>
-struct OperandTraits<64, N, K, true,
-                     typename std::enable_if<K % 16 == 0>::type> {
-    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<Int<K>, _1>>;
-    using Copy = DefaultCopy;
-};
-
-template <int N, int K>
-struct OperandTraits<64, N, K, false,
-                     typename std::enable_if<N % 16 == 0>::type> {
-    using Layout = Layout<Shape<Int<N>, Int<K>>, Stride<_1, Int<N>>>;
+        K_inner, Layout<Shape<Int<N>, Int<K>>, Shape<Int<K>, _1>>,
+        Layout<Shape<Int<N>, Int<K>>, Shape<_1, Int<N>>>>::type;
     using Copy = DefaultCopy;
 };
 
