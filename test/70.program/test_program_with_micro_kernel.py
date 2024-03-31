@@ -21,7 +21,9 @@ def test_matmul(dtype, accum_type):
 
         @ft.transform
         def matmul(a: ft.Var[(M, K), dtype], b: ft.Var[(K, N), dtype]):
+
             c = ft.empty((M, N), accum_type)
+
             #! label: blk_m
             for i in range(0, M, block_m):
                 #! label: blk_n
@@ -32,6 +34,7 @@ def test_matmul(dtype, accum_type):
                     bb = ft.empty((block_k, block_n), dtype)
                     #! label: cc
                     cc = ft.empty((block_m, block_n), accum_type)
+
                     #! label: zero_cc
                     for ii in range(block_m):
                         for jj in range(block_n):

@@ -58,7 +58,6 @@ class GemmTensorOp {
                                  int lda, int ldb, double alpha, double beta,
                                  int warp_id_m, int warp_id_n, int lane_id) {
         int tid = (warp_id_n * num_warp_m + warp_id_m) * 32 + lane_id;
-        // change the layout!!!
         Tensor sA = make_tensor(make_smem_ptr((A_type *)(pA)), SmemLayoutA{});
         Tensor sB = make_tensor(make_smem_ptr((B_type *)(pB)), SmemLayoutB{});
         TileMma tiled_mma;

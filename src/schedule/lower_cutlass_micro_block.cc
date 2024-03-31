@@ -174,6 +174,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                    9); // See comments in `lowerCutlassMicroBlock` below
             auto dtype = dtypeC_.base();
             ASSERT(dtypeA_.base() == dtypeB_.base());
+
             switch (dtype) {
             case DataType::Float64: {
                 auto batchInWarpPartition =
@@ -240,6 +241,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             dtypeA_ = _op->a_->dtype();
             dtypeB_ = _op->b_->dtype();
             dtypeC_ = _op->c_->dtype();
+
             auto dtype = dtypeC_.base();
             ASSERT(dtypeA_.base() == dtypeB_.base());
 
