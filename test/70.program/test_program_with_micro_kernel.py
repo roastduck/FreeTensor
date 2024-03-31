@@ -5,7 +5,8 @@ import freetensor as ft
 
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
-def test_matmul_float16():
+@pytest.mark.parametrize('dtype', ['float16', 'float64'])
+def test_matmul(dtype):
 
     M = N = K = 5000
     block_n = block_m = 128
@@ -17,18 +18,18 @@ def test_matmul_float16():
     with target:
 
         @ft.transform
-        def matmul(a: ft.Var[(M, K), "float16"], b: ft.Var[(K, N), "float16"]):
-            c = ft.empty((M, N), "float16")
+        def matmul(a: ft.Var[(M, K), dtype], b: ft.Var[(K, N), dtype]):
+            c = ft.empty((M, N), dtype)
             #! label: blk_m
             for i in range(0, M, block_m):
                 #! label: blk_n
                 for j in range(0, N, block_n):
                     #! label: aa
-                    aa = ft.empty((block_m, block_k), "float16")
+                    aa = ft.empty((block_m, block_k), dtype)
                     #! label: bb
-                    bb = ft.empty((block_k, block_n), "float16")
+                    bb = ft.empty((block_k, block_n), dtype)
                     #! label: cc
-                    cc = ft.empty((block_m, block_n), "float16")
+                    cc = ft.empty((block_m, block_n), dtype)
                     #! label: zero_cc
                     for ii in range(block_m):
                         for jj in range(block_n):
@@ -86,12 +87,19 @@ def test_matmul_float16():
 
         import torch
 
-        a_torch = torch.rand(M, K, dtype=torch.float16).cuda()
-        b_torch = torch.rand(K, N, dtype=torch.float16).cuda()
+        dtype_to_torch = {
+            'float16': torch.float16,
+            'float64': torch.float64,
+        }
+        a_torch = torch.rand(M, K, dtype=dtype_to_torch[dtype]).cuda()
+        b_torch = torch.rand(K, N, dtype=dtype_to_torch[dtype]).cuda()
         y_std = a_torch @ b_torch
         a_arr = ft.array(a_torch)
         b_arr = ft.array(b_torch)
         y_arr = exe(a_arr, b_arr)
         y_torch = y_arr.torch()
 
-        assert torch.all(torch.isclose(y_torch, y_std, rtol=2e-2))
+        if dtype == 'float16':
+            assert torch.all(torch.isclose(y_torch, y_std, rtol=2e-2))
+        else:
+            assert torch.all(torch.isclose(y_torch, y_std))

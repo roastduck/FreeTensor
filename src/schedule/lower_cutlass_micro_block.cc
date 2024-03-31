@@ -14,13 +14,12 @@ namespace freetensor {
 
 namespace {
 
-BaseDataType DType;
-
 bool isPowerOfTwo(int x) { return (x & (x - 1)) == 0; }
 
 class FixTransposeAndGetPartition : public Mutator {
     ID matMulId_;
     int64_t nWarpBatch_ = 0, nWarpM_ = 0, nWarpN_ = 0;
+    DataType dtypeA_, dtypeB_, dtypeC_;
 
   public:
     FixTransposeAndGetPartition(const ID &matMulId) : matMulId_(matMulId) {}
@@ -28,6 +27,10 @@ class FixTransposeAndGetPartition : public Mutator {
     auto nWarpBatch() const { return nWarpBatch_; }
     auto nWarpM() const { return nWarpM_; }
     auto nWarpN() const { return nWarpN_; }
+
+    auto dtypeA() const { return dtypeA_; }
+    auto dtypeB() const { return dtypeB_; }
+    auto dtypeC() const { return dtypeC_; }
 
   private:
     std::tuple<int, int, int> computeWarpPartition(int64_t batch, int64_t m,
@@ -82,7 +85,9 @@ class FixTransposeAndGetPartition : public Mutator {
         if (op->id() == matMulId_) {
             ASSERT(op->backend_ == MatMulBackend::CutlassMicroBlock);
 
-            DType = op->a_->dtype().base(); // BaseDataType enum
+            dtypeA_ = op->a_->dtype();
+            dtypeB_ = op->b_->dtype();
+            dtypeC_ = op->c_->dtype();
 
             // C is only supported for densely packed row-major layout in
             // registers
@@ -149,6 +154,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
     ID matMulId_;
     int64_t nWarpBatch_ = 0, nWarpM_ = 0, nWarpN_ = 0;
 
+    DataType dtypeA_, dtypeB_, dtypeC_;
+
     Ref<CutlassMicroKernelProperty> prop_;
     bool inMicroKernel_ = false;
 
@@ -165,8 +172,11 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = op->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            switch (DType) {
-            case BaseDataType::Float64: {
+            auto dtype = dtypeA_.base();
+            ASSERT(dtype == dtypeB_.base());
+            ASSERT(dtype == dtypeC_.base());
+            switch (dtype) {
+            case DataType::Float64: {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
                 auto mInWarpPartition =
@@ -187,7 +197,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                     ret);
                 break;
             }
-            case BaseDataType::Float16: {
+
+            case DataType::Float16: {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 10], prop_->warpIdBatch_);
                 auto mInWarpPartition =
@@ -208,12 +219,11 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                     ret);
                 break;
             }
-            default: {
+
+            default:
                 throw InvalidSchedule(FT_MSG
                                       << "Unsupported data types: only Float16 "
                                          "and Float64 are supported.");
-                break;
-            }
             }
         }
         return ret;
@@ -227,6 +237,14 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             if (inMicroKernel_) {
                 throw InvalidSchedule("Micro kernels cannot nest each other");
             }
+
+            dtypeA_ = _op->a_->dtype();
+            dtypeB_ = _op->b_->dtype();
+            dtypeC_ = _op->c_->dtype();
+            auto dtype = dtypeA_.base();
+            ASSERT(dtype == dtypeB_.base());
+            ASSERT(dtype == dtypeC_.base());
+
             // Here we use `threadIdx.x` for threads in a warp, and
             // `threadIdx.y` for warps, because putting everthing into a single
             // `threadIdx.x` will make the expressions to complicated to solve.
@@ -258,8 +276,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = c->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            switch (DType) {
-            case BaseDataType::Float64: {
+            switch (dtype) {
+            case DataType::Float64:
                 c->indices_[nDimsCAll - 9] = warpIdBatch;
                 c->indices_[nDimsCAll - 4] = warpIdM; // m warps
                 c->indices_[nDimsCAll - 3] =
@@ -268,8 +286,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                 c->indices_[nDimsCAll - 2] =
                     makeMod(laneId, makeIntConst(4)); // n threads
                 break;
-            }
-            case BaseDataType::Float16: {
+
+            case DataType::Float16:
                 c->indices_[nDimsCAll - 10] = warpIdBatch;
                 c->indices_[nDimsCAll - 5] = warpIdM; // m warps
                 c->indices_[nDimsCAll - 3] =
@@ -278,13 +296,11 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                 c->indices_[nDimsCAll - 1] =
                     makeMod(laneId, makeIntConst(4)); // n threads
                 break;
-            }
-            default: {
+
+            default:
                 throw InvalidSchedule(FT_MSG
                                       << "Unsupported data types: only Float16 "
                                          "and Float64 are supported.");
-                break;
-            }
             }
             op->backend_ = MatMulBackend::CutlassMicroThread;
             op->cutlassMicroKernelProperty_ = prop_;
@@ -330,10 +346,18 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     auto nWarpBatch = fixTransposeAndGetPartition.nWarpBatch();
     auto nWarpM = fixTransposeAndGetPartition.nWarpM();
     auto nWarpN = fixTransposeAndGetPartition.nWarpN();
+    auto dtypeA = fixTransposeAndGetPartition.dtypeA();
+    auto dtypeB = fixTransposeAndGetPartition.dtypeB();
+    auto dtypeC = fixTransposeAndGetPartition.dtypeC();
+    auto dtype = dtypeA.base();
+    ASSERT(dtype == dtypeB.base());
+    ASSERT(dtype == dtypeC.base());
 
     // Partition C to each threads by layout-manipulation schedules. We have
     // checked we are in TryVarReorder mode in schedule/as_matmul.cc. The
-    // resulting layout will be [
+    // resulting layout will be:
+    //
+    // float64: [
     //   ...: other leading dims,
     //   -9: batch warps,
     //   -8: batch serial,
@@ -344,10 +368,9 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     //   -3: m threads
     //   -2: n threads,
     //   -1: n 2-tiles,
-
     // ]
-
-    // and for float16, resulting layout will be [
+    //
+    // float16: [
     //   ...: other leading dims,
     //   -10: batch warps,
     //   -9: batch serial,
@@ -359,7 +382,6 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     //   -3: m threads,
     //   -2: n 2-tiles,
     //   -1: n threads,
-
     // ]
     //
     // See
@@ -413,8 +435,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     std::vector<int> vec;
     for (int i = 0; i <= nDimsCOthers + 1; i++)
         vec.push_back(i);
-    switch (DType) {
-    case BaseDataType::Float64: {
+    switch (dtype) {
+    case DataType::Float64:
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
         ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
@@ -436,9 +458,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         vec.push_back(nDimsCOthers + 8);
         ast = varReorderImpl(ast, defIdC, vec, true);
         break;
-    }
 
-    case BaseDataType::Float16: {
+    case DataType::Float16:
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
         ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
@@ -463,12 +484,10 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         vec.push_back(nDimsCOthers + 8);
         ast = varReorderImpl(ast, defIdC, vec, true);
         break;
-    }
-    default: {
+
+    default:
         throw InvalidSchedule(FT_MSG << "Unsupported data types: only Float16 "
                                         "and Float64 are supported.");
-        break;
-    }
     }
 
     // Lower to CutlassMicroThread
