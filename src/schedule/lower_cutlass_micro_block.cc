@@ -175,7 +175,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             auto dtype = dtypeC_.base();
             ASSERT(dtypeA_.base() == dtypeB_.base());
 
-            if (dtype == DataType::Float64 && dtypeA == DataType::Float64) {
+            if (dtype == DataType::Float64 && dtypeA_ == DataType::Float64) {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 9], prop_->warpIdBatch_);
                 auto mInWarpPartition =
@@ -196,7 +196,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                     ret);
             } else if ((dtype == DataType::Float32 ||
                         dtype == DataType::Float16) &&
-                       dtypeA == DataType::Float16) {
+                       dtypeA_.base() == DataType::Float16) {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 10], prop_->warpIdBatch_);
                 auto mInWarpPartition =
@@ -271,7 +271,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = c->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            if (dtype == DataType::Float64 && dtypeA == DataType::Float64) {
+            if (dtype == DataType::Float64 && dtypeA_.base() == DataType::Float64) {
                 c->indices_[nDimsCAll - 9] = warpIdBatch;
                 c->indices_[nDimsCAll - 4] = warpIdM; // m warps
                 c->indices_[nDimsCAll - 3] =
@@ -281,7 +281,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                     makeMod(laneId, makeIntConst(4)); // n threads
             } else if ((dtype == DataType::Float32 ||
                         dtype == DataType::Float16) &&
-                       dtypeA == DataType::Float16) {
+                       dtypeA_.base() == DataType::Float16) {
                 c->indices_[nDimsCAll - 10] = warpIdBatch;
                 c->indices_[nDimsCAll - 5] = warpIdM; // m warps
                 c->indices_[nDimsCAll - 3] =
@@ -427,7 +427,7 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     for (int i = 0; i <= nDimsCOthers + 1; i++)
         vec.push_back(i);
 
-    if (dtype == DataType::Float64 && dtypeA == DataType::Float64) {
+    if (dtype == DataType::Float64 && dtypeA.base() == DataType::Float64) {
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
         ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
@@ -449,7 +449,7 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         vec.push_back(nDimsCOthers + 8);
         ast = varReorderImpl(ast, defIdC, vec, true);
     } else if ((dtype == DataType::Float32 || dtype == DataType::Float16) &&
-               dtypeA == DataType::Float16) {
+               dtypeA.base() == DataType::Float16) {
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);
         ast = varSplit(ast, defIdC, nDimsCOthers + 2, VarSplitMode::FixedSize,
