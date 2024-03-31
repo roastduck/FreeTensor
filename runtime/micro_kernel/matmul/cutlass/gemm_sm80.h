@@ -22,6 +22,9 @@ template <> struct DispatchInstruction<half_t, half_t, half_t> {
 template <> struct DispatchInstruction<double, double, double> {
     using MMA = MMA_Atom<SM80_8x8x4_F64F64F64F64_TN>;
 };
+template <> struct DispatchInstruction<half_t, half_t, float> {
+    using MMA = MMA_Atom<SM80_16x8x16_F32F16F16F32_TN>;
+};
 
 template <int Bits, int N, int K, bool K_inner, typename Enable = void>
 struct OperandTraits {

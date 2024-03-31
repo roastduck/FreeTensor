@@ -172,9 +172,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             int nDimsCAll = op->indices_.size();
             ASSERT(nDimsCAll >=
                    9); // See comments in `lowerCutlassMicroBlock` below
-            auto dtype = dtypeA_.base();
-            ASSERT(dtype == dtypeB_.base());
-            ASSERT(dtype == dtypeC_.base());
+            auto dtype = dtypeC_.base();
+            ASSERT(dtypeA_.base() == dtypeB_.base());
             switch (dtype) {
             case DataType::Float64: {
                 auto batchInWarpPartition =
@@ -197,7 +196,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                     ret);
                 break;
             }
-
+            case DataType::Float32:
             case DataType::Float16: {
                 auto batchInWarpPartition =
                     makeEQ(op->indices_[nDimsCAll - 10], prop_->warpIdBatch_);
@@ -241,9 +240,8 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
             dtypeA_ = _op->a_->dtype();
             dtypeB_ = _op->b_->dtype();
             dtypeC_ = _op->c_->dtype();
-            auto dtype = dtypeA_.base();
-            ASSERT(dtype == dtypeB_.base());
-            ASSERT(dtype == dtypeC_.base());
+            auto dtype = dtypeC_.base();
+            ASSERT(dtypeA_.base() == dtypeB_.base());
 
             // Here we use `threadIdx.x` for threads in a warp, and
             // `threadIdx.y` for warps, because putting everthing into a single
@@ -286,7 +284,7 @@ class LowerCutlassMicroBlock : public SymbolTable<Mutator> {
                 c->indices_[nDimsCAll - 2] =
                     makeMod(laneId, makeIntConst(4)); // n threads
                 break;
-
+            case DataType::Float32:
             case DataType::Float16:
                 c->indices_[nDimsCAll - 10] = warpIdBatch;
                 c->indices_[nDimsCAll - 5] = warpIdM; // m warps
@@ -349,9 +347,8 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
     auto dtypeA = fixTransposeAndGetPartition.dtypeA();
     auto dtypeB = fixTransposeAndGetPartition.dtypeB();
     auto dtypeC = fixTransposeAndGetPartition.dtypeC();
-    auto dtype = dtypeA.base();
-    ASSERT(dtype == dtypeB.base());
-    ASSERT(dtype == dtypeC.base());
+    auto dtype = dtypeC.base();
+    ASSERT(dtypeA.base() == dtypeB.base());
 
     // Partition C to each threads by layout-manipulation schedules. We have
     // checked we are in TryVarReorder mode in schedule/as_matmul.cc. The
@@ -458,7 +455,7 @@ Stmt lowerCutlassMicroBlock(const Stmt &_ast, const ID &matMulId,
         vec.push_back(nDimsCOthers + 8);
         ast = varReorderImpl(ast, defIdC, vec, true);
         break;
-
+    case DataType::Float32:
     case DataType::Float16:
         ast = varSplit(ast, defIdC, nDimsCOthers + 0, VarSplitMode::FixedSize,
                        -1, nWarpBatch);

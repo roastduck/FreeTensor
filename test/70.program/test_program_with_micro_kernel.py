@@ -5,8 +5,10 @@ import freetensor as ft
 
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
-@pytest.mark.parametrize('dtype', ['float16', 'float64'])
-def test_matmul(dtype):
+@pytest.mark.parametrize(('dtype', 'accum_type'), [('float16', 'float16'),
+                                                   ('float64', 'float64'),
+                                                   ('float16', 'float32')])
+def test_matmul(dtype, accum_type):
 
     M = N = K = 5000
     block_n = block_m = 128
@@ -19,7 +21,7 @@ def test_matmul(dtype):
 
         @ft.transform
         def matmul(a: ft.Var[(M, K), dtype], b: ft.Var[(K, N), dtype]):
-            c = ft.empty((M, N), dtype)
+            c = ft.empty((M, N), accum_type)
             #! label: blk_m
             for i in range(0, M, block_m):
                 #! label: blk_n
@@ -29,7 +31,7 @@ def test_matmul(dtype):
                     #! label: bb
                     bb = ft.empty((block_k, block_n), dtype)
                     #! label: cc
-                    cc = ft.empty((block_m, block_n), dtype)
+                    cc = ft.empty((block_m, block_n), accum_type)
                     #! label: zero_cc
                     for ii in range(block_m):
                         for jj in range(block_n):
@@ -100,6 +102,9 @@ def test_matmul(dtype):
         y_torch = y_arr.torch()
 
         if dtype == 'float16':
-            assert torch.all(torch.isclose(y_torch, y_std, rtol=2e-2))
+            if accum_type == 'float16':
+                assert torch.all(torch.isclose(y_torch, y_std, rtol=2e-2))
+            else:
+                assert torch.all(torch.isclose(y_torch.half(), y_std))
         else:
             assert torch.all(torch.isclose(y_torch, y_std))
