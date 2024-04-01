@@ -2,6 +2,7 @@
 #define FREE_TENSOR_LAZY_H
 
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <type_traits>
@@ -9,35 +10,49 @@
 namespace freetensor {
 
 template <typename T> class Lazy {
-    std::optional<T> container_;
-    std::function<T()> delayedInit_;
-    std::mutex mutex_;
+    struct LazyData {
+        std::optional<T> container_;
+        std::function<T()> delayedInit_;
+        std::once_flag onceFlag_;
+    };
+
+    // Although we deleted copy constructor and copy assignment operator, we
+    // still want to use the move constructor and move assignment operator, but
+    // std::once_flag is not movable. So we use std::unique_ptr to store
+    // LazyData.
+    std::unique_ptr<LazyData> data_ = std::make_unique<LazyData>();
 
   public:
     const T &operator*() {
-        if (!container_) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            if (!container_)
-                container_ = delayedInit_();
-        }
-        return *container_;
+        std::call_once(data_->onceFlag_,
+                       [&] { data_->container_ = data_->delayedInit_(); });
+        return data_->container_.value();
     }
 
     const T *operator->() { return &(this->operator*()); }
 
-    template <typename F>
-    Lazy(F delayedInit)
-        : container_(std::nullopt), delayedInit_(delayedInit), mutex_() {}
-
-    Lazy(const Lazy &other)
-        : container_(other.container_), delayedInit_(other.delayedInit_),
-          mutex_() {}
-
-    Lazy &operator=(const Lazy &other) {
-        container_ = other.container_;
-        delayedInit_ = other.delayedInit_;
-        return *this;
+    template <typename F> Lazy(F delayedInit) {
+        data_->delayedInit_ = delayedInit;
     }
+
+    // We want to keep only one copy of LazyData. Otherwise, LazyData might be
+    // re-initialized multiple times.
+    //
+    // A bad example:
+    //
+    // ```
+    // a = Lazy(...)
+    // for (...) { auto b = a; *b; } // re-initialized
+    // ```
+    //
+    // A good example:
+    //
+    // ```
+    // a = Lazy(...)
+    // for (...) { auto &b = a; *b; } // initialized only once
+    // ```
+    Lazy(const Lazy &) = delete;
+    Lazy &operator=(const Lazy &) = delete;
 };
 
 template <typename F>
