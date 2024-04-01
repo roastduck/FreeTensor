@@ -102,6 +102,8 @@ digraph "src/schedule/auto_pluto.cc"
   Node62 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node67 -> Node13 [color="steelblue1",style="solid"];
+  Node67 -> Node21 [color="steelblue1",style="solid"];
+  Node21 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node67 -> Node60 [color="steelblue1",style="solid"];
   Node67 -> Node14 [color="steelblue1",style="solid"];
   Node14 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -122,8 +124,6 @@ digraph "src/schedule/auto_pluto.cc"
   Node70 -> Node71 [color="steelblue1",style="solid"];
   Node71 [label="cstddef",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node6 [color="steelblue1",style="solid"];
-  Node70 -> Node72 [color="steelblue1",style="solid"];
-  Node72 [label="isl/id_type.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node7 [color="steelblue1",style="solid"];
   Node70 -> Node2 [color="steelblue1",style="solid"];
   Node70 -> Node10 [color="steelblue1",style="solid"];

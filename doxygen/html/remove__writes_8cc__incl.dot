@@ -120,6 +120,8 @@ digraph "src/pass/remove_writes.cc"
   Node66 -> Node69 [color="steelblue1",style="solid"];
   Node69 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node69 -> Node14 [color="steelblue1",style="solid"];
+  Node69 -> Node22 [color="steelblue1",style="solid"];
+  Node22 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node69 -> Node2 [color="steelblue1",style="solid"];
   Node69 -> Node15 [color="steelblue1",style="solid"];
   Node69 -> Node23 [color="steelblue1",style="solid"];
@@ -144,8 +146,6 @@ digraph "src/pass/remove_writes.cc"
   Node72 -> Node8 [color="steelblue1",style="solid"];
   Node72 -> Node4 [color="steelblue1",style="solid"];
   Node72 -> Node11 [color="steelblue1",style="solid"];
-  Node72 -> Node75 [color="steelblue1",style="solid"];
-  Node75 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node72 -> Node59 [color="steelblue1",style="solid"];
   Node72 -> Node27 [color="steelblue1",style="solid"];
   Node72 -> Node30 [color="steelblue1",style="solid"];

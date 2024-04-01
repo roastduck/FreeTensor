@@ -93,6 +93,8 @@ digraph "src/schedule/parallelize.cc"
   Node2 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node3 [color="steelblue1",style="solid"];
+  Node66 -> Node25 [color="steelblue1",style="solid"];
+  Node25 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node5 [color="steelblue1",style="solid"];
   Node66 -> Node18 [color="steelblue1",style="solid"];
   Node18 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -109,8 +111,6 @@ digraph "src/schedule/parallelize.cc"
   Node68 -> Node15 [color="steelblue1",style="solid"];
   Node67 -> Node69 [color="steelblue1",style="solid"];
   Node69 [label="math/presburger.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$presburger_8h.html",tooltip=" "];
-  Node69 -> Node70 [color="steelblue1",style="solid"];
-  Node70 [label="cstddef",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node69 -> Node4 [color="steelblue1",style="solid"];
   Node69 -> Node6 [color="steelblue1",style="solid"];
   Node69 -> Node8 [color="steelblue1",style="solid"];

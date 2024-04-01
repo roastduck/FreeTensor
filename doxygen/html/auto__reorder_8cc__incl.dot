@@ -90,6 +90,8 @@ digraph "src/schedule/auto_reorder.cc"
   Node3 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node4 [color="steelblue1",style="solid"];
+  Node66 -> Node26 [color="steelblue1",style="solid"];
+  Node26 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node6 [color="steelblue1",style="solid"];
   Node66 -> Node19 [color="steelblue1",style="solid"];
   Node19 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -114,8 +116,6 @@ digraph "src/schedule/auto_reorder.cc"
   Node69 -> Node7 [color="steelblue1",style="solid"];
   Node69 -> Node9 [color="steelblue1",style="solid"];
   Node69 -> Node10 [color="steelblue1",style="solid"];
-  Node69 -> Node72 [color="steelblue1",style="solid"];
-  Node72 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node69 -> Node33 [color="steelblue1",style="solid"];
   Node33 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node33 -> Node31 [color="steelblue1",style="solid"];

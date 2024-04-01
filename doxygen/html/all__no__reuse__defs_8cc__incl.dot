@@ -94,6 +94,8 @@ digraph "src/autograd/all_no_reuse_defs.cc"
   Node62 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node67 -> Node13 [color="steelblue1",style="solid"];
+  Node67 -> Node21 [color="steelblue1",style="solid"];
+  Node21 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node67 -> Node60 [color="steelblue1",style="solid"];
   Node67 -> Node14 [color="steelblue1",style="solid"];
   Node14 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -136,8 +138,6 @@ digraph "src/autograd/all_no_reuse_defs.cc"
   Node80 [label="isl/space.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node81 [color="steelblue1",style="solid"];
   Node81 [label="isl/space_type.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node70 -> Node82 [color="steelblue1",style="solid"];
-  Node82 [label="isl/val.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node29 [color="steelblue1",style="solid"];
   Node29 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node29 -> Node27 [color="steelblue1",style="solid"];

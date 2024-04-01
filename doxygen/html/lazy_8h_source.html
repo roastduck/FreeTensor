@@ -80,60 +80,74 @@ $(function() {
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define FREE_TENSOR_LAZY_H</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html">   11</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">class </span><a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> {</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    std::optional&lt;T&gt; container_;</div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    std::function&lt;T()&gt; delayedInit_;</div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>    std::mutex mutex_;</div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>  <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">   17</a></span>    <span class="keyword">const</span> T &amp;<a class="code hl_function" href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">operator*</a>() {</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>        <span class="keywordflow">if</span> (!container_) {</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>            std::lock_guard&lt;std::mutex&gt; lock(mutex_);</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>            <span class="keywordflow">if</span> (!container_)</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>                container_ = delayedInit_();</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>        }</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>        <span class="keywordflow">return</span> *container_;</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    }</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a06e57e8fce4934c51c58ab0de6847b9c">   26</a></span>    <span class="keyword">const</span> T *<a class="code hl_function" href="classfreetensor_1_1Lazy.html#a06e57e8fce4934c51c58ab0de6847b9c">operator-&gt;</a>() { <span class="keywordflow">return</span> &amp;(this-&gt;<a class="code hl_function" href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">operator*</a>()); }</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a6ee24c1574f257dbb75e048d3915a1be">   29</a></span>    <a class="code hl_function" href="classfreetensor_1_1Lazy.html#a6ee24c1574f257dbb75e048d3915a1be">Lazy</a>(F delayedInit)</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        : container_(<a class="code hl_namespace" href="namespacestd.html">std</a>::nullopt), delayedInit_(delayedInit), mutex_() {}</div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacefreetensor.html">freetensor</a> {</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html">   12</a></span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">class </span><a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> {</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    <span class="keyword">struct </span>LazyData {</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>        std::optional&lt;T&gt; container_;</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>        std::function&lt;T()&gt; delayedInit_;</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>        std::once_flag onceFlag_;</div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>    };</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    <span class="comment">// Although we deleted copy constructor and copy assignment operator, we</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    <span class="comment">// still want to use the move constructor and move assignment operator, but</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="comment">// std::once_flag is not movable. So we use std::unique_ptr to store</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    <span class="comment">// LazyData.</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    std::unique_ptr&lt;LazyData&gt; data_ = std::make_unique&lt;LazyData&gt;();</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>  <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">   26</a></span>    <span class="keyword">const</span> T &amp;<a class="code hl_function" href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">operator*</a>() {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        std::call_once(data_-&gt;onceFlag_,</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>                       [&amp;] { data_-&gt;container_ = data_-&gt;delayedInit_(); });</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        <span class="keywordflow">return</span> data_-&gt;container_.value();</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>    }</div>
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a739138e5b85a88302ae36630d4ce7550">   32</a></span>    <a class="code hl_function" href="classfreetensor_1_1Lazy.html#a739138e5b85a88302ae36630d4ce7550">Lazy</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> &amp;other)</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        : container_(other.container_), delayedInit_(other.delayedInit_),</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>          mutex_() {}</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a371d0e6b53c36ade29dbab8b5305dd7b">   36</a></span>    <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> &amp;<a class="code hl_function" href="classfreetensor_1_1Lazy.html#a371d0e6b53c36ade29dbab8b5305dd7b">operator=</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> &amp;other) {</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        container_ = other.container_;</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        delayedInit_ = other.delayedInit_;</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    }</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>};</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="namespacefreetensor.html#aa17b63e472b2e62270355b9808c79c72">   44</a></span><a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a>(F delayedInit) -&gt; <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy&lt;std::decay_t&lt;decltype(std::declval&lt;F&gt;</a>()())&gt;&gt;;</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="lazy_8h.html#ae6beb247712f86c3f1e132d8f0070f28">   46</a></span><span class="preprocessor">#define LAZY(expr) (Lazy([&amp;]() { return (expr); }))</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>} <span class="comment">// namespace freetensor</span></div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_LAZY_H</span></div>
-<div class="ttc" id="aclassfreetensor_1_1Lazy_html"><div class="ttname"><a href="classfreetensor_1_1Lazy.html">freetensor::Lazy</a></div><div class="ttdef"><b>Definition:</b> lazy.h:11</div></div>
-<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a06e57e8fce4934c51c58ab0de6847b9c"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a06e57e8fce4934c51c58ab0de6847b9c">freetensor::Lazy::operator-&gt;</a></div><div class="ttdeci">const T * operator-&gt;()</div><div class="ttdef"><b>Definition:</b> lazy.h:26</div></div>
-<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a19babeccda35b262fb1a60ca3701aac6"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">freetensor::Lazy::operator*</a></div><div class="ttdeci">const T &amp; operator*()</div><div class="ttdef"><b>Definition:</b> lazy.h:17</div></div>
-<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a371d0e6b53c36ade29dbab8b5305dd7b"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a371d0e6b53c36ade29dbab8b5305dd7b">freetensor::Lazy::operator=</a></div><div class="ttdeci">Lazy &amp; operator=(const Lazy &amp;other)</div><div class="ttdef"><b>Definition:</b> lazy.h:36</div></div>
-<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a6ee24c1574f257dbb75e048d3915a1be"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a6ee24c1574f257dbb75e048d3915a1be">freetensor::Lazy::Lazy</a></div><div class="ttdeci">Lazy(F delayedInit)</div><div class="ttdef"><b>Definition:</b> lazy.h:29</div></div>
-<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a739138e5b85a88302ae36630d4ce7550"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a739138e5b85a88302ae36630d4ce7550">freetensor::Lazy::Lazy</a></div><div class="ttdeci">Lazy(const Lazy &amp;other)</div><div class="ttdef"><b>Definition:</b> lazy.h:32</div></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a06e57e8fce4934c51c58ab0de6847b9c">   32</a></span>    <span class="keyword">const</span> T *<a class="code hl_function" href="classfreetensor_1_1Lazy.html#a06e57e8fce4934c51c58ab0de6847b9c">operator-&gt;</a>() { <span class="keywordflow">return</span> &amp;(this-&gt;<a class="code hl_function" href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">operator*</a>()); }</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a6ee24c1574f257dbb75e048d3915a1be">   34</a></span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <a class="code hl_function" href="classfreetensor_1_1Lazy.html#a6ee24c1574f257dbb75e048d3915a1be">Lazy</a>(F delayedInit) {</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        data_-&gt;delayedInit_ = delayedInit;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    }</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="comment">// We want to keep only one copy of LazyData. Otherwise, LazyData might be</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="comment">// re-initialized multiple times.</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    <span class="comment">//</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="comment">// A bad example:</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    <span class="comment">//</span></div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="comment">// ```</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="comment">// a = Lazy(...)</span></div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="comment">// for (...) { auto b = a; *b; } // re-initialized</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="comment">// ```</span></div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="comment">//</span></div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="comment">// A good example:</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="comment">//</span></div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="comment">// ```</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="comment">// a = Lazy(...)</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <span class="comment">// for (...) { auto &amp;b = a; *b; } // initialized only once</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="comment">// ```</span></div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#a38d90e70c7ece4f299ba46ca6f6bf5bc">   54</a></span>    <a class="code hl_function" href="classfreetensor_1_1Lazy.html#a38d90e70c7ece4f299ba46ca6f6bf5bc">Lazy</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="classfreetensor_1_1Lazy.html#afd1a1bcdbe2f7541b8576fb156aa63d8">   55</a></span>    <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> &amp;<a class="code hl_function" href="classfreetensor_1_1Lazy.html#afd1a1bcdbe2f7541b8576fb156aa63d8">operator=</a>(<span class="keyword">const</span> <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>};</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="namespacefreetensor.html#aa17b63e472b2e62270355b9808c79c72">   59</a></span><a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy</a>(F delayedInit) -&gt; <a class="code hl_class" href="classfreetensor_1_1Lazy.html">Lazy&lt;std::decay_t&lt;decltype(std::declval&lt;F&gt;</a>()())&gt;&gt;;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="lazy_8h.html#ae6beb247712f86c3f1e132d8f0070f28">   61</a></span><span class="preprocessor">#define LAZY(expr) (Lazy([&amp;]() { return (expr); }))</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>} <span class="comment">// namespace freetensor</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="preprocessor">#endif </span><span class="comment">// FREE_TENSOR_LAZY_H</span></div>
+<div class="ttc" id="aclassfreetensor_1_1Lazy_html"><div class="ttname"><a href="classfreetensor_1_1Lazy.html">freetensor::Lazy</a></div><div class="ttdef"><b>Definition:</b> lazy.h:12</div></div>
+<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a06e57e8fce4934c51c58ab0de6847b9c"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a06e57e8fce4934c51c58ab0de6847b9c">freetensor::Lazy::operator-&gt;</a></div><div class="ttdeci">const T * operator-&gt;()</div><div class="ttdef"><b>Definition:</b> lazy.h:32</div></div>
+<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a19babeccda35b262fb1a60ca3701aac6"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a19babeccda35b262fb1a60ca3701aac6">freetensor::Lazy::operator*</a></div><div class="ttdeci">const T &amp; operator*()</div><div class="ttdef"><b>Definition:</b> lazy.h:26</div></div>
+<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a38d90e70c7ece4f299ba46ca6f6bf5bc"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a38d90e70c7ece4f299ba46ca6f6bf5bc">freetensor::Lazy::Lazy</a></div><div class="ttdeci">Lazy(const Lazy &amp;)=delete</div></div>
+<div class="ttc" id="aclassfreetensor_1_1Lazy_html_a6ee24c1574f257dbb75e048d3915a1be"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#a6ee24c1574f257dbb75e048d3915a1be">freetensor::Lazy::Lazy</a></div><div class="ttdeci">Lazy(F delayedInit)</div><div class="ttdef"><b>Definition:</b> lazy.h:34</div></div>
+<div class="ttc" id="aclassfreetensor_1_1Lazy_html_afd1a1bcdbe2f7541b8576fb156aa63d8"><div class="ttname"><a href="classfreetensor_1_1Lazy.html#afd1a1bcdbe2f7541b8576fb156aa63d8">freetensor::Lazy::operator=</a></div><div class="ttdeci">Lazy &amp; operator=(const Lazy &amp;)=delete</div></div>
 <div class="ttc" id="anamespacefreetensor_html"><div class="ttname"><a href="namespacefreetensor.html">freetensor</a></div><div class="ttdef"><b>Definition:</b> allocator.h:9</div></div>
-<div class="ttc" id="anamespacestd_html"><div class="ttname"><a href="namespacestd.html">std</a></div><div class="ttdoc">STL namespace.</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

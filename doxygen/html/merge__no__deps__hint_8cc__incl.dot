@@ -60,10 +60,6 @@ digraph "src/analyze/merge_no_deps_hint.cc"
   Node41 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node37 -> Node42 [color="steelblue1",style="solid"];
   Node42 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node16 -> Node30 [color="steelblue1",style="solid"];
-  Node30 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node30 -> Node31 [color="steelblue1",style="solid"];
-  Node30 -> Node7 [color="steelblue1",style="solid"];
   Node11 -> Node53 [color="steelblue1",style="solid"];
   Node53 [label="analyze/track_stmt.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
   Node53 -> Node10 [color="steelblue1",style="solid"];
@@ -97,6 +93,8 @@ digraph "src/analyze/merge_no_deps_hint.cc"
   Node3 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node4 [color="steelblue1",style="solid"];
+  Node66 -> Node26 [color="steelblue1",style="solid"];
+  Node26 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node6 [color="steelblue1",style="solid"];
   Node66 -> Node19 [color="steelblue1",style="solid"];
   Node19 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -144,7 +142,7 @@ digraph "src/analyze/merge_no_deps_hint.cc"
   Node69 -> Node55 [color="steelblue1",style="solid"];
   Node69 -> Node82 [color="steelblue1",style="solid"];
   Node82 [label="debug/profile.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$profile_8h.html",tooltip=" "];
-  Node69 -> Node30 [color="steelblue1",style="solid"];
+  Node82 -> Node26 [color="steelblue1",style="solid"];
   Node69 -> Node33 [color="steelblue1",style="solid"];
   Node33 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node33 -> Node31 [color="steelblue1",style="solid"];

@@ -188,6 +188,7 @@ digraph "include/pass/sink_var.h"
   Node1 -> Node63 [color="steelblue1",style="solid"];
   Node63 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node63 -> Node15 [color="steelblue1",style="solid"];
+  Node63 -> Node23 [color="steelblue1",style="solid"];
   Node63 -> Node55 [color="steelblue1",style="solid"];
   Node63 -> Node2 [color="steelblue1",style="solid"];
   Node63 -> Node8 [color="steelblue1",style="solid"];

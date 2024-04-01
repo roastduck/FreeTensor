@@ -105,7 +105,7 @@ digraph "src/schedule/pluto.cc"
   Node69 -> Node71 [color="steelblue1",style="solid"];
   Node69 -> Node40 [color="steelblue1",style="solid"];
   Node69 -> Node74 [color="steelblue1",style="solid"];
-  Node74 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
+  Node74 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node74 -> Node21 [color="steelblue1",style="solid"];
   Node74 -> Node60 [color="steelblue1",style="solid"];
   Node74 -> Node11 [color="steelblue1",style="solid"];

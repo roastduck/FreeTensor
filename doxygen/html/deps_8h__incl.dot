@@ -67,14 +67,10 @@ digraph "include/analyze/deps.h"
   Node52 -> Node12 [color="steelblue1",style="solid"];
   Node52 -> Node14 [color="steelblue1",style="solid"];
   Node9 -> Node53 [color="steelblue1",style="solid"];
-  Node53 [label="visitor.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$visitor_8h.html",tooltip=" "];
+  Node53 [label="visitor.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$visitor_8h.html",tooltip=" "];
   Node53 -> Node54 [color="steelblue1",style="solid"];
   Node54 [label="debug.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$debug_8h.html",tooltip=" "];
   Node54 -> Node5 [color="steelblue1",style="solid"];
-  Node53 -> Node44 [color="steelblue1",style="solid"];
-  Node44 [label="expr.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$expr_8h.html",tooltip=" "];
-  Node44 -> Node5 [color="steelblue1",style="solid"];
-  Node44 -> Node8 [color="steelblue1",style="solid"];
   Node53 -> Node57 [color="steelblue1",style="solid"];
   Node57 [label="func.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$func_8h.html",tooltip=" "];
   Node57 -> Node3 [color="steelblue1",style="solid"];
@@ -98,6 +94,8 @@ digraph "include/analyze/deps.h"
   Node1 -> Node65 [color="steelblue1",style="solid"];
   Node65 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node65 -> Node2 [color="steelblue1",style="solid"];
+  Node65 -> Node24 [color="steelblue1",style="solid"];
+  Node24 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node65 -> Node4 [color="steelblue1",style="solid"];
   Node65 -> Node17 [color="steelblue1",style="solid"];
   Node17 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -111,7 +109,6 @@ digraph "include/analyze/deps.h"
   Node67 [label="hash.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$hash_8h.html",tooltip=" "];
   Node67 -> Node6 [color="steelblue1",style="solid"];
   Node67 -> Node7 [color="steelblue1",style="solid"];
-  Node67 -> Node44 [color="steelblue1",style="solid"];
   Node67 -> Node14 [color="steelblue1",style="solid"];
   Node66 -> Node68 [color="steelblue1",style="solid"];
   Node68 [label="math/presburger.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$presburger_8h.html",tooltip=" "];
@@ -146,6 +143,7 @@ digraph "include/analyze/deps.h"
   Node68 -> Node54 [color="steelblue1",style="solid"];
   Node68 -> Node81 [color="steelblue1",style="solid"];
   Node81 [label="debug/profile.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$profile_8h.html",tooltip=" "];
+  Node81 -> Node24 [color="steelblue1",style="solid"];
   Node68 -> Node28 [color="steelblue1",style="solid"];
   Node68 -> Node31 [color="steelblue1",style="solid"];
   Node31 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];

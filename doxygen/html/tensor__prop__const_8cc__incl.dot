@@ -106,6 +106,8 @@ digraph "src/pass/tensor_prop_const.cc"
   Node63 -> Node68 [color="steelblue1",style="solid"];
   Node68 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node68 -> Node10 [color="steelblue1",style="solid"];
+  Node68 -> Node20 [color="steelblue1",style="solid"];
+  Node20 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node68 -> Node2 [color="steelblue1",style="solid"];
   Node68 -> Node12 [color="steelblue1",style="solid"];
   Node12 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -133,8 +135,6 @@ digraph "src/pass/tensor_prop_const.cc"
   Node71 -> Node17 [color="steelblue1",style="solid"];
   Node71 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node71 -> Node75 [color="steelblue1",style="solid"];
-  Node75 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node71 -> Node6 [color="steelblue1",style="solid"];
   Node71 -> Node28 [color="steelblue1",style="solid"];
   Node28 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];

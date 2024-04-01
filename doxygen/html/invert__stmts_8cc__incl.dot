@@ -106,6 +106,8 @@ digraph "src/autograd/invert_stmts.cc"
   Node62 -> Node67 [color="steelblue1",style="solid"];
   Node67 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node67 -> Node14 [color="steelblue1",style="solid"];
+  Node67 -> Node22 [color="steelblue1",style="solid"];
+  Node22 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node67 -> Node60 [color="steelblue1",style="solid"];
   Node67 -> Node15 [color="steelblue1",style="solid"];
   Node15 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -135,8 +137,6 @@ digraph "src/autograd/invert_stmts.cc"
   Node73 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node74 [color="steelblue1",style="solid"];
   Node74 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node70 -> Node75 [color="steelblue1",style="solid"];
-  Node75 [label="isl/id.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node58 [color="steelblue1",style="solid"];
   Node70 -> Node27 [color="steelblue1",style="solid"];
   Node70 -> Node29 [color="steelblue1",style="solid"];

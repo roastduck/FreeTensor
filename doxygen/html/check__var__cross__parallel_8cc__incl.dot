@@ -59,10 +59,6 @@ digraph "src/schedule/check_var_cross_parallel.cc"
   Node41 [label="range/v3/range.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node36 -> Node42 [color="steelblue1",style="solid"];
   Node42 [label="range/v3/view.hpp",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node15 -> Node29 [color="steelblue1",style="solid"];
-  Node29 [label="except.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$except_8h.html",tooltip=" "];
-  Node29 -> Node30 [color="steelblue1",style="solid"];
-  Node29 -> Node6 [color="steelblue1",style="solid"];
   Node10 -> Node53 [color="steelblue1",style="solid"];
   Node53 [label="analyze/track_stmt.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$track__stmt_8h.html",tooltip=" "];
   Node53 -> Node9 [color="steelblue1",style="solid"];
@@ -96,6 +92,8 @@ digraph "src/schedule/check_var_cross_parallel.cc"
   Node2 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node3 [color="steelblue1",style="solid"];
+  Node66 -> Node25 [color="steelblue1",style="solid"];
+  Node25 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node5 [color="steelblue1",style="solid"];
   Node66 -> Node18 [color="steelblue1",style="solid"];
   Node18 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -143,7 +141,7 @@ digraph "src/schedule/check_var_cross_parallel.cc"
   Node69 -> Node55 [color="steelblue1",style="solid"];
   Node69 -> Node82 [color="steelblue1",style="solid"];
   Node82 [label="debug/profile.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$profile_8h.html",tooltip=" "];
-  Node69 -> Node29 [color="steelblue1",style="solid"];
+  Node82 -> Node25 [color="steelblue1",style="solid"];
   Node69 -> Node32 [color="steelblue1",style="solid"];
   Node32 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node32 -> Node30 [color="steelblue1",style="solid"];

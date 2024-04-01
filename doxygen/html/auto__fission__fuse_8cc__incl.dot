@@ -89,6 +89,8 @@ digraph "src/schedule/auto_fission_fuse.cc"
   Node2 -> Node66 [color="steelblue1",style="solid"];
   Node66 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node66 -> Node3 [color="steelblue1",style="solid"];
+  Node66 -> Node25 [color="steelblue1",style="solid"];
+  Node25 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node66 -> Node5 [color="steelblue1",style="solid"];
   Node66 -> Node18 [color="steelblue1",style="solid"];
   Node18 [label="optional",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
@@ -117,8 +119,6 @@ digraph "src/schedule/auto_fission_fuse.cc"
   Node72 [label="isl/aff.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node69 -> Node73 [color="steelblue1",style="solid"];
   Node73 [label="isl/ctx.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node69 -> Node74 [color="steelblue1",style="solid"];
-  Node74 [label="isl/id.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node69 -> Node32 [color="steelblue1",style="solid"];
   Node32 [label="serialize/to_string.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$to__string_8h.html",tooltip=" "];
   Node32 -> Node30 [color="steelblue1",style="solid"];

@@ -124,6 +124,8 @@ digraph "src/analyze/check_not_modified.cc"
   Node67 -> Node70 [color="steelblue1",style="solid"];
   Node70 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node70 -> Node10 [color="steelblue1",style="solid"];
+  Node70 -> Node20 [color="steelblue1",style="solid"];
+  Node20 [label="memory",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node70 -> Node40 [color="steelblue1",style="solid"];
   Node70 -> Node12 [color="steelblue1",style="solid"];
   Node70 -> Node21 [color="steelblue1",style="solid"];
@@ -158,8 +160,6 @@ digraph "src/analyze/check_not_modified.cc"
   Node79 [label="isl/ilp.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node73 -> Node80 [color="steelblue1",style="solid"];
   Node80 [label="isl/map.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
-  Node73 -> Node81 [color="steelblue1",style="solid"];
-  Node81 [label="isl/options.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node73 -> Node6 [color="steelblue1",style="solid"];
   Node73 -> Node25 [color="steelblue1",style="solid"];
   Node73 -> Node28 [color="steelblue1",style="solid"];

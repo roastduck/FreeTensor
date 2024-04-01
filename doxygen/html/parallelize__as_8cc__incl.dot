@@ -109,7 +109,7 @@ digraph "src/schedule/parallelize_as.cc"
   Node66 -> Node68 [color="steelblue1",style="solid"];
   Node66 -> Node33 [color="steelblue1",style="solid"];
   Node66 -> Node69 [color="steelblue1",style="solid"];
-  Node69 [label="lazy.h",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$lazy_8h.html",tooltip=" "];
+  Node69 [label="lazy.h",height=0.2,width=0.4,color="red", fillcolor="#FFF0F0", style="filled",URL="$lazy_8h.html",tooltip=" "];
   Node69 -> Node13 [color="steelblue1",style="solid"];
   Node69 -> Node60 [color="steelblue1",style="solid"];
   Node69 -> Node14 [color="steelblue1",style="solid"];
