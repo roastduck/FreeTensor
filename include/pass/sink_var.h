@@ -18,7 +18,7 @@ class SinkVar : public Mutator {
     const std::unordered_set<std::pair<ID, ID>> &deps_; // {(vardef, loop)}
     const std::unordered_set<ID> &analyzedDeps_;        // {vardef}
     std::unordered_set<ID> &needDepAnalysis_;           // {vardef}
-    Lazy<LoopVariUniqVarMap> variantMap_;
+    Lazy<LoopVariUniqVarMap> &variantMap_;
     std::function<bool(const Stmt &)> scopeFilter_;
     bool isFixPoint_ = true;
 
@@ -30,7 +30,7 @@ class SinkVar : public Mutator {
             const std::unordered_set<std::pair<ID, ID>> &deps,
             const std::unordered_set<ID> &analyzedDeps,
             std::unordered_set<ID> &needDepAnalysis,
-            const Lazy<LoopVariUniqVarMap> &variantMap,
+            Lazy<LoopVariUniqVarMap> &variantMap,
             const std::function<bool(const Stmt &)> &scopeFilter)
         : toSink_(toSink), deps_(deps), analyzedDeps_(analyzedDeps),
           needDepAnalysis_(needDepAnalysis), variantMap_(variantMap),
