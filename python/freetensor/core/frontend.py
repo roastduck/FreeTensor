@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from .. import ffi
 
 from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
-                   VarVersionRef)
+                   VarVersionRef, UndeclaredParam)
 from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Assert, Invoke,
                    MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
@@ -420,8 +420,16 @@ class Var(StagedTypeAnnotation):
         self.shape, self.dtype, self.atype, self.mtype = shape, dtype, atype, mtype
 
     def annotate(self, name: str) -> VarRef:
-        return lang_overload.register_vardef(name, self.shape, self.dtype,
-                                             self.atype, self.mtype)
+
+        def annotate_impl(old_var):
+            if not isinstance(old_var, UndeclaredParam):
+                raise lang_overload.error(
+                    f'`ft.Var` annotation should only be used on undeclared parameters, instead of `{name}`.'
+                )
+            return lang_overload.register_vardef(name, self.shape, self.dtype,
+                                                 self.atype, self.mtype)
+
+        return annotate_impl
 
 
 @dataclass
