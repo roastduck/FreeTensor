@@ -374,7 +374,7 @@ class StagingOverload:
     def annotate_stmt(self, name: str, ty):
         if isinstance(ty, StagedTypeAnnotation):
             return ty.annotate(name)
-        return None
+        return lambda x: x
 
     def mark_position(self, lineno: int):
         '''
@@ -799,10 +799,12 @@ class Transformer(ast.NodeTransformer):
         intermediate = f'freetensor__annotate__{x.id}'
         intermediate_store = ast.Name(intermediate, ast.Store())
         intermediate_load = ast.Name(intermediate, ast.Load())
+        intermediate_call = ast.Call(intermediate_load,
+                                     [ast.Name(x.id, ast.Load())], [])
         node = [
             ast.Assign([intermediate_store],
                        call_helper(StagingOverload.annotate_stmt, x_str, Ty)),
-            ast.If(intermediate_load, [ast.Assign([x], intermediate_load)], [])
+            ast.If(intermediate_load, [ast.Assign([x], intermediate_call)], [])
         ]
 
         return node
@@ -812,7 +814,7 @@ class Transformer(ast.NodeTransformer):
         `x: Ty` -> ```
         freetensor__annotate__x = annotate_stmt('x', Ty)
         if freetensor__annotate__x:
-            x = freetensor__annotate__x
+            x = freetensor__annotate__x(x)
         ```: pure annotation
         '''
         node: ast.AnnAssign = self.generic_visit(old_node)

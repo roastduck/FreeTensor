@@ -96,3 +96,27 @@ def test_unusual_indent():
     assert f"File \"{file}\", line {line_foo}" in e.value.args[0]
     assert f"File \"{file}\", line {line_bar}" in e.value.args[0]
     assert f"File \"{file}\", line {line_ab}" in e.value.args[0]
+
+
+def test_invalid_type_declaration_1():
+
+    with pytest.raises(ft.StagingError):
+
+        @ft.transform(verbose=2)
+        def test(a, b):
+            c = 1
+            a: ft.Var[(), "int32"]
+            c: ft.Var[(), "int32"]  # c is not a parameter
+            return a
+
+
+def test_invalid_type_declaration_2():
+
+    with pytest.raises(ft.StagingError):
+
+        @ft.transform(verbose=2)
+        def test(a, b):
+            # c is not defined
+            a: ft.Var[(), "int32"]
+            c: ft.Var[(), "int32"]  # c is not a parameter
+            return a

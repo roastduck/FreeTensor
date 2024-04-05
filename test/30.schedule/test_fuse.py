@@ -461,7 +461,7 @@ def test_fuse_no_deps_1():
 def test_fuse_no_deps_2():
 
     @ft.transform
-    def test(ptr, edge1, edge2):
+    def test(ptr, edge1, edge2, foobar):
         ptr: ft.Var[(11,), "int32", "input", "cpu"]
         edge1: ft.Var[(50,), "int32", "input", "cpu"]
         edge2: ft.Var[(50,), "int32", "output", "cpu"]
