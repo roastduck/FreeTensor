@@ -479,7 +479,7 @@ def test_syncthreads_split_branch_out_of_const_loop():
 def test_syncthreads_no_split_branch_out_of_dynamic_loop():
 
     @ft.transform
-    def test(x, y):
+    def test(lim, x, y):
         lim: ft.Var[(3, 4), "int32", "input", "gpu/global"]
         x: ft.Var[(10, 10, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(10, 10), "int32", "output", "gpu/global"]
@@ -509,7 +509,7 @@ def test_syncthreads_no_split_branch_out_of_dynamic_loop():
 def test_syncthreads_no_need_to_split_branch():
 
     @ft.transform
-    def test(x, y):
+    def test(lim, x, y):
         lim: ft.Var[(3, 4), "int32", "input", "gpu/global"]
         x: ft.Var[(12, 10, 64), "int32", "input", "gpu/global"]
         y: ft.Var[(12, 10), "int32", "output", "gpu/global"]
@@ -562,7 +562,7 @@ def test_syncthreads_no_need_to_split_branch():
 def test_syncthreads_no_need_to_split_branch_warp():
 
     @ft.transform
-    def test(x, y):
+    def test(lim, x, y):
         lim: ft.Var[(3, 4), "int32", "input", "gpu/global"]
         x: ft.Var[(12, 10, 32), "int32", "input", "gpu/global"]
         y: ft.Var[(12, 10), "int32", "output", "gpu/global"]

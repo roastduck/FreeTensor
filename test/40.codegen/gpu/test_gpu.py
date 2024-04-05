@@ -1110,7 +1110,7 @@ def test_merge_no_deps_1():
 def test_merge_no_deps_2():
 
     @ft.transform(verbose=1)
-    def test(ptr, edge1, edge2):
+    def test(ptr, edge1, edge2, foobar):
         ptr: ft.Var[(4, 11), "int32", "input", "cpu"]
         edge1: ft.Var[(4, 50), "int32", "input", "cpu"]
         edge2: ft.Var[(4, 50), "int32", "output", "cpu"]

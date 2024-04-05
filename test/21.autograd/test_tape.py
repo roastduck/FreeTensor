@@ -523,7 +523,7 @@ def test_single_version_tape():
     bwd = ft.lower(bwd, verbose=1)
 
     @ft.transform
-    def expected(a, d_a, b_tape, d_c):
+    def expected(a, d_a, b_tape, d_b, d_c):
         a: ft.Var[(10,), "float32", "input"]
         d_a: ft.Var[(10,), "float32", "output"]
         b_tape: ft.Var[(1, 10), "float32>=0", "input"]
