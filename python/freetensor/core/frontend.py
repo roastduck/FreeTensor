@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from .. import ffi
 
 from .expr import (dtype, mtype, ndim, l_and, l_or, l_not, if_then_else, shape,
-                   VarVersionRef, UndeclaredParam)
-from .stmt import (_VarDef, VarRef, For, If, Else, ctx_stack, Assert, Invoke,
+                   VarRef, VarVersionRef, UndeclaredParam)
+from .stmt import (_VarDef, For, If, Else, ctx_stack, Assert, Invoke,
                    MarkVersion, UserGradStaged)
 from .staging import (StagedPredicate, StagedTypeAnnotation, StagedAssignable,
                       StagedIterable, StagingOverload, StagingOverloadStack,
@@ -537,36 +537,85 @@ class dynamic_range(StagedIterable):
             self.stop = start
         self.step = step
 
-    def foreach(self, name, body: Callable[[Any], None]) -> None:
+    @staticmethod
+    def _foreach(name, body: Callable[[Any], None], start, stop, step) -> None:
         '''Customized foreach behavior. Creates a For loop.'''
         if not isinstance(name, str):
             raise lang_overload.error(
                 'dynamic_range only supports exactly one target variable')
 
         # Early optimizations
-        if isinstance(self.start, Number) and isinstance(
-                self.stop, Number) and isinstance(self.step, Number):
-            if not range(self.start, self.stop, self.step):
+        if isinstance(start, Number) and isinstance(
+                stop, Number) and isinstance(step, Number):
+            if not range(start, stop, step):
                 return
-            if len(range(self.start, self.stop, self.step)) == 1:
+            if len(range(start, stop, step)) == 1:
                 with LifetimeScope():
-                    body(self.start)
+                    body(start)
                 return
 
         with lang_overload.allow_shortcut_scope(False):
-            with For(lang_overload.fullname(name), self.start, self.stop,
-                     self.step) as iter_var:
+            with For(lang_overload.fullname(name), start, stop,
+                     step) as iter_var:
                 with LifetimeScope():
                     body(iter_var)
+
+    def foreach(self, name, body: Callable[[Any], None]) -> None:
+        return self._foreach(name, body, self.start, self.stop, self.step)
+
+    def reversed_foreach(self, name, body: Callable[[Any], None]) -> None:
+        return self._foreach(
+            name, body, self.start + self.step *
+            ((self.stop - self.start - 1) // self.step), self.start - self.step,
+            -self.step)
 
 
 static_range = range
 
 
+def varref_foreach(self: VarRef, name, body: Callable[[Any], None]):
+    if not isinstance(name, str):
+        raise lang_overload.error(
+            '`for` `in` a `VarRef` only supports exactly one target variable')
+    with lang_overload.allow_shortcut_scope(False):
+        with For(lang_overload.fullname(name + ".iter"), 0, self.shape(0),
+                 1) as iter_var:
+            with LifetimeScope():
+                body(self[iter_var])
+
+
+def varref_reversed_foreach(self: VarRef, name, body: Callable[[Any], None]):
+    if not isinstance(name, str):
+        raise lang_overload.error(
+            '`for` `in` a `VarRef` only supports exactly one target variable')
+    with lang_overload.allow_shortcut_scope(False):
+        with For(lang_overload.fullname(name + ".iter"),
+                 self.shape(0) - 1, -1, -1) as iter_var:
+            with LifetimeScope():
+                body(self[iter_var])
+
+
+StagedIterable.register(VarRef)
+VarRef.foreach = varref_foreach
+VarRef.reversed_foreach = varref_reversed_foreach
+
+_register_as_predicate(VarRef)
+
+
+class ReversedIterable(StagedIterable):
+
+    def __init__(self, iterable: StagedIterable):
+        self.iterable = iterable
+
+    def foreach(self, name, body):
+        return self.iterable.reversed_foreach(name, body)
+
+    def reversed_foreach(self, name, body):
+        return self.iterable.foreach(name, body)
+
+
 def reversed(rng):
-    if isinstance(rng, dynamic_range):
-        return dynamic_range(
-            rng.start + rng.step * ((rng.stop - rng.start - 1) // rng.step),
-            rng.start - rng.step, -rng.step)
+    if isinstance(rng, StagedIterable):
+        return ReversedIterable(rng)
     else:
         return builtins.reversed(rng)

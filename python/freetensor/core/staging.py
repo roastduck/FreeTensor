@@ -601,9 +601,14 @@ class StagingOverloadStack:
         return f_staging
 
 
-class StagedIterable:
+class StagedIterable(abc.ABC):
 
+    @abc.abstractmethod
     def foreach(self, names, f: Callable[[Any], None]):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def reversed_foreach(self, names, f: Callable[[Any], None]):
         raise NotImplementedError()
 
 

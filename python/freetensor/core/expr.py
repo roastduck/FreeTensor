@@ -63,6 +63,12 @@ class VarRef(ffi.FrontendVar):
         for item in self.borrowed_vardefs:
             item.lend_out()
 
+    # If `__iter__` is just missing, Python will try to use `__getitem__` in a loop
+    # (https://docs.python.org/3/library/functions.html#iter), which is incorrect in our case.
+    # So we set it to None to avoiding the fallback
+    # (https://docs.python.org/3/reference/datamodel.html#special-method-names).
+    __iter__ = None
+
     def __del__(self):
         for item in self.borrowed_vardefs:
             item.reclaim()

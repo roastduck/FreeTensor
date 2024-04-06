@@ -181,6 +181,24 @@ def test_for():
     assert np.array_equal(y_func, y_std)
 
 
+def test_for_in_tensor():
+
+    @ft.optimize
+    @ft.transform(verbose=2)
+    def f(y):
+        y: ft.Var[(4,), "int32", "inout"]
+        for item in y:
+            item += 1
+
+    y_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_arr = ft.Array(y_np)
+    f(y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([2, 3, 4, 5], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
 def test_if():
 
     def test(y):
@@ -583,6 +601,24 @@ def test_reversed_dynamic_range_2():
             y[i] = x[i] + 1
 
     assert test.body.match(test_expected.body)
+
+
+def test_reversed_for_in_tensor():
+
+    @ft.optimize
+    @ft.transform(verbose=2)
+    def f(y):
+        y: ft.Var[(4,), "int32", "inout"]
+        for item in reversed(y):
+            item += 1
+
+    y_np = np.array([1, 2, 3, 4], dtype="int32")
+    y_arr = ft.Array(y_np)
+    f(y_arr)
+    y_np = y_arr.numpy()
+
+    y_std = np.array([2, 3, 4, 5], dtype="int32")
+    assert np.array_equal(y_np, y_std)
 
 
 @dataclass
