@@ -59,7 +59,7 @@ def test_float16_compute():
                 x16[j] = ft.cast(x[i, j], "float16")
             y16[...] = 0
             for j in range(4):
-                y16[j] += x16[j]
+                y16[...] += x16[j]
             y[i] = ft.cast(y16[...], "float32")
 
     with device:

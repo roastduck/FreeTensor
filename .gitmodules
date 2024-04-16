@@ -24,3 +24,6 @@
 [submodule "3rd-party/cutlass"]
 	path = 3rd-party/cutlass
 	url = ../../NVIDIA/cutlass.git
+[submodule "3rd-party/half"]
+	path = 3rd-party/half
+	url = ../../suruoxi/half.git

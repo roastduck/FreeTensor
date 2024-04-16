@@ -767,6 +767,14 @@ std::string CodeGenC<Stream>::gen(const DataType &dtype) {
         return "double";
     case DataType::Float32:
         return "float";
+    case DataType::Float16:
+        WARNING(
+            "float16 arithmetics on CPU is supported via emulation and comes "
+            "with a performance cost, which is only for compatibility purpose. "
+            "If you intend to do float32 computation on float16 variables, "
+            "please convert them explicitly. Please ignore this warning if you "
+            "are only allocating buffers and not performing arithmetics.");
+        return "half_float::half"; // From 3rd-party/half
     case DataType::Int64:
         return "int64_t";
     case DataType::Int32:
