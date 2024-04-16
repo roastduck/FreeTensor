@@ -157,6 +157,10 @@ class VarRef(ffi.FrontendVar):
         if not isinstance(key, collections.abc.Sequence):
             key = (key,)
         ffiIdx = []
+        if len(key) > self.ndim:
+            raise ffi.InvalidProgram(
+                f"Too many indices for {self.name}, expected no more than {self.ndim}"
+            )
         for idx, length in zip(key, self.shape()):
             if isinstance(idx, slice):
                 start = idx.start if idx.start is not None else 0
