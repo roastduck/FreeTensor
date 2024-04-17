@@ -783,7 +783,7 @@ def test_circular_dependence_in_parallel():
 
 
 def test_one_loop_depends_on_multiple_statements_no_remove():
-    with ft.VarDef("u", (64,), "float64", "input", "cpu") as u:
+    with ft.VarDef("u", (2, 2), "float64", "input", "cpu") as u:
         with ft.VarDef("y", (2,), "float64", "output", "cpu") as y:
             with ft.VarDef("tmp", (2,), "float64", "cache", "cpu") as tmp:
                 with ft.For("i", 0, 2) as i:
@@ -807,7 +807,7 @@ def test_one_loop_depends_on_multiple_statements_no_remove():
                        'prop_one_time_use', 'make_heap_alloc', 'float_simplify'
                    ])
 
-    with ft.VarDef("u", (64,), "float64", "input", "cpu") as u:
+    with ft.VarDef("u", (2, 2), "float64", "input", "cpu") as u:
         with ft.VarDef("y", (2,), "float64", "output", "cpu") as y:
             with ft.VarDef("tmp", (2,), "float64", "cache", "cpu") as tmp:
                 with ft.VarDef("A", (2,), "float32", "cache", "cpu") as A:
