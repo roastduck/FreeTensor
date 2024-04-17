@@ -113,7 +113,7 @@ void CodeGenCUDA::genMdPtrDef(const VarDef &def,
 }
 
 std::string CodeGenCUDA::gen(const DataType &dtype) {
-    if (inKernel() && dtype.base() == DataType::Float16) {
+    if (dtype.base() == DataType::Float16) {
         return "__half";
     } else {
         return CodeGenC::gen(dtype);

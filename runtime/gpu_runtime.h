@@ -21,7 +21,6 @@
 #include "unchecked_opt.h"
 
 #include "../3rd-party/cuda-samples/Common/helper_math.h"
-#include "../3rd-party/half/include/half.hpp" // For host code
 
 #define restrict __restrict__
 
