@@ -19,6 +19,8 @@
 #include "mdspan.h"
 #include "unchecked_opt.h"
 
+#include "../3rd-party/half/include/half.hpp"
+
 #define restrict __restrict__
 #define __ByValArray std::array
 
