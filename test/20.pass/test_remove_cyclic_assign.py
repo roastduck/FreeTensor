@@ -46,7 +46,7 @@ def test_in_branch_2():
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("cond", (), "bool", "cache", "cpu") as cond:
                 cond[...] = p[i] > 0
-                with ft.If(cond[i]):
+                with ft.If(cond[...]):
                     b[i] = a[i]
                     a[i] = b[i]
     ast = ft.pop_ast(verbose=True)
@@ -60,7 +60,7 @@ def test_in_branch_2():
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("cond", (), "bool", "cache", "cpu") as cond:
                 cond[...] = p[i] > 0
-                with ft.If(cond[i]):
+                with ft.If(cond[...]):
                     b[i] = a[i]
     std = ft.pop_ast()
 

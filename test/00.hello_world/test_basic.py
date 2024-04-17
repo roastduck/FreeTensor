@@ -388,6 +388,13 @@ def test_error_modifying_input_tensor_by_iadd_scalar():
         func = ft.lower(ft.Func("main", ["x"], [], ft.pop_ast()))
 
 
+def test_error_invalid_indices():
+    with pytest.raises(ft.InvalidProgram):
+        with ft.VarDef([("x", (4,), "float32", "output"),
+                        ("y", (), "float32", "output")]) as (x, y):
+            y[2] = x[2]  # y[2] is invalid
+
+
 def test_input_mutable():
     with ft.VarDef([("x", (), "int32", "input-mutable"),
                     ("y", (), "int32", "output")]) as (x, y):
