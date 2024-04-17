@@ -174,8 +174,8 @@ def test_prop_iter_in_expr():
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
-            y1[i] = i + 1
-            y2[i] = y1[i]
+            y1[...] = i + 1
+            y2[i] = y1[...]
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
 
@@ -183,7 +183,7 @@ def test_prop_iter_in_expr():
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
             with ft.If(i == 3):
-                y1[i] = 4
+                y1[...] = 4
             y2[i] = i + 1
     std = ft.pop_ast()
 

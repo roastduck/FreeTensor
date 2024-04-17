@@ -158,8 +158,9 @@ class VarRef(ffi.FrontendVar):
             key = (key,)
         ffiIdx = []
         if len(key) > self.ndim:
+            key_str = ', '.join(map(str, key))
             raise ffi.InvalidProgram(
-                f"Too many indices for {self.name}, expected no more than {self.ndim}"
+                f"Too many indices for {self.name}, expected no more than {self.ndim}, got [{key_str}]"
             )
         for idx, length in zip(key, self.shape()):
             if isinstance(idx, slice):

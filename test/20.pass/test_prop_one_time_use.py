@@ -129,8 +129,8 @@ def test_used_in_many_reads_no_prop():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
-                t[i] = x[i] + 1
-                y[i] = t[i] * t[i] + t[i]
+                t[...] = x[i] + 1
+                y[i] = t[...] * t[...] + t[...]
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
@@ -138,8 +138,8 @@ def test_used_in_many_reads_no_prop():
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
-                t[i] = x[i] + 1
-                y[i] = t[i] * t[i] + t[i]
+                t[...] = x[i] + 1
+                y[i] = t[...] * t[...] + t[...]
     std = ft.pop_ast()
 
     assert std.match(ast)
@@ -150,9 +150,9 @@ def test_used_in_many_iterations_no_prop():
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
-                t[i] = x[i] + 1
+                t[...] = x[i] + 1
                 with ft.For("j", 0, 8) as j:
-                    y[i, j] = t[i] * 2
+                    y[i, j] = t[...] * 2
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast, verbose=1)
 
@@ -160,9 +160,9 @@ def test_used_in_many_iterations_no_prop():
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
-                t[i] = x[i] + 1
+                t[...] = x[i] + 1
                 with ft.For("j", 0, 8) as j:
-                    y[i, j] = t[i] * 2
+                    y[i, j] = t[...] * 2
     std = ft.pop_ast()
 
     assert std.match(ast)
