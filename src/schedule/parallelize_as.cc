@@ -182,7 +182,7 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
     };
 
     FindAccessPoint finder{
-        defId, DEP_ALL, syncFunc([&](const Access &acc) {
+        defId, syncFunc([&](const auto &acc) {
             return acc.stmt_->ancestorById(reference).isValid();
         })};
     finder.doFind(ast);

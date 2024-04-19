@@ -23,9 +23,9 @@ void FindAllNoDeps::visit(const For &op) {
     }
 }
 
-FindAccessPoint::FindAccessPoint(const ID &vardef, DepType depType,
+FindAccessPoint::FindAccessPoint(const ID &vardef,
                                  const FindDepsAccFilter &accFilter)
-    : vardef_(vardef), depType_(depType), accFilter_(accFilter) {}
+    : vardef_(vardef), accFilter_(accFilter) {}
 
 void FindAccessPoint::doFind(const Stmt &root) {
     // Push potential StmtSeq scope
@@ -222,10 +222,6 @@ void FindAccessPoint::visit(const Assert &op) {
 void FindAccessPoint::visit(const Load &op) {
     BaseClass::visit(op);
 
-    if (!(depType_ & DEP_RAW) && !(depType_ & DEP_WAR)) {
-        return;
-    }
-
     bool isThisVarDef = false;
     VarDef viewOf;
     if (def(op->var_)->id() == vardef_) {
@@ -258,8 +254,8 @@ void FindAccessPoint::visit(const Load &op) {
         d = def(op->var_);
     }
 
-    if (accFilter_ == nullptr ||
-        accFilter_(Access{op, curStmt(), d, d->buffer_})) {
+    auto ap = Ref<AccessPoint>::make(op, curStmt(), d, d->buffer_);
+    if (accFilter_ == nullptr || accFilter_(*ap)) {
         if (!cur_.empty() &&
             cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
             // top is band node
@@ -270,9 +266,7 @@ void FindAccessPoint::visit(const Load &op) {
         }
         lastIsLoad_ = true;
 
-        auto ap = Ref<AccessPoint>::make();
-        *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
-               cur_, std::move(exprs), conds_};
+        ap->addCoord(defAxis_, cur_, std::move(exprs), conds_);
         reads_.emplace_back(ap);
     }
 }
@@ -1327,6 +1321,19 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     FindAllNoDeps noDepsFinder;
     noDepsFinder(op);
 
+    auto accFilter = accFilter_;
+    if (!(type_ & DEP_RAW) && !(type_ & DEP_WAR)) {
+        if (accFilter == nullptr) {
+            accFilter = unsyncFunc([](const AccessPointBase &ap) {
+                return ap.op_->nodeType() != ASTNodeType::Load;
+            });
+        } else {
+            accFilter = unsyncFunc([f = accFilter](const AccessPointBase &ap) {
+                return ap.op_->nodeType() != ASTNodeType::Load && f(ap);
+            });
+        }
+    }
+
     // Number the iteration space coordinates variable by variable, in order to
     // make the space more compact, so can be better coalesced
     auto defs = findAllStmt(
@@ -1334,7 +1341,7 @@ void FindDeps::operator()(const Stmt &op, const FindDepsCallback &found) {
     std::vector<FindAccessPoint> finders;
     finders.reserve(defs.size());
     for (auto &&def : defs) {
-        finders.emplace_back(def->id(), type_, accFilter_);
+        finders.emplace_back(def->id(), accFilter);
     }
     exceptSafeParallelFor<size_t>(
         0, finders.size(), 1, [&](size_t i) { finders[i].doFind(op); },

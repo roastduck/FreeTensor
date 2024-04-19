@@ -33,24 +33,35 @@ struct IterAxis {
         : iter_(iter), parallel_(parallel), negStep_(negStep) {}
 };
 
-struct Access {
+struct AccessPointBase {
     AST op_;
     Stmt stmt_;
     VarDef def_;
     Ref<Buffer> buffer_;
+
+    AccessPointBase(const AST &op, const Stmt &stmt, const VarDef &def,
+                    const Ref<Buffer> &buffer)
+        : op_(op), stmt_(stmt), def_(def), buffer_(buffer) {}
 };
 
-struct AccessPoint {
-    AST op_;
-    Stmt stmt_;
-    VarDef def_;
-    Ref<Buffer> buffer_;
-    int defAxis_;                /// The position of the VarDef
+struct AccessPoint : public AccessPointBase {
+    int defAxis_ = -1;           /// The position of the VarDef
     std::vector<IterAxis> iter_; /// The temporal location of the access
     std::vector<Expr> access_;   /// The spatial location of the access
     std::vector<std::pair<Expr, ID>>
         conds_; /// - first: The condition (predicate) of the access
                 /// - second: the statement that contribute to the condition)
+
+    AccessPoint(const AST &op, const Stmt &stmt, const VarDef &def,
+                const Ref<Buffer> &buffer)
+        : AccessPointBase(op, stmt, def, buffer) {}
+
+    void addCoord(int defAxis, auto &&iter, auto &&access, auto &&conds) {
+        defAxis_ = defAxis;
+        iter_ = std::forward<decltype(iter)>(iter);
+        access_ = std::forward<decltype(access)>(access);
+        conds_ = std::forward<decltype(conds)>(conds);
+    }
 };
 
 class FindAllNoDeps : public Visitor {
@@ -71,7 +82,7 @@ class FindAllNoDeps : public Visitor {
     void visit(const For &op) override;
 };
 
-typedef SyncFunc<bool(const Access &)> FindDepsAccFilter;
+typedef SyncFunc<bool(const AccessPointBase &)> FindDepsAccFilter;
 typedef std::function<bool(const AccessPoint &)> FindDepsAccPtFilter;
 typedef std::function<bool(const AccessPoint &later,
                            const AccessPoint &earlier)>
@@ -90,8 +101,6 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     typedef SymbolTable<TrackStmt<Visitor>> BaseClass;
 
     ID vardef_;
-
-    const DepType depType_;
     const FindDepsAccFilter &accFilter_;
 
     bool lastIsLoad_ =
@@ -137,8 +146,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
     /** @} */
 
   public:
-    FindAccessPoint(const ID &vardef, DepType depType,
-                    const FindDepsAccFilter &accFilter);
+    FindAccessPoint(const ID &vardef, const FindDepsAccFilter &accFilter);
 
     void doFind(const Stmt &root);
 
@@ -186,8 +194,8 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
             d = def(op->var_);
         }
 
-        if (accFilter_ == nullptr ||
-            accFilter_(Access{op, curStmt(), d, d->buffer_})) {
+        auto ap = Ref<AccessPoint>::make(op, curStmt(), d, d->buffer_);
+        if (accFilter_ == nullptr || accFilter_(*ap)) {
             if (!cur_.empty() &&
                 cur_.back().iter_->nodeType() == ASTNodeType::IntConst) {
                 // top is band node
@@ -196,9 +204,7 @@ class FindAccessPoint : public SymbolTable<TrackStmt<Visitor>> {
             }
             lastIsLoad_ = false;
 
-            auto ap = Ref<AccessPoint>::make();
-            *ap = {op,   curStmt(),        d,     d->buffer_, defAxis_,
-                   cur_, std::move(exprs), conds_};
+            ap->addCoord(defAxis_, cur_, std::move(exprs), conds_);
             writes_.emplace_back(ap);
         }
     }
@@ -587,17 +593,18 @@ class FindDeps {
      *
      * @{
      */
-    FindDeps filterAccess(const std::function<bool(const Access &)> &f) {
+    FindDeps
+    filterAccess(const std::function<bool(const AccessPointBase &)> &f) {
         return filterAccess(syncFunc(f));
     }
     FindDeps filterAccess(const FindDepsAccFilter &f) {
         FindDeps ret = *this;
-        ret.accFilter_ =
-            ret.accFilter_ == nullptr
-                ? f
-                : unsyncFunc([f0 = ret.accFilter_, f1 = f](const Access &acc) {
-                      return f0(acc) && f1(acc);
-                  });
+        ret.accFilter_ = ret.accFilter_ == nullptr
+                             ? f
+                             : unsyncFunc([f0 = ret.accFilter_,
+                                           f1 = f](const AccessPointBase &acc) {
+                                   return f0(acc) && f1(acc);
+                               });
         return ret;
     }
     /** @} */
@@ -665,7 +672,7 @@ class FindDeps {
      * Help function to analyze a sub-AST only
      */
     FindDeps filterSubAST(const ID &subAST) {
-        return filterAccess([subAST](const Access &acc) {
+        return filterAccess([subAST](const AccessPointBase &acc) {
             return acc.stmt_->ancestorById(subAST).isValid();
         });
     }
