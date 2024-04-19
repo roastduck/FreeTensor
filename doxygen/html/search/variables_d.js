@@ -1,7 +1,7 @@
 var searchData=
 [
   ['offset_0',['offset',['../structfreetensor_1_1ScalarPropConst_1_1ScalarIndices.html#ad7fdf5facebdce16ca443406d1288ad1',1,'freetensor::ScalarPropConst::ScalarIndices']]],
-  ['op_5f_1',['op_',['../structfreetensor_1_1Access.html#abd558d159c5aa4d7750466bd2cd980c3',1,'freetensor::Access::op_()'],['../structfreetensor_1_1AccessPoint.html#ad33b6369121f491d8119a7c482c03782',1,'freetensor::AccessPoint::op_()'],['../structfreetensor_1_1ReductionItem.html#a7ba933bec2d2c9b279a6d9b5f043de3f',1,'freetensor::ReductionItem::op_()'],['../classfreetensor_1_1ReduceToNode.html#a96417db2314feb513540c37a233faacc',1,'freetensor::ReduceToNode::op_()']]],
+  ['op_5f_1',['op_',['../structfreetensor_1_1AccessPointBase.html#af46f435eda2a038d76a9ac396d8da96b',1,'freetensor::AccessPointBase::op_()'],['../structfreetensor_1_1ReductionItem.html#a7ba933bec2d2c9b279a6d9b5f043de3f',1,'freetensor::ReductionItem::op_()'],['../classfreetensor_1_1ReduceToNode.html#a96417db2314feb513540c37a233faacc',1,'freetensor::ReduceToNode::op_()']]],
   ['opcnt_5f_2',['opCnt_',['../structfreetensor_1_1NodeFeature.html#a19ac857aad2de7d9b8132c3cbf67f263',1,'freetensor::NodeFeature']]],
   ['order_5f_3',['order_',['../structfreetensor_1_1NeedVarReorder.html#adf43789d493381b05645e2e0ce9aeb4f',1,'freetensor::NeedVarReorder']]],
   ['oribegin_5f_4',['oriBegin_',['../structfreetensor_1_1RangeToUserGrad.html#a49a008c1dc4fe0c65ee869004f22182b',1,'freetensor::RangeToUserGrad']]],

@@ -11,7 +11,7 @@ var searchData=
   ['splitter_8',['splitter',['../structfreetensor_1_1__Join.html#ae9d2fd04e5292d6e3c6c795f1f64f72d',1,'freetensor::_Join']]],
   ['stddev_5f_9',['stddev_',['../structfreetensor_1_1AutoScheduleTuneTrial.html#a7dc7a6bca75c1dae014e6f3e3445f137',1,'freetensor::AutoScheduleTuneTrial']]],
   ['step_5f_10',['step_',['../classfreetensor_1_1ForNode.html#a7937daecf4ee6b33f2ade0af08dc9e14',1,'freetensor::ForNode']]],
-  ['stmt_5f_11',['stmt_',['../structfreetensor_1_1AccessPoint.html#a17c23b5333b9ea13ccb69c90b48ec145',1,'freetensor::AccessPoint::stmt_()'],['../structfreetensor_1_1Access.html#ab9af0f26080fc0d73c4aa1fd3581173d',1,'freetensor::Access::stmt_()']]],
+  ['stmt_5f_11',['stmt_',['../structfreetensor_1_1AccessPointBase.html#ac351a8ac99ee1b4ada487a9455cf232a',1,'freetensor::AccessPointBase']]],
   ['stmts_5f_12',['stmts_',['../classfreetensor_1_1StmtSeqNode.html#a25e99bb11163dac12620b760dda442a9',1,'freetensor::StmtSeqNode']]],
   ['storearea_5f_13',['storeArea_',['../structfreetensor_1_1NodeFeature.html#a9e1d3beffa90b08d02482bd141407b46',1,'freetensor::NodeFeature']]],
   ['storecnt_5f_14',['storeCnt_',['../structfreetensor_1_1NodeFeature.html#a61a4c38e354d6f695eb1fa355fee9d40',1,'freetensor::NodeFeature']]],

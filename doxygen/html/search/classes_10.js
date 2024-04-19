@@ -67,6 +67,6 @@ var searchData=
   ['symboltabledata_64',['SymbolTableData',['../classfreetensor_1_1SymbolTableData.html',1,'freetensor']]],
   ['symboltableinterface_65',['SymbolTableInterface',['../classfreetensor_1_1SymbolTableInterface.html',1,'freetensor']]],
   ['syncfunc_66',['SyncFunc',['../classfreetensor_1_1SyncFunc.html',1,'freetensor']]],
-  ['syncfunc_3c_20bool_28const_20access_20_26_29_3e_67',['SyncFunc&lt; bool(const Access &amp;)&gt;',['../classfreetensor_1_1SyncFunc.html',1,'freetensor']]],
+  ['syncfunc_3c_20bool_28const_20accesspointbase_20_26_29_3e_67',['SyncFunc&lt; bool(const AccessPointBase &amp;)&gt;',['../classfreetensor_1_1SyncFunc.html',1,'freetensor']]],
   ['syncfunc_3c_20r_28params_2e_2e_2e_29_3e_68',['SyncFunc&lt; R(Params...)&gt;',['../classfreetensor_1_1SyncFunc_3_01R_07Params_8_8_8_08_4.html',1,'freetensor']]]
 ];

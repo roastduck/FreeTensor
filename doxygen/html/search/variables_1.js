@@ -17,6 +17,6 @@ var searchData=
   ['borrowed_5f_14',['borrowed_',['../structfreetensor_1_1ArrayCopy.html#a3792efc579514cc7d153f69c9ef7c2d7',1,'freetensor::ArrayCopy']]],
   ['bound_5f_15',['bound_',['../classfreetensor_1_1CompUniqueBoundsPB_1_1Bound.html#a7e75dea5f409e256a1d4357129ae5d5d',1,'freetensor::CompUniqueBoundsPB::Bound']]],
   ['bounds_5f_16',['bounds_',['../structfreetensor_1_1CompAccessBound_1_1Access.html#a8ad005818aab8f5d41176b45414b1c4c',1,'freetensor::CompAccessBound::Access']]],
-  ['buffer_5f_17',['buffer_',['../structfreetensor_1_1Access.html#abeafe394c1d679c13e3b969f273ec0c7',1,'freetensor::Access::buffer_()'],['../structfreetensor_1_1AccessPoint.html#ae5dee38c8af03951c72f8fa814ed4978',1,'freetensor::AccessPoint::buffer_()'],['../classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101',1,'freetensor::VarDefNode::buffer_()']]],
+  ['buffer_5f_17',['buffer_',['../structfreetensor_1_1AccessPointBase.html#a05c4fd28818572af370deab365dbb764',1,'freetensor::AccessPointBase::buffer_()'],['../classfreetensor_1_1VarDefNode.html#a6092e2ac0f53788f2ef040883cf36101',1,'freetensor::VarDefNode::buffer_()']]],
   ['bwdbody_5f_18',['bwdBody_',['../structfreetensor_1_1StmtSetToUserGrad.html#a8ff3af4bf5a06871d6e8f6b0f70c062f',1,'freetensor::StmtSetToUserGrad::bwdBody_()'],['../structfreetensor_1_1RangeToUserGrad.html#ab78dd6f2cfeb7cd2e94731e005eef714',1,'freetensor::RangeToUserGrad::bwdBody_()']]]
 ];

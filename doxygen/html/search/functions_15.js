@@ -1,8 +1,8 @@
 var searchData=
 [
   ['varinfo_0',['varInfo',['../classfreetensor_1_1FindLoopVariance.html#ae6091af06d3484c6524d81b93de7813c',1,'freetensor::FindLoopVariance']]],
-  ['varmerge_1',['VarMerge',['../classfreetensor_1_1VarMerge.html#a887c85602c5001b9e0d41bd090af7fe9',1,'freetensor::VarMerge']]],
-  ['varmerge_2',['varMerge',['../namespacefreetensor.html#abca0c7890ba9f6c2759ec78a7aee7ce4',1,'freetensor::varMerge()'],['../classfreetensor_1_1Schedule.html#a4afd2c54b5c306cea3ef02276278a638',1,'freetensor::Schedule::varMerge()']]],
+  ['varmerge_1',['varMerge',['../classfreetensor_1_1Schedule.html#a4afd2c54b5c306cea3ef02276278a638',1,'freetensor::Schedule::varMerge()'],['../namespacefreetensor.html#abca0c7890ba9f6c2759ec78a7aee7ce4',1,'freetensor::varMerge()']]],
+  ['varmerge_2',['VarMerge',['../classfreetensor_1_1VarMerge.html#a887c85602c5001b9e0d41bd090af7fe9',1,'freetensor::VarMerge']]],
   ['varreorder_3',['VarReorder',['../classfreetensor_1_1VarReorder.html#ad398e1f8cdce9f5c35342af960b0daf1',1,'freetensor::VarReorder']]],
   ['varreorder_4',['varReorder',['../classfreetensor_1_1Schedule.html#a0527473deeef7e00524a5aa1887c974b',1,'freetensor::Schedule::varReorder()'],['../namespacefreetensor.html#ae0daebab755627261041dd65164e2aad',1,'freetensor::varReorder(const Stmt &amp;ast, const ID &amp;def, const std::vector&lt; int &gt; &amp;order)']]],
   ['varreorderimpl_5',['varReorderImpl',['../namespacefreetensor.html#ae958153b0ad1173a6fe58d01588c86d6',1,'freetensor']]],

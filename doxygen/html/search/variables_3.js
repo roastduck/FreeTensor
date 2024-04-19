@@ -1,7 +1,7 @@
 var searchData=
 [
   ['data_5f_0',['data_',['../unionfreetensor_1_1SmallItem.html#ac0286701ad3d8a35a75cc3386fb93e04',1,'freetensor::SmallItem']]],
-  ['def_5f_1',['def_',['../structfreetensor_1_1Access.html#ad8d826bbc649121280aad8e06ba6d6b2',1,'freetensor::Access::def_()'],['../structfreetensor_1_1AccessPoint.html#ad8e8565aec405d576e4a10a575f56098',1,'freetensor::AccessPoint::def_()']]],
+  ['def_5f_1',['def_',['../structfreetensor_1_1AccessPointBase.html#abb2342324c9e0f19e5550d0e8aa3d0d7',1,'freetensor::AccessPointBase']]],
   ['defaxis_5f_2',['defAxis_',['../structfreetensor_1_1AccessPoint.html#adea1735e0b312418a82c3593b4555312',1,'freetensor::AccessPoint']]],
   ['demanglemap_5f_3',['demangleMap_',['../classfreetensor_1_1CompUniqueBoundsPB_1_1Bound.html#a0fa3ea013bbb02ce9547d03055ffd074',1,'freetensor::CompUniqueBoundsPB::Bound']]],
   ['dep_5fall_4',['DEP_ALL',['../namespacefreetensor.html#aa1ce31459ce14415bd7726376d64e06d',1,'freetensor']]],
