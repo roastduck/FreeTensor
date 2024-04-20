@@ -26,8 +26,12 @@ typedef std::vector<SimplePBFuncAST> PBFuncAST;
 
 /**
  * Parse a PBFunc to be ASTs
+ *
+ * @{
  */
-PBFuncAST parsePBFunc(const std::string &str);
+PBFuncAST parsePBFunc(const PBFunc::Serialized &f);
+PBFuncAST parsePBFunc(const PBSingleFunc::Serialized &f);
+/** @} */
 
 /**
  * Construct AST from PBSet while preserving min and max with a special hack to
@@ -35,8 +39,8 @@ PBFuncAST parsePBFunc(const std::string &str);
  *
  * @{
  */
-PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set);
-PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBMap &map);
+PBFuncAST parsePBFuncReconstructMinMax(const PBSet &set);
+PBFuncAST parsePBFuncReconstructMinMax(const PBMap &map);
 /** @} */
 
 /**
@@ -44,16 +48,15 @@ PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBMap &map);
  *
  * @{
  */
-inline SimplePBFuncAST parseSimplePBFunc(const std::string &str) {
-    auto ret = parsePBFunc(str);
+inline SimplePBFuncAST parseSimplePBFunc(const auto &f) {
+    auto ret = parsePBFunc(f);
     if (ret.size() != 1) {
-        throw ParserError(str + " is not a simple PBFunc");
+        throw ParserError(FT_MSG << f << " is not a simple PBFunc");
     }
     return ret.front();
 }
-inline SimplePBFuncAST parseSimplePBFuncReconstructMinMax(const PBCtx &ctx,
-                                                          const auto &f) {
-    auto ret = parsePBFuncReconstructMinMax(ctx, f);
+inline SimplePBFuncAST parseSimplePBFuncReconstructMinMax(const auto &f) {
+    auto ret = parsePBFuncReconstructMinMax(f);
     if (ret.size() != 1) {
         throw ParserError(FT_MSG << f << " is not a simple PBFunc");
     }

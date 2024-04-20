@@ -20,8 +20,7 @@ namespace freetensor {
 namespace {
 
 template <PBSetRef T>
-PBSet moveDimToNamedParam(const PBCtx &ctx, T &&set, int dim,
-                          const std::string &param) {
+PBSet moveDimToNamedParam(T &&set, int dim, const std::string &param) {
     // A name is required for the parameter, so we can't simply use
     // isl_set_move_dims. We constuct a map to apply on the set to move the
     // dimension. Example map: [p] -> {[_1, _2, p] -> [_1, _2]}
@@ -39,7 +38,7 @@ PBSet moveDimToNamedParam(const PBCtx &ctx, T &&set, int dim,
            views::transform([](int i) { return "_" + std::to_string(i); }) |
            join(","))
        << "]}";
-    PBMap map(ctx, os.str());
+    PBMap map(set.ctx(), os.str());
     return apply(std::forward<T>(set), std::move(map));
 }
 
@@ -48,13 +47,15 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
     std::pair<int64_t /* modulo */, Expr /* offset */>
     getStride(const Ref<CompUniqueBoundsPB::Bound> &bound, bool requireConst) {
         isl_stride_info *info = isl_set_get_stride_info(bound->bound_.get(), 0);
-        auto stride = PBVal(isl_stride_info_get_stride(info));
-        auto offset = PBSingleFunc(isl_stride_info_get_offset(info));
+        auto stride =
+            PBVal(bound->bound_.ctx(), isl_stride_info_get_stride(info));
+        auto offset =
+            PBSingleFunc(bound->bound_.ctx(), isl_stride_info_get_offset(info));
         isl_stride_info_free(info);
         ASSERT(stride.denSi() == 1);
         auto strideInt = stride.numSi();
         ReplaceIter demangler(*bound->demangleMap_);
-        auto offsetSimpleFunc = parseSimplePBFunc(toString(offset));
+        auto offsetSimpleFunc = parseSimplePBFunc(offset.toSerialized());
         // offsetSimpleFunc.args_ should be a dummy variable equals to `bound`'s
         // value. Leave it.
         ASSERT(offsetSimpleFunc.values_.size() == 1);
@@ -117,7 +118,7 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
         PBSet set = bound->bound_;
 
         // Reveal local dimensions
-        set = isl_set_lift(set.move());
+        set = PBSet{set.ctx(), isl_set_lift(set.move())};
 
         // Put local dimension at front, so we can represent the target
         // dimension by local dimensions, instead of representing local
@@ -141,7 +142,6 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
             }
 
             auto thisLoopBound = Ref<CompUniqueBoundsPB::Bound>::make(
-                bound->ctx_,
                 Ref<std::unordered_map<std::string, Expr>>::make(demangleMap),
                 thisLoopSet);
             Expr l, u, diff;
@@ -166,8 +166,7 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
                 // represented by outer loops. The parameter name used here is
                 // temporary, and will be replaced later.
                 auto paramName = "ft_shrink_for_tmp_" + std::to_string(i++);
-                set = moveDimToNamedParam(*bound->ctx_, std::move(set), 0,
-                                          paramName);
+                set = moveDimToNamedParam(std::move(set), 0, paramName);
                 demangleMap[paramName] = makeVar(paramName);
             }
         }

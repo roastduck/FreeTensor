@@ -99,9 +99,7 @@ class RecoverBoolVars : public Mutator {
     }
 };
 
-} // Anonymous namespace
-
-PBFuncAST parsePBFunc(const std::string &str) {
+PBFuncAST parsePBFuncImpl(const std::string &str) {
     try {
         antlr4::ANTLRInputStream charStream(str);
         pb_lexer lexer(&charStream);
@@ -125,6 +123,15 @@ PBFuncAST parsePBFunc(const std::string &str) {
         throw ParserError(FT_MSG << "Parser error: " << e.what()
                                  << "\n during parsing \"" << str << "\"");
     }
+}
+
+} // Anonymous namespace
+
+PBFuncAST parsePBFunc(const PBFunc::Serialized &f) {
+    return parsePBFuncImpl(f.data());
+}
+PBFuncAST parsePBFunc(const PBSingleFunc::Serialized &f) {
+    return parsePBFuncImpl(f.data());
 }
 
 namespace {
@@ -304,7 +311,7 @@ isl2Func(__isl_take isl_ast_node *node) {
 
 } // Anonymous namespace
 
-PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
+PBFuncAST parsePBFuncReconstructMinMax(const PBSet &set) {
     // This is a hack to isl's schedule. Treat the set as an iteration domain.
     // For a single-valued set, the domain will be zero or one statement,
     // implemented by a statement in multiple branches. We can recover Expr from
@@ -324,10 +331,10 @@ PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
         }) |
         ranges::to<std::vector>();
 
-    isl_options_set_ast_build_detect_min_max(ctx.get(), 1);
+    isl_options_set_ast_build_detect_min_max(set.ctx()->get(), 1);
 
     PBFuncAST ret;
-    isl_ast_build *build = isl_ast_build_alloc(ctx.get());
+    isl_ast_build *build = isl_ast_build_alloc(set.ctx()->get());
     try {
         isl_schedule *s =
             isl_schedule_from_domain(isl_union_set_from_set(set.copy()));
@@ -347,7 +354,7 @@ PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set) {
 
 namespace {
 
-template <PBMapRef T> PBMap moveAllInputDimsToParam(const PBCtx &ctx, T &&map) {
+template <PBMapRef T> PBMap moveAllInputDimsToParam(T &&map) {
     // A name is required for the parameter, so we can't simply use
     // isl_map_move_dims. We constuct a map to apply on the set to move the
     // dimension. Example map: [i1, i2] -> {[i1, i2] -> []}. The parameters are
@@ -366,15 +373,14 @@ template <PBMapRef T> PBMap moveAllInputDimsToParam(const PBCtx &ctx, T &&map) {
            }) |
            join(","))
        << "] -> []}";
-    PBMap moving(ctx, os.str());
+    PBMap moving(map.ctx(), os.str());
     return applyDomain(std::forward<T>(map), std::move(moving));
 }
 
 } // Anonymous namespace
 
-PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBMap &map) {
-    return parsePBFuncReconstructMinMax(
-        ctx, range(moveAllInputDimsToParam(ctx, map)));
+PBFuncAST parsePBFuncReconstructMinMax(const PBMap &map) {
+    return parsePBFuncReconstructMinMax(range(moveAllInputDimsToParam(map)));
 }
 
 } // namespace freetensor

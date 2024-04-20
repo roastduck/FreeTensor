@@ -17,7 +17,7 @@ namespace {
 
 struct ReplaceInfo {
     std::vector<IterAxis> earlierIters_, laterIters_;
-    std::string funcStr_;
+    PBFunc::Serialized func_;
 };
 
 } // namespace
@@ -111,7 +111,6 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
                            .isSingleValued()) { // Check before converting into
                                                 // PBFunc
                        if (auto f = pbFuncWithTimeout(
-                               d.presburger_,
                                [](const PBMap &map) { return PBFunc(map); }, 10,
                                d.later2EarlierIter_);
                            f.has_value()) {
@@ -119,7 +118,7 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
                            r2w[d.later()].emplace_back(
                                d.earlier().as<StmtNode>(),
                                ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                                           toString(*f)});
+                                           f->toSerialized()});
                        }
                    }
                }));
@@ -156,7 +155,7 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
             if (!allIters(store->expr_).empty()) {
                 try {
                     auto &&[args, values, cond] =
-                        parseSimplePBFunc(repInfo.funcStr_); // later -> earlier
+                        parseSimplePBFunc(repInfo.func_); // later -> earlier
                     ASSERT(repInfo.earlierIters_.size() <=
                            values.size()); // maybe padded
                     ASSERT(repInfo.laterIters_.size() <= args.size());
