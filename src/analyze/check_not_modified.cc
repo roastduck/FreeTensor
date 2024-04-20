@@ -176,16 +176,13 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         return ret;
     };
 
-    // write -> serialized PBSet
-    std::unordered_map<Stmt, std::string> writesWAR;
+    std::unordered_map<Stmt /* write */, PBSet::Serialized> writesWAR;
     std::mutex m;
     auto foundWAR = [&](const Dependence &dep) {
-        // Serialize WAR map because it is from a random PBCtx
-        auto strWAR =
-            toString(apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_));
+        auto strWAR = apply(domain(dep.later2EarlierIter_), dep.laterIter2Idx_);
         // only lock for writing the map
         std::lock_guard l(m);
-        writesWAR[dep.later_.stmt_] = strWAR;
+        writesWAR[dep.later_.stmt_] = strWAR.toSerialized();
     };
     FindDeps()
         .direction({dir})
@@ -200,9 +197,8 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
         .noProjectOutPrivateAxis(true)(tmpOp, unsyncFunc(foundWAR));
 
     auto foundRAW = [&](const Dependence &dep) {
-        // re-construct WAR map from stored string in current PBCtx
         auto w0 =
-            PBSet(dep.later2EarlierIter_.ctx(), writesWAR[dep.earlier_.stmt_]);
+            writesWAR[dep.earlier_.stmt_].to(dep.later2EarlierIter_.ctx());
         auto w1 = apply(range(dep.later2EarlierIter_), dep.earlierIter2Idx_);
         if (!intersect(std::move(w0), std::move(w1)).empty())
             throw ModifiedException{};

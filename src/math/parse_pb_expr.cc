@@ -99,9 +99,7 @@ class RecoverBoolVars : public Mutator {
     }
 };
 
-} // Anonymous namespace
-
-PBFuncAST parsePBFunc(const std::string &str) {
+PBFuncAST parsePBFuncImpl(const std::string &str) {
     try {
         antlr4::ANTLRInputStream charStream(str);
         pb_lexer lexer(&charStream);
@@ -125,6 +123,15 @@ PBFuncAST parsePBFunc(const std::string &str) {
         throw ParserError(FT_MSG << "Parser error: " << e.what()
                                  << "\n during parsing \"" << str << "\"");
     }
+}
+
+} // Anonymous namespace
+
+PBFuncAST parsePBFunc(const PBFunc::Serialized &f) {
+    return parsePBFuncImpl(f.data());
+}
+PBFuncAST parsePBFunc(const PBSingleFunc::Serialized &f) {
+    return parsePBFuncImpl(f.data());
 }
 
 namespace {

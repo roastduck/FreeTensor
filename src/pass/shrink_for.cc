@@ -55,7 +55,7 @@ class CompUniqueBoundsPBWithStride : public CompUniqueBoundsPB {
         ASSERT(stride.denSi() == 1);
         auto strideInt = stride.numSi();
         ReplaceIter demangler(*bound->demangleMap_);
-        auto offsetSimpleFunc = parseSimplePBFunc(toString(offset));
+        auto offsetSimpleFunc = parseSimplePBFunc(offset.toSerialized());
         // offsetSimpleFunc.args_ should be a dummy variable equals to `bound`'s
         // value. Leave it.
         ASSERT(offsetSimpleFunc.values_.size() == 1);

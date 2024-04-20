@@ -48,6 +48,13 @@ template <class T> T *MOVE_ISL_PTR(T *&ptr) {
     return ret;
 }
 
+/**
+ * Context for presburger operation
+ *
+ * - All operands of a presburger operation should be on the same context.
+ * - Operations in the same context is NOT thread-safe. Explitly transfer to a
+ * different context if you want to use in multiple threads.
+ */
 class PBCtx {
     isl_ctx *ctx_ = nullptr;
 
@@ -113,9 +120,21 @@ class PBMap {
     isl_map *copy() const { return COPY_ISL_PTR(map_, map); }
     isl_map *move() { return MOVE_ISL_PTR(map_); }
 
-    PBMap to(const Ref<PBCtx> &ctx) const {
-        return {ctx, isl_map_to_str(get())};
-    }
+    class Serialized {
+        std::string data_;
+
+      public:
+        Serialized() {}
+        Serialized(const std::string &data) : data_(data) {}
+        PBMap to(const Ref<PBCtx> &ctx) const { return {ctx, data_}; }
+        bool isValid() const { return !data_.empty(); }
+        const auto &data() const { return data_; }
+        friend std::ostream &operator<<(std::ostream &os, const Serialized &s) {
+            return os << s.data_;
+        }
+    };
+    Serialized toSerialized() const { return {isl_map_to_str(get())}; }
+    PBMap to(const Ref<PBCtx> &ctx) const { return toSerialized().to(ctx); }
 
     bool empty() const {
         DEBUG_PROFILE("empty");
@@ -249,9 +268,21 @@ class PBSet {
     isl_set *copy() const { return COPY_ISL_PTR(set_, set); }
     isl_set *move() { return MOVE_ISL_PTR(set_); }
 
-    PBSet to(const Ref<PBCtx> &ctx) const {
-        return {ctx, isl_set_to_str(get())};
-    }
+    class Serialized {
+        std::string data_;
+
+      public:
+        Serialized() {}
+        Serialized(const std::string &data) : data_(data) {}
+        PBSet to(const Ref<PBCtx> &ctx) const { return {ctx, data_}; }
+        bool isValid() const { return !data_.empty(); }
+        const auto &data() const { return data_; }
+        friend std::ostream &operator<<(std::ostream &os, const Serialized &s) {
+            return os << s.data_;
+        }
+    };
+    Serialized toSerialized() const { return {isl_set_to_str(get())}; }
+    PBSet to(const Ref<PBCtx> &ctx) const { return toSerialized().to(ctx); }
 
     bool empty() const {
         DEBUG_PROFILE("empty");
@@ -351,6 +382,12 @@ class PBSingleFunc {
     PBSingleFunc() {}
     PBSingleFunc(const Ref<PBCtx> &ctx, isl_pw_aff *func)
         : ctx_(ctx), func_(func) {}
+    PBSingleFunc(const Ref<PBCtx> &ctx, const std::string &str)
+        : ctx_(ctx), func_(isl_pw_aff_read_from_str(ctx->get(), str.c_str())) {
+        if (func_ == nullptr) {
+            ERROR("Unable to construct an PBSingleFunc from " + str);
+        }
+    }
     explicit PBSingleFunc(const Ref<PBCtx> &ctx, isl_aff *func)
         : ctx_(ctx), func_(isl_pw_aff_from_aff(func)) {}
 
@@ -391,6 +428,24 @@ class PBSingleFunc {
     isl_pw_aff *copy() const { return COPY_ISL_PTR(func_, pw_aff); }
     isl_pw_aff *move() { return MOVE_ISL_PTR(func_); }
 
+    class Serialized {
+        std::string data_;
+
+      public:
+        Serialized() {}
+        Serialized(const std::string &data) : data_(data) {}
+        PBSingleFunc to(const Ref<PBCtx> &ctx) const { return {ctx, data_}; }
+        bool isValid() const { return !data_.empty(); }
+        const auto &data() const { return data_; }
+        friend std::ostream &operator<<(std::ostream &os, const Serialized &s) {
+            return os << s.data_;
+        }
+    };
+    Serialized toSerialized() const { return {isl_pw_aff_to_str(get())}; }
+    PBSingleFunc to(const Ref<PBCtx> &ctx) const {
+        return toSerialized().to(ctx);
+    }
+
     isl_size nInDims() const { return isl_pw_aff_dim(get(), isl_dim_in); }
 
     std::vector<std::pair<PBSet, PBSingleFunc>> pieces() const {
@@ -424,6 +479,13 @@ class PBFunc {
     PBFunc() {}
     PBFunc(const Ref<PBCtx> &ctx, isl_pw_multi_aff *func)
         : ctx_(ctx), func_(func) {}
+    PBFunc(const Ref<PBCtx> &ctx, const std::string &str)
+        : ctx_(ctx),
+          func_(isl_pw_multi_aff_read_from_str(ctx->get(), str.c_str())) {
+        if (func_ == nullptr) {
+            ERROR("Unable to construct an PBFunc from " + str);
+        }
+    }
 
     PBFunc(const PBSingleFunc &singleFunc)
         : ctx_(singleFunc.ctx()),
@@ -478,6 +540,22 @@ class PBFunc {
     isl_pw_multi_aff *get() const { return GET_ISL_PTR(func_); }
     isl_pw_multi_aff *copy() const { return COPY_ISL_PTR(func_, pw_multi_aff); }
     isl_pw_multi_aff *move() { return MOVE_ISL_PTR(func_); }
+
+    class Serialized {
+        std::string data_;
+
+      public:
+        Serialized() {}
+        Serialized(const std::string &data) : data_(data) {}
+        PBFunc to(const Ref<PBCtx> &ctx) const { return {ctx, data_}; }
+        bool isValid() const { return !data_.empty(); }
+        const auto &data() const { return data_; }
+        friend std::ostream &operator<<(std::ostream &os, const Serialized &s) {
+            return os << s.data_;
+        }
+    };
+    Serialized toSerialized() const { return {isl_pw_multi_aff_to_str(get())}; }
+    PBFunc to(const Ref<PBCtx> &ctx) const { return toSerialized().to(ctx); }
 
     isl_size nInDims() const { return isl_pw_multi_aff_dim(get(), isl_dim_in); }
     isl_size nOutDims() const {

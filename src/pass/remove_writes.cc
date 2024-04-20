@@ -18,7 +18,7 @@ namespace {
 
 struct ReplaceInfo {
     std::vector<IterAxis> earlierIters_, laterIters_;
-    std::string funcStr_;
+    PBFunc::Serialized func_;
 };
 
 } // Anonymous namespace
@@ -229,15 +229,15 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         auto earlier = d.earlier().as<StmtNode>();
         auto later = d.later().as<StmtNode>();
         if (!kill.count(earlier)) {
-            kill[earlier] = domain(d.earlierIter2Idx_).to(presburger);
+            kill[earlier] = domain(d.earlierIter2Idx_.to(presburger));
         }
-        auto extConstraint = range(d.extConstraint_).to(presburger);
+        auto extConstraint = range(d.extConstraint_.to(presburger));
         std::tie(kill[earlier], extConstraint) =
             padToSameDims(std::move(kill[earlier]), std::move(extConstraint));
         kill[earlier] =
             intersect(std::move(kill[earlier]), std::move(extConstraint));
         overwrites.emplace_back(later, earlier,
-                                range(d.later2EarlierIter_).to(presburger),
+                                range(d.later2EarlierIter_.to(presburger)),
                                 ReplaceInfo{});
         suspect.insert(d.def());
     };
@@ -255,15 +255,14 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
                     auto earlier = d.earlier().as<StmtNode>();
                     auto later = d.later().as<StmtNode>();
                     if (!kill.count(earlier)) {
-                        kill[earlier] = PBSet(
-                            presburger, toString(domain(d.earlierIter2Idx_)));
+                        kill[earlier] =
+                            domain(d.earlierIter2Idx_.to(presburger));
                     }
                     overwrites.emplace_back(
                         later, earlier,
-                        PBSet(presburger,
-                              toString(range(d.later2EarlierIter_))),
+                        range(d.later2EarlierIter_.to(presburger)),
                         ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                                    toString(*f)});
+                                    f->toSerialized()});
                     suspect.insert(d.def());
                 }
             }
@@ -427,7 +426,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
             if (!allIters(expr).empty()) {
                 try {
                     auto &&[args, values, cond] =
-                        parseSimplePBFunc(repInfo.funcStr_); // later -> earlier
+                        parseSimplePBFunc(repInfo.func_); // later -> earlier
                     ASSERT(repInfo.earlierIters_.size() <=
                            values.size()); // maybe padded
                     ASSERT(repInfo.laterIters_.size() <= args.size());

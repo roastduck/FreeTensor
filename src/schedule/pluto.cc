@@ -277,7 +277,7 @@ struct PermuteInfo {
         newToOld = intersectRange(std::move(newToOld), loopSet);
         newToOld = moveDimsOutputToInput(std::move(newToOld), 0, nParams, 0);
 
-        auto func = parseSimplePBFunc(toString(PBFunc(newToOld)));
+        auto func = parseSimplePBFunc(PBFunc(newToOld).toSerialized());
         ASSERT(func.args_.size() == unsigned(nParams + nestLevel));
         ASSERT(func.values_.size() == unsigned(nestLevel));
 
@@ -418,8 +418,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                 n++;
             if (n < expectedN)
                 throw InvalidSchedule(
-                    "PlutoFuse: not enough loop nests found for " +
-                    toString(loop));
+                    FT_MSG << "PlutoFuse: not enough loop nests found for "
+                           << loop);
         }
         return std::pair{n, inner->parentStmt()->id()};
     };
@@ -459,7 +459,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         outersSame[0].emplace_back(f->id(), DepDirection::Same);
 
     auto ctx = Ref<PBCtx>::make();
-    std::string loop0SetStr, loop1SetStr;
+    PBSet::Serialized loop0SetStr, loop1SetStr;
     std::vector<IterAxis> outerAxes, loop0Axes, loop1Axes;
 
     auto getDeps = [&](const For &l0, int n0, const For &l1, int n1,
@@ -542,8 +542,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     // if fake access, set the loop sets instead of store deps
                     if (d.var_ == FAKE_ACCESS_VAR) {
                         // hMap is later -> earlier, hence loop1 -> loop0.
-                        loop1SetStr = toString(std::move(domain(hMap)));
-                        loop0SetStr = toString(std::move(range(hMap)));
+                        loop1SetStr = domain(hMap).toSerialized();
+                        loop0SetStr = range(hMap).toSerialized();
                         return;
                     }
 
@@ -573,7 +573,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     auto dep1to0 = getDeps(loop0, nestLevel0, loop1, nestLevel1, true);
 
     // construct loop sets
-    PBSet loop0Set(ctx, loop0SetStr), loop1Set(ctx, loop1SetStr);
+    PBSet loop0Set = loop0SetStr.to(ctx), loop1Set = loop1SetStr.to(ctx);
 
     // align external params and move to set dimensions
     const auto [nParams, paramExprs] = [&] {

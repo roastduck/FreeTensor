@@ -19,7 +19,7 @@ namespace {
 
 struct ReplaceInfo {
     std::vector<IterAxis> earlierIters_, laterIters_;
-    std::string funcStr_;
+    PBFunc::Serialized func_;
 };
 
 std::vector<std::pair<AST, std::pair<Stmt, ReplaceInfo>>>
@@ -69,8 +69,8 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
         r2wCandidates;
     std::unordered_map<AST, std::vector<Stmt>> r2wMay;
     std::unordered_set<Stmt> wCandidates;
-    std::unordered_map<Stmt,
-                       std::vector<std::pair<AST, std::string /* writeIter */>>>
+    std::unordered_map<
+        Stmt, std::vector<std::pair<AST, PBSet::Serialized /* writeIter */>>>
         w2rMay;
     std::unordered_map<AST, Stmt> stmts;
     std::mutex lock;
@@ -124,7 +124,7 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
                            // which may propagate
                            d.earlier().as<StmtNode>(),
                            ReplaceInfo{d.earlier_.iter_, d.later_.iter_,
-                                       toString(*f)});
+                                       f->toSerialized()});
                        wCandidates.emplace(d.earlier().as<StmtNode>());
                        stmts[d.later()] = d.later_.stmt_;
                    }
@@ -153,7 +153,7 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
                 writeIter.nDims() - d.earlier_.iter_.size());
             r2wMay[d.later()].emplace_back(d.earlier().as<StmtNode>());
             w2rMay[d.earlier().as<StmtNode>()].emplace_back(
-                d.later(), toString(writeIter));
+                d.later(), writeIter.toSerialized());
         });
 
     // Filter single-valued and one-time-used
@@ -175,8 +175,8 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
         ASSERT(w2rMay.count(write.first));
         auto ctx = Ref<PBCtx>::make();
         PBSet writeIterUnion;
-        for (auto &&[read, writeIterStr] : w2rMay.at(write.first)) {
-            PBSet writeIter = PBSet(ctx, writeIterStr);
+        for (auto &&[read, _writeIter] : w2rMay.at(write.first)) {
+            PBSet writeIter = _writeIter.to(ctx);
             if (writeIterUnion.isValid()) {
                 if (!intersect(writeIterUnion, writeIter).empty()) {
                     goto failure; // Not one-time-used
@@ -212,7 +212,7 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
         if (!allIters(toProp).empty()) {
             try {
                 auto &&[args, values, cond] =
-                    parseSimplePBFunc(repInfo.funcStr_); // later -> earlier
+                    parseSimplePBFunc(repInfo.func_); // later -> earlier
                 ASSERT(repInfo.earlierIters_.size() <=
                        values.size()); // maybe padded
                 ASSERT(repInfo.laterIters_.size() <= args.size());

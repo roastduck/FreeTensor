@@ -82,7 +82,7 @@ void genCondExpr(const Ref<PBCtx> &presburger, CondInfo *info) {
         PBMap indicator = intersectDomain(
             anythingTo1(presburger, info->when_.nDims()), info->when_);
         for (auto &&[args, _, factorRange] :
-             parsePBFunc(toString(PBFunc(indicator)))) {
+             parsePBFunc(PBFunc(indicator).toSerialized())) {
             if (!allReads(factorRange).empty()) {
                 throw ParserError("External variable in recomputing condition "
                                   "is not yet supported");

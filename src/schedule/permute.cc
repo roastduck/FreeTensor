@@ -216,7 +216,7 @@ std::pair<Stmt, std::vector<ID>> permute(
     };
 
     size_t numBackDims;
-    std::string iter2permuted;
+    PBMap::Serialized iter2permuted;
 
     FindDeps()
         .direction({dir.begin(), dir.end()})
@@ -228,7 +228,7 @@ std::pair<Stmt, std::vector<ID>> permute(
             [&](const ID &defId,
                 const std::unordered_map<ID, std::vector<IterAxis>>
                     &scope2coord) {
-                if (iter2permuted.empty() && scope2coord.count(loopsId[0])) {
+                if (!iter2permuted.isValid() && scope2coord.count(loopsId[0])) {
                     // compute number of backing dimensions, outer than our
                     // outermost loop
                     numBackDims = scope2coord.at(loopsId[0]).size() - 1;
@@ -239,13 +239,13 @@ std::pair<Stmt, std::vector<ID>> permute(
 
                     // prepare iter -> permuted map string, for later use in
                     // `found'
-                    iter2permuted = toString(permuteMap);
+                    iter2permuted = permuteMap.toSerialized();
                 }
             })
         .filterSubAST(loops.front()->id())(ast, [&](const Dependence &d) {
             // Construct map for iter -> permuted
             auto iter2permutedMap =
-                PBMap(d.later2EarlierIter_.ctx(), iter2permuted);
+                iter2permuted.to(d.later2EarlierIter_.ctx());
             // laterIter -> permuted
             auto &&permuteMapLater = applyRange(
                 PBMap(d.later2EarlierIter_.ctx(),
@@ -276,7 +276,7 @@ std::pair<Stmt, std::vector<ID>> permute(
     // compute the function for reverse permute; we iterate against permuted
     // space, thus we need to compute the original iterators from the new ones
     auto reversePermute =
-        parseSimplePBFunc(toString(PBFunc(reverse(permuteMap))));
+        parseSimplePBFunc(PBFunc(reverse(permuteMap)).toSerialized());
 
     // perform transformation
     Permute permuter(loopsId, reversePermute);
