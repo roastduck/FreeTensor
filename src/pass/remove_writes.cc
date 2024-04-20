@@ -219,7 +219,7 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         })
         .ignoreReductionWAW(false)(op, foundSelfDependent);
 
-    PBCtx presburger;
+    auto presburger = Ref<PBCtx>::make();
     // {(later, earlier, toKill, replaceInfo)}
     std::vector<std::tuple<Stmt, Stmt, PBSet, ReplaceInfo>> overwrites;
     std::unordered_map<Stmt, std::unordered_set<AST>> usesRAW; // W -> R
@@ -229,19 +229,16 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
         auto earlier = d.earlier().as<StmtNode>();
         auto later = d.later().as<StmtNode>();
         if (!kill.count(earlier)) {
-            kill[earlier] =
-                PBSet(presburger, toString(domain(d.earlierIter2Idx_)));
+            kill[earlier] = domain(d.earlierIter2Idx_).to(presburger);
         }
-        auto extConstraint =
-            PBSet(presburger, toString(range(d.extConstraint_)));
+        auto extConstraint = range(d.extConstraint_).to(presburger);
         std::tie(kill[earlier], extConstraint) =
             padToSameDims(std::move(kill[earlier]), std::move(extConstraint));
         kill[earlier] =
             intersect(std::move(kill[earlier]), std::move(extConstraint));
-        overwrites.emplace_back(
-            later, earlier,
-            PBSet(presburger, toString(range(d.later2EarlierIter_))),
-            ReplaceInfo{});
+        overwrites.emplace_back(later, earlier,
+                                range(d.later2EarlierIter_).to(presburger),
+                                ReplaceInfo{});
         suspect.insert(d.def());
     };
     std::mutex lock;
@@ -251,7 +248,6 @@ Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
              sameParent(d.later_.stmt_, d.earlier_.stmt_))) {
             if (d.later2EarlierIter_.isSingleValued()) {
                 if (auto f = pbFuncWithTimeout(
-                        d.presburger_,
                         [](const PBMap &map) { return PBFunc(map); }, 10,
                         d.later2EarlierIter_);
                     f.has_value()) {

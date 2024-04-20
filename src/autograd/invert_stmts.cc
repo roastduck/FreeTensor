@@ -58,7 +58,7 @@ struct CondInfo {
     Expr cond_;
 };
 
-PBMap anythingTo1(PBCtx &presburger, int nDims) {
+PBMap anythingTo1(const Ref<PBCtx> &presburger, int nDims) {
     std::ostringstream os;
     os << "{[";
     for (int i = 0; i < nDims; i++) {
@@ -68,7 +68,7 @@ PBMap anythingTo1(PBCtx &presburger, int nDims) {
     return PBMap(presburger, os.str());
 }
 
-void genCondExpr(PBCtx &presburger, CondInfo *info) {
+void genCondExpr(const Ref<PBCtx> &presburger, CondInfo *info) {
     // Use less basic sets to express info->when_. It also makes our final
     // expression simpler
     info->when_ = coalesce(info->when_);
@@ -230,7 +230,7 @@ invertStmts(const Stmt &op,
     // invertible statement, and when X reaches the end of its lifetime. To
     // detect the latter case, we insert a fake self-assigning statement just
     // before the lifetime's end before dependence analysis.
-    PBCtx presburger;
+    auto presburger = Ref<PBCtx>::make();
     std::unordered_map<ID, CondInfo> unrecoverableInfo, toInvertInfo;
     std::unordered_map<ID, PBSet> allPossibleIters;
     // TODO: We can apply an additional filter to only invert Y if it already to
@@ -247,9 +247,8 @@ invertStmts(const Stmt &op,
             }
             return false;
         })(InsertLifetimeEndChecker{*idsNeeded}(op), [&](const Dependence &d) {
-            // Serialize and deserialize to change PBCtx
-            auto earlierIterSet =
-                PBSet(presburger, toString(range(d.later2EarlierIter_)));
+            auto later2EarlierIter = d.later2EarlierIter_.to(presburger);
+            auto earlierIterSet = range(later2EarlierIter);
 
             // Trim paddings
             earlierIterSet = projectOutDims(
@@ -259,9 +258,7 @@ invertStmts(const Stmt &op,
             auto toInvert = d.later_.stmt_->id();
             auto toRecover = d.earlier_.stmt_->id();
             if (invertibles.count(d.later_.stmt_->id())) { // Can invert
-                // Serialize and deserialize to change PBCtx
-                auto laterIterSet =
-                    PBSet(presburger, toString(domain(d.later2EarlierIter_)));
+                auto laterIterSet = domain(later2EarlierIter);
 
                 // Trim paddings
                 laterIterSet = projectOutDims(

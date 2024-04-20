@@ -21,7 +21,6 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
   public:
     class Bound : public CompUniqueBounds::Bound {
       public: // Visible to CompUniqueBoundsPB's subclasses
-        Ref<PBCtx> ctx_;
         // isl var -> ft expr, the demangling map yielded from GenPBExpr
         // shared from CompUniqueBoundsPB::cachedFreeVars_
         Ref<std::unordered_map<std::string, Expr>> demangleMap_;
@@ -30,11 +29,9 @@ class CompUniqueBoundsPB : public CompUniqueBounds {
         PBSet bound_;
 
       public:
-        Bound(Ref<PBCtx> ctx,
-              Ref<std::unordered_map<std::string, Expr>> demangleMap,
+        Bound(Ref<std::unordered_map<std::string, Expr>> demangleMap,
               PBSet bound)
-            : ctx_(std::move(ctx)), demangleMap_(std::move(demangleMap)),
-              bound_(std::move(bound)) {}
+            : demangleMap_(std::move(demangleMap)), bound_(std::move(bound)) {}
 
         BoundType type() const override { return BoundType::Presburger; }
 

@@ -115,7 +115,6 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
                    // we not only need `singleValued`, but also `bijective`, to
                    // ensure it is really used "one time"
                    if (auto f = pbFuncWithTimeout(
-                           d.presburger_,
                            [](const PBMap &map) { return PBFunc(map); }, 10,
                            d.later2EarlierIter_);
                        f.has_value()) {
@@ -174,7 +173,7 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
         // Check one-time use: All read statements should read different items
         // written by the write statement
         ASSERT(w2rMay.count(write.first));
-        PBCtx ctx;
+        auto ctx = Ref<PBCtx>::make();
         PBSet writeIterUnion;
         for (auto &&[read, writeIterStr] : w2rMay.at(write.first)) {
             PBSet writeIter = PBSet(ctx, writeIterStr);

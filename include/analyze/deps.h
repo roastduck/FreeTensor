@@ -256,7 +256,6 @@ struct Dependence {
     // not only counting the nearest, but all
     PBMap later2EarlierIterAllPossible_;
     PBMap extConstraint_;
-    PBCtx &presburger_;
     AnalyzeDeps &self_;
 
     // Helper functions
@@ -363,39 +362,40 @@ class AnalyzeDeps {
     static std::string makeCond(GenPBExpr &genPBExpr,
                                 GenPBExpr::VarMap &externals,
                                 bool eraseOutsideVarDef, const AccessPoint &ap);
-    static PBMap makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
-                                  int iterDim, int accDim,
+    static PBMap makeAccMapStatic(const Ref<PBCtx> &presburger,
+                                  const AccessPoint &p, int iterDim, int accDim,
                                   const std::string &extSuffix,
                                   GenPBExpr::VarMap &externals,
                                   const ASTHashSet<Expr> &noNeedToBeVars,
                                   bool eraseOutsideVarDef);
 
   private:
-    PBMap makeAccMap(PBCtx &presburger, const AccessPoint &p, int iterDim,
-                     int accDim, const std::string &extSuffix,
+    PBMap makeAccMap(const Ref<PBCtx> &presburger, const AccessPoint &p,
+                     int iterDim, int accDim, const std::string &extSuffix,
                      GenPBExpr::VarMap &externals,
                      const ASTHashSet<Expr> &noNeedToBeVars) {
         return makeAccMapStatic(presburger, p, iterDim, accDim, extSuffix,
                                 externals, noNeedToBeVars, eraseOutsideVarDef_);
     }
 
-    PBMap makeEqForBothOps(PBCtx &presburger,
+    PBMap makeEqForBothOps(const Ref<PBCtx> &presburger,
                            const std::vector<std::pair<int, int>> &coord,
                            int iterDim) const;
-    PBMap makeIneqBetweenOps(PBCtx &presburger, DepDirection mode, int iterId,
-                             int iterDim) const;
+    PBMap makeIneqBetweenOps(const Ref<PBCtx> &presburger, DepDirection mode,
+                             int iterId, int iterDim) const;
 
-    PBMap makeSerialToAll(PBCtx &presburger, int iterDim,
+    PBMap makeSerialToAll(const Ref<PBCtx> &presburger, int iterDim,
                           const std::vector<IterAxis> &point) const;
     static int countSerial(const std::vector<IterAxis> &point);
 
-    PBMap makeExternalEq(PBCtx &presburger, int iterDim,
+    PBMap makeExternalEq(const Ref<PBCtx> &presburger, int iterDim,
                          const std::string &ext1, const std::string &ext2);
 
-    PBMap makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
-                                     DepDirection mode, int iterDim);
+    PBMap makeConstraintOfSingleLoop(const Ref<PBCtx> &presburger,
+                                     const ID &loop, DepDirection mode,
+                                     int iterDim);
 
-    PBMap makeConstraintOfParallelScope(PBCtx &presburger,
+    PBMap makeConstraintOfParallelScope(const Ref<PBCtx> &presburger,
                                         const ParallelScope &parallel,
                                         DepDirection mode, int iterDim,
                                         const AccessPoint &later,
@@ -415,14 +415,14 @@ class AnalyzeDeps {
      *
      * There will be no dependences of a[0] across i
      */
-    PBMap makeEraseVarDefConstraint(PBCtx &presburger,
+    PBMap makeEraseVarDefConstraint(const Ref<PBCtx> &presburger,
                                     const Ref<AccessPoint> &point, int iterDim);
 
     /**
      * Constraint for loops that explicitly marked as no_deps by users
      */
-    PBMap makeNoDepsConstraint(PBCtx &presburger, const std::string &var,
-                               int iterDim);
+    PBMap makeNoDepsConstraint(const Ref<PBCtx> &presburger,
+                               const std::string &var, int iterDim);
 
     /**
      * Constraint for external variables inside loop
@@ -438,7 +438,7 @@ class AnalyzeDeps {
      * idx[i] + j must be different for the same i but different j, but
      * idx[i] + j may be the same for different i
      */
-    PBMap makeExternalVarConstraint(PBCtx &presburger,
+    PBMap makeExternalVarConstraint(const Ref<PBCtx> &presburger,
                                     const Ref<AccessPoint> &later,
                                     const Ref<AccessPoint> &earlier,
                                     const GenPBExpr::VarMap &laterExternals,
@@ -460,13 +460,15 @@ class AnalyzeDeps {
      * FindDepsMode::Dep mode, we do not care about the result. Therefore, we
      * project out these dimensions
      */
-    PBMap projectOutPrivateAxis(PBCtx &presburger, int iterDim, int since);
-    void projectOutPrivateAxis(PBCtx &presburger, const Ref<AccessPoint> &point,
+    PBMap projectOutPrivateAxis(const Ref<PBCtx> &presburger, int iterDim,
+                                int since);
+    void projectOutPrivateAxis(const Ref<PBCtx> &presburger,
+                               const Ref<AccessPoint> &point,
                                const std::vector<Ref<AccessPoint>> &otherList,
                                std::vector<PBMap> &otherMapList, int iterDim);
     int numCommonDims(const Ref<AccessPoint> &p1, const Ref<AccessPoint> &p2);
 
-    void checkAgainstCond(PBCtx &presburger, const Ref<AccessPoint> &later,
+    void checkAgainstCond(const Ref<AccessPoint> &later,
                           const Ref<AccessPoint> &earlier, const PBMap &depAll,
                           const PBMap &nearest, const PBMap &laterMap,
                           const PBMap &earlierMap, const PBMap &extConstraint,
@@ -485,7 +487,8 @@ class AnalyzeDeps {
     checkDepLatestEarlier(const Ref<AccessPoint> &later,
                           const std::vector<Ref<AccessPoint>> &earlierList);
     void
-    checkDepLatestEarlierImpl(PBCtx &presburger, const Ref<AccessPoint> &later,
+    checkDepLatestEarlierImpl(const Ref<PBCtx> &presburger,
+                              const Ref<AccessPoint> &later,
                               const std::vector<Ref<AccessPoint>> &earlierList);
 
     /**
@@ -498,7 +501,7 @@ class AnalyzeDeps {
     void checkDepEarliestLater(const std::vector<Ref<AccessPoint>> &laterList,
                                const Ref<AccessPoint> &earlier);
     void
-    checkDepEarliestLaterImpl(PBCtx &presburger,
+    checkDepEarliestLaterImpl(const Ref<PBCtx> &presburger,
                               const std::vector<Ref<AccessPoint>> &laterList,
                               const Ref<AccessPoint> &earlier);
 };

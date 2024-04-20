@@ -39,7 +39,6 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
     typedef TrackStmt<SymbolTable<Mutator>> BaseClass;
 
     ID nest_, defId_;
-    const PBCtx &presburger_;
     const std::vector<For> &orderedScopes_;
     const std::unordered_map<ID, PBMap> &scope2Idx2Iter_;
 
@@ -55,11 +54,11 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
     std::unordered_map<ID, std::vector<std::vector<Expr>>> threadGuard_;
 
   public:
-    AddParScopes(const ID &nest, const ID &defId, const PBCtx &presburger,
+    AddParScopes(const ID &nest, const ID &defId,
                  const std::vector<For> &orderedScopes,
                  const std::unordered_map<ID, PBMap> &scope2Idx2Iter)
-        : nest_(nest), defId_(defId), presburger_(presburger),
-          orderedScopes_(orderedScopes), scope2Idx2Iter_(scope2Idx2Iter) {}
+        : nest_(nest), defId_(defId), orderedScopes_(orderedScopes),
+          scope2Idx2Iter_(scope2Idx2Iter) {}
 
     const auto &newScopeIds() const { return newScopeIds_; }
     const auto &newNestId() const { return newNestId_; }
@@ -74,8 +73,7 @@ class AddParScopes : public TrackStmt<SymbolTable<Mutator>> {
                 auto &&idx2iter = coalesce(scope2Idx2Iter_.at(scope->id()));
                 SimplePBFuncAST f;
                 try {
-                    f = parseSimplePBFuncReconstructMinMax(presburger_,
-                                                           idx2iter);
+                    f = parseSimplePBFuncReconstructMinMax(idx2iter);
                 } catch (const ParserError &e) {
                     throw InvalidSchedule(
                         FT_MSG << "Thread mapping is not a simple function: "
@@ -187,7 +185,7 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
         })};
     finder.doFind(ast);
 
-    PBCtx presburger;
+    auto presburger = Ref<PBCtx>::make();
     std::unordered_map<ID, PBMap> scope2Idx2Iter;
     for (const Ref<AccessPoint> &acc :
          views::concat(finder.reads(), finder.writes())) {
@@ -261,7 +259,7 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
         }
     }
 
-    AddParScopes adder{nest, defId, presburger, orderedScopes, scope2Idx2Iter};
+    AddParScopes adder{nest, defId, orderedScopes, scope2Idx2Iter};
     ast = adder(ast);
 
     // Shrink original loops in `nest` according to the gaurds with just add. If

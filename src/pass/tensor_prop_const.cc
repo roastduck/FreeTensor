@@ -111,7 +111,6 @@ Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
                            .isSingleValued()) { // Check before converting into
                                                 // PBFunc
                        if (auto f = pbFuncWithTimeout(
-                               d.presburger_,
                                [](const PBMap &map) { return PBFunc(map); }, 10,
                                d.later2EarlierIter_);
                            f.has_value()) {

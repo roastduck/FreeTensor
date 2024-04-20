@@ -40,7 +40,7 @@ std::optional<int64_t> CompUniqueBoundsPB::Bound::getInt() const {
 namespace {
 
 Expr translateBoundFunc(
-    PBCtx &ctx, const PBSet &boundSet,
+    const PBSet &boundSet,
     const std::unordered_map<std::string, Expr> &demangleMap) {
 
     if (boundSet.empty()) {
@@ -49,7 +49,7 @@ Expr translateBoundFunc(
 
     // TODO: clear out those not related params
     PBSet compactedBoundSet = coalesce(boundSet);
-    auto parsed = parsePBFuncReconstructMinMax(ctx, compactedBoundSet);
+    auto parsed = parsePBFuncReconstructMinMax(compactedBoundSet);
 
     Expr result;
     ReplaceIter demangler(demangleMap);
@@ -73,26 +73,26 @@ Expr translateBoundFunc(
 
 Expr CompUniqueBoundsPB::Bound::lowerExpr() const {
     return bound_.hasLowerBound(0)
-               ? translateBoundFunc(*ctx_, lexmin(bound_), *demangleMap_)
+               ? translateBoundFunc(lexmin(bound_), *demangleMap_)
                : nullptr;
 }
 Expr CompUniqueBoundsPB::Bound::upperExpr() const {
     return bound_.hasUpperBound(0)
-               ? translateBoundFunc(*ctx_, lexmax(bound_), *demangleMap_)
+               ? translateBoundFunc(lexmax(bound_), *demangleMap_)
                : nullptr;
 }
 std::tuple<Expr, Expr, Expr>
 CompUniqueBoundsPB::Bound::lowerUpperDiffExpr() const {
     PBSet l = bound_.hasLowerBound(0) ? lexmin(bound_) : PBSet();
     PBSet u = bound_.hasUpperBound(0) ? lexmax(bound_) : PBSet();
-    PBSet diff = l.isValid() && u.isValid()
-                     ? coalesce(apply(cartesianProduct(u, l),
-                                      PBMap(*ctx_, "{[u, l] -> [u - l]}")))
-                     : PBSet();
-    return {l.isValid() ? translateBoundFunc(*ctx_, l, *demangleMap_) : nullptr,
-            u.isValid() ? translateBoundFunc(*ctx_, u, *demangleMap_) : nullptr,
-            diff.isValid() ? translateBoundFunc(*ctx_, diff, *demangleMap_)
-                           : nullptr};
+    PBSet diff =
+        l.isValid() && u.isValid()
+            ? coalesce(apply(cartesianProduct(u, l),
+                             PBMap(bound_.ctx(), "{[u, l] -> [u - l]}")))
+            : PBSet();
+    return {l.isValid() ? translateBoundFunc(l, *demangleMap_) : nullptr,
+            u.isValid() ? translateBoundFunc(u, *demangleMap_) : nullptr,
+            diff.isValid() ? translateBoundFunc(diff, *demangleMap_) : nullptr};
 }
 
 Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::Bound::restrictScope(
@@ -109,7 +109,7 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::Bound::restrictScope(
     auto newBound = bound_;
     for (auto axes : views::reverse(axesToProject))
         newBound = projectOutParamDims(newBound, axes, 1);
-    return Ref<CompUniqueBoundsPB::Bound>::make(ctx_, demangleMap_, newBound);
+    return Ref<CompUniqueBoundsPB::Bound>::make(demangleMap_, newBound);
 }
 
 Expr CompUniqueBoundsPB::Bound::simplestExpr(
@@ -142,7 +142,7 @@ Expr CompUniqueBoundsPB::Bound::simplestExpr(
         restrictedBound = std::move(newRestrictedBound);
         minScopeLevel = scopeLevel;
     }
-    auto resultExpr = translateBoundFunc(*ctx_, restrictedBound, *demangleMap_);
+    auto resultExpr = translateBoundFunc(restrictedBound, *demangleMap_);
     if (!resultExpr.isValid()) {
         return nullptr;
     }
@@ -187,8 +187,8 @@ CompUniqueBoundsPB::CompUniqueBoundsPB(
         }
         str += str.empty() ? subStr : "; " + subStr;
     }
-    cachedConds_ = PBSet(*ctx_, "[" + (varMap | views::values | join(", ")) +
-                                    "] -> {" + str + "}");
+    cachedConds_ = PBSet(ctx_, "[" + (varMap | views::values | join(", ")) +
+                                   "] -> {" + str + "}");
 
     // initialize known demangle map
     cachedFreeVars_ = decltype(cachedFreeVars_)::make();
@@ -233,8 +233,8 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
         str += str.empty() ? subStr : "; " + subStr;
     }
     auto bound =
-        (intersect(PBSet(*ctx_, "[" + (varMap | views::values | join(", ")) +
-                                    "] -> {" + str + "}"),
+        (intersect(PBSet(ctx_, "[" + (varMap | views::values | join(", ")) +
+                                   "] -> {" + str + "}"),
                    cachedConds_));
     // update free variables
     for (auto &&[expr, pbVar] : varMap) {
@@ -244,7 +244,7 @@ Ref<CompUniqueBounds::Bound> CompUniqueBoundsPB::getBound(const Expr &op) {
         else
             (*cachedFreeVars_)[pbVar] = expr;
     }
-    return cachedValues_[op] = Ref<Bound>::make(ctx_, cachedFreeVars_, bound);
+    return cachedValues_[op] = Ref<Bound>::make(cachedFreeVars_, bound);
 }
 
 bool CompUniqueBoundsPB::alwaysLE(const Expr &lhs, const Expr &rhs) {
@@ -252,7 +252,7 @@ bool CompUniqueBoundsPB::alwaysLE(const Expr &lhs, const Expr &rhs) {
          r = insertDims(getBound(rhs).as<Bound>()->bound_, 0, 1);
     // we check for the emptiness of l > r; if empty, it means we never have l >
     // r, or equivalently always have l <= r
-    auto combined = intersect(intersect(l, r), PBSet(*ctx_, "{[l, r]: l > r}"));
+    auto combined = intersect(intersect(l, r), PBSet(ctx_, "{[l, r]: l > r}"));
     return combined.empty();
 }
 
@@ -260,8 +260,7 @@ bool CompUniqueBoundsPB::alwaysLT(const Expr &lhs, const Expr &rhs) {
     auto l = insertDims(getBound(lhs).as<Bound>()->bound_, 1, 1),
          r = insertDims(getBound(rhs).as<Bound>()->bound_, 0, 1);
     // similar to alwaysLE, but !LT = GE
-    auto combined =
-        intersect(intersect(l, r), PBSet(*ctx_, "{[l, r]: l >= r}"));
+    auto combined = intersect(intersect(l, r), PBSet(ctx_, "{[l, r]: l >= r}"));
     return combined.empty();
 }
 
@@ -275,8 +274,8 @@ Ref<CompUniqueBoundsPB::Bound> CompUniqueBoundsPB::unionBoundsAsBound(
         _bounds | views::transform([&](auto &&_bound) {
             ASSERT(_bound->type() == BoundType::Presburger);
             auto &&bound = _bound.template as<Bound>();
-            return Ref<Bound>::make(ctx_, bound->demangleMap_,
-                                    PBSet(*ctx_, toString(bound->bound_)));
+            return Ref<Bound>::make(bound->demangleMap_,
+                                    bound->bound_.to(ctx_));
         }));
 
     // union the bounds
@@ -305,7 +304,7 @@ Ref<CompUniqueBoundsPB::Bound> CompUniqueBoundsPB::unionBoundsAsBound(
         (*demangleMap)[dimName] = demangled;
     }
 
-    return Ref<CompUniqueBoundsPB::Bound>::make(ctx_, demangleMap, bound);
+    return Ref<CompUniqueBoundsPB::Bound>::make(demangleMap, bound);
 }
 
 std::pair<Expr, Expr> CompUniqueBoundsPB::unionBounds(

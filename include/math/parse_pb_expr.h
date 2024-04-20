@@ -35,8 +35,8 @@ PBFuncAST parsePBFunc(const std::string &str);
  *
  * @{
  */
-PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBSet &set);
-PBFuncAST parsePBFuncReconstructMinMax(const PBCtx &ctx, const PBMap &map);
+PBFuncAST parsePBFuncReconstructMinMax(const PBSet &set);
+PBFuncAST parsePBFuncReconstructMinMax(const PBMap &map);
 /** @} */
 
 /**
@@ -51,9 +51,8 @@ inline SimplePBFuncAST parseSimplePBFunc(const std::string &str) {
     }
     return ret.front();
 }
-inline SimplePBFuncAST parseSimplePBFuncReconstructMinMax(const PBCtx &ctx,
-                                                          const auto &f) {
-    auto ret = parsePBFuncReconstructMinMax(ctx, f);
+inline SimplePBFuncAST parseSimplePBFuncReconstructMinMax(const auto &f) {
+    auto ret = parsePBFuncReconstructMinMax(f);
     if (ret.size() != 1) {
         throw ParserError(FT_MSG << f << " is not a simple PBFunc");
     }

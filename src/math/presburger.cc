@@ -70,7 +70,7 @@ std::vector<PBBuildExpr> PBMapBuilder::newOutputs(int n,
     return ret;
 }
 
-PBMap PBMapBuilder::build(const PBCtx &ctx) const {
+PBMap PBMapBuilder::build(const Ref<PBCtx> &ctx) const {
     return {ctx, "{ [" + join(inputs_, ", ") + "] -> [" + join(outputs_, ", ") +
                      "]: " + getConstraintsStr() + " }"};
 }
@@ -89,7 +89,7 @@ std::vector<PBBuildExpr> PBSetBuilder::newVars(int n,
     return ret;
 }
 
-PBSet PBSetBuilder::build(const PBCtx &ctx) const {
+PBSet PBSetBuilder::build(const Ref<PBCtx> &ctx) const {
     return {ctx,
             "{ [" + join(vars_, ", ") + "]: " + getConstraintsStr() + " }"};
 }

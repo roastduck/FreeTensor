@@ -175,7 +175,7 @@ std::pair<Stmt, std::vector<ID>> permute(
         permuteMapStr = oss.str();
     }
     // check if the map is bijective
-    PBCtx pbCtx;
+    auto pbCtx = Ref<PBCtx>::make();
     PBMap permuteMap(pbCtx, permuteMapStr);
     {
         //! FIXME: if step != 1 or -1, this check will be more strict than
@@ -244,16 +244,17 @@ std::pair<Stmt, std::vector<ID>> permute(
             })
         .filterSubAST(loops.front()->id())(ast, [&](const Dependence &d) {
             // Construct map for iter -> permuted
-            auto iter2permutedMap = PBMap(d.presburger_, iter2permuted);
+            auto iter2permutedMap =
+                PBMap(d.later2EarlierIter_.ctx(), iter2permuted);
             // laterIter -> permuted
             auto &&permuteMapLater = applyRange(
-                PBMap(d.presburger_,
+                PBMap(d.later2EarlierIter_.ctx(),
                       getExtractDimMap(numBackDims, numBackDims + loops.size(),
                                        d.later_.iter_.size())),
                 iter2permutedMap);
             // earlierIter -> permuted
             auto &&permuteMapEarlier = applyRange(
-                PBMap(d.presburger_,
+                PBMap(d.later2EarlierIter_.ctx(),
                       getExtractDimMap(numBackDims, numBackDims + loops.size(),
                                        d.earlier_.iter_.size())),
                 iter2permutedMap);

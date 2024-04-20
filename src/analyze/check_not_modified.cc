@@ -201,7 +201,8 @@ bool checkNotModified(const Stmt &op, const Expr &s0Expr, const Expr &s1Expr,
 
     auto foundRAW = [&](const Dependence &dep) {
         // re-construct WAR map from stored string in current PBCtx
-        auto w0 = PBSet(dep.presburger_, writesWAR[dep.earlier_.stmt_]);
+        auto w0 =
+            PBSet(dep.later2EarlierIter_.ctx(), writesWAR[dep.earlier_.stmt_]);
         auto w1 = apply(range(dep.later2EarlierIter_), dep.earlierIter2Idx_);
         if (!intersect(std::move(w0), std::move(w1)).empty())
             throw ModifiedException{};

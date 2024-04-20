@@ -424,9 +424,9 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
     return ret;
 }
 
-PBMap AnalyzeDeps::makeAccMapStatic(PBCtx &presburger, const AccessPoint &p,
-                                    int iterDim, int accDim,
-                                    const std::string &extSuffix,
+PBMap AnalyzeDeps::makeAccMapStatic(const Ref<PBCtx> &presburger,
+                                    const AccessPoint &p, int iterDim,
+                                    int accDim, const std::string &extSuffix,
                                     GenPBExpr::VarMap &externals,
                                     const ASTHashSet<Expr> &noNeedToBeVars,
                                     bool eraseOutsideVarDef) {
@@ -474,45 +474,57 @@ std::string AnalyzeDeps::makeNdList(const std::string &name, int n) {
 }
 
 PBMap AnalyzeDeps::makeEqForBothOps(
-    PBCtx &presburger, const std::vector<std::pair<int, int>> &coord,
+    const Ref<PBCtx> &presburger, const std::vector<std::pair<int, int>> &coord,
     int iterDim) const {
     auto map = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move();
     for (auto &&[dim, val] : coord)
         map = isl_map_fix_si(isl_map_fix_si(map, isl_dim_out, dim, val),
                              isl_dim_in, dim, val);
-    return PBMap(map);
+    return PBMap(presburger, map);
 }
 
-PBMap AnalyzeDeps::makeIneqBetweenOps(PBCtx &presburger, DepDirection mode,
-                                      int iterId, int iterDim) const {
+PBMap AnalyzeDeps::makeIneqBetweenOps(const Ref<PBCtx> &presburger,
+                                      DepDirection mode, int iterId,
+                                      int iterDim) const {
     switch (mode) {
     case DepDirection::Inv:
-        return PBMap(isl_map_order_gt(
-            universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
-            isl_dim_out, iterId, isl_dim_in, iterId));
+        return PBMap(
+            presburger,
+            isl_map_order_gt(
+                universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+                isl_dim_out, iterId, isl_dim_in, iterId));
     case DepDirection::Normal:
-        return PBMap(isl_map_order_lt(
-            universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
-            isl_dim_out, iterId, isl_dim_in, iterId));
+        return PBMap(
+            presburger,
+            isl_map_order_lt(
+                universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+                isl_dim_out, iterId, isl_dim_in, iterId));
     case DepDirection::Same:
-        return PBMap(isl_map_equate(
-            universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
-            isl_dim_out, iterId, isl_dim_in, iterId));
+        return PBMap(
+            presburger,
+            isl_map_equate(
+                universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
+                isl_dim_out, iterId, isl_dim_in, iterId));
     case DepDirection::Different:
         return uni(
-            PBMap(isl_map_order_lt(
-                universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
-                isl_dim_out, iterId, isl_dim_in, iterId)),
-            PBMap(isl_map_order_gt(
-                universeMap(spaceAlloc(presburger, 0, iterDim, iterDim)).move(),
-                isl_dim_out, iterId, isl_dim_in, iterId)));
+            PBMap(presburger,
+                  isl_map_order_lt(
+                      universeMap(spaceAlloc(presburger, 0, iterDim, iterDim))
+                          .move(),
+                      isl_dim_out, iterId, isl_dim_in, iterId)),
+            PBMap(presburger,
+                  isl_map_order_gt(
+                      universeMap(spaceAlloc(presburger, 0, iterDim, iterDim))
+                          .move(),
+                      isl_dim_out, iterId, isl_dim_in, iterId)));
     default:
         ASSERT(false);
     }
 }
 
-PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
-                                              DepDirection mode, int iterDim) {
+PBMap AnalyzeDeps::makeConstraintOfSingleLoop(const Ref<PBCtx> &presburger,
+                                              const ID &loop, DepDirection mode,
+                                              int iterDim) {
     if (!scope2coord_.count(loop)) {
         // If we don't have the scope in `scope2coord_`, it means the scope is
         // trivial, which has only one instance inside. So it must be `Same`
@@ -548,7 +560,7 @@ PBMap AnalyzeDeps::makeConstraintOfSingleLoop(PBCtx &presburger, const ID &loop,
                      makeIneqBetweenOps(presburger, mode, iterId, iterDim));
 }
 
-PBMap AnalyzeDeps::makeConstraintOfParallelScope(PBCtx &presburger,
+PBMap AnalyzeDeps::makeConstraintOfParallelScope(const Ref<PBCtx> &presburger,
                                                  const ParallelScope &parallel,
                                                  DepDirection mode, int iterDim,
                                                  const AccessPoint &later,
@@ -598,7 +610,7 @@ PBMap AnalyzeDeps::makeConstraintOfParallelScope(PBCtx &presburger,
                                  " d" + std::to_string(laterDim) + "}");
 }
 
-PBMap AnalyzeDeps::makeExternalEq(PBCtx &presburger, int iterDim,
+PBMap AnalyzeDeps::makeExternalEq(const Ref<PBCtx> &presburger, int iterDim,
                                   const std::string &ext1,
                                   const std::string &ext2) {
     PBMap universe = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
@@ -621,7 +633,7 @@ const std::string &AnalyzeDeps::getVar(const AST &op) {
     }
 }
 
-PBMap AnalyzeDeps::makeSerialToAll(PBCtx &presburger, int iterDim,
+PBMap AnalyzeDeps::makeSerialToAll(const Ref<PBCtx> &presburger, int iterDim,
                                    const std::vector<IterAxis> &point) const {
     std::string to = makeNdList("d", iterDim), from;
     for (int i = 0; i < iterDim; i++) {
@@ -635,7 +647,7 @@ PBMap AnalyzeDeps::makeSerialToAll(PBCtx &presburger, int iterDim,
     return PBMap(presburger, "{" + from + " -> " + to + "}");
 }
 
-PBMap AnalyzeDeps::makeEraseVarDefConstraint(PBCtx &presburger,
+PBMap AnalyzeDeps::makeEraseVarDefConstraint(const Ref<PBCtx> &presburger,
                                              const Ref<AccessPoint> &point,
                                              int iterDim) {
     PBMap ret = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
@@ -649,7 +661,7 @@ PBMap AnalyzeDeps::makeEraseVarDefConstraint(PBCtx &presburger,
     return ret;
 }
 
-PBMap AnalyzeDeps::makeNoDepsConstraint(PBCtx &presburger,
+PBMap AnalyzeDeps::makeNoDepsConstraint(const Ref<PBCtx> &presburger,
                                         const std::string &var, int iterDim) {
     PBMap ret = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
     if (noDepsLists_.count(var)) {
@@ -663,7 +675,7 @@ PBMap AnalyzeDeps::makeNoDepsConstraint(PBCtx &presburger,
 }
 
 PBMap AnalyzeDeps::makeExternalVarConstraint(
-    PBCtx &presburger, const Ref<AccessPoint> &later,
+    const Ref<PBCtx> &presburger, const Ref<AccessPoint> &later,
     const Ref<AccessPoint> &earlier, const GenPBExpr::VarMap &laterExternals,
     const GenPBExpr::VarMap &earlierExternals, int iterDim) {
     PBMap ret = universeMap(spaceAlloc(presburger, 0, iterDim, iterDim));
@@ -708,8 +720,8 @@ PBMap AnalyzeDeps::makeExternalVarConstraint(
     return ret;
 }
 
-PBMap AnalyzeDeps::projectOutPrivateAxis(PBCtx &presburger, int iterDim,
-                                         int since) {
+PBMap AnalyzeDeps::projectOutPrivateAxis(const Ref<PBCtx> &presburger,
+                                         int iterDim, int since) {
     std::string from = makeNdList("d", iterDim);
     std::string to;
     for (int i = 0; i < iterDim; i++) {
@@ -720,7 +732,7 @@ PBMap AnalyzeDeps::projectOutPrivateAxis(PBCtx &presburger, int iterDim,
 }
 
 void AnalyzeDeps::projectOutPrivateAxis(
-    PBCtx &presburger, const Ref<AccessPoint> &point,
+    const Ref<PBCtx> &presburger, const Ref<AccessPoint> &point,
     const std::vector<Ref<AccessPoint>> &otherList,
     std::vector<PBMap> &otherMapList, int iterDim) {
     if (!noProjectOutPrivateAxis_) {
@@ -771,8 +783,7 @@ int AnalyzeDeps::numCommonDims(const Ref<AccessPoint> &p1,
     return n;
 }
 
-void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
-                                   const Ref<AccessPoint> &later,
+void AnalyzeDeps::checkAgainstCond(const Ref<AccessPoint> &later,
                                    const Ref<AccessPoint> &earlier,
                                    const PBMap &depAll, const PBMap &nearest,
                                    const PBMap &laterMap,
@@ -822,7 +833,6 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         if (mode_ == FindDepsMode::KillEarlier ||
             mode_ == FindDepsMode::KillBoth) {
             if (auto flag = pbFuncWithTimeout(
-                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realEarlierIter, range(depAll));
@@ -833,7 +843,6 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         if (mode_ == FindDepsMode::KillLater ||
             mode_ == FindDepsMode::KillBoth) {
             if (auto flag = pbFuncWithTimeout(
-                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realLaterIter, domain(depAll));
@@ -846,7 +855,6 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         if (mode_ == FindDepsMode::KillEarlier ||
             mode_ == FindDepsMode::KillBoth) {
             if (auto flag = pbFuncWithTimeout(
-                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realEarlierIter, range(nearest));
@@ -857,7 +865,6 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         if (mode_ == FindDepsMode::KillLater ||
             mode_ == FindDepsMode::KillBoth) {
             if (auto flag = pbFuncWithTimeout(
-                    presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
                     10, realLaterIter, domain(nearest));
@@ -872,11 +879,11 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         for (auto &&[nodeOrParallel, dir] : item) {
             if (nodeOrParallel.isNode_) {
                 _requires.emplace_back(makeConstraintOfSingleLoop(
-                    presburger, nodeOrParallel.id_, dir, iterDim));
+                    depAll.ctx(), nodeOrParallel.id_, dir, iterDim));
             } else {
                 _requires.emplace_back(makeConstraintOfParallelScope(
-                    presburger, nodeOrParallel.parallel_, dir, iterDim, *later,
-                    *earlier));
+                    depAll.ctx(), nodeOrParallel.parallel_, dir, iterDim,
+                    *later, *earlier));
             }
         }
 
@@ -900,13 +907,13 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
         if (noProjectOutPrivateAxis_) {
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, res, laterMap, earlierMap, possible,
-                              extConstraint, presburger, *this});
+                              extConstraint, *this});
         } else {
             // It will be misleading if we pass Presburger maps to users in
             // this case
             found_(Dependence{item, getVar(later->op_), *later, *earlier,
                               iterDim, PBMap(), PBMap(), PBMap(), PBMap(),
-                              PBMap(), presburger, *this});
+                              PBMap(), *this});
         }
     fail:;
     }
@@ -999,8 +1006,7 @@ void AnalyzeDeps::checkDepLatestEarlier(
         return;
     }
     tasks_.emplace_back([later, earlierList = std::move(earlierList), this]() {
-        PBCtx presburger;
-        checkDepLatestEarlierImpl(presburger, later, earlierList);
+        checkDepLatestEarlierImpl(Ref<PBCtx>::make(), later, earlierList);
     });
 }
 
@@ -1022,13 +1028,12 @@ void AnalyzeDeps::checkDepEarliestLater(
         return;
     }
     tasks_.emplace_back([laterList = std::move(laterList), earlier, this]() {
-        PBCtx presburger;
-        checkDepEarliestLaterImpl(presburger, laterList, earlier);
+        checkDepEarliestLaterImpl(Ref<PBCtx>::make(), laterList, earlier);
     });
 }
 
 void AnalyzeDeps::checkDepLatestEarlierImpl(
-    PBCtx &presburger, const Ref<AccessPoint> &later,
+    const Ref<PBCtx> &presburger, const Ref<AccessPoint> &later,
     const std::vector<Ref<AccessPoint>> &earlierList) {
     int accDim = later->access_.size();
     int iterDim = later->iter_.size();
@@ -1132,7 +1137,7 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
          views::zip(earlierList, es2aList, earlierMapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
-                presburger, later, earlier, depAll,
+                later, earlier, depAll,
                 intersect(applyRange(psNearest, std::move(es2a)), depAll),
                 laterMap, earlierMap, extConstraint, iterDim);
         }
@@ -1140,7 +1145,8 @@ void AnalyzeDeps::checkDepLatestEarlierImpl(
 }
 
 void AnalyzeDeps::checkDepEarliestLaterImpl(
-    PBCtx &presburger, const std::vector<Ref<AccessPoint>> &laterList,
+    const Ref<PBCtx> &presburger,
+    const std::vector<Ref<AccessPoint>> &laterList,
     const Ref<AccessPoint> &earlier) {
     int accDim = earlier->access_.size();
     int iterDim = earlier->iter_.size();
@@ -1243,7 +1249,7 @@ void AnalyzeDeps::checkDepEarliestLaterImpl(
          views::zip(laterList, ls2aList, laterMapList, depAllList)) {
         if (depAll.isValid()) {
             checkAgainstCond(
-                presburger, later, earlier, depAll,
+                later, earlier, depAll,
                 intersect(applyDomain(spNearest, std::move(ls2a)), depAll),
                 laterMap, earlierMap, extConstraint, iterDim);
         }
@@ -1299,11 +1305,11 @@ PBMap Dependence::extraCheck(PBMap dep,
     PBMap require;
     if (nodeOrParallel.isNode_) {
         require = self_.makeConstraintOfSingleLoop(
-            presburger_, nodeOrParallel.id_, dir, iterDim_);
+            later2EarlierIter_.ctx(), nodeOrParallel.id_, dir, iterDim_);
     } else {
         require = self_.makeConstraintOfParallelScope(
-            presburger_, nodeOrParallel.parallel_, dir, iterDim_, later_,
-            earlier_);
+            later2EarlierIter_.ctx(), nodeOrParallel.parallel_, dir, iterDim_,
+            later_, earlier_);
     }
     dep = intersect(std::move(dep), std::move(require));
     return dep;

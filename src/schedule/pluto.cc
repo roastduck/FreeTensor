@@ -89,7 +89,7 @@ orthogonalMatrix(const std::vector<std::vector<int>> &vectors) {
         return ortho == 0;
     };
 
-    PBCtx ctx;
+    auto ctx = Ref<PBCtx>::make();
     builder.addConstraint(nonZeroConstraint(vars, delta));
     builder.addConstraints(views::zip_with(
         [](auto &&abs, auto &&x) { return abs >= x && abs >= -x; }, abss,
@@ -155,7 +155,7 @@ class InjectFakeAccess : public Mutator {
     }
 };
 
-PBMap combineExternal(PBMap l2e, PBCtx &ctx, bool isFakeAccess) {
+PBMap combineExternal(PBMap l2e, const Ref<PBCtx> &ctx, bool isFakeAccess) {
     auto nParams = l2e.nParamDims();
     // combined <-> first met original
     std::map<std::string, std::string> orig2comb;
@@ -179,10 +179,11 @@ PBMap combineExternal(PBMap l2e, PBCtx &ctx, bool isFakeAccess) {
             builder.addConstraint(comb2origVar[comb] == origVar);
     }
     auto eqConstraints = builder.build(ctx);
-    eqConstraints = isl_set_move_dims(eqConstraints.move(), isl_dim_param, 0,
-                                      isl_dim_set, 0, nParams);
+    eqConstraints =
+        PBSet{ctx, isl_set_move_dims(eqConstraints.move(), isl_dim_param, 0,
+                                     isl_dim_set, 0, nParams)};
     PBMap constrainedL2e(
-        isl_map_intersect_params(l2e.copy(), eqConstraints.copy()));
+        ctx, isl_map_intersect_params(l2e.copy(), eqConstraints.copy()));
     // Fake access uses AllPossible which doesn't have the corresponding
     // constraints. Thus we don't check fake accesses and always use the
     // constrained one.
@@ -194,10 +195,11 @@ PBMap combineExternal(PBMap l2e, PBCtx &ctx, bool isFakeAccess) {
     for (int i = nParams - 1; i >= 0; --i) {
         std::string orig = isl_map_get_dim_name(l2e.get(), isl_dim_param, i);
         if (orig2comb.contains(orig))
-            l2e = isl_map_set_dim_name(l2e.move(), isl_dim_param, i,
-                                       orig2comb[orig].c_str());
+            l2e = PBMap{ctx, isl_map_set_dim_name(l2e.move(), isl_dim_param, i,
+                                                  orig2comb[orig].c_str())};
         else
-            l2e = isl_map_remove_dims(l2e.move(), isl_dim_param, i, 1);
+            l2e = PBMap{ctx,
+                        isl_map_remove_dims(l2e.move(), isl_dim_param, i, 1)};
     }
 
     return l2e;
@@ -252,7 +254,7 @@ struct PermuteInfo {
                 const std::vector<std::vector<int>> &cIterValue,
                 const std::vector<Expr> &paramExprs,
                 const std::vector<IterAxis> &oldLoopAxes,
-                const std::vector<std::string> &loopVars, const PBCtx &ctx,
+                const std::vector<std::string> &loopVars, const Ref<PBCtx> &ctx,
                 const PBSet &loopSet) {
         size_t nParams = paramExprs.size(), nestLevel = loopVars.size();
         ASSERT(oldLoopAxes.size() == loopVars.size());
@@ -456,7 +458,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
     for (auto &&f : outers)
         outersSame[0].emplace_back(f->id(), DepDirection::Same);
 
-    PBCtx ctx;
+    auto ctx = Ref<PBCtx>::make();
     std::string loop0SetStr, loop1SetStr;
     std::vector<IterAxis> outerAxes, loop0Axes, loop1Axes;
 
@@ -496,7 +498,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
 
                     // combine external params from earlier and later, since we
                     // don't expect them to change during the two loops in Pluto
-                    hMap = combineExternal(std::move(hMap), d.presburger_,
+                    hMap = combineExternal(std::move(hMap),
+                                           d.earlierIter2Idx_.ctx(),
                                            d.var_ == FAKE_ACCESS_VAR);
 
                     auto nRealParams = hMap.nParamDims();
@@ -519,9 +522,11 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     hMap = moveDimsOutputToParam(
                         std::move(hMap), 0, outerDims0.size(), nRealParams);
                     for (size_t i = 0; i < outerDims0.size(); ++i)
-                        hMap = isl_map_set_dim_name(
-                            hMap.move(), isl_dim_param, nRealParams + i,
-                            ("out_" + std::to_string(i)).c_str());
+                        hMap = PBMap{hMap.ctx(),
+                                     isl_map_set_dim_name(
+                                         hMap.move(), isl_dim_param,
+                                         nRealParams + i,
+                                         ("out_" + std::to_string(i)).c_str())};
 
                     // remove inner dims for later
                     auto [pos1, outerDims1] =
@@ -548,7 +553,8 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
                     auto hSet = flattenMapToSet(std::move(hMap));
                     // overapproximate to allow coefficients on strided
                     // dependences
-                    hSet = isl_set_remove_unknown_divs(hSet.move());
+                    hSet = PBSet{hSet.ctx(),
+                                 isl_set_remove_unknown_divs(hSet.move())};
                     auto strSet = toString(std::move(hSet));
 
                     std::lock_guard l(m);
@@ -575,17 +581,20 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
         // that no dependence exists to bring them into the space
         auto paramsSpace = spaceSetAlloc(ctx, outerAxes.size(), 0);
         for (size_t i = 0; i < outerAxes.size(); ++i)
-            paramsSpace =
+            paramsSpace = PBSpace{
+                paramsSpace.ctx(),
                 isl_space_set_dim_name(paramsSpace.move(), isl_dim_param, i,
-                                       ("out_" + std::to_string(i)).c_str());
+                                       ("out_" + std::to_string(i)).c_str())};
 
         DisjointSet<std::string> paramsConnect;
         // setup a common root, which represents combination of set dimensions
         paramsConnect.find("");
         for (auto &d : {&dep0, &dep1, &dep1to0})
             for (const auto &dd : *d) {
-                paramsSpace = isl_space_align_params(paramsSpace.move(),
-                                                     PBSpace(dd).move());
+                paramsSpace =
+                    PBSpace{paramsSpace.ctx(),
+                            isl_space_align_params(paramsSpace.move(),
+                                                   PBSpace(dd).move())};
                 isl_set_foreach_basic_set(
                     dd.get(),
                     [](isl_basic_set *bset, void *user) {
@@ -638,14 +647,17 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             nAllParams - ranges::accumulate(isRedundants, 0);
 
         auto align = [&](PBSet &s) {
-            s = isl_set_align_params(s.move(), paramsSpace.copy());
+            s = PBSet{s.ctx(),
+                      isl_set_align_params(s.move(), paramsSpace.copy())};
             int j = 0;
             for (int i = 0; i < nAllParams; ++i)
                 if (isRedundants[i])
-                    s = isl_set_project_out(s.move(), isl_dim_param, 0, 1);
+                    s = PBSet{s.ctx(), isl_set_project_out(
+                                           s.move(), isl_dim_param, 0, 1)};
                 else
-                    s = isl_set_move_dims(s.move(), isl_dim_set, j++,
-                                          isl_dim_param, 0, 1);
+                    s = PBSet{s.ctx(),
+                              isl_set_move_dims(s.move(), isl_dim_set, j++,
+                                                isl_dim_param, 0, 1)};
         };
 
         for (auto &d : {&dep0, &dep1, &dep1to0})
@@ -1014,7 +1026,7 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             builder.addOutputs(p);
             builder.addOutput(result);
             auto projectedLoopRange = apply(loopSet, builder.build(ctx));
-            return PBSet(projectedLoopRange.move());
+            return PBSet(ctx, projectedLoopRange.move());
         };
         auto loop0Range = loopSetToRange(loop0Set, nParams + 1, nestLevel0);
         auto loop1Range = loopSetToRange(
@@ -1046,10 +1058,14 @@ plutoFuseImpl(Stmt ast, const ID &loop0Id, const ID &loop1Id, int _nestLevel0,
             bool hugeNonOverlap = false;
             auto check = [&, nParams = nParams](const PBSet &_aRange,
                                                 const PBSet &_bRange) {
-                PBSet aRange = isl_set_move_dims(_aRange.copy(), isl_dim_param,
-                                                 0, isl_dim_set, 0, nParams);
-                PBSet bRange = isl_set_move_dims(_bRange.copy(), isl_dim_param,
-                                                 0, isl_dim_set, 0, nParams);
+                PBSet aRange =
+                    PBSet{_aRange.ctx(),
+                          isl_set_move_dims(_aRange.copy(), isl_dim_param, 0,
+                                            isl_dim_set, 0, nParams)};
+                PBSet bRange =
+                    PBSet{_bRange.ctx(),
+                          isl_set_move_dims(_bRange.copy(), isl_dim_param, 0,
+                                            isl_dim_set, 0, nParams)};
 
                 auto tol = fixDim(universeSet(PBSpace(aRange)), 0,
                                   fusableNonOverlapTolerance);
