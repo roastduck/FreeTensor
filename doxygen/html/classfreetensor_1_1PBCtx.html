@@ -96,12 +96,16 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad1809b14d8017b55571db43b82eabdae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8176b1d80bd7f2798352f5c9102fd49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBCtx.html#ad8176b1d80bd7f2798352f5c9102fd49">operator=</a> (<a class="el" href="classfreetensor_1_1PBCtx.html">PBCtx</a> &amp;&amp;other)=delete</td></tr>
 <tr class="separator:ad8176b1d80bd7f2798352f5c9102fd49"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac32626389464e8d8d4cf447cf58f9d43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBCtx.html#ac32626389464e8d8d4cf447cf58f9d43">setDontFree</a> (bool flag=true)</td></tr>
-<tr class="separator:ac32626389464e8d8d4cf447cf58f9d43"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5fbb0f04d01240979697168503201947"><td class="memItemLeft" align="right" valign="top">isl_ctx *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classfreetensor_1_1PBCtx.html#a5fbb0f04d01240979697168503201947">get</a> () const</td></tr>
 <tr class="separator:a5fbb0f04d01240979697168503201947"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Context for presburger operation</p>
+<ul>
+<li>All operands of a presburger operation should be on the same context.</li>
+<li>Operations in the same context is NOT thread-safe. Explitly transfer to a different context if you want to use in multiple threads. </li>
+</ul>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a7ee2f41e40d6f0cc4a5e91270dd29435" name="a7ee2f41e40d6f0cc4a5e91270dd29435"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7ee2f41e40d6f0cc4a5e91270dd29435">&#9670;&#160;</a></span>PBCtx() <span class="overload">[1/3]</span></h2>
 
@@ -276,32 +280,6 @@ Public Member Functions</h2></td></tr>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">delete</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ac32626389464e8d8d4cf447cf58f9d43" name="ac32626389464e8d8d4cf447cf58f9d43"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac32626389464e8d8d4cf447cf58f9d43">&#9670;&#160;</a></span>setDontFree()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void freetensor::PBCtx::setDontFree </td>
-          <td>(</td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>flag</em> = <code>true</code></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

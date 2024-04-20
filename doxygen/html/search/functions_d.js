@@ -5,7 +5,7 @@ var searchData=
   ['make_2',['make',['../classfreetensor_1_1ID.html#a74652f22f319fd87b63d732ec7c43369',1,'freetensor::ID::make()'],['../classfreetensor_1_1ID.html#a80f27e4dd538b217d74c1974ba23c74c',1,'freetensor::ID::make(uint64_t id)'],['../classfreetensor_1_1Ref.html#a07be840737c8cf0a9c0860ea6f4e30ea',1,'freetensor::Ref::make()'],['../classfreetensor_1_1Ref.html#a021f459f2776ebd5147531a660694c4c',1,'freetensor::Ref::make(T &amp;&amp;x)'],['../classfreetensor_1_1Ref.html#a0fe72520cdc4b4ff410ec8c1917175f9',1,'freetensor::Ref::make(const T &amp;x)'],['../classfreetensor_1_1Ref.html#a9651aaf9797ee3da2a12f6896d07a115',1,'freetensor::Ref::make(Args &amp;&amp;...args)']]],
   ['makeabs_3',['makeAbs',['../namespacefreetensor.html#a7551582cd50998a447eef65b52d8cbed',1,'freetensor']]],
   ['makeacclist_4',['makeAccList',['../classfreetensor_1_1AnalyzeDeps.html#a9476bb78c2cbfd39b7ce18efdf1e783d',1,'freetensor::AnalyzeDeps']]],
-  ['makeaccmapstatic_5',['makeAccMapStatic',['../classfreetensor_1_1AnalyzeDeps.html#a3eab1e13d96f32cd2bfdfcd35b373327',1,'freetensor::AnalyzeDeps']]],
+  ['makeaccmapstatic_5',['makeAccMapStatic',['../classfreetensor_1_1AnalyzeDeps.html#af15ba2fc0765526169eb6cfb5b7d0937',1,'freetensor::AnalyzeDeps']]],
   ['makeadd_6',['makeAdd',['../namespacefreetensor.html#a45b5cfbc3e775059a828ca4abb7d1aa9',1,'freetensor']]],
   ['makealloc_7',['makeAlloc',['../namespacefreetensor.html#af1b087d02b2e51f7ecbb1dcee1c08db2',1,'freetensor']]],
   ['makeany_8',['makeAny',['../namespacefreetensor.html#a7ea4d13a965fbd47b0205ddc698f1b80',1,'freetensor']]],

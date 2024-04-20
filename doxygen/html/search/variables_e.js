@@ -9,7 +9,6 @@ var searchData=
   ['pinned_5f_6',['pinned_',['../classfreetensor_1_1VarDefNode.html#a1357a236110a6a62afae933a1596532b',1,'freetensor::VarDefNode']]],
   ['poppedstream_5f_7',['poppedStream_',['../classfreetensor_1_1CodeGen.html#ad88eaf7974cc70ec638f44aaf7c894eb',1,'freetensor::CodeGen']]],
   ['preferlibs_5f_8',['preferLibs_',['../structfreetensor_1_1ForProperty.html#a74f1f20aae6c5ad274cda8a72c1ad988',1,'freetensor::ForProperty']]],
-  ['presburger_5f_9',['presburger_',['../structfreetensor_1_1Dependence.html#abc27a7c84908c13790d11a7662601d7d',1,'freetensor::Dependence']]],
-  ['property_5f_10',['property_',['../classfreetensor_1_1ForNode.html#a7392b8561b7bd0cd3be9bdf91761f7bd',1,'freetensor::ForNode']]],
-  ['ptr_5f_11',['ptr_',['../structfreetensor_1_1ArrayCopy.html#a959516e15e2f79277ec360b9bd9d159e',1,'freetensor::ArrayCopy']]]
+  ['property_5f_9',['property_',['../classfreetensor_1_1ForNode.html#a7392b8561b7bd0cd3be9bdf91761f7bd',1,'freetensor::ForNode']]],
+  ['ptr_5f_10',['ptr_',['../structfreetensor_1_1ArrayCopy.html#a959516e15e2f79277ec360b9bd9d159e',1,'freetensor::ArrayCopy']]]
 ];

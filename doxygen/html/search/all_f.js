@@ -23,7 +23,7 @@ var searchData=
   ['ne_20',['NE',['../namespacefreetensor.html#a8338bfeb22dd325d28cacc7beef52b2a',1,'freetensor::NE()'],['../namespacefreetensor.html#afc87eee71f05eb84c5799d7f3492915fadc33066c3993e0d50896e533fd692ce0',1,'freetensor::NE()']]],
   ['ne0_21',['NE0',['../namespacefreetensor.html#a0c42d47b27414b977b47ce5f3c6329caa842d20047783c162789decd96e8efcd7',1,'freetensor']]],
   ['needvarreorder_22',['NeedVarReorder',['../structfreetensor_1_1NeedVarReorder.html',1,'freetensor::NeedVarReorder'],['../structfreetensor_1_1NeedVarReorder.html#a98fed294fb9d8c26485f6500cd66f028',1,'freetensor::NeedVarReorder::NeedVarReorder()']]],
-  ['neg_23',['neg',['../namespacefreetensor.html#a67ba53dd12442c3dbdf77ce7474657db',1,'freetensor::neg(T &amp;&amp;lhs)'],['../namespacefreetensor.html#a9fc2d057143ed9369b7824fdbdac932d',1,'freetensor::neg(T &amp;&amp;lhs)']]],
+  ['neg_23',['neg',['../namespacefreetensor.html#a65fd85bea2e2bbcef273a1d1cb1f41ba',1,'freetensor::neg(T &amp;&amp;set)'],['../namespacefreetensor.html#a9467ac110531a04aa028a55e0a2fad4e',1,'freetensor::neg(T &amp;&amp;map)']]],
   ['negstep_5f_24',['negStep_',['../structfreetensor_1_1IterAxis.html#a13b2d0cc4c059e8fd12d7ec75bf6b5c1',1,'freetensor::IterAxis']]],
   ['nelem_25',['nElem',['../classfreetensor_1_1Array.html#a6d9b1b11967930703c54a3d2fe454d72',1,'freetensor::Array']]],
   ['nenode_26',['NENode',['../classfreetensor_1_1NENode.html',1,'freetensor']]],

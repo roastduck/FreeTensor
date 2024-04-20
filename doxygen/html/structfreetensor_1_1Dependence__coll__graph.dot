@@ -40,8 +40,6 @@ digraph "freetensor::Dependence"
   Node17 [label="std::vector\< std::pair\l\< freetensor::Ref, freetensor\l::ID \> \>",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",tooltip=" "];
   Node18 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" earlierIter2Idx_\nextConstraint_\nlater2EarlierIterAllPossible\l_\nlater2EarlierIter_\nlaterIter2Idx_" ];
   Node18 [label="freetensor::PBMap",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBMap.html",tooltip=" "];
-  Node19 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" presburger_" ];
-  Node19 [label="freetensor::PBCtx",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1PBCtx.html",tooltip=" "];
-  Node20 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" self_" ];
-  Node20 [label="freetensor::AnalyzeDeps",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1AnalyzeDeps.html",tooltip=" "];
+  Node19 -> Node1 [dir="back",color="darkorchid3",style="dashed",label=" self_" ];
+  Node19 [label="freetensor::AnalyzeDeps",height=0.2,width=0.4,color="gray40", fillcolor="white", style="filled",URL="$classfreetensor_1_1AnalyzeDeps.html",tooltip=" "];
 }

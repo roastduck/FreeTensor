@@ -180,6 +180,7 @@ digraph "src/analyze/comp_access_bound.cc"
   Node77 -> Node86 [color="steelblue1",style="solid"];
   Node86 [label="isl/set.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
   Node77 -> Node59 [color="steelblue1",style="solid"];
+  Node77 -> Node22 [color="steelblue1",style="solid"];
   Node77 -> Node31 [color="steelblue1",style="solid"];
   Node76 -> Node58 [color="steelblue1",style="solid"];
   Node75 -> Node77 [color="steelblue1",style="solid"];

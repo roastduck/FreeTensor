@@ -5,5 +5,5 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [label="freetensor::ScheduleLogItemHash",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1ScheduleLogItemHash.html",tooltip=" "];
+  Node0 [label="freetensor::Scale\< T \>",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structfreetensor_1_1Scale.html",tooltip=" "];
 }

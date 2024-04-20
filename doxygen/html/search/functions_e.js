@@ -15,7 +15,7 @@ var searchData=
   ['ndim_12',['ndim',['../classfreetensor_1_1FrontendVar.html#ab9211b390a7047b0fce4bebb7a0e9441',1,'freetensor::FrontendVar']]],
   ['ndims_13',['nDims',['../classfreetensor_1_1PBSet.html#afd2c77d9bf8a7769cd9246c56a2bc91d',1,'freetensor::PBSet']]],
   ['needvarreorder_14',['NeedVarReorder',['../structfreetensor_1_1NeedVarReorder.html#a98fed294fb9d8c26485f6500cd66f028',1,'freetensor::NeedVarReorder']]],
-  ['neg_15',['neg',['../namespacefreetensor.html#a9fc2d057143ed9369b7824fdbdac932d',1,'freetensor::neg(T &amp;&amp;lhs)'],['../namespacefreetensor.html#a67ba53dd12442c3dbdf77ce7474657db',1,'freetensor::neg(T &amp;&amp;lhs)']]],
+  ['neg_15',['neg',['../namespacefreetensor.html#a9467ac110531a04aa028a55e0a2fad4e',1,'freetensor::neg(T &amp;&amp;map)'],['../namespacefreetensor.html#a65fd85bea2e2bbcef273a1d1cb1f41ba',1,'freetensor::neg(T &amp;&amp;set)']]],
   ['nelem_16',['nElem',['../classfreetensor_1_1Array.html#a6d9b1b11967930703c54a3d2fe454d72',1,'freetensor::Array']]],
   ['neutralval_17',['neutralVal',['../namespacefreetensor.html#ae1036cce4c80376191e917093111bffe',1,'freetensor']]],
   ['nevertape_18',['neverTape',['../classfreetensor_1_1TapeStrategy.html#a2e8e4faa9f040a0f7320d12e0e5b440d',1,'freetensor::TapeStrategy']]],
