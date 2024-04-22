@@ -495,11 +495,12 @@ def test_ternary_expr_in_indices():
 
     assert std.match(ast)
 
+
 def test_ternary_expr_in_if():
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
-                with ft.If(ft.if_then_else(i==3, 1, 0)==1):
+                with ft.If(ft.if_then_else(i == 3, 1, 0) == 1):
                     y[i + j] = i
 
     ast = ft.pop_ast(verbose=True)
@@ -507,7 +508,7 @@ def test_ternary_expr_in_if():
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("j", 0, 8) as j:
             with ft.For("i", 0, 4) as i:
-                with ft.If(ft.if_then_else(i==3, 1, 0)==1):
+                with ft.If(ft.if_then_else(i == 3, 1, 0) == 1):
                     y[i + j] = i
     std = ft.pop_ast()
     assert std.match(ast)

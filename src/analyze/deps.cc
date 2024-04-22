@@ -414,9 +414,9 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
             ret += " and ";
         }
         int size = cond_after.size();
-        for (auto &&[l, r] : cond_after){
+        for (auto &&[l, r] : cond_after) {
             Expr expr_tmp = l;
-            if(r.isValid()) {
+            if (r.isValid()) {
                 expr_tmp = makeLAnd(l, r);
             }
             auto &&[str, vars] = genPBExpr.gen(expr_tmp);
@@ -434,7 +434,6 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
     }
     return ret;
 }
-
 
 PBMap AnalyzeDeps::makeAccMapStatic(const Ref<PBCtx> &presburger,
                                     const AccessPoint &p, int iterDim,
