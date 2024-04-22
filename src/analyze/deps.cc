@@ -409,18 +409,28 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
         }
 
         auto &&[cond, baseStmtId] = condItem;
-        auto &&[str, vars] = genPBExpr.gen(cond);
-        for (auto &&[expr, str] : vars) {
-            if (expr->nodeType() != ASTNodeType::Var) {
-                externals[expr] = str;
-            }
-        }
         if (!ret.empty()) {
             ret += " and ";
         }
-        ret += str;
-    }
 
+        auto condFactors = normalizeConditionalExpr(cond);
+        std::string tmp;
+        for (auto &&[i, factor] : views::enumerate(condFactors)) {
+            auto &&[l, r] = factor;
+            if (i > 0) {
+                tmp += " or ";
+            }
+            auto &&[str, vars] =
+                genPBExpr.gen(r.isValid() ? makeLAnd(l, r) : l);
+            for (auto &&[expr, str] : vars) {
+                if (expr->nodeType() != ASTNodeType::Var) {
+                    externals[expr] = str;
+                }
+            }
+            tmp += "(" + str + ")";
+        }
+        ret += " ( " + tmp + ")";
+    }
     return ret;
 }
 

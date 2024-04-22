@@ -194,9 +194,14 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
             presburger, *acc, acc->iter_.size(), acc->access_.size(), "",
             externals, {}, true);
         if (!externals.empty()) {
-            throw InvalidSchedule(
-                FT_MSG << "Indirect thread mapping in reference loop nest "
-                       << reference << " is not supported");
+            MessageBuilder err;
+            err << "Indirect thread mapping in reference loop nest "
+                << reference
+                << " is not supported. Indirection expressions are: ";
+            for (auto &&[expr, _] : externals) {
+                err << expr << ", ";
+            }
+            throw InvalidSchedule(err);
         }
 
         std::unordered_map<std::string, For> iter2Scope;
