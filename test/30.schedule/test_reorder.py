@@ -479,7 +479,7 @@ def test_no_merge_if_outer_iter_var_is_used_in_inner():
         s.reorder(["L2", "L1"])
 
 
-def test_if_expr():
+def test_ternary_expr_in_indices():
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
@@ -493,4 +493,21 @@ def test_if_expr():
                 y[i * 8 + j + ft.if_then_else(i <= 1, 16, -16)] = i + j
     std = ft.pop_ast()
 
+    assert std.match(ast)
+
+def test_ternary_expr_in_if():
+    with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
+        with ft.For("i", 0, 4, label="L1") as i:
+            with ft.For("j", 0, 8, label="L2") as j:
+                with ft.If(ft.if_then_else(i==3, 1, 0)==1):
+                    y[i + j] = i
+
+    ast = ft.pop_ast(verbose=True)
+    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
+        with ft.For("j", 0, 8) as j:
+            with ft.For("i", 0, 4) as i:
+                with ft.If(ft.if_then_else(i==3, 1, 0)==1):
+                    y[i + j] = i
+    std = ft.pop_ast()
     assert std.match(ast)

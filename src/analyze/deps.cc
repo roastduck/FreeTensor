@@ -407,22 +407,34 @@ std::string AnalyzeDeps::makeCond(GenPBExpr &genPBExpr,
         if (isRedundant) {
             continue;
         }
-
         auto &&[cond, baseStmtId] = condItem;
-        auto &&[str, vars] = genPBExpr.gen(cond);
-        for (auto &&[expr, str] : vars) {
-            if (expr->nodeType() != ASTNodeType::Var) {
-                externals[expr] = str;
-            }
-        }
+        auto cond_after = normalizeConditionalExpr(cond);
+        std::string tmp;
         if (!ret.empty()) {
             ret += " and ";
         }
-        ret += str;
+        int size = cond_after.size();
+        for (auto &&[l, r] : cond_after){
+            Expr expr_tmp = l;
+            if(r.isValid()) {
+                expr_tmp = makeLAnd(l, r);
+            }
+            auto &&[str, vars] = genPBExpr.gen(expr_tmp);
+            for (auto &&[expr, str] : vars) {
+                if (expr->nodeType() != ASTNodeType::Var) {
+                    externals[expr] = str;
+                }
+            }
+            tmp += str;
+            size--;
+            if (size > 0)
+                tmp += " or ";
+        }
+        ret += " ( " + tmp + ")";
     }
-
     return ret;
 }
+
 
 PBMap AnalyzeDeps::makeAccMapStatic(const Ref<PBCtx> &presburger,
                                     const AccessPoint &p, int iterDim,
