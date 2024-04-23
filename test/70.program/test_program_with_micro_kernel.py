@@ -5,16 +5,13 @@ import freetensor as ft
 
 @pytest.mark.skipif(not ft.with_pytorch() or not ft.with_cuda(),
                     reason="requires PyTorch and CUDA")
-@pytest.mark.parametrize(('dtype', 'accum_type'), [('float16', 'float16'),
-                                                   ('float64', 'float64'),
-                                                   ('float16', 'float32')])
-def test_matmul(dtype, accum_type):
-
-    M = N = K = 5000
-    block_n = block_m = 128
-    block_k = 32
-    n_warps = 4
-
+@pytest.mark.parametrize(
+    ('M', 'N', 'K', 'block_n', 'block_m', 'block_k', 'n_warps', 'dtype',
+     'accum_type'), [(5000, 5000, 5000, 128, 128, 32, 4, 'float16', 'float16'),
+                     (5000, 5000, 5000, 128, 64, 32, 4, 'float16', 'float16'),
+                     (5000, 5000, 5000, 128, 128, 32, 4, 'float64', 'float64'),
+                     (5000, 5000, 5000, 128, 128, 32, 4, 'float16', 'float32')])
+def test_matmul(M, N, K, block_n, block_m, block_k, n_warps, dtype, accum_type):
     device = ft.GPU()
     target = device.target()
     with target:
