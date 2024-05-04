@@ -166,9 +166,17 @@ Expr Z3Simplify::visit(const FloorDiv &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::FloorDiv);
     auto op = __op.as<FloorDivNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        // "/" in z3 means floor div. To verify, run the following in PyZ3
-        // z3.prove(z3.Implies(z3.And(a == -3, b == 2), a / b == -2))
-        put(op, get(op->lhs_) / get(op->rhs_),
+        // Z3 uses Euclidean division, but we want floor division. See
+        // https://en.wikipedia.org/wiki/Modulo for details.
+        // To verify, run the following in z3py for any Python integers X and Y:
+        //
+        // ```
+        // z3.prove(z3.Implies(z3.And(a == X, b == Y), z3.If(b > 0, a / b, a / b
+        // - 1) == X // Y))
+        // ```
+        put(op,
+            z3::ite(get(op->rhs_) > 0, get(op->lhs_) / get(op->rhs_),
+                    get(op->lhs_) / get(op->rhs_) - 1),
             cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
@@ -190,7 +198,14 @@ Expr Z3Simplify::visit(const Mod &_op) {
     ASSERT(__op->nodeType() == ASTNodeType::Mod);
     auto op = __op.as<ModNode>();
     if (exists(op->lhs_) && exists(op->rhs_)) {
-        put(op, z3::mod(get(op->lhs_), get(op->rhs_)),
+        // Z3 uses Euclidean mod, but we want floor mod. See
+        // https://en.wikipedia.org/wiki/Modulo for details. We use the division
+        // formula above to express mod.
+        put(op,
+            get(op->lhs_) -
+                get(op->rhs_) * z3::ite(get(op->rhs_) > 0,
+                                        get(op->lhs_) / get(op->rhs_),
+                                        get(op->lhs_) / get(op->rhs_) - 1),
             cat(conds(op->lhs_), conds(op->rhs_)));
     }
     return op;
