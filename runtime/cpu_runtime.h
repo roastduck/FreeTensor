@@ -44,9 +44,8 @@ inline auto ceilDiv(IntegralExceptBool auto a, IntegralExceptBool auto b) {
 
 inline auto runtime_mod(IntegralExceptBool auto a, IntegralExceptBool auto b) {
     auto m = a % b;
-    if (m < 0) {
-        // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
-        m = (b < 0) ? m - b : m + b;
+    if ((m > 0 && b < 0) || (m < 0 && b > 0)) {
+        m += b;
     }
     return m;
 }

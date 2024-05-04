@@ -124,3 +124,41 @@ def test_if_expr():
     y_std = np.array(5, dtype="int32")
     assert y_np[()] == y_std[()]
     assert y_func[()] == y_std[()]
+
+
+def test_python_style_div():
+
+    def test(a, b, y):
+        a: ft.Var[(4,), "int32", "input", "cpu"]
+        b: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "output", "cpu"]
+        for i in range(4):
+            y[i] = a[i] // b[i]
+
+    func = ft.lower(ft.transform(test), ft.CPU())
+    code = ft.codegen(func, ft.CPU())
+    a_np = np.array([10, 10, -10, -10], dtype="int32")
+    b_np = np.array([3, -3, 3, -3], dtype="int32")
+    y_np = np.array([0, 0, 0, 0], dtype="int32")
+    ft.build_binary(code, ft.CPU())(a_np, b_np, y_np)
+    y_std = np.array([10 // 3, 10 // -3, -10 // 3, -10 // -3], dtype="int32")
+    assert np.array_equal(y_np, y_std)
+
+
+def test_python_style_mod():
+
+    def test(a, b, y):
+        a: ft.Var[(4,), "int32", "input", "cpu"]
+        b: ft.Var[(4,), "int32", "input", "cpu"]
+        y: ft.Var[(4,), "int32", "output", "cpu"]
+        for i in range(4):
+            y[i] = a[i] % b[i]
+
+    func = ft.lower(ft.transform(test), ft.CPU())
+    code = ft.codegen(func, ft.CPU())
+    a_np = np.array([10, 10, -10, -10], dtype="int32")
+    b_np = np.array([3, -3, 3, -3], dtype="int32")
+    y_np = np.array([0, 0, 0, 0], dtype="int32")
+    ft.build_binary(code, ft.CPU())(a_np, b_np, y_np)
+    y_std = np.array([10 % 3, 10 % -3, -10 % 3, -10 % -3], dtype="int32")
+    assert np.array_equal(y_np, y_std)

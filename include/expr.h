@@ -287,6 +287,8 @@ Expr makeRoundTowards0Div(
 
 /** Modulo
  *
+ * Please refer to floored division in https://en.wikipedia.org/wiki/Modulo.
+ *
  * Mod(3, 5) = 3
  * Mod(-3, 5) = 2
  * Mod(-3, -5) = -3
@@ -307,6 +309,8 @@ Expr makeMod(T &&lhs, U &&rhs,
 }
 
 /** Remainder
+ *
+ * Please refer to truncated division in https://en.wikipedia.org/wiki/Modulo.
  *
  * Remainder(3, 5) = 3
  * Remainder(-3, 5) = -3

@@ -221,9 +221,8 @@ template <class T, class U,
                                     IsIntegralAnywhere<U>> * = nullptr>
 __host__ __device__ auto runtime_mod(T a, U b) {
     auto m = a % b;
-    if (m < 0) {
-        // m += (b < 0) ? -b : b; // avoid this form: it is UB when b == INT_MIN
-        m = (b < 0) ? m - b : m + b;
+    if ((m > 0 && b < 0) || (m < 0 && b > 0)) {
+        m += b;
     }
     return m;
 }
