@@ -1392,7 +1392,7 @@ def mtype(var):
         return 'byvalue'
 
 
-def register_operators(cls):
+def _register_operators(cls):
     cls.__add__ = add
     cls.__radd__ = lambda self, other: add(other, self)
     cls.__sub__ = sub
@@ -1414,5 +1414,5 @@ def register_operators(cls):
     cls.__neg__ = neg
 
 
-register_operators(ffi.FrontendVar)
-register_operators(ffi.Expr)
+_register_operators(ffi.FrontendVar)
+_register_operators(ffi.Expr)
