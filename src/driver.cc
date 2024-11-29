@@ -222,7 +222,7 @@ void Driver::buildAndLoad() {
             // be split into multiple arguments.
             addArgs("-I" + (std::string)path);
         }
-        addArgs("-std=c++20", "-O3", "-fPIC", "-Wall", "-fopenmp");
+        addArgs("-std=c++20", "-fPIC", "-Wall", "-fopenmp");
         if (Config::fastMath()) {
             addArgs("-ffast-math");
         }
@@ -239,6 +239,8 @@ void Driver::buildAndLoad() {
         }
         if (Config::debugBinary()) {
             addArgs("-g");
+        } else {
+            addArgs("-O3");
         }
         for (auto &&extra : cxxFlags_) {
             addArgs(extra);
