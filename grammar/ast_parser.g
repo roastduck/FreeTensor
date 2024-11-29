@@ -542,7 +542,7 @@ expr returns [Expr node]
       {
         $node = makeMax($expr0.node, $expr1.node);
       }
-    | expr0=expr '?' expr1=expr ':' expr2=expr
+    |<assoc=right> expr0=expr '?' expr1=expr ':' expr2=expr
       {
         $node = makeIfExpr($expr0.node, $expr1.node, $expr2.node);
       }

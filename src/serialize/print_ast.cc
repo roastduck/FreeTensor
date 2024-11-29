@@ -578,8 +578,8 @@ void PrintVisitor::visit(const Unbound &op) {
 }
 
 void PrintVisitor::visit(const IfExpr &op) {
-    precedence_enclose(Precedence::TRINARY, [&] {
-        recur(op->cond_);
+    precedence_enclose(Precedence::TERNARY, [&] {
+        precedence_enclose(Precedence::TERNARY_LHS, [&] { recur(op->cond_); });
         os() << SPACE << "?" << SPACE;
         recur(op->thenCase_);
         os() << SPACE << ":" << SPACE;

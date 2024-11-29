@@ -23,10 +23,14 @@ class PrintVisitor : public CodeGen<CodeGenStream> {
      * RHS is for the right hand side of the operator. They require a slightly
      * higher precedence than the operator itself to correctly print parentheses
      * in case of A op (B op C).
+     * 
+     * Ternary is a bit different: it's right associative, so the corresponding
+     * slightly higher precedence is for the left hand side.
      */
     enum class Precedence {
         ANY,
-        TRINARY,
+        TERNARY,
+        TERNARY_LHS,
         LOR,
         LOR_RHS,
         LAND,
