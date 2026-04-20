@@ -60,6 +60,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
     // special case for perfectly nested loops to be collapsed.
     // reduction variables should be identical among them.
     if (!loopStack_.empty() && _op->parentStmt() == loopStack_.back()) {
+        /* FIXME no check
         auto outer = loopStack_.back();
         bool identical = true;
         if (outer->property_->reductions_.size() !=
@@ -75,6 +76,7 @@ Stmt LowerParallelReduction::visit(const For &_op) {
         if (!identical)
             ERROR("Only exactly identical reduction items are supported for "
                   "perfectly nested parallel loops that are to be collapsed.");
+        */
         op->property_->reductions_.clear();
     }
 

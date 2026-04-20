@@ -3,7 +3,14 @@
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
-
+// Source - https://stackoverflow.com/a
+// // Posted by Thomas Piekarski
+// // Retrieved 2026-01-08, License - CC BY-SA 4.0
+//
+#if __GLIBC__ == 2 && __GLIBC_MINOR__ < 30
+#include <sys/syscall.h>
+#define gettid() syscall(SYS_gettid)
+#endif
 #include <debug.h>
 #include <except.h>
 #include <timeout.h>

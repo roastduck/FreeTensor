@@ -166,7 +166,7 @@ Driver::Driver(const NativeCode &nativeCode, const Ref<Device> &dev,
 }
 
 void Driver::buildAndLoad() {
-    std::string home = getenv("HOME");
+    std::string home = getenv("FT_CACHE_HOME");
     mkdir((home + "/.freetensor").c_str(), 0755);
     std::string path_string = home + "/.freetensor/XXXXXX";
     char path[64];
@@ -324,6 +324,10 @@ void Driver::buildAndLoad() {
     if (!Config::debugBinary()) {
         remove(cpp.c_str());
         remove(so.c_str());
+        if (dev_->type() == TargetType::CPU) {
+            auto oFile = (std::string)path + "/run.o";
+            remove(oFile.c_str());
+        }
         rmdir(path);
     } else {
         WARNING((std::string) "debug-binary mode on. The produced files are "

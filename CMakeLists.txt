@@ -236,7 +236,7 @@ target_link_libraries(freetensor PUBLIC
     ${Z3_PATH}/lib/libz3.so
     antlr4_shared # See 3rd-party/antlr/antlr4/runtime/Cpp/runtime/CMakeLists.txt
     OpenMP::OpenMP_CXX
-    ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
+    ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} rt)
 target_include_directories(freetensor PUBLIC
     ${CUDA_INCLUDE_DIRS}
     ${Z3_PATH}/include
