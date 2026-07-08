@@ -402,8 +402,9 @@ template <class Stream> void CodeGenC<Stream>::visit(const FloatConst &op) {
     } else if (op->val_ == -INFINITY) {
         this->os() << "-INFINITY";
     } else {
-        this->os() << std::hexfloat << op->val_
-                   << "f"; // FIXME: Determine the actual type
+        this->os() << std::hexfloat << op->val_;
+        if (sizeOf(op->dtype()) == 4)
+            this->os()<< "f"; // FIXME: Determine the actual type
     }
 }
 

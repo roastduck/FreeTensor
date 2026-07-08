@@ -50,7 +50,8 @@ DataType DataTypeInfer::infer(const IntConstNode &op) {
 
 DataType DataTypeInfer::infer(const FloatConstNode &op) {
     // TODO: Able to configure this to other types
-    BaseDataType base = BaseDataType::Float32;
+    // BaseDataType base = BaseDataType::Float32;
+    BaseDataType base = BaseDataType::Float64;
     SignDataType sign = SignDataType::Any;
     if (op.val_ > 0) {
         sign = SignDataType::GT0;

@@ -184,7 +184,7 @@ void init_ffi_ast_expr(py::module_ &m) {
     pyExpr.def(py::init([](const Expr &expr) { return deepCopy(expr); }))
         .def(py::init([](bool val) { return makeBoolConst(val); }))
         .def(py::init([](int64_t val) { return makeIntConst(val); }))
-        .def(py::init([](float val) { return makeFloatConst(val); }))
+        .def(py::init([](double val) { return makeFloatConst(val); }))
         .def(py::init([](const FrontendVar &var) { return var.asLoad(); }))
         .def(
             "__add__",
