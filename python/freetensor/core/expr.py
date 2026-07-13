@@ -151,6 +151,7 @@ class VarRef(ffi.FrontendVar):
         if not isinstance(key, collections.abc.Sequence):
             key = (key,)
         ffiIdx = []
+        assert len(key) <= len(self.shape()), f"{self.name} is a {len(self.full_shape)}D-tensor, but ({len(self.indices)}+{len(key)})-D indices are given."
         for idx, length in zip(key, self.shape()):
             if isinstance(idx, slice):
                 start = idx.start if idx.start is not None else 0
