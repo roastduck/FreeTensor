@@ -808,7 +808,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                     presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
-                    10, realEarlierIter, range(depAll));
+                    61, realEarlierIter, range(depAll));
                 !flag.has_value() || !*flag) {
                 return;
             }
@@ -819,7 +819,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                     presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
-                    10, realLaterIter, domain(depAll));
+                    62, realLaterIter, domain(depAll));
                 !flag.has_value() || !*flag) {
                 return;
             }
@@ -832,7 +832,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                     presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
-                    10, realEarlierIter, range(nearest));
+                    63, realEarlierIter, range(nearest));
                 !flag.has_value() || !*flag) {
                 return;
             }
@@ -843,7 +843,7 @@ void AnalyzeDeps::checkAgainstCond(PBCtx &presburger,
                     presburger,
                     static_cast<bool (*)(const PBSet &, const PBSet &)>(
                         isSubset),
-                    10, realLaterIter, domain(nearest));
+                    64, realLaterIter, domain(nearest));
                 !flag.has_value() || !*flag) {
                 return;
             }

@@ -116,7 +116,7 @@ Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
                    // ensure it is really used "one time"
                    if (auto f = pbFuncWithTimeout(
                            d.presburger_,
-                           [](const PBMap &map) { return PBFunc(map); }, 10,
+                           [](const PBMap &map) { return PBFunc(map); }, 60,
                            d.later2EarlierIter_);
                        f.has_value()) {
                        std::lock_guard _(lock);
