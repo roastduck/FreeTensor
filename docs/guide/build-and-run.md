@@ -61,9 +61,14 @@ You can create your own `.toml` files to set them explicitly.
 
 Alternatively, you can build our docker images by `make -f docker.Makefile <variant>`, where `<variant>` can be:
 
-- `minimal-dev`, for `-DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF`, or
-- `cuda-mkl-dev`, for `-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=OFF`, or
+- `gcc-minimal-dev` or `clang-minimal-dev`, for `-DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF`,
+- `cuda-mkl-dev`, for `-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=OFF`,
+- `clang-mkl-dev`, for `-DFT_WITH_CUDA=OFF -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=OFF`, or
 - `cuda-mkl-pytorch-dev`, for `-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=ON`.
+
+The Docker makefile enables BuildKit by default. The `cuda-mkl-pytorch-dev` image uses BuildKit cache mounts for `apt`, `pip`, and `ccache`, so repeated builds can reuse downloaded packages and C/C++ compilation results. If your Docker daemon disables BuildKit, either enable it or build with `DOCKER_BUILDKIT=1 make -f docker.Makefile cuda-mkl-pytorch-dev`.
+
+Docker images can include optional Python dependency groups from `pyproject.toml` by setting `PYTHON_EXTRAS`. For example, `PYTHON_EXTRAS=test make -f docker.Makefile cuda-mkl-pytorch-dev` installs `.[test]`, including `pytest`. Multiple groups can be comma-separated, e.g. `PYTHON_EXTRAS=test,doc`.
 
 After installation, simply `import freetensor` to Python to use.
 

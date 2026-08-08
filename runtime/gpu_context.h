@@ -52,6 +52,17 @@ inline const char *cublasGetErrorString(cublasStatus_t error) {
     return "<unknown>";
 }
 
+#if CUDART_VERSION >= 13000
+inline cudaMemLocation cudaMemAdviseLocationForDevice(int device) {
+    cudaMemLocation location = {};
+    location.type = cudaMemLocationTypeDevice;
+    location.id = device;
+    return location;
+}
+#else
+inline int cudaMemAdviseLocationForDevice(int device) { return device; }
+#endif
+
 // checkCutlassError is defined in gpu_runtime.h
 
 class GPUContext : public Context {
@@ -81,7 +92,8 @@ class GPUContext : public Context {
                     &gpuGlobalStaticPool_, gpuGlobalStaticPoolSize));
                 runtimeCheckCudaError(
                     cudaMemAdvise(gpuGlobalStaticPool_, gpuGlobalStaticPoolSize,
-                                  cudaMemAdviseSetPreferredLocation, deviceId));
+                                  cudaMemAdviseSetPreferredLocation,
+                                  cudaMemAdviseLocationForDevice(deviceId)));
                 runtimeCheckCudaError(cudaMemset(gpuGlobalStaticPool_, 0,
                                                  gpuGlobalStaticPoolSize));
             }

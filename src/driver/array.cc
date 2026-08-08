@@ -58,8 +58,9 @@ static uint8_t *allocOn(size_t size, const Ref<Device> &device) {
             // Set the buffer to prefer the selected device, so `cudaMemcpy`
             // with a `cudaMemcpyDefault` direction will treat it as a
             // traditional device memory
-            checkCudaError(cudaMemAdvise(
-                ptr, size, cudaMemAdviseSetPreferredLocation, device->num()));
+            checkCudaError(
+                cudaMemAdvise(ptr, size, cudaMemAdviseSetPreferredLocation,
+                              cudaMemAdviseLocationForDevice(device->num())));
 
             // `cudaMemset` is required, to actually move the buffer to the
             // device just set

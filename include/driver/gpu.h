@@ -16,6 +16,21 @@
         }                                                                      \
     }
 
+#if CUDART_VERSION >= 13000
+namespace freetensor {
+inline cudaMemLocation cudaMemAdviseLocationForDevice(int device) {
+    cudaMemLocation location = {};
+    location.type = cudaMemLocationTypeDevice;
+    location.id = device;
+    return location;
+}
+} // namespace freetensor
+#else
+namespace freetensor {
+inline int cudaMemAdviseLocationForDevice(int device) { return device; }
+} // namespace freetensor
+#endif
+
 #endif // FT_WITH_CUDA
 
 #endif // FREE_TENSOR_GPU_H

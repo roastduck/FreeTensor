@@ -46,8 +46,9 @@ inline void *cudaNew(size_t size, cudaStream_t stream) {
         int device;
         checkCudaError(cudaGetDevice(&device));
         checkCudaError(cudaMallocManaged(&ptr, size));
-        checkCudaError(cudaMemAdvise(
-            ptr, size, cudaMemAdviseSetPreferredLocation, device));
+        checkCudaError(cudaMemAdvise(ptr, size,
+                                     cudaMemAdviseSetPreferredLocation,
+                                     cudaMemAdviseLocationForDevice(device)));
         checkCudaError(cudaMemset(ptr, 0, size));
 #endif // FT_DEBUG_CUDA_WITH_UM
     }

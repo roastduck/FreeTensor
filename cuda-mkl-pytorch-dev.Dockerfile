@@ -1,27 +1,45 @@
-FROM nvcr.io/nvidia/pytorch:23.05-py3
-# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-05.html#rel-23-05
-# CUDA 12.1.1
-# PyTorch 2.0.0
+# syntax=docker/dockerfile:1.7
+FROM pytorch/pytorch:2.9.1-cuda13.0-cudnn9-devel
 
-RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    g++ python3 python3-dev python3-pip python3-venv cmake make ninja-build \
-    autoconf automake libtool openjdk-11-jdk libgmp-dev \
-    libmkl-dev
+ARG PYTHON_EXTRAS=""
 
-RUN pip3 install --upgrade -i https://pypi.tuna.tsinghua.edu.cn/simple pip # We need `-C` from pip
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
+    PIP_CACHE_DIR=/root/.cache/pip \
+    CCACHE_DIR=/root/.cache/ccache \
+    CCACHE_MAXSIZE=10G
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        g++ cmake make ninja-build ccache \
+        autoconf automake libtool openjdk-11-jdk libgmp-dev \
+        libmkl-dev
+
+# The image provides PyTorch in its Python environment. FreeTensor's PyTorch build must
+# use that same environment, so build isolation is disabled below and build-time Python
+# requirements are installed explicitly.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m pip install --upgrade pip && \
+    python3 -m pip install \
+        "py-build-cmake~=0.1.8" \
+        importlib_metadata \
+        z3-solver \
+        setuptools
 
 WORKDIR /opt/freetensor
 COPY . .
 
-# We use --no-build-isolation to disable building in a virtual environment because we need
-# PyTorch from the system. But this requires us to install build dependencies on our own
-RUN python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple "py-build-cmake~=0.1.8"
-
-RUN PY_BUILD_CMAKE_VERBOSE=1 python3 -m pip install --no-build-isolation \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple -v -e . \
-    -C--local=with-cuda.toml \
-    -C--local=with-mkl.toml \
-    -C--local=with-pytorch.toml
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=cache,target=/root/.cache/ccache \
+    install_target="."; \
+    if [ -n "${PYTHON_EXTRAS}" ]; then install_target=".[${PYTHON_EXTRAS}]"; fi; \
+    PY_BUILD_CMAKE_VERBOSE=1 python3 -m pip install --no-build-isolation \
+        -v -e "${install_target}" \
+        -C--local=with-cuda.toml \
+        -C--local=with-mkl.toml \
+        -C--local=with-pytorch.toml
 
 WORKDIR /workspace

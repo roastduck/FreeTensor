@@ -4,8 +4,8 @@
 # See https://stackoverflow.com/questions/32482199/git-submodules-it-is-possible-to-provide-both-https-and-ssh-access-to-submodule
 [submodule "3rd-party/pybind11"]
     path = 3rd-party/pybind11
-    url = ../../roastduck/pybind11.git
-    branch = fix-typing
+    url = ../../pybind/pybind11.git
+    branch = v2.13
 [submodule "3rd-party/isl"]
     path = 3rd-party/isl
     url = git://repo.or.cz/isl.git

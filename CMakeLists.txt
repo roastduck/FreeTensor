@@ -92,7 +92,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr4/runtime/Cpp/runtime/src)
 # 2. Generator
 find_package(Java QUIET REQUIRED COMPONENTS Runtime)
-set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr-4.11.1-complete.jar)
+set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/antlr/antlr-4.13.2-complete.jar)
 macro(ANTLR_TARGET Name InputFile)
     set(ANTLR_ONE_VALUE_ARGS PACKAGE)
     set(ANTLR_MULTI_VALUE_ARGS COMPILE_FLAGS DEPENDS)
@@ -150,17 +150,40 @@ if(FT_WITH_PYTORCH)
     list(APPEND TORCH_LIBRARIES "${TORCH_INSTALL_PREFIX}/lib/libtorch_python.so")
 
     # Use the C++11 (gcc >= 5) ABI
-    # PyTorch's pip release uses the old C++ ABI. When linking PyTorch in CMake, it automatically
-    # sets FreeTensor to use the old ABI as well. The only difference between the two ABIs are
-    # std::string and std::list (https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html).
-    # We don't pass std::string or std::list from or to PyTorch, so we can keep FreeTensor
-    # to use the new ABI.
+    # PyTorch exposes its ABI through Python, while its CMake package may pass
+    # required compile flags through TORCH_CXX_FLAGS and imported target
+    # properties. FreeTensor keeps using the new ABI because it does not pass
+    # ABI-sensitive C++ standard library types through the PyTorch boundary.
+    execute_process(
+        COMMAND "${Python_EXECUTABLE}" -c "import torch;print(int(torch.compiled_with_cxx11_abi()))"
+        OUTPUT_VARIABLE PYTORCH_WITH_CXX11_ABI COMMAND_ERROR_IS_FATAL ANY)
+    string(STRIP "${PYTORCH_WITH_CXX11_ABI}" PYTORCH_WITH_CXX11_ABI)
+    message(STATUS "PyTorch was built with C++11 ABI: ${PYTORCH_WITH_CXX11_ABI}")
+
+    function(ft_remove_torch_old_abi_flag_from_target TARGET_NAME)
+        foreach(PROP IN ITEMS INTERFACE_COMPILE_OPTIONS INTERFACE_COMPILE_DEFINITIONS)
+            get_target_property(TORCH_COMPILE_PROP ${TARGET_NAME} ${PROP})
+            if(TORCH_COMPILE_PROP)
+                message(STATUS "Checking ${TARGET_NAME}.${PROP}: ${TORCH_COMPILE_PROP}")
+                list(REMOVE_ITEM TORCH_COMPILE_PROP
+                    "-D_GLIBCXX_USE_CXX11_ABI=0"
+                    "_GLIBCXX_USE_CXX11_ABI=0")
+                set_property(TARGET ${TARGET_NAME} PROPERTY ${PROP} ${TORCH_COMPILE_PROP})
+            else()
+                message(STATUS "Checking ${TARGET_NAME}.${PROP}: not set")
+            endif()
+        endforeach()
+    endfunction()
+
+    if(TORCH_CXX_FLAGS)
+        message(STATUS "Checking TORCH_CXX_FLAGS: ${TORCH_CXX_FLAGS}")
+        string(REPLACE "-D_GLIBCXX_USE_CXX11_ABI=0" "" TORCH_CXX_FLAGS "${TORCH_CXX_FLAGS}")
+        string(STRIP "${TORCH_CXX_FLAGS}" TORCH_CXX_FLAGS)
+    endif()
+
     foreach(TORCH_LIBRARY IN ITEMS ${TORCH_LIBRARIES})
         if(TARGET ${TORCH_LIBRARY})
-            get_target_property(DEF ${TORCH_LIBRARY} INTERFACE_COMPILE_OPTIONS)
-            message(STATUS "Checking ${TORCH_LIBRARY}: ${DEF}")
-            list(REMOVE_ITEM DEF "-D_GLIBCXX_USE_CXX11_ABI=0")
-            set_property(TARGET ${TORCH_LIBRARY} PROPERTY INTERFACE_COMPILE_OPTIONS ${DEF})
+            ft_remove_torch_old_abi_flag_from_target(${TORCH_LIBRARY})
         endif()
     endforeach()
 
@@ -225,7 +248,7 @@ if(FT_WITH_CUDA)
 endif()
 
 # OpenMP used to parallelize the compilation of different instances
-find_package(OpenMP REQUIRED)
+find_package(OpenMP REQUIRED COMPONENTS CXX)
 list(JOIN OpenMP_CXX_LIBRARIES ":" OMP_LIBS_COLON_SEPARATED)
 add_definitions(-DFT_BACKEND_OPENMP="${OMP_LIBS_COLON_SEPARATED}")
 

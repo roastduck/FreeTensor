@@ -14,7 +14,7 @@ def test_parallel_reduction():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y: ft.Var[(4,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -23,7 +23,7 @@ def test_parallel_reduction():
 
     with ft.VarDef([
         ("x", (4, 64), "int32", "input", "gpu/global"),
-        ("y", (4,), "int32", "output", "gpu/global"),
+        ("y", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 64, label="L2") as j:
@@ -55,8 +55,8 @@ def test_parallel_reduction_on_2_vars():
     @ft.transform
     def test(x, y, z):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(4,), "int32", "output", "gpu/global"]
-        z: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y: ft.Var[(4,), "int32", "inout", "gpu/global"]
+        z: ft.Var[(4,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -92,7 +92,7 @@ def test_parallel_reduction_on_array():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 64, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(4, 64), "int32", "output", "gpu/global"]
+        y: ft.Var[(4, 64), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -124,7 +124,7 @@ def test_parallel_reduction_trivial_length():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 2), "int32", "input", "gpu/global"]
-        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y: ft.Var[(4,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -154,7 +154,7 @@ def test_parallel_reduction_on_multi_dim_array():
     @ft.transform
     def test(x, y):
         x: ft.Var[(64, 64, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(64,), "int32", "output", "gpu/global"]
+        y: ft.Var[(64,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 64):
             #! label: L2
@@ -168,7 +168,7 @@ def test_parallel_reduction_on_multi_dim_array():
     func = ft.lower(s.func(), target, verbose=1)
 
     with ft.VarDef([("x", (64, 64, 64), "int32", "input", "gpu/global"),
-                    ("y", (64,), "int32", "output", "gpu/global")]) as (x, y):
+                    ("y", (64,), "int32", "inout", "gpu/global")]) as (x, y):
         with ft.For("i", 0, 64) as i:  # thread
             # THE SIZE SHOULD BE 64 INSTEAD OF 64 x 64
             with ft.VarDef("workspace", (64, 1), "int32", "cache",
@@ -398,7 +398,7 @@ def test_serial_reduction():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y: ft.Var[(4,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -407,7 +407,7 @@ def test_serial_reduction():
 
     with ft.VarDef([
         ("x", (4, 64), "int32", "input", "gpu/global"),
-        ("y", (4,), "int32", "output", "gpu/global"),
+        ("y", (4,), "int32", "inout", "gpu/global"),
     ]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 64, label="L2") as j:
@@ -438,7 +438,7 @@ def test_parallel_reduction_on_dynamic_thread_dim():
     def test(n, x, y):
         n: ft.Var[(), "int32", "input", "byvalue"]
         x: ft.Var[(4, n[...]), "int32", "input", "gpu/global"]
-        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y: ft.Var[(4,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -470,7 +470,7 @@ def test_parallel_reduction_over_multiple_scopes():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 6, 6), "int32", "input", "gpu/global"]
-        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y: ft.Var[(4,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -503,7 +503,7 @@ def test_parallel_reduction_on_triangular_dim_1():
     @ft.transform
     def test(x, y):
         x: ft.Var[(64, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(64,), "int32", "output", "gpu/global"]
+        y: ft.Var[(64,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 64):
             #! label: L2
@@ -535,7 +535,7 @@ def test_parallel_reduction_on_triangular_dim_2():
     @ft.transform
     def test(x, y):
         x: ft.Var[(64, 64, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(64, 64), "int32", "output", "gpu/global"]
+        y: ft.Var[(64, 64), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 64):
             #! label: L2
@@ -572,7 +572,7 @@ def test_parallel_reduction_on_triangular_dim_3():
     @ft.transform
     def test(x, y):
         x: ft.Var[(64, 8, 8), "int32", "input", "gpu/global"]
-        y: ft.Var[(64, 8), "int32", "output", "gpu/global"]
+        y: ft.Var[(64, 8), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 64):
             #! label: L2
@@ -609,7 +609,7 @@ def test_parallel_reduction_with_inactive_threads_1():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(4,), "int32", "output", "gpu/global"]
+        y: ft.Var[(4,), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
@@ -643,7 +643,7 @@ def test_parallel_reduction_with_inactive_threads_2():
     @ft.transform
     def test(x, y, z):
         x: ft.Var[(4, 8, 8), "int32", "input", "gpu/global"]
-        y: ft.Var[(4, 8), "int32", "output", "gpu/global"]
+        y: ft.Var[(4, 8), "int32", "inout", "gpu/global"]
         z: ft.Var[(4, 8), "int32", "output", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
@@ -680,7 +680,7 @@ def test_hybrid_binary_then_atomic():
     @ft.transform
     def test(x, y):
         x: ft.Var[(4, 64), "int32", "input", "gpu/global"]
-        y: ft.Var[(), "int32", "output", "gpu/global"]
+        y: ft.Var[(), "int32", "inout", "gpu/global"]
         #! label: L1
         for i in range(0, 4):
             #! label: L2
