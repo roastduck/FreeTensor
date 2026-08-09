@@ -20,9 +20,12 @@ test = [
     "pytest",
 ]
 doc = [
-    "mkdocs",
+    "mkdocs==1.4.2",
+    "mkdocs-autorefs==0.4.1",
     "mkdocstrings==0.18.1",
-    "pytkdocs[numpy-style]",
+    "mkdocstrings-python-legacy==0.2.2",
+    "pytkdocs[numpy-style]==0.16.1",
+    "pymdown-extensions==10.0",
 ]
 
 [build-system]
