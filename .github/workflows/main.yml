@@ -14,7 +14,8 @@ on:
 jobs:
   build-and-test-gcc-cuda-mkl-pytorch-install:
     runs-on: self-hosted
-    if: github.event.pull_request.draft == false
+    # Disabled while the self-hosted CI server is offline.
+    if: ${{ false && github.event.pull_request.draft == false }}
     steps:
       - uses: roastduck/checkout@main
         with:
@@ -40,7 +41,8 @@ jobs:
           srun -N 1 -c 64 -p octave --gres=gpu:a100:1 pytest --color=yes -m "not performance_sensitive" test
   build-and-test-gcc-minimal-run_in_tree:
     runs-on: self-hosted
-    if: github.event.pull_request.draft == false
+    # Disabled while the self-hosted CI server is offline.
+    if: ${{ false && github.event.pull_request.draft == false }}
     steps:
       - uses: roastduck/checkout@main
         with:
@@ -66,7 +68,8 @@ jobs:
           PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -c 64 -p ja pytest --color=yes -m "not performance_sensitive" test
   build-and-test-clang-run-in-tree:
     runs-on: self-hosted
-    if: github.event.pull_request.draft == false
+    # Disabled while the self-hosted CI server is offline.
+    if: ${{ false && github.event.pull_request.draft == false }}
     steps:
       - uses: roastduck/checkout@main
         with:
@@ -92,7 +95,8 @@ jobs:
           PYTHONPATH=build:python:$PYTHONPATH srun -N 1 -c 64 -p ja pytest --color=yes -m "not performance_sensitive" test
   build-and-test-gcc-cuda-mkl-exclusively:
     runs-on: self-hosted
-    if: github.event.pull_request.draft == false
+    # Disabled while the self-hosted CI server is offline.
+    if: ${{ false && github.event.pull_request.draft == false }}
     steps:
       - uses: roastduck/checkout@main
         with:

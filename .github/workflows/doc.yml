@@ -12,7 +12,8 @@ on:
 jobs:
   build-and-publish-doc:
     runs-on: self-hosted
-    if: github.event.pull_request.draft == false
+    # Disabled while the self-hosted CI server is offline.
+    if: ${{ false && github.event.pull_request.draft == false }}
     steps:
       - uses: roastduck/checkout@main
         with:
