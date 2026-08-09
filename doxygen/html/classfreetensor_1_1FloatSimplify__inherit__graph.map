@@ -1,0 +1,7 @@
+<map id="freetensor::FloatSimplify" name="freetensor::FloatSimplify">
+<area shape="rect" id="node1" title=" " alt="" coords="107,244,289,271"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="108,155,288,196"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1ConstFold.html" title=" " alt="" coords="5,80,167,107"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1Mutator.html" title=" " alt="" coords="12,5,160,32"/>
+<area shape="rect" id="node5" href="$classfreetensor_1_1SymbolTableInterface.html" title=" " alt="" coords="191,80,429,107"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="freetensor::StructuralFeature" name="freetensor::StructuralFeature">
+<area shape="rect" id="node1" title=" " alt="" coords="182,259,391,285"/>
+<area shape="rect" id="node2" href="$classfreetensor_1_1CompTransientBounds.html" title=" " alt="" coords="159,169,414,211"/>
+<area shape="rect" id="node3" href="$classfreetensor_1_1SymbolTable.html" title=" " alt="" coords="91,80,271,121"/>
+<area shape="rect" id="node4" href="$classfreetensor_1_1Visitor.html" title=" " alt="" coords="5,5,144,32"/>
+<area shape="rect" id="node5" href="$classfreetensor_1_1SymbolTableInterface.html" title=" " alt="" coords="169,5,407,32"/>
+<area shape="rect" id="node6" href="$classfreetensor_1_1CompTransientBoundsInterface.html" title=" " alt="" coords="296,80,491,121"/>
+</map>

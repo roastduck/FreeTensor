@@ -174,10 +174,13 @@
 <p>You can create your own <code>.toml</code> files to set them explicitly.</p>
 <p>Alternatively, you can build our docker images by <code>make -f docker.Makefile &lt;variant&gt;</code>, where <code>&lt;variant&gt;</code> can be:</p>
 <ul>
-<li><code>minimal-dev</code>, for <code>-DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF</code>, or</li>
-<li><code>cuda-mkl-dev</code>, for <code>-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=OFF</code>, or</li>
+<li><code>gcc-minimal-dev</code> or <code>clang-minimal-dev</code>, for <code>-DFT_WITH_CUDA=OFF -DFT_WITH_MKL=OFF -DFT_WITH_PYTORCH=OFF</code>,</li>
+<li><code>cuda-mkl-dev</code>, for <code>-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=OFF</code>,</li>
+<li><code>clang-mkl-dev</code>, for <code>-DFT_WITH_CUDA=OFF -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=OFF</code>, or</li>
 <li><code>cuda-mkl-pytorch-dev</code>, for <code>-DFT_WITH_CUDA=ON -DFT_WITH_MKL=ON -DFT_WITH_PYTORCH=ON</code>.</li>
 </ul>
+<p>The Docker makefile enables BuildKit by default. The <code>cuda-mkl-pytorch-dev</code> image uses BuildKit cache mounts for <code>apt</code>, <code>pip</code>, and <code>ccache</code>, so repeated builds can reuse downloaded packages and C/C++ compilation results. If your Docker daemon disables BuildKit, either enable it or build with <code>DOCKER_BUILDKIT=1 make -f docker.Makefile cuda-mkl-pytorch-dev</code>.</p>
+<p>Docker images can include optional Python dependency groups from <code>pyproject.toml</code> by setting <code>PYTHON_EXTRAS</code>. For example, <code>PYTHON_EXTRAS=test make -f docker.Makefile cuda-mkl-pytorch-dev</code> installs <code>.[test]</code>, including <code>pytest</code>. Multiple groups can be comma-separated, e.g. <code>PYTHON_EXTRAS=test,doc</code>.</p>
 <p>After installation, simply <code>import freetensor</code> to Python to use.</p>
 <h2 id="global-configurations">Global Configurations<a class="headerlink" href="#global-configurations" title="Permanent link">&para;</a></h2>
 <p>There are serveral global configurations can be set via environment variables:</p>
@@ -265,7 +268,6 @@
     <script src="../../js/theme_extra.js" defer></script>
     <script src="../../js/theme.js" defer></script>
       <script src="../../javascripts/mathjax.js" defer></script>
-      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
       <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
       <script src="../../search/main.js" defer></script>
     <script defer>
