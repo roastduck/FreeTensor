@@ -1104,8 +1104,8 @@ def schedule(ast=None,
     jit_cache : Callable[Callable, Callable]
         Function decorator used to cache JIT instances
     verbose : int (Optional)
-        0 = print nothing. 1 = print the final AST. 2 = print an AST after
-        each schedule
+        0 = print nothing. 1 = print the final AST. 2 = print an AST and elapsed
+        time after each schedule
 
     Returns
     -------

@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_SCHEDULE_H
 #define FREE_TENSOR_SCHEDULE_H
 
+#include <chrono>
 #include <functional>
 #include <unordered_map>
 
@@ -33,9 +34,12 @@ class Schedule {
     struct Transaction {
         Stmt ast_;
         ScheduleLog logs_;
+        std::chrono::steady_clock::time_point beginTime_;
 
-        Transaction(const Stmt &ast, const ScheduleLog &logs)
-            : ast_(ast), logs_(logs) {}
+        Transaction(const Stmt &ast, const ScheduleLog &logs,
+                    std::chrono::steady_clock::time_point beginTime =
+                        std::chrono::steady_clock::now())
+            : ast_(ast), logs_(logs), beginTime_(beginTime) {}
     };
 
     Func func_; /// Used for `func()`. Only header of `func_` is used, while its

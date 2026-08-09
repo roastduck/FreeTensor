@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_LOWER_H
 #define FREE_TENSOR_LOWER_H
 
+#include <chrono>
 #include <unordered_set>
 
 #include <autograd/clear_mark_version.h>
@@ -47,7 +48,7 @@ namespace freetensor {
  * passes will not be skipped even specified in these parameter, because they
  * are indirectly called in some other passes
  * @param verbose : 0 = print nothing. 1 = print the lowered AST. 2 = print AST
- * after every single passes
+ * and elapsed time after every single pass
  */
 template <class T>
 T lower(const T &_ast, const Ref<Target> &_target = nullptr,
@@ -56,18 +57,30 @@ T lower(const T &_ast, const Ref<Target> &_target = nullptr,
 
     auto target = _target.isValid() ? _target : Config::defaultTarget();
 
-    auto maybePrint = [&](const std::string &name, const T &ast) -> T {
+    auto maybePrint = [&](const std::string &name, const T &ast,
+                          std::chrono::steady_clock::duration elapsed) -> T {
         if (verbose >= 2) {
-            logger() << "AST after " << name << " is:" << std::endl
-                     << ast << std::endl;
+            logger()
+                << "AST after " << name << " (took "
+                << std::chrono::duration<double, std::milli>(elapsed).count()
+                << " ms) is:" << std::endl
+                << ast << std::endl;
         }
         return ast;
     };
 
+    auto applyPass = [&](const std::string &name, auto &&pass) -> T {
+        auto begin = std::chrono::steady_clock::now();
+        auto ast = pass();
+        auto end = std::chrono::steady_clock::now();
+        return maybePrint(name, ast, end - begin);
+    };
+
 #define FIRST_OF(x, ...) (x)
 #define APPLY(name, pass, ...)                                                 \
-    skipPasses.count(name) ? FIRST_OF(__VA_ARGS__)                             \
-                           : maybePrint(name, pass(__VA_ARGS__))
+    skipPasses.count(name)                                                     \
+        ? FIRST_OF(__VA_ARGS__)                                                \
+        : applyPass(name, [&]() -> T { return pass(__VA_ARGS__); })
 
     // NOTE: The following passes enables each other: some optimizations can be
     // done in pass A only after we do pass B first. Thus the order of the

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 
 #include <autograd/clear_mark_version.h>
 #include <codegen/code_gen.h>
@@ -50,7 +51,9 @@ Schedule::Schedule(const Stmt &ast, int verbose)
                             ScheduleLog());
 }
 
-void Schedule::beginTransaction() { openTrans_.emplace_back(ast(), logs()); }
+void Schedule::beginTransaction() {
+    openTrans_.emplace_back(ast(), logs(), std::chrono::steady_clock::now());
+}
 
 void Schedule::commitTransaction() {
     if (openTrans_.size() == 1) {
@@ -67,12 +70,19 @@ void Schedule::commitTransaction() {
             for (auto &&[i, item] : views::enumerate(logs)) {
                 os << (i > 0 ? ", " : "") << *item;
             }
-            os << ", resulting in:" << std::endl << trans.ast_ << std::endl;
+            os << ", took "
+               << std::chrono::duration<double, std::milli>(
+                      std::chrono::steady_clock::now() - trans.beginTime_)
+                      .count()
+               << " ms, resulting in:" << std::endl
+               << trans.ast_ << std::endl;
         } else {
             os << "No schedule is committed" << std::endl;
         }
     }
-    openTrans_.back() = std::move(trans);
+    auto &parent = openTrans_.back();
+    parent.ast_ = std::move(trans.ast_);
+    parent.logs_ = std::move(trans.logs_);
 }
 
 void Schedule::abortTransaction() {

@@ -55,7 +55,7 @@ def sch(s):
     s.parallelize(outer, 'openmp')
 
 # Set verbose=1 to see the resulting native code
-# Set verbose=2 to see the code after EVERY schedule
+# Set verbose=2 to see the code and elapsed time after EVERY schedule
 @ft.optimize(schedule_callback=sch)
 def test(a: ft.Var[(n,), "int32"], b: ft.Var[(n,), "int32"]):
     y = ft.empty((n,), "int32")

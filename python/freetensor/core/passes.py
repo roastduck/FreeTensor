@@ -76,8 +76,8 @@ def lower(ast=None,
     jit_cache : Callable[Callable, Callable]
         Function decorator used to cache JIT instances
     verbose : int (Optional)
-        0 = print nothing. 1 = print the lowered AST. 2 = print AST after every
-        single passes
+        0 = print nothing. 1 = print the lowered AST. 2 = print AST and elapsed
+        time after every single pass
 
     Returns
     -------
