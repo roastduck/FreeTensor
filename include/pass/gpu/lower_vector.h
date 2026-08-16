@@ -8,6 +8,7 @@
 #include <analyze/analyze_linear.h>
 #include <func.h>
 #include <pass/z3_simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -41,7 +42,9 @@ class LowerVector : public Z3SimplifyWithSymbolTable {
     Stmt visit(const ReduceTo &op) override;
 };
 
-Stmt lowerVector(const Stmt &op);
+Stmt lowerVector(const Stmt &op,
+                 const std::optional<bool> &asSubprocess = std::nullopt,
+                 const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(lowerVector)
 

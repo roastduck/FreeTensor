@@ -27,3 +27,6 @@
 [submodule "3rd-party/half"]
 	path = 3rd-party/half
 	url = ../../suruoxi/half.git
+[submodule "3rd-party/json"]
+	path = 3rd-party/json
+	url = ../../nlohmann/json.git

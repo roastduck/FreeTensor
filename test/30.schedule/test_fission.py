@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_fission_after():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fission_after(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -14,7 +15,10 @@ def test_fission_after():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    map0, map1 = s.fission("L2", ft.FissionSide.After, "S0")
+    map0, map1 = s.fission("L2",
+                           ft.FissionSide.After,
+                           "S0",
+                           as_subprocess=as_subprocess)
     assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
     assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
     ast = ft.lower(s.ast(), verbose=1)
@@ -33,7 +37,8 @@ def test_fission_after():
     assert std.match(ast)
 
 
-def test_fission_before():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fission_before(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -45,7 +50,10 @@ def test_fission_before():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    map0, map1 = s.fission("L2", ft.FissionSide.Before, "S0")
+    map0, map1 = s.fission("L2",
+                           ft.FissionSide.Before,
+                           "S0",
+                           as_subprocess=as_subprocess)
     assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
     assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
     ast = ft.lower(s.ast(), verbose=1)
@@ -64,7 +72,8 @@ def test_fission_before():
     assert std.match(ast)
 
 
-def test_fission_after_empty():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fission_after_empty(as_subprocess):
     with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
@@ -72,7 +81,10 @@ def test_fission_after_empty():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    map0, map1 = s.fission("L2", ft.FissionSide.After, "S0")
+    map0, map1 = s.fission("L2",
+                           ft.FissionSide.After,
+                           "S0",
+                           as_subprocess=as_subprocess)
     assert s.find(map0["L2"]) == s.find("$fission.0{L2}")
     assert "L2" not in map1
     ast = s.ast()
@@ -89,7 +101,8 @@ def test_fission_after_empty():
     assert std.match(ast)
 
 
-def test_fission_before_empty():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fission_before_empty(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
@@ -97,7 +110,10 @@ def test_fission_before_empty():
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    map0, map1 = s.fission("L2", ft.FissionSide.Before, "S0")
+    map0, map1 = s.fission("L2",
+                           ft.FissionSide.Before,
+                           "S0",
+                           as_subprocess=as_subprocess)
     assert "L2" not in map0
     assert s.find(map1["L2"]) == s.find("$fission.1{L2}")
     ast = s.ast()
@@ -114,7 +130,8 @@ def test_fission_before_empty():
     assert std.match(ast)
 
 
-def test_stmt_in_if():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_stmt_in_if(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -127,7 +144,7 @@ def test_stmt_in_if():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -147,7 +164,8 @@ def test_stmt_in_if():
     assert std.match(ast)
 
 
-def test_buffer_hoist():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_buffer_hoist(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -161,7 +179,7 @@ def test_buffer_hoist():
                     y[i, j] = b[j] * b[j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -182,7 +200,8 @@ def test_buffer_hoist():
     assert std.match(ast)
 
 
-def test_buffer_no_hoist():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_buffer_no_hoist(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -198,7 +217,7 @@ def test_buffer_no_hoist():
                     z[i, j] = x0[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -220,7 +239,8 @@ def test_buffer_no_hoist():
     assert std.match(ast)
 
 
-def test_correct_dependence_after():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_after(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -234,7 +254,7 @@ def test_correct_dependence_after():
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -255,7 +275,8 @@ def test_correct_dependence_after():
     assert std.match(ast)
 
 
-def test_correct_dependence_before():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_before(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -269,7 +290,7 @@ def test_correct_dependence_before():
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.Before, "S0")
+    s.fission("L2", ft.FissionSide.Before, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -290,7 +311,8 @@ def test_correct_dependence_before():
     assert std.match(ast)
 
 
-def test_correct_dependence_branch():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_branch(as_subprocess):
 
     @ft.transform(verbose=1)
     def test(x: ft.Var[(3,), "float32"]):
@@ -306,7 +328,7 @@ def test_correct_dependence_branch():
         return y
 
     s = ft.Schedule(test, verbose=1)
-    s.fission("L", ft.FissionSide.Before, "S")
+    s.fission("L", ft.FissionSide.Before, "S", as_subprocess=as_subprocess)
     test = ft.lower(s.func(),
                     verbose=1,
                     skip_passes=['prop_one_time_use', 'float_simplify'])
@@ -326,7 +348,8 @@ def test_correct_dependence_branch():
     assert expect.body.match(test.body)
 
 
-def test_correct_dependence_branch_with_else():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_branch_with_else(as_subprocess):
 
     @ft.transform(verbose=1)
     def test(x: ft.Var[(4,), "float32"]):
@@ -345,7 +368,7 @@ def test_correct_dependence_branch_with_else():
         return y
 
     s = ft.Schedule(test, verbose=1)
-    s.fission("L", ft.FissionSide.Before, "S2")
+    s.fission("L", ft.FissionSide.Before, "S2", as_subprocess=as_subprocess)
     test = ft.lower(s.func(),
                     verbose=1,
                     skip_passes=['prop_one_time_use', 'float_simplify'])
@@ -366,7 +389,8 @@ def test_correct_dependence_branch_with_else():
     assert expected.body.match(test.body)
 
 
-def test_correct_dependence_loop_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_loop_step(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -380,7 +404,7 @@ def test_correct_dependence_loop_step():
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -401,7 +425,8 @@ def test_correct_dependence_loop_step():
     assert std.match(ast)
 
 
-def test_correct_dependence_multi_loop_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_multi_loop_1(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -415,7 +440,7 @@ def test_correct_dependence_multi_loop_1():
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L1", ft.FissionSide.After, "S0")
+    s.fission("L1", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -437,7 +462,8 @@ def test_correct_dependence_multi_loop_1():
     assert std.match(ast)
 
 
-def test_correct_dependence_multi_loop_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_multi_loop_2(as_subprocess):
     with ft.VarDef([("a", (4, 4), "float32", "input", "cpu"),
                     ("b", (4,), "float32", "input", "cpu"),
                     ("d_y", (4,), "float32", "inout", "cpu"),
@@ -457,7 +483,7 @@ def test_correct_dependence_multi_loop_2():
     ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
-    s.fission("L1", ft.FissionSide.Before, "S0")
+    s.fission("L1", ft.FissionSide.Before, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -483,7 +509,8 @@ def test_correct_dependence_multi_loop_2():
     assert std.match(ast)
 
 
-def test_correct_dependence_real_dep():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_real_dep(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -494,7 +521,7 @@ def test_correct_dependence_real_dep():
                     y[i, j] = b[0] * b[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L1", ft.FissionSide.After, "S0")
+    s.fission("L1", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -512,7 +539,8 @@ def test_correct_dependence_real_dep():
     assert std.match(ast)
 
 
-def test_correct_dependence_unable_resolve():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_unable_resolve(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -527,12 +555,13 @@ def test_correct_dependence_unable_resolve():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fission("L2", ft.FissionSide.After, "S0")
+        s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_legal_dependence():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_legal_dependence(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -549,7 +578,7 @@ def test_legal_dependence():
                 y[i, j] = b[i, j] * b[i, j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -571,7 +600,8 @@ def test_legal_dependence():
     assert std.match(ast)
 
 
-def test_correct_dependence_no_need_to_modify_no_dep():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_no_need_to_modify_no_dep(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 4), "int32", "input", "cpu"),
         ("x1", (4, 4), "int32", "input", "cpu"),
@@ -586,7 +616,7 @@ def test_correct_dependence_no_need_to_modify_no_dep():
                         y[i, j, k] = b[k] * x1[i, j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -608,7 +638,8 @@ def test_correct_dependence_no_need_to_modify_no_dep():
     assert std.match(ast)
 
 
-def test_correct_dependence_no_need_to_modify_broadcast():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_no_need_to_modify_broadcast(as_subprocess):
     with ft.VarDef([
         ("x0", (4,), "int32", "input", "cpu"),
         ("x1", (4, 4), "int32", "input", "cpu"),
@@ -623,7 +654,7 @@ def test_correct_dependence_no_need_to_modify_broadcast():
                         y[i, j, k] = b[()] * x1[i, j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -644,7 +675,8 @@ def test_correct_dependence_no_need_to_modify_broadcast():
     assert std.match(ast)
 
 
-def test_correct_dependence_overwritten_store():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_dependence_overwritten_store(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -662,7 +694,7 @@ def test_correct_dependence_overwritten_store():
     # We cannot determine b is loop-invarient just becase b[0] = 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0")
+    s.fission("L2", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -685,7 +717,8 @@ def test_correct_dependence_overwritten_store():
     assert std.match(ast)
 
 
-def test_scan_without_dep():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_scan_without_dep(as_subprocess):
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
         with ft.For("i", 1, 10, label='L1') as i:
@@ -695,7 +728,7 @@ def test_scan_without_dep():
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L1", ft.FissionSide.After, "S0")
+    s.fission("L1", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -711,7 +744,8 @@ def test_scan_without_dep():
     assert std.match(ast)
 
 
-def test_scan_with_dep():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_scan_with_dep(as_subprocess):
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
         with ft.For("i", 0, 9, label='L1') as i:
@@ -722,12 +756,13 @@ def test_scan_with_dep():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fission("L1", ft.FissionSide.After, "S0")
+        s.fission("L1", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_reversed_scan_without_dep():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reversed_scan_without_dep(as_subprocess):
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
         with ft.For("i", 8, -1, -1, label='L1') as i:
@@ -737,7 +772,7 @@ def test_reversed_scan_without_dep():
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L1", ft.FissionSide.After, "S0")
+    s.fission("L1", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -753,7 +788,8 @@ def test_reversed_scan_without_dep():
     assert std.match(ast)
 
 
-def test_reversed_scan_with_dep():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reversed_scan_with_dep(as_subprocess):
     with ft.VarDef([("a", (10,), "int32", "inout", "cpu"),
                     ("b", (10,), "int32", "inout", "cpu")]) as (a, b):
         with ft.For("i", 9, 0, -1, label='L1') as i:
@@ -764,10 +800,11 @@ def test_reversed_scan_with_dep():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fission("L1", ft.FissionSide.After, "S0")
+        s.fission("L1", ft.FissionSide.After, "S0", as_subprocess=as_subprocess)
 
 
-def test_fission_after_multiple_statements():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fission_after_multiple_statements(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -783,7 +820,7 @@ def test_fission_after_multiple_statements():
                 w[i, j] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.After, "S0|S1")
+    s.fission("L2", ft.FissionSide.After, "S0|S1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -804,7 +841,8 @@ def test_fission_after_multiple_statements():
     assert std.match(ast)
 
 
-def test_fission_before_multiple_statements():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fission_before_multiple_statements(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -820,7 +858,7 @@ def test_fission_before_multiple_statements():
                 w[i, j] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fission("L2", ft.FissionSide.Before, "S1|S2")
+    s.fission("L2", ft.FissionSide.Before, "S1|S2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)

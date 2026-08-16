@@ -1,13 +1,15 @@
 import freetensor as ft
+import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
         x[()] = 1
     with ft.VarDef("y", (), "int32", "cache", "cpu") as y:
         y[()] = 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.hoist_var_over_stmt_seq(ast)
+    ast = ft.hoist_var_over_stmt_seq(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "cache", "cpu"),
@@ -19,13 +21,14 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_rename():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_rename(as_subprocess):
     with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
         x[()] = 1
     with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
         x[()] = 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.hoist_var_over_stmt_seq(ast)
+    ast = ft.hoist_var_over_stmt_seq(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x.0", (), "int32", "cache", "cpu"),
@@ -37,7 +40,8 @@ def test_rename():
     assert std.match(ast)
 
 
-def test_rename_nested_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_rename_nested_1(as_subprocess):
     with ft.VarDef("y", (), "int32", "cache", "cpu") as y:
         with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
             x[()] = 1
@@ -47,7 +51,7 @@ def test_rename_nested_1():
     with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
         x[()] = 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.hoist_var_over_stmt_seq(ast)
+    ast = ft.hoist_var_over_stmt_seq(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("y", (), "int32", "cache", "cpu"),
@@ -63,7 +67,8 @@ def test_rename_nested_1():
     assert std.match(ast)
 
 
-def test_rename_nested_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_rename_nested_2(as_subprocess):
     with ft.VarDef("x", (), "int32", "cache", "cpu") as x:
         x[()] = 1
     with ft.VarDef("y", (), "int32", "cache", "cpu") as y:
@@ -71,7 +76,7 @@ def test_rename_nested_2():
             x[()] = 2
         y[()] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = ft.hoist_var_over_stmt_seq(ast)
+    ast = ft.hoist_var_over_stmt_seq(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x.0", (), "int32", "cache", "cpu"),
@@ -85,7 +90,8 @@ def test_rename_nested_2():
     assert std.match(ast)
 
 
-def test_no_hoisting_affected_shape_front():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_hoisting_affected_shape_front(as_subprocess):
     with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:
         n[...] += 1
         with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
@@ -93,7 +99,7 @@ def test_no_hoisting_affected_shape_front():
             with ft.For("i", 0, n[...]) as i:
                 y[i] = x[i] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.hoist_var_over_stmt_seq(ast)
+    ast = ft.hoist_var_over_stmt_seq(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:
@@ -107,7 +113,8 @@ def test_no_hoisting_affected_shape_front():
     assert std.match(ast)
 
 
-def test_no_hoisting_affected_shape_back():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_hoisting_affected_shape_back(as_subprocess):
     with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:
         with ft.VarDef([("x", (n[...],), "int32", "cache", "cpu"),
                         ("y", (n[...],), "int32", "cache", "cpu")]) as (x, y):
@@ -117,7 +124,7 @@ def test_no_hoisting_affected_shape_back():
         # We can't hoist `x` or `y` even `n += 1` is at the back, beacuse we
         # forbit modifying the shape inside its VarDef
     ast = ft.pop_ast(verbose=True)
-    ast = ft.hoist_var_over_stmt_seq(ast)
+    ast = ft.hoist_var_over_stmt_seq(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("n", (), "int32", "input-mutable", "cpu") as n:

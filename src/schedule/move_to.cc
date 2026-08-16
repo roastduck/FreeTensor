@@ -1,9 +1,23 @@
 #include <schedule.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
 std::pair<ID, ID> Schedule::moveTo(const ID &_stmt, MoveToSide side,
-                                   const ID &_dst) {
+                                   const ID &_dst,
+                                   const std::optional<bool> &asSubprocess,
+                                   const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto sideStr = side == MoveToSide::Before ? "Before" : "After";
+        auto result = runTransformSubprocess(
+            "move_to", ast(),
+            subprocessArgs({"--stmt", idArg(_stmt), "--side", sideStr, "--dst",
+                            idArg(_dst)}),
+            timeout);
+        applySubprocessResult(result);
+        const auto &info = result.info_.value();
+        return {idFromJson(info["moved"]), idFromJson(info["outer"])};
+    }
     beginTransaction();
     try {
         auto stmt = _stmt, dst = _dst;

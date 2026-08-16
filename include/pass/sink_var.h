@@ -9,6 +9,7 @@
 #include <func.h>
 #include <lazy.h>
 #include <mutator.h>
+#include <subprocess.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -53,7 +54,9 @@ class SinkVar : public Mutator {
  */
 Stmt sinkVar(const Stmt &op,
              const std::optional<std::unordered_set<ID>> &toSink = std::nullopt,
-             const std::function<bool(const Stmt &)> &scopeFilter = nullptr);
+             const std::function<bool(const Stmt &)> &scopeFilter = nullptr,
+             const std::optional<bool> &asSubprocess = std::nullopt,
+             const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(sinkVar)
 

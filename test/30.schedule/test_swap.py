@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -20,7 +21,7 @@ def test_basic():
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.swap(["S2", "S3", "S1"])
+    s.swap(["S2", "S3", "S1"], as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -41,7 +42,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_not_consecutive():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_consecutive(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -60,12 +62,13 @@ def test_not_consecutive():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.swap(["S4", "S1"])
+        s.swap(["S4", "S1"], as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_dependence():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dependence(as_subprocess):
     with ft.VarDef([("y1", (4,), "int32", "inout", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -76,12 +79,13 @@ def test_dependence():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.swap(["S2", "S1"])
+        s.swap(["S2", "S1"], as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_legal_dependence():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_legal_dependence(as_subprocess):
     with ft.VarDef([("x1", (1000,), "int32", "input", "cpu"),
                     ("x2", (1000,), "int32", "input", "cpu"),
                     ("y", (1001,), "int32", "output", "cpu")]) as (x1, x2, y):
@@ -94,7 +98,7 @@ def test_legal_dependence():
             y[i + 1] = x2[i]  # Always happens beforehand swapped or not
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.swap(["S2", "S1"])
+    s.swap(["S2", "S1"], as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -112,7 +116,8 @@ def test_legal_dependence():
     assert std.match(ast)
 
 
-def test_crossing_var_def():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_crossing_var_def(as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
@@ -128,7 +133,7 @@ def test_crossing_var_def():
                     y2[i, j] = t[j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.swap(["L2", "S1"])
+    s.swap(["L2", "S1"], as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["prop_one_time_use"], verbose=1)
@@ -150,7 +155,8 @@ def test_crossing_var_def():
     assert std.match(ast)
 
 
-def test_select_multiple():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_select_multiple(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -168,7 +174,7 @@ def test_select_multiple():
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.swap(["S3|S4", "S1|S2"])
+    s.swap(["S3|S4", "S1|S2"], as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)

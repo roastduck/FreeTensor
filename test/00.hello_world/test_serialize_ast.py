@@ -26,6 +26,28 @@ def test_float_literal():
     assert ast2.match(ast)
 
 
+def test_float_infinity_literal():
+    with ft.VarDef("x", (2,), "float32", "output", "cpu") as x:
+        x[0] = float("inf")
+        x[1] = -float("inf")
+    ast = ft.pop_ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert "@!inf" in txt
+    assert "-@!inf" in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
+def test_float_nan_literal_serialization_error():
+    with ft.VarDef("x", (), "float32", "output", "cpu") as x:
+        x[()] = float("nan")
+    ast = ft.pop_ast()
+    with pytest.raises(ft.Error, match="NaN floating constants"):
+        ft.dump_ast(ast)
+
+
 def test_func():
     with ft.VarDef("x", (4, 4), "float32", "output", "cpu") as x:
         x[2, 3] = 2.0
@@ -345,6 +367,27 @@ def test_view():
     txt = ft.dump_ast(ast)
     print(txt)
     assert '@!view_of' in txt
+    ast2 = ft.load_ast(txt)
+    print(ast2)
+    assert ast2.match(ast)
+
+
+def test_view_load():
+    ft.MarkLabel("Dx")
+    with ft.VarDef("x", (10,), "int32", "input", "cpu") as x:
+        with ft.VarDef([("y", (10,), "int32", "output", "cpu"),
+                        ("z", (10,), "int32", "output", "cpu")]) as (y, z):
+            with ft.For("i", 0, 10) as i:
+                y[i] = x[i] + 1
+                z[i] = x[i] + 2
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.var_split("Dx", 0, ft.VarSplitMode.FixedSize, 4)
+    ast = s.ast()
+    txt = ft.dump_ast(ast)
+    print(txt)
+    assert '@!view_of' in txt
+    assert 'x.view' in txt
     ast2 = ft.load_ast(txt)
     print(ast2)
     assert ast2.match(ast)

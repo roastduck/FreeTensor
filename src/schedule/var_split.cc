@@ -1,5 +1,6 @@
 #include <pass/const_fold.h>
 #include <schedule.h>
+#include <schedule/subprocess_utils.h>
 #include <schedule/var_split.h>
 
 namespace freetensor {
@@ -94,7 +95,21 @@ Stmt varSplit(const Stmt &_ast, const ID &def, int dim, VarSplitMode mode,
 }
 
 void Schedule::varSplit(const ID &def, int dim, VarSplitMode mode, int factor,
-                        int nparts) {
+                        int nparts, const std::optional<bool> &asSubprocess,
+                        const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto modeStr =
+            mode == VarSplitMode::FixedSize ? "FixedSize" : "RelaxedSize";
+        auto result = runTransformSubprocess(
+            "var_split", ast(),
+            subprocessArgs({"--vardef", idArg(def), "--dim",
+                            std::to_string(dim), "--mode", modeStr, "--factor",
+                            std::to_string(factor), "--nparts",
+                            std::to_string(nparts)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(VarSplit, freetensor::varSplit, def,
                                            dim, mode, factor, nparts));

@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_reduce_sum():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reduce_sum(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -11,7 +12,7 @@ def test_reduce_sum():
                 y[i, j] = y[i, j] + x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache_reduction("L2", "y", "cpu")
+    s.cache_reduction("L2", "y", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -29,7 +30,8 @@ def test_reduce_sum():
     assert std.match(ast)
 
 
-def test_reduce_sum_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reduce_sum_loop(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -38,7 +40,7 @@ def test_reduce_sum_loop():
                 y[i] = y[i] + x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache_reduction("L2", "y", "cpu")
+    s.cache_reduction("L2", "y", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -56,7 +58,8 @@ def test_reduce_sum_loop():
     assert std.match(ast)
 
 
-def test_reduce_min_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reduce_min_loop(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "float32", "input", "cpu"),
         ("y", (4,), "float32", "inout", "cpu"),
@@ -66,7 +69,7 @@ def test_reduce_min_loop():
                 y[i] = ft.min(y[i], x[i, j] * 2)
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache_reduction("L2", "y", "cpu")
+    s.cache_reduction("L2", "y", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -86,7 +89,8 @@ def test_reduce_min_loop():
     assert std.match(ast)
 
 
-def test_no_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_var(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -96,12 +100,13 @@ def test_no_var():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache_reduction("S0", "z", "cpu")
+        s.cache_reduction("S0", "z", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_no_stmt():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_stmt(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -110,12 +115,13 @@ def test_no_stmt():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache_reduction("S0", "y", "cpu")
+        s.cache_reduction("S0", "y", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_no_reduction_into_specific_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_reduction_into_specific_var(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu"),
                     ("z", (4, 8), "int32", "inout", "cpu")]) as (x, y, z):
@@ -128,12 +134,13 @@ def test_no_reduction_into_specific_var():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache_reduction("S1", "y", "cpu")
+        s.cache_reduction("S1", "y", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_read_not_allowed():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_read_not_allowed(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -144,12 +151,13 @@ def test_read_not_allowed():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache_reduction("S0", "x", "cpu")
+        s.cache_reduction("S0", "x", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_write_not_allowed():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_write_not_allowed(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -161,12 +169,13 @@ def test_write_not_allowed():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache_reduction("S0", "y", "cpu")
+        s.cache_reduction("S0", "y", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_mix_op_not_allowed():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_mix_op_not_allowed(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -177,6 +186,6 @@ def test_mix_op_not_allowed():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache_reduction("S0", "y", "cpu")
+        s.cache_reduction("S0", "y", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)

@@ -33,6 +33,8 @@
 #include <pass/tensor_prop_const.h>
 #include <pass/use_builtin_div.h>
 #include <pass/z3_simplify.h>
+#include <serialize/print_driver.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -52,10 +54,27 @@ namespace freetensor {
  */
 template <class T>
 T lower(const T &_ast, const Ref<Target> &_target = nullptr,
-        const std::unordered_set<std::string> &skipPasses = {},
-        int verbose = 0) {
+        const std::unordered_set<std::string> &skipPasses = {}, int verbose = 0,
+        const std::optional<bool> &asSubprocess = std::nullopt,
+        const std::optional<double> &timeout = std::nullopt) {
 
     auto target = _target.isValid() ? _target : Config::defaultTarget();
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        std::string skipPassesStr;
+        for (auto &&pass : skipPasses) {
+            if (!skipPassesStr.empty()) {
+                skipPassesStr += ",";
+            }
+            skipPassesStr += pass;
+        }
+        std::vector<std::string> args = {"--target-meta", dumpTarget(target),
+                                         "--verbose", std::to_string(verbose)};
+        if (!skipPassesStr.empty()) {
+            args.emplace_back("--skip-passes");
+            args.emplace_back(skipPassesStr);
+        }
+        return runPassSubprocess<T>("lower", _ast, args, asSubprocess, timeout);
+    }
 
     auto maybePrint = [&](const std::string &name, const T &ast,
                           std::chrono::steady_clock::duration elapsed) -> T {

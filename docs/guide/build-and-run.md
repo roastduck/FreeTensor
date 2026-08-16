@@ -41,7 +41,7 @@ This command will build FreeTensor with minimal dependencies. To build with a la
 - `pip3 install . -C--local=with-pytorch.toml`: Build with PyTorch.
 
 !!! note "Note if building with PyTorch"
-    Since there are conflicts with PyTorch as described above, we do not manage PyTorch as a dependency in the Python project, and it should be installed manually before installing FreeTensor. However, this breaks the requirement of `pip` that all dependencies should be declared, so `pip` must be called with `--no-build-isolation`, and this further requires installing the following build-time dependencies manally: `pip3 install py-build-cmake~=0.1.8 z3-solver setuptools`.
+    Since there are conflicts with PyTorch as described above, we do not manage PyTorch as a dependency in the Python project, and it should be installed manually before installing FreeTensor. However, this breaks the requirement of `pip` that all dependencies should be declared, so `pip` must be called with `--no-build-isolation`, and this further requires installing the following build-time dependencies manally: `pip3 install py-build-cmake~=0.5.0 z3-solver setuptools`.
 
 The `.toml` files in these options can be found in the root directory of this repository, in which options to CMake are set. The full set of CMake options of FreeTensor are:
 

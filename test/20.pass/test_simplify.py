@@ -8,12 +8,13 @@ import pytest
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_const_fold(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_const_fold(p, as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = 0 * i
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -25,7 +26,8 @@ def test_const_fold(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_partial_fold_1(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_partial_fold_1(p, as_subprocess):
     # This is the case that we need a symbolic bound, instead
     # of using integers only
     with ft.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
@@ -33,7 +35,7 @@ def test_partial_fold_1(p):
             with ft.For("j", 0, 4) as j:
                 y[i, j] = 2 * j + i - j - j
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4, 4), "int32", "output", "cpu") as y:
@@ -46,13 +48,14 @@ def test_partial_fold_1(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify])
-def test_partial_fold_2(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_partial_fold_2(p, as_subprocess):
     with ft.VarDef("y", (32, 2), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 32) as i:
             with ft.For("j", 0, 2) as j:
                 y[i, j] = i - 4 * (1 + ((2 * i + j) // 8)) + 4
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (32, 2), "int32", "output", "cpu") as y:
@@ -65,13 +68,14 @@ def test_partial_fold_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_redundant_if(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_redundant_if(p, as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             with ft.If(i < 10):
                 y[i] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -83,13 +87,14 @@ def test_redundant_if(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_redundant_if_2(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_redundant_if_2(p, as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             with ft.If(i < i + 2):
                 y[i] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -101,14 +106,15 @@ def test_redundant_if_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_redundant_if_3(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_redundant_if_3(p, as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ft.For("i", 0, n[()]) as i:
             with ft.If(2 * i < i + n[()]):
                 y[i] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
@@ -121,7 +127,8 @@ def test_redundant_if_3(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_int_max(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_int_max(p, as_subprocess):
     with ft.VarDef([("a", (20, 64), "int32", "input", "cpu"),
                     ("b", (20, 64), "int32", "output", "cpu")]) as (a, b):
         with ft.For("i", 0, 20) as i:
@@ -129,7 +136,7 @@ def test_int_max(p):
                 with ft.If(j < ft.min(-32 * (i % 4) + 100, 64)):
                     b[i, j] = a[i, j] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (20, 64), "int32", "input", "cpu"),
@@ -144,13 +151,14 @@ def test_int_max(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_redundant_min(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_redundant_min(p, as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             with ft.If(i < 10):
                 y[i] = ft.min(i, i + 2)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -162,13 +170,14 @@ def test_redundant_min(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_redundant_max(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_redundant_max(p, as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             with ft.If(i < 10):
                 y[i] = ft.max(i, i + 2)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -180,13 +189,14 @@ def test_redundant_max(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_multiple_mins_1(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_mins_1(p, as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             y[i] = ft.min(ft.min(x[i] + 2, i), x[i])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -199,14 +209,15 @@ def test_multiple_mins_1(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify])
-def test_multiple_mins_2(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_mins_2(p, as_subprocess):
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
                     y[i, j, k] = ft.min(i + j - k, ft.min(i - k, i + j + -1))
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
@@ -220,13 +231,14 @@ def test_multiple_mins_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_multiple_maxes_1(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_maxes_1(p, as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
             y[i] = ft.max(ft.max(x[i] + 2, i), x[i])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -239,14 +251,15 @@ def test_multiple_maxes_1(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify])
-def test_multiple_maxes_2(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_maxes_2(p, as_subprocess):
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10) as i:
             with ft.For("j", 0, 10) as j:
                 with ft.For("k", 0, 10) as k:
                     y[i, j, k] = ft.max(i + j - k, ft.max(i - k, i + j + -1))
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (10, 10, 10), "int32", "output", "cpu") as y:
@@ -260,7 +273,8 @@ def test_multiple_maxes_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
-def test_multiple_min_max(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_min_max(p, as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -270,7 +284,7 @@ def test_multiple_min_max(p):
             with ft.If(i < ft.min(ft.max(5, a[()]), ft.max(6, b[()]))):
                 y[i] = i
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -286,12 +300,13 @@ def test_multiple_min_max(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify])
-def test_multiple_mins_separted_by_scalar_op(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_mins_separted_by_scalar_op(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[...] = ft.min(10 * ft.min(x[...], 8), 50)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -303,7 +318,8 @@ def test_multiple_mins_separted_by_scalar_op(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_precondition_from_if(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_precondition_from_if(p, as_subprocess):
     with ft.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
         ("x2", (4,), "int32", "input", "cpu"),
@@ -315,7 +331,7 @@ def test_precondition_from_if(p):
             with ft.Else():
                 y[i] = ft.min(x1[i], x2[i]) + 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -334,7 +350,8 @@ def test_precondition_from_if(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_multiple_preconditions_from_if(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_preconditions_from_if(p, as_subprocess):
     with ft.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
         ("x2", (4,), "int32", "input", "cpu"),
@@ -346,7 +363,7 @@ def test_multiple_preconditions_from_if(p):
             with ft.Else():
                 y[i] = ft.min(x1[i] + 1, x2[i] + 1)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -365,7 +382,8 @@ def test_multiple_preconditions_from_if(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_precondition_from_assert(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_precondition_from_assert(p, as_subprocess):
     with ft.VarDef([
         ("x1", (4,), "int32", "input", "cpu"),
         ("x2", (4,), "int32", "input", "cpu"),
@@ -375,7 +393,7 @@ def test_precondition_from_assert(p):
             with ft.Assert(x1[i] < x2[i]):
                 y[i] = ft.min(x1[i], x2[i])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -392,7 +410,8 @@ def test_precondition_from_assert(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_assert_false(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_assert_false(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[()] > 0):
@@ -400,11 +419,12 @@ def test_assert_false(p):
                 y[()] = 1
     ast = ft.pop_ast(verbose=True)
     with pytest.raises(ft.AssertAlwaysFalse):
-        ast = p(ast)
+        p(ast, as_subprocess=as_subprocess)
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_unreachable_assert_false(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_unreachable_assert_false(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[()] < 0):
@@ -416,7 +436,7 @@ def test_unreachable_assert_false(p):
         with ft.Else():
             y[()] = 3
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -431,7 +451,8 @@ def test_unreachable_assert_false(p):
 
 
 @pytest.mark.parametrize('p', [ft.simplify, ft.z3_simplify])
-def test_precondition_from_sign_type(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_precondition_from_sign_type(p, as_subprocess):
     with ft.VarDef([
         ("x1", (4,), "int32<0", "input", "cpu"),
         ("x2", (4,), "int32>0", "input", "cpu"),
@@ -440,7 +461,7 @@ def test_precondition_from_sign_type(p):
         with ft.For("i", 0, 4) as i:
             y[i] = ft.min(x1[i], x2[i])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -456,7 +477,8 @@ def test_precondition_from_sign_type(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_different_scope(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_scope(p, as_subprocess):
     with ft.VarDef([
         ("x", (4, 10), "int32", "input", "cpu"),
         ("y", (4, 10), "int32", "output", "cpu"),
@@ -475,7 +497,7 @@ def test_different_scope(p):
                     with ft.Else():
                         y[i, j] = x[i, j] + 3
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -498,14 +520,15 @@ def test_different_scope(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_dynamic(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dynamic(p, as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ft.For("i", 0, n[()]) as i:
             with ft.If(n[()] + 1 > n[()]):
                 y[i] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
@@ -518,14 +541,15 @@ def test_dynamic(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_floor_div_1(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_floor_div_1(p, as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ft.For("i", 0, n[()] // 4) as i:
             with ft.If(i * 4 < n[()]):
                 y[i] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
@@ -538,14 +562,15 @@ def test_floor_div_1(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_floor_div_2(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_floor_div_2(p, as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ft.For("i", 0, (n[()] - 1) // 4) as i:
             with ft.If(i * 4 < n[()]):
                 y[i] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
@@ -558,12 +583,13 @@ def test_floor_div_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_floor_div_3(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_floor_div_3(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = ft.min(x[()] // 4, x[()] // 4)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -575,12 +601,13 @@ def test_floor_div_3(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_floor_div_4(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_floor_div_4(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 64 * x[()] // 64
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -592,12 +619,13 @@ def test_floor_div_4(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_floor_div_5(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_floor_div_5(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] // 4 - x[()] // 4
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -609,12 +637,13 @@ def test_floor_div_5(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_floor_div_6(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_floor_div_6(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] // -1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -626,12 +655,13 @@ def test_floor_div_6(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_mod_1(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_mod_1(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 64 * x[()] % 64
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -643,7 +673,8 @@ def test_mod_1(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_mod_2(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_mod_2(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.If(ft.l_and(x[()] >= 0, x[()] < 64)):
@@ -651,7 +682,7 @@ def test_mod_2(p):
         with ft.Else():
             y[()] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
@@ -666,13 +697,14 @@ def test_mod_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_divisible_div(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_divisible_div(p, as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("c", (), "int32", "output", "cpu")]) as (a, b, c):
         c[...] = a[...] * b[...] // b[...]
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
@@ -685,13 +717,14 @@ def test_divisible_div(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_divisible_mod(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_divisible_mod(p, as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("c", (), "int32", "output", "cpu")]) as (a, b, c):
         c[...] = a[...] * b[...] % b[...]
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
@@ -704,14 +737,15 @@ def test_divisible_mod(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_reduce_fraction_for_div(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reduce_fraction_for_div(p, as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("c", (), "int32", "input", "cpu"),
                     ("d", (), "int32", "output", "cpu")]) as (a, b, c, d):
         d[...] = (a[...] * b[...]) // (b[...] * c[...])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
@@ -725,14 +759,15 @@ def test_reduce_fraction_for_div(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_not_reduce_fraction_for_mod(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_reduce_fraction_for_mod(p, as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("c", (), "int32", "input", "cpu"),
                     ("d", (), "int32", "output", "cpu")]) as (a, b, c, d):
         d[...] = (a[...] * b[...]) % (b[...] * c[...])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
@@ -746,7 +781,8 @@ def test_not_reduce_fraction_for_mod(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_simplify_not_cmp(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_not_cmp(p, as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "bool", "output", "cpu"),
@@ -764,7 +800,7 @@ def test_simplify_not_cmp(p):
             y5[i] = ft.l_not(x[i] == 5)
             y6[i] = ft.l_not(x[i] != 5)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -789,7 +825,8 @@ def test_simplify_not_cmp(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_simplify_not_logic_op(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_not_logic_op(p, as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -798,7 +835,7 @@ def test_simplify_not_logic_op(p):
             with ft.Else():
                 y[i] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -814,7 +851,8 @@ def test_simplify_not_logic_op(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_simplify_identical_term_in_logic_or(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_identical_term_in_logic_or(p, as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -823,7 +861,7 @@ def test_simplify_identical_term_in_logic_or(p):
             with ft.Else():
                 y[i] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -839,7 +877,8 @@ def test_simplify_identical_term_in_logic_or(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_simplify_identical_term_in_logic_and(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_identical_term_in_logic_and(p, as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -848,7 +887,7 @@ def test_simplify_identical_term_in_logic_and(p):
             with ft.Else():
                 y[i] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -864,7 +903,8 @@ def test_simplify_identical_term_in_logic_and(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_min_minus_min(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_min_minus_min(p, as_subprocess):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y", (), "int32", "input", "cpu"),
@@ -872,7 +912,7 @@ def test_min_minus_min(p):
     ]) as (x, y, z):
         z[()] = ft.min(x[()], y[()]) - ft.min(x[()], y[()])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([
@@ -887,7 +927,8 @@ def test_min_minus_min(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_min_max_as_bound(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_min_max_as_bound(p, as_subprocess):
     with ft.VarDef([("l", (), "int32", "input", "cpu"),
                     ("r", (), "int32", "input", "cpu")]) as (l, r):
         with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -897,7 +938,7 @@ def test_min_max_as_bound(p):
                 with ft.Else():
                     y[i] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("l", (), "int32", "input", "cpu"),
@@ -911,14 +952,15 @@ def test_min_max_as_bound(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify])
-def test_if_expr(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_if_expr(p, as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("c", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (a, b, c, y):
         y[...] = ft.if_then_else(c < 0, a, b) + ft.if_then_else(c < 0, b, a)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
@@ -932,7 +974,8 @@ def test_if_expr(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify])
-def test_if_expr_in_cond(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_if_expr_in_cond(p, as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("c", (), "int32", "input", "cpu"),
@@ -941,7 +984,7 @@ def test_if_expr_in_cond(p):
         with ft.Assert(d == ft.if_then_else(c < 0, a, b)):
             y[...] = d + ft.if_then_else(c < 0, b, a)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
@@ -957,14 +1000,15 @@ def test_if_expr_in_cond(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_sink_if_expr_into_linear_expression(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_sink_if_expr_into_linear_expression(p, as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("c", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (a, b, c, y):
         y[...] = ft.if_then_else(c < 0, 3 * a, 3 * a + 2 * b)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
@@ -978,12 +1022,13 @@ def test_sink_if_expr_into_linear_expression(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_convert_if_expr_to_floor_1(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_convert_if_expr_to_floor_1(p, as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = ft.if_then_else(i < 2, 1, 5)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -995,12 +1040,13 @@ def test_convert_if_expr_to_floor_1(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_convert_if_expr_to_floor_2(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_convert_if_expr_to_floor_2(p, as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = ft.if_then_else(i >= 3, 5, 1)
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
@@ -1012,7 +1058,8 @@ def test_convert_if_expr_to_floor_2(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_accessible_after_writing_if(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_accessible_after_writing_if(p, as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[0] < 4):
@@ -1022,7 +1069,7 @@ def test_accessible_after_writing_if(p):
             with ft.If(x[0] < 4):
                 y[1] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("x", (4,), "int32", "inout", "cpu") as x:
@@ -1038,7 +1085,8 @@ def test_accessible_after_writing_if(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify, ft.z3_simplify])
-def test_accessible_after_writing_for(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_accessible_after_writing_for(p, as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[0] < 4):
@@ -1049,7 +1097,7 @@ def test_accessible_after_writing_for(p):
                 with ft.If(x[0] < 4):
                     y[1] = 1
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("x", (4,), "int32", "inout", "cpu") as x:
@@ -1067,14 +1115,15 @@ def test_accessible_after_writing_for(p):
 
 
 @pytest.mark.parametrize('p', [ft.pb_simplify, ft.simplify])
-def test_loop_length_0_or_1(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_length_0_or_1(p, as_subprocess):
     with ft.VarDef("n", (), "int32", "input", "cpu") as n:
         with ft.Assert(n[()] <= 1):
             with ft.VarDef("y", (n[()],), "int32", "inout", "cpu") as y:
                 with ft.For("i", 0, n[()]) as i:
                     y[i] = i
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef("n", (), "int32", "input", "cpu") as n:
@@ -1088,14 +1137,15 @@ def test_loop_length_0_or_1(p):
 
 
 @pytest.mark.parametrize('p', [ft.z3_simplify])
-def test_complex_tautology(p):
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_complex_tautology(p, as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("pred", (), "bool", "input", "cpu"),
                     ("y", (), "bool", "output", "cpu")]) as (x, pred, y):
         y[()] = ft.l_and(ft.l_or(x[()] < 5, ft.l_and(x[()] >= 5, True)),
                          pred[()])
     ast = ft.pop_ast(verbose=True)
-    ast = p(ast)
+    ast = p(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),

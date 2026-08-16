@@ -91,3 +91,20 @@ All schedules support passing selectors.
 ## Auto Scheduling (Experimental)
 
 Manually scheduling a program requires a lot of efforts. We provide an experimental automatic scheduling functions in [`Schedule`](../../api/#freetensor.core.schedule.Schedule). You can call `s.auto_schedule` to pick schedules fully automatically. `s.auto_schedule` calls other `s.auto_xxxxxx` functions internally, you can also call one or some of them instead. Please note that these auto-scheduling functions are experimental, and their API is subject to changes.
+
+## Running Transformations in a Subprocess
+
+Most manually selected schedules and compiler passes support two optional keyword arguments:
+
+- `as_subprocess=True`: run the transformation in a separate `freetensor-transform` process.
+- `timeout=<seconds>`: run the transformation in a subprocess and fail if it exceeds the given timeout. Passing `timeout` together with `as_subprocess=False` is an error.
+
+Subprocess execution serializes the AST before invoking the transformation and parses the transformed AST afterwards. This is useful when isolating long-running or failure-prone transformations from the current Python process.
+
+The `freetensor-transform` executable is installed together with FreeTensor. It can also be invoked directly on serialized AST input for inspection:
+
+```sh
+freetensor-transform --help
+```
+
+By default, subprocess execution finds `freetensor-transform` from `PATH`. Set `FREETENSOR_TRANSFORM_EXECUTABLE=<path>` to use a specific executable.

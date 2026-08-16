@@ -7,6 +7,7 @@
 #include <func.h>
 #include <memory>
 #include <mutator.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -26,7 +27,9 @@ class UseBuiltinDiv : public CompTransientBounds<SymbolTable<Mutator>> {
 /**
  * Try to replace FloorDiv and CeilDiv with RoundTowards0Div
  */
-Stmt useBuiltinDiv(const Stmt &op);
+Stmt useBuiltinDiv(const Stmt &op,
+                   const std::optional<bool> &asSubprocess = std::nullopt,
+                   const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(useBuiltinDiv)
 

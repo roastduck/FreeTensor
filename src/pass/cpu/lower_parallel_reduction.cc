@@ -3,6 +3,7 @@
 #include <pass/cpu/lower_parallel_reduction.h>
 #include <pass/make_nested_loops.h>
 #include <pass/simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -203,7 +204,13 @@ Stmt LowerParallelReduction::visit(const ReduceTo &_op) {
     return op;
 }
 
-Stmt lowerParallelReduction(const Stmt &_op) {
+Stmt lowerParallelReduction(const Stmt &_op,
+                            const std::optional<bool> &asSubprocess,
+                            const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("cpu_lower_parallel_reduction", _op, {},
+                                       asSubprocess, timeout);
+    }
     auto op = LowerParallelReduction()(_op);
     op = simplify(op); // flatten singleton loops
     return op;

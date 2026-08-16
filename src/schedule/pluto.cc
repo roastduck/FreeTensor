@@ -25,6 +25,7 @@
 #include <schedule/check_not_in_lib.h>
 #include <schedule/fuse.h>
 #include <schedule/pluto.h>
+#include <schedule/subprocess_utils.h>
 #include <serialize/load_ast.h>
 #include <serialize/mangle.h>
 
@@ -1250,7 +1251,25 @@ std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
                                        int nestLevel0, int nestLevel1,
                                        int fusableOverlapThreshold,
                                        int fusableNonOverlapTolerance,
-                                       bool doSimplify) {
+                                       bool doSimplify,
+                                       const std::optional<bool> &asSubprocess,
+                                       const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "pluto_fuse", ast(),
+            subprocessArgs({"--loop0", idArg(loop0), "--loop1", idArg(loop1),
+                            "--nest-level-0", std::to_string(nestLevel0),
+                            "--nest-level-1", std::to_string(nestLevel1),
+                            "--fusable-overlap-threshold",
+                            std::to_string(fusableOverlapThreshold),
+                            "--fusable-nonoverlap-tolerance",
+                            std::to_string(fusableNonOverlapTolerance),
+                            "--do-simplify", boolArg(doSimplify)}),
+            timeout);
+        applySubprocessResult(result);
+        const auto &info = result.info_.value();
+        return {idFromJson(info["id"]), info["parallel_level"].get<int>()};
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
         PlutoFuse, freetensor::plutoFuse, loop0, loop1, nestLevel0, nestLevel1,
@@ -1265,8 +1284,21 @@ std::pair<ID, int> Schedule::plutoFuse(const ID &loop0, const ID &loop1,
     }
 }
 
-std::pair<ID, int> Schedule::plutoPermute(const ID &loop, int nestLevel,
-                                          bool doSimplify) {
+std::pair<ID, int>
+Schedule::plutoPermute(const ID &loop, int nestLevel, bool doSimplify,
+                       const std::optional<bool> &asSubprocess,
+                       const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "pluto_permute", ast(),
+            subprocessArgs({"--loop", idArg(loop), "--nest-level",
+                            std::to_string(nestLevel), "--do-simplify",
+                            boolArg(doSimplify)}),
+            timeout);
+        applySubprocessResult(result);
+        const auto &info = result.info_.value();
+        return {idFromJson(info["id"]), info["parallel_level"].get<int>()};
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
         PlutoPermute, freetensor::plutoPermute, loop, nestLevel, doSimplify));

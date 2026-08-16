@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef("z", (), "int32", "inout", "cpu") as z:
         ft.MarkLabel("Dy")
         with ft.VarDef("y", (7, 8), "int32", "cache", "cpu") as y:
@@ -14,7 +15,7 @@ def test_basic():
                     z[...] += y[i, j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_merge("Dy", 0)
+    s.var_merge("Dy", 0, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast,
@@ -37,7 +38,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_view_of_io_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_view_of_io_var(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (7, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 7) as i:
@@ -45,7 +47,7 @@ def test_view_of_io_var():
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_merge("Dy", 0)
+    s.var_merge("Dy", 0, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -64,7 +66,8 @@ def test_view_of_io_var():
     assert std.match(ast)
 
 
-def test_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_found(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (7, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 7) as i:
@@ -73,12 +76,13 @@ def test_not_found():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_merge("Dx", 0)
+        s.var_merge("Dx", 0, as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_out_of_range():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_out_of_range(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (7, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 7) as i:
@@ -87,6 +91,6 @@ def test_out_of_range():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_merge("Dy", 1)
+        s.var_merge("Dy", 1, as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)

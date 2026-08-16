@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
@@ -15,7 +17,7 @@ def test_basic():
                 y2[i] = 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
@@ -32,7 +34,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_multiple_cond():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_cond(as_subprocess):
     with ft.VarDef([("y1", (5,), "int32", "output", "cpu"),
                     ("y2", (5,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 5) as i:
@@ -46,7 +49,7 @@ def test_multiple_cond():
                 y2[i] = 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
@@ -65,7 +68,8 @@ def test_multiple_cond():
     assert std.match(ast)
 
 
-def test_eq():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_eq(as_subprocess):
     with ft.VarDef("y", (5,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 5) as i:
             with ft.If(i == 2):
@@ -74,7 +78,7 @@ def test_eq():
                 y[i] = 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
 
@@ -89,7 +93,8 @@ def test_eq():
     assert std.match(ast)
 
 
-def test_tiled():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_tiled(as_subprocess):
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 3) as i:
             with ft.For("j", 0, 4) as j:
@@ -97,7 +102,7 @@ def test_tiled():
                     y[4 * i + j] = 4 * i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1)
 
@@ -112,7 +117,8 @@ def test_tiled():
     assert std.match(ast)
 
 
-def test_dynamic_tiled():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dynamic_tiled(as_subprocess):
     with ft.VarDef("n", (), "int32", "input", "byvalue") as n:
         with ft.Assert(n[()] > 0):
             with ft.VarDef("y", (n[()],), "int32", "output", "cpu") as y:
@@ -122,7 +128,7 @@ def test_dynamic_tiled():
                             y[4 * i + j] = 4 * i + j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -140,7 +146,8 @@ def test_dynamic_tiled():
     assert std.match(ast)
 
 
-def test_1d_stencil():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_1d_stencil(as_subprocess):
     with ft.VarDef([("x", (10,), "int32", "input", "cpu"),
                     ("y", (10,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 10) as i:
@@ -151,7 +158,7 @@ def test_1d_stencil():
                 y[i] = y[i] + x[i + 1]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1)
 
@@ -166,7 +173,8 @@ def test_1d_stencil():
     assert std.match(ast)
 
 
-def test_duplicate_vardef():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_duplicate_vardef(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -180,7 +188,7 @@ def test_duplicate_vardef():
                     y[i] = t[()] + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1)
 
@@ -203,7 +211,8 @@ def test_duplicate_vardef():
     assert std.match(ast)
 
 
-def test_no_duplicate_vardef():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_duplicate_vardef(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -217,7 +226,7 @@ def test_no_duplicate_vardef():
                     y[i] = t[()] + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.separate_tail(True)
+    s.separate_tail(True, as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1)
 
@@ -237,7 +246,8 @@ def test_no_duplicate_vardef():
     assert std.match(ast)
 
 
-def test_no_hoisting_loop_variant():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_hoisting_loop_variant(as_subprocess):
 
     @ft.transform
     def foo(x):
@@ -252,5 +262,5 @@ def test_no_hoisting_loop_variant():
                 x[i] = 32 - i
 
     s = ft.Schedule(foo)
-    s.separate_tail()
+    s.separate_tail(as_subprocess=as_subprocess)
     print(s.func())

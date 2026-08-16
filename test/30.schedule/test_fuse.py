@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -14,7 +15,7 @@ def test_basic():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    fused = s.fuse("L2a", "L2b")
+    fused = s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     assert s.find(fused) == s.find("$fuse{L2a, L2b}")
     ast = ft.lower(s.ast(), verbose=1)
 
@@ -31,7 +32,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_find_following_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_find_following_loop(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -43,7 +45,7 @@ def test_find_following_loop():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a")
+    s.fuse("L2a", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -61,7 +63,8 @@ def test_find_following_loop():
     assert std.match(ast)
 
 
-def test_not_aligned_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_aligned_1(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -73,7 +76,7 @@ def test_not_aligned_1():
                 z[i, j - 2] = i * (j - 2)
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
+    s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -91,7 +94,8 @@ def test_not_aligned_1():
     assert std.match(ast)
 
 
-def test_not_aligned_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_aligned_2(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -103,7 +107,7 @@ def test_not_aligned_2():
                 z[i, j - 2] = i * (j - 2)
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
+    s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -121,7 +125,8 @@ def test_not_aligned_2():
     assert std.match(ast)
 
 
-def test_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_step(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -133,7 +138,7 @@ def test_step():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
+    s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -151,7 +156,8 @@ def test_step():
     assert std.match(ast)
 
 
-def test_not_following_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_following_1(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -168,12 +174,13 @@ def test_not_following_1():
     print(ast)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fuse("L2a", "L2c")
+        s.fuse("L2a", "L2c", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_not_following_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_following_2(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -187,12 +194,13 @@ def test_not_following_2():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fuse("L2a", "L2b")
+        s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_different_length():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_length(as_subprocess):
     with ft.VarDef([
         ("y", (4, 8), "int32", "output", "cpu"),
         ("z", (4, 8), "int32", "output", "cpu"),
@@ -205,12 +213,13 @@ def test_different_length():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fuse("L2a", "L2b")
+        s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_dependence_unable_resolve():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dependence_unable_resolve(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -225,12 +234,13 @@ def test_dependence_unable_resolve():
     print(ast)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fuse("L2a", "L2b")
+        s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_legal_dependence():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_legal_dependence(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -246,7 +256,7 @@ def test_legal_dependence():
                     y[i, j] = b[i + 1, 8 - j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
+    s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -266,7 +276,8 @@ def test_legal_dependence():
     assert std.match(ast)
 
 
-def test_buffer_fuse():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_buffer_fuse(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y1", (4, 8), "int32", "output", "cpu"),
@@ -281,7 +292,7 @@ def test_buffer_fuse():
                     y2[i, j] = b[i, j] + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
+    s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -302,7 +313,8 @@ def test_buffer_fuse():
     assert std.match(ast)
 
 
-def test_hoist_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_hoist_var(as_subprocess):
     with ft.For("i", 0, 4, label="L1") as i:
         with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
             with ft.For("j1", 0, 8, label="L2a") as j:
@@ -312,7 +324,7 @@ def test_hoist_var():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
+    s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -330,7 +342,8 @@ def test_hoist_var():
     assert std.match(ast)
 
 
-def test_hoist_var_find_following_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_hoist_var_find_following_loop(as_subprocess):
     with ft.For("i", 0, 4, label="L1") as i:
         with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
             with ft.For("j1", 0, 8, label="L2a") as j:
@@ -340,7 +353,7 @@ def test_hoist_var_find_following_loop():
                 z[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a")
+    s.fuse("L2a", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -358,7 +371,8 @@ def test_hoist_var_find_following_loop():
     assert std.match(ast)
 
 
-def test_hoist_var_in_stmt_seq():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_hoist_var_in_stmt_seq(as_subprocess):
     with ft.For("i", 0, 4, label="L1") as i:
         with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
             with ft.For("j1", 0, 8, label="L2a") as j:
@@ -369,37 +383,7 @@ def test_hoist_var_in_stmt_seq():
             z[0, 0] = -1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.fuse("L2a", "L2b")
-    ast = s.ast()
-    print(ast)
-    ast = ft.lower(ast, verbose=1)
-
-    with ft.For("i", 0, 4) as i:
-        with ft.VarDef([
-            ("y", (4, 8), "int32", "output", "cpu"),
-            ("z", (4, 8), "int32", "output", "cpu"),
-        ]) as (y, z):
-            with ft.For("j", 0, 8) as j:
-                y[i, j] = i + j
-                z[i, j] = i * j
-            z[0, 0] = -1
-    std = ft.pop_ast()
-
-    assert std.match(ast)
-
-
-def test_hoist_var_in_stmt_seq_find_following_loop():
-    with ft.For("i", 0, 4, label="L1") as i:
-        with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
-            with ft.For("j1", 0, 8, label="L2a") as j:
-                y[i, j] = i + j
-        with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
-            with ft.For("j2", 0, 8, label="L2b") as j:
-                z[i, j] = i * j
-            z[0, 0] = -1
-    ast = ft.pop_ast(verbose=True)
-    s = ft.Schedule(ast)
-    s.fuse("L2a")
+    s.fuse("L2a", "L2b", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -418,7 +402,39 @@ def test_hoist_var_in_stmt_seq_find_following_loop():
     assert std.match(ast)
 
 
-def test_hoist_var_with_modified_shape():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_hoist_var_in_stmt_seq_find_following_loop(as_subprocess):
+    with ft.For("i", 0, 4, label="L1") as i:
+        with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
+            with ft.For("j1", 0, 8, label="L2a") as j:
+                y[i, j] = i + j
+        with ft.VarDef("z", (4, 8), "int32", "output", "cpu") as z:
+            with ft.For("j2", 0, 8, label="L2b") as j:
+                z[i, j] = i * j
+            z[0, 0] = -1
+    ast = ft.pop_ast(verbose=True)
+    s = ft.Schedule(ast)
+    s.fuse("L2a", as_subprocess=as_subprocess)
+    ast = s.ast()
+    print(ast)
+    ast = ft.lower(ast, verbose=1)
+
+    with ft.For("i", 0, 4) as i:
+        with ft.VarDef([
+            ("y", (4, 8), "int32", "output", "cpu"),
+            ("z", (4, 8), "int32", "output", "cpu"),
+        ]) as (y, z):
+            with ft.For("j", 0, 8) as j:
+                y[i, j] = i + j
+                z[i, j] = i * j
+            z[0, 0] = -1
+    std = ft.pop_ast()
+
+    assert std.match(ast)
+
+
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_hoist_var_with_modified_shape(as_subprocess):
     with ft.VarDef("n", (), "int32", "output", "cpu") as n:
         with ft.For("i", 0, 4, label="L1") as i:
             n[()] = i
@@ -428,12 +444,13 @@ def test_hoist_var_with_modified_shape():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.fuse("L1", "L2")
+        s.fuse("L1", "L2", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_fuse_no_deps_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fuse_no_deps_1(as_subprocess):
 
     @ft.transform
     def test(ptr, edge1, edge2):
@@ -453,12 +470,13 @@ def test_fuse_no_deps_1():
 
     print(test)
     s = ft.Schedule(test)
-    fused = s.fuse("Li1", "Li2")
+    fused = s.fuse("Li1", "Li2", as_subprocess=as_subprocess)
     print(s.ast())
     assert s.find(fused).property.no_deps == ["edge2"]
 
 
-def test_fuse_no_deps_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fuse_no_deps_2(as_subprocess):
 
     @ft.transform
     def test(ptr, edge1, edge2, foobar):
@@ -478,12 +496,13 @@ def test_fuse_no_deps_2():
 
     print(test)
     s = ft.Schedule(test)
-    fused = s.fuse("Li1", "Li2")
+    fused = s.fuse("Li1", "Li2", as_subprocess=as_subprocess)
     print(s.ast())
     assert s.find(fused).property.no_deps == ["edge2"]
 
 
-def test_fuse_no_deps_3():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fuse_no_deps_3(as_subprocess):
 
     @ft.transform
     def test(ptr, edge1, edge2):
@@ -508,7 +527,8 @@ def test_fuse_no_deps_3():
     assert ast.match(test.body)
 
 
-def test_fuse_with_if():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fuse_with_if(as_subprocess):
     with ft.VarDef([
         ("c", (), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -542,7 +562,8 @@ def test_fuse_with_if():
     assert std.match(ast)
 
 
-def test_fuse_with_if_find_following_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fuse_with_if_find_following_loop(as_subprocess):
     with ft.VarDef([
         ("c", (), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -576,7 +597,8 @@ def test_fuse_with_if_find_following_loop():
     assert std.match(ast)
 
 
-def test_potential_name_conflict():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_potential_name_conflict(as_subprocess):
     with ft.VarDef([("x1", (5,), "int32", "input", "cpu"),
                     ("x2", (5, 10), "int32", "input", "cpu"),
                     ("y1", (5,), "int32", "output", "cpu"),

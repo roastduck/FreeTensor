@@ -7,6 +7,7 @@
 #include <pass/normalize_loops.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -187,7 +188,12 @@ Stmt ShrinkNormalizedThreads::visit(const For &op) {
     return ret;
 }
 
-Stmt normalizeThreads(const Stmt &_op) {
+Stmt normalizeThreads(const Stmt &_op, const std::optional<bool> &asSubprocess,
+                      const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("gpu_normalize_threads", _op, {},
+                                       asSubprocess, timeout);
+    }
     auto op = normalizeLoops(_op, [](const For &l) {
         return std::holds_alternative<CUDAScope>(l->property_->parallel_);
     });

@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_ge0_floor_div_ge0():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_ge0_floor_div_ge0(as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -12,7 +13,7 @@ def test_ge0_floor_div_ge0():
             with ft.Assert(b[()] >= 0):
                 c[()] = a[()] // b[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -27,7 +28,8 @@ def test_ge0_floor_div_ge0():
     assert std.match(ast)
 
 
-def test_unknown_floor_div_unknown():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_unknown_floor_div_unknown(as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -35,7 +37,7 @@ def test_unknown_floor_div_unknown():
     ]) as (a, b, c):
         c[()] = a[()] // b[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -48,7 +50,8 @@ def test_unknown_floor_div_unknown():
     assert std.match(ast)
 
 
-def test_ge0_ceil_div_ge0():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_ge0_ceil_div_ge0(as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -58,7 +61,7 @@ def test_ge0_ceil_div_ge0():
             with ft.Assert(b[()] >= 0):
                 c[()] = ft.ceildiv(a[()], b[()])
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -73,7 +76,8 @@ def test_ge0_ceil_div_ge0():
     assert std.match(ast)
 
 
-def test_unknown_ceil_div_unknown():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_unknown_ceil_div_unknown(as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -81,7 +85,7 @@ def test_unknown_ceil_div_unknown():
     ]) as (a, b, c):
         c[()] = ft.ceildiv(a[()], b[()])
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -94,7 +98,8 @@ def test_unknown_ceil_div_unknown():
     assert std.match(ast)
 
 
-def test_ge0_mod_ge0():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_ge0_mod_ge0(as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -104,7 +109,7 @@ def test_ge0_mod_ge0():
             with ft.Assert(b[()] >= 0):
                 c[()] = a[()] % b[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -119,7 +124,8 @@ def test_ge0_mod_ge0():
     assert std.match(ast)
 
 
-def test_mod_mod_ge0():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_mod_mod_ge0(as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -131,7 +137,7 @@ def test_mod_mod_ge0():
                 with ft.Assert(c[()] >= 0):
                     d[()] = (a[()] % b[()]) % c[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
@@ -148,7 +154,8 @@ def test_mod_mod_ge0():
     assert std.match(ast)
 
 
-def test_unknown_mod_unknown():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_unknown_mod_unknown(as_subprocess):
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),
         ("b", (), "int32", "input", "cpu"),
@@ -156,7 +163,7 @@ def test_unknown_mod_unknown():
     ]) as (a, b, c):
         c[()] = a[()] % b[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("a", (), "int32", "input", "cpu"),

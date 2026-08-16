@@ -10,6 +10,7 @@
 #include <pass/make_reduction.h>
 #include <pass/scalar_prop_const.h>
 #include <pass/undo_make_reduction.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -238,6 +239,13 @@ Stmt ScalarPropConst::visit(const For &op) {
     return result;
 }
 
-Stmt scalarPropConst(const Stmt &op) { return ScalarPropConst()(op); }
+Stmt scalarPropConst(const Stmt &op, const std::optional<bool> &asSubprocess,
+                     const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("scalar_prop_const", op, {},
+                                       asSubprocess, timeout);
+    }
+    return ScalarPropConst()(op);
+}
 
 } // namespace freetensor

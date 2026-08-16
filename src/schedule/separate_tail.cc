@@ -10,6 +10,7 @@
 #include <pass/z3_simplify.h>
 #include <schedule.h>
 #include <schedule/separate_tail.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -167,7 +168,18 @@ Stmt separateTail(const Stmt &_ast, bool noDuplicateVarDefs) {
     return ast;
 }
 
-void Schedule::separateTail(bool noDuplicateVarDefs) {
+void Schedule::separateTail(bool noDuplicateVarDefs,
+                            const std::optional<bool> &asSubprocess,
+                            const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "separate_tail", ast(),
+            subprocessArgs(
+                {"--no-duplicate-var-defs", boolArg(noDuplicateVarDefs)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
         SeparateTail, freetensor::separateTail, noDuplicateVarDefs));

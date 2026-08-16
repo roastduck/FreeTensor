@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_softmax():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_softmax(as_subprocess):
 
     @ft.lower(verbose=1)
     @ft.transform(verbose=1)

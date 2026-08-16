@@ -3,6 +3,7 @@
 #include <schedule.h>
 #include <schedule/blend.h>
 #include <schedule/check_not_in_lib.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -191,7 +192,14 @@ Stmt blend(const Stmt &_ast, const ID &loop) {
     return ast;
 }
 
-void Schedule::blend(const ID &loop) {
+void Schedule::blend(const ID &loop, const std::optional<bool> &asSubprocess,
+                     const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "blend", ast(), subprocessArgs({"--loop", idArg(loop)}), timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(Blend, freetensor::blend, loop));
     try {

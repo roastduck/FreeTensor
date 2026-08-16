@@ -1,14 +1,16 @@
 import freetensor as ft
+import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
             a[()] = x[()] + 1
         y[()] = x[()] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -18,7 +20,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_chained():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_chained(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
@@ -29,7 +32,7 @@ def test_chained():
                     c[()] = a[()] + b[()]
         y[()] = x[()] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -39,7 +42,8 @@ def test_chained():
     assert std.match(ast)
 
 
-def test_self_assign():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_self_assign(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
@@ -48,7 +52,7 @@ def test_self_assign():
                 a[()] = a[()] * x[()] + 1
         y[()] = x[()] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -58,7 +62,8 @@ def test_self_assign():
     assert std.match(ast)
 
 
-def test_remove_a_write_if_no_reads_after_it():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_remove_a_write_if_no_reads_after_it(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
@@ -66,7 +71,7 @@ def test_remove_a_write_if_no_reads_after_it():
             y[()] = a[()] * a[()]
             a[()] *= 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -78,7 +83,8 @@ def test_remove_a_write_if_no_reads_after_it():
     assert std.match(ast)
 
 
-def test_remove_a_write_in_a_loop_if_no_reads_after_it():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_remove_a_write_in_a_loop_if_no_reads_after_it(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (4,), "int32", "cache", "cpu") as a:
@@ -89,7 +95,7 @@ def test_remove_a_write_in_a_loop_if_no_reads_after_it():
             with ft.For("i", 0, 4) as i:
                 a[i] *= 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -103,7 +109,8 @@ def test_remove_a_write_in_a_loop_if_no_reads_after_it():
     assert std.match(ast)
 
 
-def test_no_remove_writes_if_maybe_looped_around():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_remove_writes_if_maybe_looped_around(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (2,), "int32", "output", "cpu")]) as (x, y):
         with ft.VarDef("a", (), "int32", "cache", "cpu") as a:
@@ -112,7 +119,7 @@ def test_no_remove_writes_if_maybe_looped_around():
                 y[i] = a[()] * a[()]
                 a[()] *= 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (2,), "int32", "output", "cpu")]) as (x, y):
@@ -126,13 +133,14 @@ def test_no_remove_writes_if_maybe_looped_around():
     assert std.match(ast)
 
 
-def test_input_mutable_can_be_optimized_out():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_input_mutable_can_be_optimized_out(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input-mutable", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] * 2
         x[()] += 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):

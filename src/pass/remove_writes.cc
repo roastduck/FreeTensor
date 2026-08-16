@@ -11,6 +11,7 @@
 #include <pass/remove_writes.h>
 #include <pass/replace_iter.h>
 #include <pass/sink_var.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -182,7 +183,15 @@ Stmt RemoveWrites::visit(const If &_op) {
     return op;
 }
 
-Stmt removeWrites(const Stmt &_op, const ID &singleDefId) {
+Stmt removeWrites(const Stmt &_op, const ID &singleDefId,
+                  const std::optional<bool> &asSubprocess,
+                  const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "remove_writes", _op,
+            subprocessArgs({"--single-def-id", idArg(singleDefId)}),
+            asSubprocess, timeout);
+    }
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef

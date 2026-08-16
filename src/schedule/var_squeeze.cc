@@ -1,6 +1,7 @@
 #include <hash.h>
 #include <mutator.h>
 #include <schedule.h>
+#include <schedule/subprocess_utils.h>
 #include <schedule/var_squeeze.h>
 
 namespace freetensor {
@@ -63,7 +64,18 @@ Stmt varSqueeze(const Stmt &ast, const ID &def, int dim) {
     return VarSqueeze{def, dim}(ast);
 }
 
-void Schedule::varSqueeze(const ID &def, int dim) {
+void Schedule::varSqueeze(const ID &def, int dim,
+                          const std::optional<bool> &asSubprocess,
+                          const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "var_squeeze", ast(),
+            subprocessArgs(
+                {"--vardef", idArg(def), "--dim", std::to_string(dim)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(
         MAKE_SCHEDULE_LOG(VarSqueeze, freetensor::varSqueeze, def, dim));

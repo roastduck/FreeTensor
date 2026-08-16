@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -13,7 +14,7 @@ def test_basic():
                 y[i] = t[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -27,7 +28,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_multiple_assignments():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_assignments(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -42,7 +44,7 @@ def test_multiple_assignments():
                 y[i] = t[i] + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -58,7 +60,8 @@ def test_multiple_assignments():
     assert std.match(ast)
 
 
-def test_modified_unrelated_item():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_modified_unrelated_item(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -70,7 +73,7 @@ def test_modified_unrelated_item():
                 y[i] = t[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -85,7 +88,8 @@ def test_modified_unrelated_item():
     assert std.match(ast)
 
 
-def test_loop_around():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_around(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 3), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -98,7 +102,7 @@ def test_loop_around():
                     t[i] = x[i] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -113,7 +117,8 @@ def test_loop_around():
     assert std.match(ast)
 
 
-def test_loop_around_different_iter_no_prop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_around_different_iter_no_prop(as_subprocess):
     with ft.VarDef([("x", (4, 3), "int32", "input", "cpu"),
                     ("y", (4, 3), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -127,12 +132,13 @@ def test_loop_around_different_iter_no_prop():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.inline("T")
+        s.inline("T", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_no_inline_expr_is_changed_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_inline_expr_is_changed_1(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -146,12 +152,13 @@ def test_no_inline_expr_is_changed_1():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.inline("T")
+        s.inline("T", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_no_inline_expr_is_changed_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_inline_expr_is_changed_2(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -164,12 +171,13 @@ def test_no_inline_expr_is_changed_2():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.inline("T")
+        s.inline("T", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_no_inline_expr_is_changed_multiple_times():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_inline_expr_is_changed_multiple_times(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -187,12 +195,13 @@ def test_no_inline_expr_is_changed_multiple_times():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.inline("T")
+        s.inline("T", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_no_inline_output_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_inline_output_var(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -204,12 +213,13 @@ def test_no_inline_output_var():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.inline("T")
+        s.inline("T", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_different_iter_with_the_same_name():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_iter_with_the_same_name(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -220,7 +230,7 @@ def test_different_iter_with_the_same_name():
                 y[i + -4] = t[i + -4] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -234,7 +244,8 @@ def test_different_iter_with_the_same_name():
     assert std.match(ast)
 
 
-def test_different_iter_with_different_names():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_iter_with_different_names(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "inout", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -247,7 +258,7 @@ def test_different_iter_with_different_names():
                 x[i] = 0
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -263,7 +274,8 @@ def test_different_iter_with_different_names():
     assert std.match(ast)
 
 
-def test_different_iter_with_dynamic_offset():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_iter_with_dynamic_offset(as_subprocess):
     with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
                     ("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (offset, x, y):
@@ -275,7 +287,7 @@ def test_different_iter_with_dynamic_offset():
                 y[i] = t[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -290,7 +302,8 @@ def test_different_iter_with_dynamic_offset():
     assert std.match(ast)
 
 
-def test_different_iter_with_uncertain_offset_no_inline():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_iter_with_uncertain_offset_no_inline(as_subprocess):
     with ft.VarDef([("offset", (), "int32", "inout", "cpu"),
                     ("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (offset, x, y):
@@ -304,13 +317,14 @@ def test_different_iter_with_uncertain_offset_no_inline():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.inline("T")
+        s.inline("T", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     print(ast_)
     assert ast_.match(ast)
 
 
-def test_different_iter_non_linear():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_iter_non_linear(as_subprocess):
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
                     ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
@@ -323,7 +337,7 @@ def test_different_iter_non_linear():
                 y[k] = t[k] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("T")
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -338,7 +352,8 @@ def test_different_iter_non_linear():
     assert std.match(ast)
 
 
-def test_inline_serial_into_parallel():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_inline_serial_into_parallel(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("T")
@@ -349,8 +364,8 @@ def test_inline_serial_into_parallel():
                 y[i] = t[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.parallelize("L", "threadIdx.x")
-    s.inline("T")
+    s.parallelize("L", "threadIdx.x", as_subprocess=as_subprocess)
+    s.inline("T", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -364,7 +379,8 @@ def test_inline_serial_into_parallel():
     assert std.match(ast)
 
 
-def test_correct_scope():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_correct_scope(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("U")
@@ -379,7 +395,7 @@ def test_correct_scope():
                 y[i] = u[i] - 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline("U")
+    s.inline("U", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -397,7 +413,8 @@ def test_correct_scope():
     assert std.match(ast)
 
 
-def test_no_inline_defined_inside_a_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_inline_defined_inside_a_loop(as_subprocess):
     with ft.VarDef([("x", (4, 4), "int32", "input", "cpu"),
                     ("y", (4, 4), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("U")
@@ -415,12 +432,13 @@ def test_no_inline_defined_inside_a_loop():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.inline("U")
+        s.inline("U", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_def_then_use_then_def_in_the_same_place():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_def_then_use_then_def_in_the_same_place(as_subprocess):
     with ft.VarDef("x", (128, 128, 128), "float64", "inout", "cpu") as x:
         with ft.For("ix_2", 1, 127) as ix:
             with ft.For("iy_2", 1, 127) as iy:
@@ -432,7 +450,7 @@ def test_def_then_use_then_def_in_the_same_place():
                         x[ix, iy, iz] = sx[()] / 26.0
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.inline('sx')
+    s.inline('sx', as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)

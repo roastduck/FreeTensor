@@ -5,6 +5,7 @@
 #include <math/utils.h>
 #include <pass/float_simplify.h>
 #include <pass/refine_sign_data_type.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -489,7 +490,12 @@ Expr FloatSimplify::visit(const Abs &_op) {
     return op;
 }
 
-Stmt floatSimplify(const Stmt &_op) {
+Stmt floatSimplify(const Stmt &_op, const std::optional<bool> &asSubprocess,
+                   const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("float_simplify", _op, {}, asSubprocess,
+                                       timeout);
+    }
     if (!Config::fastMath()) {
         return _op;
     }

@@ -5,6 +5,7 @@
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/replace_iter.h>
 #include <pass/shrink_var.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -53,7 +54,14 @@ Stmt ApplySimplexOffset::visit(const For &op) {
     }
 }
 
-Stmt simplexBuffers(const Stmt &_op, const ID &defId) {
+Stmt simplexBuffers(const Stmt &_op, const ID &defId,
+                    const std::optional<bool> &asSubprocess,
+                    const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "gpu_simplex_buffers", _op,
+            subprocessArgs({"--def-id", idArg(defId)}), asSubprocess, timeout);
+    }
     FindSimplexOffset visitor(defId);
     visitor(_op);
     ApplySimplexOffset mutator(visitor.offsets());

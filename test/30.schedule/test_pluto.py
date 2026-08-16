@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_pluto_fuse():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
@@ -17,13 +18,14 @@ def test_pluto_fuse():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_fuse("L0", "L1")
+    _, parallelism = s.pluto_fuse("L0", "L1", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert parallelism == 1
 
 
-def test_pluto_fuse_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_2(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
@@ -38,13 +40,14 @@ def test_pluto_fuse_2():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_fuse("L0", "L1")
+    _, parallelism = s.pluto_fuse("L0", "L1", as_subprocess=as_subprocess)
     assert parallelism == 1
     kernel = s.func()
     print(kernel)
 
 
-def test_pluto_fuse_3():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_3(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
@@ -59,13 +62,14 @@ def test_pluto_fuse_3():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_fuse("L0", "L1")
+    _, parallelism = s.pluto_fuse("L0", "L1", as_subprocess=as_subprocess)
     assert parallelism == 1
     kernel = s.func()
     print(kernel)
 
 
-def test_pluto_fuse_reversed():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_reversed(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
@@ -80,13 +84,14 @@ def test_pluto_fuse_reversed():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_fuse("L0", "L1")
+    _, parallelism = s.pluto_fuse("L0", "L1", as_subprocess=as_subprocess)
     assert parallelism == 1
     kernel = s.func()
     print(kernel)
 
 
-def test_pluto_fuse_imbalanced_nest():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_imbalanced_nest(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "inout"],
@@ -109,14 +114,15 @@ def test_pluto_fuse_imbalanced_nest():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_fuse("L0", "L1")
+    _, parallelism = s.pluto_fuse("L0", "L1", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert parallelism == 0
     assert kernel.body.match(kernel_expected.body)
 
 
-def test_pluto_fuse_modulo():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_modulo(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256,), "float32", "inout"],
@@ -139,13 +145,14 @@ def test_pluto_fuse_modulo():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    s.pluto_fuse("L0", "L1")
+    s.pluto_fuse("L0", "L1", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert kernel.body.match(kernel_expected.body)
 
 
-def test_pluto_permute_reorder():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_permute_reorder(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
@@ -162,14 +169,15 @@ def test_pluto_permute_reorder():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_permute("L0")
+    _, parallelism = s.pluto_permute("L0", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
 
 
-def test_pluto_permute_fully_parallelizable():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_permute_fully_parallelizable(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "output"],
@@ -189,14 +197,15 @@ def test_pluto_permute_fully_parallelizable():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_permute("L0")
+    _, parallelism = s.pluto_permute("L0", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert parallelism == 2
     assert kernel.body.match(kernel_expected.body)
 
 
-def test_pluto_permute_inner_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_permute_inner_loop(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256, 5), "float32", "inout"]):
@@ -215,14 +224,15 @@ def test_pluto_permute_inner_loop():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_permute("L0")
+    _, parallelism = s.pluto_permute("L0", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
 
 
-def test_pluto_permute_outer_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_permute_outer_loop(as_subprocess):
 
     @ft.transform
     def kernel(x: ft.Var[(256, 256), "float32", "inout"]):
@@ -242,14 +252,15 @@ def test_pluto_permute_outer_loop():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_permute("L0")
+    _, parallelism = s.pluto_permute("L0", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
 
 
-def test_pluto_fuse_bloat():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_bloat(as_subprocess):
 
     @ft.transform
     def kernel(Ls, Lsg, xc, xcg, Yg):
@@ -273,10 +284,11 @@ def test_pluto_fuse_bloat():
 
     with pytest.raises(ft.InvalidSchedule):
         s = ft.Schedule(kernel)
-        s.pluto_fuse("L1", "L2")
+        s.pluto_fuse("L1", "L2", as_subprocess=as_subprocess)
 
 
-def test_pluto_fuse_external():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_external(as_subprocess):
 
     @ft.transform
     def kernel(N: ft.Var[(), "int64", "input"], x):
@@ -305,14 +317,15 @@ def test_pluto_fuse_external():
 
     print(kernel)
     s = ft.Schedule(kernel)
-    _, parallelism = s.pluto_fuse("L0", "L1")
+    _, parallelism = s.pluto_fuse("L0", "L1", as_subprocess=as_subprocess)
     kernel = s.func()
     print(kernel)
     assert parallelism == 1
     assert kernel.body.match(kernel_expected.body)
 
 
-def test_pluto_fuse_bloat_external():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pluto_fuse_bloat_external(as_subprocess):
 
     @ft.transform
     def kernel(N: ft.Var[(), "int64", "input"], Ls, Lsg, xc, xcg, Yg):
@@ -337,5 +350,5 @@ def test_pluto_fuse_bloat_external():
 
     with pytest.raises(ft.InvalidSchedule):
         s = ft.Schedule(kernel)
-        s.pluto_fuse("L1", "L2")
+        s.pluto_fuse("L1", "L2", as_subprocess=as_subprocess)
         print(s.ast())

@@ -8,6 +8,7 @@
 #include <schedule.h>
 #include <schedule/check_not_in_lib.h>
 #include <schedule/hoist_selected_var.h>
+#include <schedule/subprocess_utils.h>
 #include <schedule/swap.h>
 #include <selector.h>
 
@@ -106,7 +107,22 @@ Stmt swap(const Stmt &_ast, const std::vector<ID> &order) {
     return sinkVar(ast);
 }
 
-void Schedule::swap(const std::vector<ID> &order) {
+void Schedule::swap(const std::vector<ID> &order,
+                    const std::optional<bool> &asSubprocess,
+                    const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        std::string orderStr;
+        for (auto &&id : order) {
+            if (!orderStr.empty()) {
+                orderStr += ",";
+            }
+            orderStr += idArg(id);
+        }
+        auto result = runTransformSubprocess(
+            "swap", ast(), subprocessArgs({"--order", orderStr}), timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(Swap, freetensor::swap, order));
     try {

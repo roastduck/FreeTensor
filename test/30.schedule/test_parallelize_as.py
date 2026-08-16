@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_partitioned_by_tile():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_partitioned_by_tile(as_subprocess):
     with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
                     ("c", (8,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -14,8 +15,8 @@ def test_partitioned_by_tile():
                 c[i] = b[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
-    s.parallelize_as("L2", "L1", "Vb")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
+    s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)
     ast = s.ast()
     assert ft.find_stmt(ast, "<For>->L2").property.parallel == "openmp"
 
@@ -34,7 +35,8 @@ def test_partitioned_by_tile():
     assert std.match(ast)
 
 
-def test_partitioned_by_stride():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_partitioned_by_stride(as_subprocess):
     with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
                     ("c", (8,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -46,8 +48,8 @@ def test_partitioned_by_stride():
                 c[i] = b[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
-    s.parallelize_as("L2", "L1", "Vb")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
+    s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)
     ast = s.ast()
     assert ft.find_stmt(ast, "<For>->L2").property.parallel == "openmp"
 
@@ -66,7 +68,8 @@ def test_partitioned_by_stride():
     assert std.match(ast)
 
 
-def test_partitioned_by_high_order_stride():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_partitioned_by_high_order_stride(as_subprocess):
     with ft.VarDef([("a", (64,), "int32", "input", "cpu"),
                     ("c", (64,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -79,8 +82,8 @@ def test_partitioned_by_high_order_stride():
                 c[i] = b[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
-    s.parallelize_as("L2", "L1", "Vb")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
+    s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)
     ast = s.ast()
     assert ft.find_stmt(ast, "<For>->L2").property.parallel == "openmp"
 
@@ -101,7 +104,8 @@ def test_partitioned_by_high_order_stride():
     assert std.match(ast)
 
 
-def test_reference_after_nest():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reference_after_nest(as_subprocess):
     with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
                     ("c", (8,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -113,8 +117,8 @@ def test_reference_after_nest():
                     c[i * 2 + j] = b[i * 2 + j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
-    s.parallelize_as("L2", "L1", "Vb")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
+    s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)
     ast = s.ast()
     assert ft.find_stmt(ast, "<For>->L2").property.parallel == "openmp"
 
@@ -133,7 +137,8 @@ def test_reference_after_nest():
     assert std.match(ast)
 
 
-def test_choosing_vardef():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_choosing_vardef(as_subprocess):
     with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
                     ("c", (8,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -145,8 +150,8 @@ def test_choosing_vardef():
                 c[i] = b[i] + a[0]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
-    s.parallelize_as("L2", "L1", "Vb")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
+    s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)
     ast = s.ast()
     assert ft.find_stmt(ast, "<For>->L2").property.parallel == "openmp"
 
@@ -166,7 +171,8 @@ def test_choosing_vardef():
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_multiple_levels():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_levels(as_subprocess):
     with ft.VarDef([("a", (128, 128), "int32", "input", "cpu"),
                     ("c", (128, 128), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -181,9 +187,9 @@ def test_multiple_levels():
                     c[i, j] = b[i, j] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1i", "blockIdx.x")
-    s.parallelize("L1j", "threadIdx.x")
-    s.parallelize_as("L2", "L1i", "Vb")
+    s.parallelize("L1i", "blockIdx.x", as_subprocess=as_subprocess)
+    s.parallelize("L1j", "threadIdx.x", as_subprocess=as_subprocess)
+    s.parallelize_as("L2", "L1i", "Vb", as_subprocess=as_subprocess)
     ast = s.ast()
     assert ft.find_stmt(ast, "<For>->L2").property.parallel == "threadIdx.x"
     assert ft.find_stmt(ast,
@@ -209,7 +215,8 @@ def test_multiple_levels():
     assert std.match(ast)
 
 
-def test_reject_thread_non_local_reference_shared_by_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reject_thread_non_local_reference_shared_by_loop(as_subprocess):
     with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
                     ("c", (2,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -221,12 +228,14 @@ def test_reject_thread_non_local_reference_shared_by_loop():
                 c[i] = b[i] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
     with pytest.raises(ft.InvalidSchedule):
-        s.parallelize_as("L2", "L1", "Vb")
+        s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)
 
 
-def test_reject_thread_non_local_reference_shared_by_multiple_access_sites():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reject_thread_non_local_reference_shared_by_multiple_access_sites(
+        as_subprocess):
     with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
                     ("c", (8,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -238,12 +247,13 @@ def test_reject_thread_non_local_reference_shared_by_multiple_access_sites():
                     c[i * 2 + j] = b[i * 2 + j] + b[(i * 2 + j + 1) % 8]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
     with pytest.raises(ft.InvalidSchedule):
-        s.parallelize_as("L2", "L1", "Vb")
+        s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)
 
 
-def test_reject_thread_non_local_destination_nest():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reject_thread_non_local_destination_nest(as_subprocess):
     with ft.VarDef([("a", (8,), "int32", "input", "cpu"),
                     ("c", (8,), "int32", "output", "cpu")]) as (a, c):
         ft.MarkLabel("Vb")
@@ -255,6 +265,6 @@ def test_reject_thread_non_local_destination_nest():
                 c[i] = b[i] + b[(i + 1) % 8]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize("L1", "openmp")
+    s.parallelize("L1", "openmp", as_subprocess=as_subprocess)
     with pytest.raises(ft.InvalidSchedule):
-        s.parallelize_as("L2", "L1", "Vb")
+        s.parallelize_as("L2", "L1", "Vb", as_subprocess=as_subprocess)

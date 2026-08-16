@@ -6,6 +6,7 @@ options {
 }
 
 @parser::postinclude {
+    #include <cmath>
     #include <string>
     #include <vector>
 
@@ -285,7 +286,7 @@ varDef returns [Stmt node]
         (VIEW_OF '=' view_of=var { viewOf = $var.name; })?
         (PINNED { pinned = true; })?
       {
-        name2dtype_[$var.name] = $dtype.type;
+        name2dtype_[$name.name] = $dtype.type;
       }
         LBRACE stmts RBRACE
       {
@@ -640,7 +641,15 @@ intConst returns [Expr node]
     ;
 
 floatConst returns [Expr node]
-    : Float
+    : Inf
+      {
+        $node = makeFloatConst(INFINITY);
+      }
+    | '-' Inf
+      {
+        $node = makeFloatConst(-INFINITY);
+      }
+    | Float
       {
         $node = makeFloatConst(std::stod($Float.text));
       }

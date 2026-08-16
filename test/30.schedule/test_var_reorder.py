@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("Dc")
@@ -15,7 +16,7 @@ def test_basic():
                     y[i, j] = c[i, j] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_reorder("Dc", [1, 0])
+    s.var_reorder("Dc", [1, 0], as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -35,7 +36,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_found(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("Dc")
@@ -49,12 +51,13 @@ def test_not_found():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_reorder("Dx", [1, 0])
+        s.var_reorder("Dx", [1, 0], as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_not_a_permutation():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_a_permutation(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("Dc")
@@ -68,6 +71,6 @@ def test_not_a_permutation():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_reorder("Dx", [2, 0])
+        s.var_reorder("Dx", [2, 0], as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)

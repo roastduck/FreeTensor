@@ -5,7 +5,8 @@ import pytest
 # in test/40.codegen
 
 
-def test_not_plain_iterator():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_plain_iterator(as_subprocess):
 
     @ft.transform
     def test(a, b, c):
@@ -20,10 +21,12 @@ def test_not_plain_iterator():
 
     s = ft.Schedule(test)
     with pytest.raises(ft.InvalidSchedule):
-        s.as_matmul("L1")
+        s.as_matmul("L1", as_subprocess=as_subprocess)
 
 
-def test_splitted_dim_not_contiguous_because_of_not_full_iterating_range():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_splitted_dim_not_contiguous_because_of_not_full_iterating_range(
+        as_subprocess):
 
     @ft.transform
     def test(a, b, c):
@@ -39,10 +42,11 @@ def test_splitted_dim_not_contiguous_because_of_not_full_iterating_range():
 
     s = ft.Schedule(test)
     with pytest.raises(ft.InvalidSchedule):
-        s.as_matmul("L1")
+        s.as_matmul("L1", as_subprocess=as_subprocess)
 
 
-def test_splitted_dim_not_contiguous_because_of_steps():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_splitted_dim_not_contiguous_because_of_steps(as_subprocess):
 
     @ft.transform
     def test(a, b, c):
@@ -58,10 +62,11 @@ def test_splitted_dim_not_contiguous_because_of_steps():
 
     s = ft.Schedule(test)
     with pytest.raises(ft.InvalidSchedule):
-        s.as_matmul("L1")
+        s.as_matmul("L1", as_subprocess=as_subprocess)
 
 
-def test_splitted_dim_not_contiguous_indices():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_splitted_dim_not_contiguous_indices(as_subprocess):
 
     @ft.transform
     def test(a, b, c):
@@ -78,10 +83,11 @@ def test_splitted_dim_not_contiguous_indices():
 
     s = ft.Schedule(test)
     with pytest.raises(ft.InvalidSchedule):
-        s.as_matmul("L1")
+        s.as_matmul("L1", as_subprocess=as_subprocess)
 
 
-def test_splitted_dim_different_order():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_splitted_dim_different_order(as_subprocess):
 
     @ft.transform
     def test(a, b, c):
@@ -98,10 +104,11 @@ def test_splitted_dim_different_order():
 
     s = ft.Schedule(test)
     with pytest.raises(ft.InvalidSchedule):
-        s.as_matmul("L1")
+        s.as_matmul("L1", as_subprocess=as_subprocess)
 
 
-def test_not_reduce_add():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_reduce_add(as_subprocess):
 
     @ft.transform
     def test(a, b, c):
@@ -116,10 +123,11 @@ def test_not_reduce_add():
 
     s = ft.Schedule(test)
     with pytest.raises(ft.InvalidSchedule):
-        s.as_matmul("L1")
+        s.as_matmul("L1", as_subprocess=as_subprocess)
 
 
-def test_not_mul():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_mul(as_subprocess):
 
     @ft.transform
     def test(a, b, c):
@@ -134,4 +142,4 @@ def test_not_mul():
 
     s = ft.Schedule(test)
     with pytest.raises(ft.InvalidSchedule):
-        s.as_matmul("L1")
+        s.as_matmul("L1", as_subprocess=as_subprocess)

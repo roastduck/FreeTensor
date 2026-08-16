@@ -1,5 +1,6 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/remove_dead_var.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -121,7 +122,12 @@ Stmt RemoveDeadVar::visit(const StmtSeq &op) {
     return makeStmtSeq(std::move(stmts), op->metadata(), op->id());
 }
 
-Stmt removeDeadVar(const Stmt &_op) {
+Stmt removeDeadVar(const Stmt &_op, const std::optional<bool> &asSubprocess,
+                   const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("remove_dead_var", _op, {}, asSubprocess,
+                                       timeout);
+    }
     auto op = _op;
 
     for (int i = 0;; i++) {

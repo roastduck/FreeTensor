@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, t, y):
@@ -10,7 +11,7 @@ def test_basic():
             t[i] = x[i] + 1
             y[i] = t[i] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -21,7 +22,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_preserve_data_type():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_preserve_data_type(as_subprocess):
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("y", (4,), "float32", "output", "cpu")]) as (x, t, y):
@@ -29,7 +31,7 @@ def test_preserve_data_type():
             t[i] = x[i] * 2
             y[i] = t[i] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "float32", "input", "cpu"),
                     ("y", (4,), "float32", "output", "cpu")]) as (x, y):
@@ -40,7 +42,8 @@ def test_preserve_data_type():
     assert std.match(ast)
 
 
-def test_multiple_vars():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_vars(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("u", (4,), "int32", "cache", "cpu"),
@@ -50,7 +53,7 @@ def test_multiple_vars():
             u[i] = t[i] + 1
             y[i] = u[i] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -61,7 +64,8 @@ def test_multiple_vars():
     assert std.match(ast)
 
 
-def test_prop_across_loops():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_prop_across_loops(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, t, y):
@@ -70,7 +74,7 @@ def test_prop_across_loops():
         with ft.For("i", 0, 4) as i:
             y[i] = t[i] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -81,7 +85,8 @@ def test_prop_across_loops():
     assert std.match(ast)
 
 
-def test_prop_out_of_a_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_prop_out_of_a_loop(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("t", (4,), "int32", "cache", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, t, y):
@@ -89,7 +94,7 @@ def test_prop_out_of_a_loop():
             t[i] = x[i] * 2
         y[...] = t[0] + t[1] + t[2] + t[3]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -99,7 +104,8 @@ def test_prop_out_of_a_loop():
     assert std.match(ast)
 
 
-def test_used_in_many_stmts_no_prop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_used_in_many_stmts_no_prop(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -109,7 +115,7 @@ def test_used_in_many_stmts_no_prop():
                 y1[i] = t[()] * 2
                 y2[i] = t[()] * 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -124,7 +130,8 @@ def test_used_in_many_stmts_no_prop():
     assert std.match(ast)
 
 
-def test_used_in_many_reads_no_prop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_used_in_many_reads_no_prop(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -132,7 +139,7 @@ def test_used_in_many_reads_no_prop():
                 t[...] = x[i] + 1
                 y[i] = t[...] * t[...] + t[...]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -145,7 +152,8 @@ def test_used_in_many_reads_no_prop():
     assert std.match(ast)
 
 
-def test_used_in_many_iterations_no_prop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_used_in_many_iterations_no_prop(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -154,7 +162,7 @@ def test_used_in_many_iterations_no_prop():
                 with ft.For("j", 0, 8) as j:
                     y[i, j] = t[...] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
@@ -168,7 +176,8 @@ def test_used_in_many_iterations_no_prop():
     assert std.match(ast)
 
 
-def test_modify_self_no_prop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_modify_self_no_prop(as_subprocess):
     with ft.VarDef([("x", (5,), "float64", "inout", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
@@ -179,7 +188,7 @@ def test_modify_self_no_prop():
                 t[i] = t[i] * 2 + 1
                 y[i] = t[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "float64", "inout", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
@@ -195,7 +204,8 @@ def test_modify_self_no_prop():
     assert std.match(ast)
 
 
-def test_using_local_var_no_prop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_using_local_var_no_prop(as_subprocess):
     with ft.VarDef([("x", (5, 10), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
         with ft.VarDef("t", (5,), "float64", "cache", "cpu") as t:
@@ -208,7 +218,7 @@ def test_using_local_var_no_prop():
             with ft.For("i", 0, 5) as i:
                 y[i] = t[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5, 10), "float64", "input", "cpu"),
                     ("y", (5,), "float64", "output", "cpu")]) as (x, y):
@@ -227,7 +237,8 @@ def test_using_local_var_no_prop():
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_thread_local_no_prop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_thread_local_no_prop(as_subprocess):
     with ft.VarDef([("x", (5, 10), "float32", "input", "gpu/global"),
                     ("y", (5, 10), "float32", "output", "gpu/global")]) as (x,
                                                                             y):
@@ -248,7 +259,10 @@ def test_thread_local_no_prop():
     s.parallelize("Li", "blockIdx.x")
     s.parallelize("Lj2", "threadIdx.x")
     ast = s.ast()
-    ast = ft.lower(ast, verbose=1, skip_passes=['use_builtin_div'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['use_builtin_div'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5, 10), "float32", "input", "gpu/global"),
                     ("y", (5, 10), "float32", "output", "gpu/global")]) as (x,
@@ -267,7 +281,8 @@ def test_thread_local_no_prop():
     assert std.match(ast)
 
 
-def test_different_iter_non_linear():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_iter_non_linear(as_subprocess):
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),
                     ("y", (16,), "int32", "output", "cpu")]) as (x1, x2, y):
@@ -279,7 +294,10 @@ def test_different_iter_non_linear():
             with ft.For("k", 0, 16) as k:
                 y[k] = t[k] + 1
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
+    ast = ft.lower(ast,
+                   skip_passes=["use_builtin_div"],
+                   verbose=1,
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x1", (4,), "int32", "input", "cpu"),
                     ("x2", (4,), "int32", "input", "cpu"),

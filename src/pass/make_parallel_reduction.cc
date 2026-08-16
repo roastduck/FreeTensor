@@ -11,6 +11,8 @@
 #include <pass/make_parallel_reduction.h>
 #include <pass/make_reduction.h>
 #include <pass/simplify.h>
+#include <serialize/print_driver.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -373,7 +375,15 @@ Stmt MakeSyncReduction::visit(const For &_op) {
     }
 }
 
-Stmt makeParallelReduction(const Stmt &_op, const Ref<Target> &target) {
+Stmt makeParallelReduction(const Stmt &_op, const Ref<Target> &target,
+                           const std::optional<bool> &asSubprocess,
+                           const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "make_parallel_reduction", _op,
+            subprocessArgs({"--target-meta", dumpTarget(target)}), asSubprocess,
+            timeout);
+    }
     auto op = makeReduction(_op);
     op = constFold(op); // For loop lengths
 

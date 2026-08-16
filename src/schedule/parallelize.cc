@@ -7,6 +7,7 @@
 #include <schedule.h>
 #include <schedule/check_not_in_lib.h>
 #include <schedule/parallelize.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -162,7 +163,19 @@ Stmt parallelize(const Stmt &_ast, const ID &loop,
 }
 
 void Schedule::parallelize(const ID &loop, const ParallelScope &parallel,
-                           bool allowReduction) {
+                           bool allowReduction,
+                           const std::optional<bool> &asSubprocess,
+                           const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "parallelize", ast(),
+            subprocessArgs({"--loop", idArg(loop), "--parallel",
+                            toString(parallel), "--allow-reduction",
+                            boolArg(allowReduction)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(Parallelize, freetensor::parallelize,
                                            loop, parallel, allowReduction));

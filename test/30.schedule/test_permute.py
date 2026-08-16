@@ -2,7 +2,8 @@ import pytest
 import freetensor as ft
 
 
-def test_5_point_seidel():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_5_point_seidel(as_subprocess):
 
     def schd(s: ft.Schedule):
         s.permute(['L1', 'L2'], lambda i, j: (i + j, i))
@@ -28,11 +29,12 @@ def test_5_point_seidel():
     assert test.body.match(test_expected.body)
 
 
-def test_9_point_seidel():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_9_point_seidel(as_subprocess):
 
     def schd(s: ft.Schedule):
         _, inner = s.permute(['L1', 'L2'], lambda i, j: (2 * i + j, i))
-        s.parallelize(inner, 'openmp')
+        s.parallelize(inner, 'openmp', as_subprocess=as_subprocess)
 
     @ft.schedule(callback=schd)
     @ft.transform
@@ -49,11 +51,12 @@ def test_9_point_seidel():
                 x[i, j] += delta
 
 
-def test_9_point_seidel_failed():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_9_point_seidel_failed(as_subprocess):
 
     def schd(s: ft.Schedule):
         _, inner = s.permute(['L1', 'L2'], lambda i, j: (i + j, i))
-        s.parallelize(inner, 'openmp')
+        s.parallelize(inner, 'openmp', as_subprocess=as_subprocess)
 
     with pytest.raises(ft.InvalidSchedule):
 

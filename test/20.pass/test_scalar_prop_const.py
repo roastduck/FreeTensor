@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu")]) as (y1, y2):
         y1[()] = 1
@@ -9,7 +11,8 @@ def test_basic():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu")]) as (y1, y2):
@@ -20,7 +23,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_multiple_choices_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_choices_no_remove(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -32,7 +36,8 @@ def test_multiple_choices_no_remove():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
@@ -47,13 +52,17 @@ def test_multiple_choices_no_remove():
     assert std.match(ast)
 
 
-def test_multiple_choices_no_remove_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_choices_no_remove_2(as_subprocess):
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 0
         with ft.For("i", 0, 5) as i:
             y[()] += i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 0
@@ -64,7 +73,8 @@ def test_multiple_choices_no_remove_2():
     assert std.match(ast)
 
 
-def test_remove_intermediate_array():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_remove_intermediate_array(as_subprocess):
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         with ft.VarDef("t", (), "int32", "cache", "cpu") as t:
             t[()] = 2
@@ -72,7 +82,8 @@ def test_remove_intermediate_array():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 2
@@ -81,7 +92,8 @@ def test_remove_intermediate_array():
     assert std.match(ast)
 
 
-def test_non_const_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_non_const_no_remove(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -90,7 +102,10 @@ def test_non_const_no_remove():
             y1[()] = t[()] * 2
             y2[()] = t[()] * 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
@@ -104,7 +119,8 @@ def test_non_const_no_remove():
     assert std.match(ast)
 
 
-def test_propagate():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_propagate(as_subprocess):
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
                     ("y3", (), "int32", "output", "cpu")]) as (y1, y2, y3):
@@ -114,7 +130,8 @@ def test_propagate():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
@@ -127,7 +144,8 @@ def test_propagate():
     assert std.match(ast)
 
 
-def test_propagate_through_expressions():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_propagate_through_expressions(as_subprocess):
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
                     ("y3", (), "int32", "output", "cpu")]) as (y1, y2, y3):
@@ -137,7 +155,8 @@ def test_propagate_through_expressions():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu"),
@@ -150,14 +169,18 @@ def test_propagate_through_expressions():
     assert std.match(ast)
 
 
-def test_prop_iter():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_prop_iter(as_subprocess):
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
             y1[()] = i
             y2[i] = y1[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -170,14 +193,18 @@ def test_prop_iter():
     assert std.match(ast)
 
 
-def test_prop_iter_in_expr():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_prop_iter_in_expr(as_subprocess):
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
             y1[...] = i + 1
             y2[i] = y1[...]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -190,14 +217,18 @@ def test_prop_iter_in_expr():
     assert std.match(ast)
 
 
-def test_prop_iter_in_expr_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_prop_iter_in_expr_2(as_subprocess):
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
             y1[i] = i + 1
             y2[i] = y1[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -209,7 +240,8 @@ def test_prop_iter_in_expr_2():
     assert std.match(ast)
 
 
-def test_loop_local_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_local_basic(as_subprocess):
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
@@ -218,7 +250,8 @@ def test_loop_local_basic():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -230,7 +263,8 @@ def test_loop_local_basic():
     assert std.match(ast)
 
 
-def test_loop_local_multiple_choices_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_local_multiple_choices_no_remove(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -243,7 +277,8 @@ def test_loop_local_multiple_choices_no_remove():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -259,14 +294,18 @@ def test_loop_local_multiple_choices_no_remove():
     assert std.match(ast)
 
 
-def test_loop_local_multiple_choices_no_remove_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_local_multiple_choices_no_remove_2(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = 0
             with ft.For("j", 0, 5) as j:
                 y[i] += j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -278,14 +317,18 @@ def test_loop_local_multiple_choices_no_remove_2():
     assert std.match(ast)
 
 
-def test_loop_local_prop_iter():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_local_prop_iter(as_subprocess):
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4) as i:
             y1[i] = i
             y2[i] = y1[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['tensor_prop_const'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['tensor_prop_const'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
@@ -297,7 +340,8 @@ def test_loop_local_prop_iter():
     assert std.match(ast)
 
 
-def test_reduction():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reduction(as_subprocess):
     # This is a case that cannot be handled by pass/remove_writes,
     # so it must be done in prop const
 
@@ -311,7 +355,8 @@ def test_reduction():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['tensor_prop_const', 'float_simplify'])
+                   skip_passes=['tensor_prop_const', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:

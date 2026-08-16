@@ -45,7 +45,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 # Check whther 3rd-party modules exist
-foreach(MODULE IN ITEMS antlr/antlr4 range-v3 cuda-samples isl pybind11)
+foreach(MODULE IN ITEMS antlr/antlr4 range-v3 cuda-samples isl pybind11 json)
     file(GLOB RESULT ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${MODULE}/*)
     list(LENGTH RESULT RES_LEN)
     if(RES_LEN EQUAL 0)
@@ -284,7 +284,8 @@ target_include_directories(freetensor PUBLIC
     ${CUDA_INCLUDE_DIRS}
     ${Z3_PATH}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/range-v3/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/range-v3/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/json/single_include)
 target_include_directories(freetensor PRIVATE ${ANTLR_INCLUDES})
 
 file(GLOB_RECURSE FFI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ffi/*.cc)
@@ -295,6 +296,12 @@ list(JOIN CMAKE_CXX_LINKER_WRAPPER_FLAG " " CXX_LINKER_WRAPPER_FLAG_STR) # May b
 set(AS_NEEDED_FLAG "${CXX_LINKER_WRAPPER_FLAG_STR}--as-needed")
 target_link_libraries(freetensor_ffi PRIVATE freetensor ${AS_NEEDED_FLAG} ${TORCH_LIBRARIES})
 target_include_directories(freetensor_ffi PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ffi)
+
+add_executable(freetensor-transform ${CMAKE_CURRENT_SOURCE_DIR}/tools/freetensor-transform.cc)
+target_link_libraries(freetensor-transform PRIVATE freetensor)
+target_include_directories(freetensor-transform PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/json/single_include)
 
 # Pybind11 stubgen
 # FIXME: We support only pybind11-stubgen<=0.16.2. We should check the version here or upgrade to the latest.
@@ -311,30 +318,36 @@ endif()
 
 # Install
 set_target_properties(freetensor_ffi PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE) # Required for PyTorch
-if (PY_BUILD_CMAKE_MODULE_NAME) # Install to `???/lib/python3.10/dist-packages/freetensor`
+if (PY_BUILD_CMAKE_IMPORT_NAME) # Install to `???/lib/python3.10/dist-packages/freetensor`
     # py-build-cmake requires an RPATH relative to $ORIGIN. NOTE: $ORIGIN is a variable of LD, not CMake.
     set_target_properties(freetensor freetensor_ffi PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(freetensor-transform PROPERTIES INSTALL_RPATH "$ORIGIN/..")
 
     install(
         TARGETS freetensor freetensor_ffi antlr4_shared
-        LIBRARY DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+        LIBRARY DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME} COMPONENT python_module)
     install(
         DIRECTORY ${Z3_PATH}/lib/ # Trailing slash needed
-        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+        DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME} COMPONENT python_module)
     install(
         DIRECTORY ${ISL_DIR}/install/lib/ # Trailing slash needed
-        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME} COMPONENT python_module)
+        DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME} COMPONENT python_module)
+    install(
+        TARGETS freetensor-transform
+        RUNTIME DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME}/bin COMPONENT python_module)
     install(
         DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ # Trailing slash needed
-        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME}/include/freetensor COMPONENT python_module)
+        DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME}/include/freetensor COMPONENT python_module)
     install(
         DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ # Trailing slash needed
-        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME}/share/runtime_include COMPONENT python_module)
+        DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME}/share/runtime_include COMPONENT python_module)
     install(
         DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/mdspan/ # Trailing slash needed
-        DESTINATION ${PY_BUILD_CMAKE_MODULE_NAME}/share/3rd-party/mdspan COMPONENT python_module)
+        DESTINATION ${PY_BUILD_CMAKE_IMPORT_NAME}/share/3rd-party/mdspan COMPONENT python_module)
 else()
-    install(TARGETS freetensor freetensor_ffi LIBRARY DESTINATION lib)
+    install(TARGETS freetensor freetensor_ffi freetensor-transform
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin)
     # ANTLR will be installed by its own install command
     # z3 is already installed
     install(DIRECTORY ${ISL_DIR}/install/lib/ DESTINATION lib) # Trailing slash needed

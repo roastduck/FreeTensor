@@ -110,7 +110,14 @@ class Schedule(ffi.Schedule):
     def fork(self):
         return Schedule(super().fork())
 
-    def split(self, node, factor=-1, nparts=-1, shift=0):
+    def split(self,
+              node,
+              factor=-1,
+              nparts=-1,
+              shift=0,
+              *,
+              as_subprocess=None,
+              timeout=None):
         """
         Split a loop into two nested loops
 
@@ -162,11 +169,20 @@ class Schedule(ffi.Schedule):
             (outer loop ID, inner loop ID), either ID can be None if the loop is
             proved to have only a single iteration
         """
-        return tuple(
-            i if i else None
-            for i in super().split(self._lookup(node), factor, nparts, shift))
+        return tuple(i if i else None
+                     for i in super().split(self._lookup(node),
+                                            factor,
+                                            nparts,
+                                            shift,
+                                            as_subprocess=as_subprocess,
+                                            timeout=timeout))
 
-    def reorder(self, order, mode: ReorderMode = ReorderMode.PerfectOnly):
+    def reorder(self,
+                order,
+                mode: ReorderMode = ReorderMode.PerfectOnly,
+                *,
+                as_subprocess=None,
+                timeout=None):
         """
         Reorder directly nested loops
 
@@ -188,9 +204,12 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the input is invalid or there are breaking dependences
         """
-        super().reorder(list(map(self._lookup, order)), mode)
+        super().reorder(list(map(self._lookup, order)),
+                        mode,
+                        as_subprocess=as_subprocess,
+                        timeout=timeout)
 
-    def merge(self, loop1, loop2):
+    def merge(self, loop1, loop2, *, as_subprocess=None, timeout=None):
         """
         Merge two directly nested loops into one
 
@@ -217,7 +236,10 @@ class Schedule(ffi.Schedule):
         ID
             ID of the merged loop
         """
-        return super().merge(self._lookup(loop1), self._lookup(loop2))
+        return super().merge(self._lookup(loop1),
+                             self._lookup(loop2),
+                             as_subprocess=as_subprocess,
+                             timeout=timeout)
 
     def permute(self, loops, transform_func):
         """
@@ -241,7 +263,14 @@ class Schedule(ffi.Schedule):
         """
         return super().permute([self._lookup(l) for l in loops], transform_func)
 
-    def fission(self, loop, side, splitter, allow_enlarge=True):
+    def fission(self,
+                loop,
+                side,
+                splitter,
+                allow_enlarge=True,
+                *,
+                as_subprocess=None,
+                timeout=None):
         """
         Fission a loop into two loops each containing part of the statements, one
         followed by another
@@ -286,11 +315,21 @@ class Schedule(ffi.Schedule):
             splitter = splitter_list[0]
         else:
             splitter = splitter_list[-1]
-        map1, map2 = super().fission(self._lookup(loop), side, splitter,
-                                     allow_enlarge)
+        map1, map2 = super().fission(self._lookup(loop),
+                                     side,
+                                     splitter,
+                                     allow_enlarge,
+                                     as_subprocess=as_subprocess,
+                                     timeout=timeout)
         return IDMap(old_ast, map1), IDMap(old_ast, map2)
 
-    def fuse(self, loop0, loop1=None, strict=False):
+    def fuse(self,
+             loop0,
+             loop1=None,
+             strict=False,
+             *,
+             as_subprocess=None,
+             timeout=None):
         """
         Fuse two directly following loops with the same length into one
 
@@ -325,12 +364,18 @@ class Schedule(ffi.Schedule):
             ID of the result loop
         """
         if loop1 is None:
-            return super().fuse(self._lookup(loop0), strict)
+            return super().fuse(self._lookup(loop0),
+                                strict,
+                                as_subprocess=as_subprocess,
+                                timeout=timeout)
         else:
-            return super().fuse(self._lookup(loop0), self._lookup(loop1),
-                                strict)
+            return super().fuse(self._lookup(loop0),
+                                self._lookup(loop1),
+                                strict,
+                                as_subprocess=as_subprocess,
+                                timeout=timeout)
 
-    def swap(self, order):
+    def swap(self, order, *, as_subprocess=None, timeout=None):
         """
         Swap statements in the same block
 
@@ -347,9 +392,11 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the statements are not found or the dependences cannot be solved
         """
-        super().swap(self._lookup_list(order))
+        super().swap(self._lookup_list(order),
+                     as_subprocess=as_subprocess,
+                     timeout=timeout)
 
-    def blend(self, loop):
+    def blend(self, loop, *, as_subprocess=None, timeout=None):
         """
         Unroll a loop and interleave statements from each iteration
 
@@ -384,9 +431,11 @@ class Schedule(ffi.Schedule):
             if the loop is not found, the loop length is not a constant, or
             the dependences cannot be solved
         """
-        super().blend(self._lookup(loop))
+        super().blend(self._lookup(loop),
+                      as_subprocess=as_subprocess,
+                      timeout=timeout)
 
-    def cache(self, stmt, var, mtype):
+    def cache(self, stmt, var, mtype, *, as_subprocess=None, timeout=None):
         """
         Cache a variable into a new local variable
 
@@ -433,9 +482,19 @@ class Schedule(ffi.Schedule):
             flushes from the cache, name of the cache variable, ID of the VarDef
             node of the cache variable)
         """
-        return super().cache(self._lookup(stmt), var, MemType(mtype))
+        return super().cache(self._lookup(stmt),
+                             var,
+                             MemType(mtype),
+                             as_subprocess=as_subprocess,
+                             timeout=timeout)
 
-    def cache_reduction(self, stmt, var, mtype):
+    def cache_reduction(self,
+                        stmt,
+                        var,
+                        mtype,
+                        *,
+                        as_subprocess=None,
+                        timeout=None):
         """
         Perform local reductions (e.g. sum) in a local variable first, and then
         reduce the local result to the global variable
@@ -477,9 +536,13 @@ class Schedule(ffi.Schedule):
             that reduces the local result to the global result, name of the
             cache variable, ID of the VarDef node of the cache variable)
         """
-        return super().cache_reduction(self._lookup(stmt), var, MemType(mtype))
+        return super().cache_reduction(self._lookup(stmt),
+                                       var,
+                                       MemType(mtype),
+                                       as_subprocess=as_subprocess,
+                                       timeout=timeout)
 
-    def set_mem_type(self, vardef, mtype):
+    def set_mem_type(self, vardef, mtype, *, as_subprocess=None, timeout=None):
         """
         Change where a variable is stored
 
@@ -504,9 +567,20 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable is not found, or if rejecting an indirect access
         """
-        super().set_mem_type(self._lookup(vardef), MemType(mtype))
+        super().set_mem_type(self._lookup(vardef),
+                             MemType(mtype),
+                             as_subprocess=as_subprocess,
+                             timeout=timeout)
 
-    def var_split(self, vardef, dim, mode, factor=-1, nparts=-1):
+    def var_split(self,
+                  vardef,
+                  dim,
+                  mode,
+                  factor=-1,
+                  nparts=-1,
+                  *,
+                  as_subprocess=None,
+                  timeout=None):
         """
         Split a dimension of a variable into two
 
@@ -532,10 +606,15 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable or the dimension is not found
         """
-        return super().var_split(self._lookup(vardef), dim, mode, factor,
-                                 nparts)
+        return super().var_split(self._lookup(vardef),
+                                 dim,
+                                 mode,
+                                 factor,
+                                 nparts,
+                                 as_subprocess=as_subprocess,
+                                 timeout=timeout)
 
-    def var_merge(self, vardef, dim):
+    def var_merge(self, vardef, dim, *, as_subprocess=None, timeout=None):
         """
         Merge two dimensions of a variable
         Parameters
@@ -545,9 +624,12 @@ class Schedule(ffi.Schedule):
         dim : int
             Merge the `dim`-th and the `(dim + 1)`-th dimension
         """
-        return super().var_merge(self._lookup(vardef), dim)
+        return super().var_merge(self._lookup(vardef),
+                                 dim,
+                                 as_subprocess=as_subprocess,
+                                 timeout=timeout)
 
-    def var_reorder(self, vardef, order):
+    def var_reorder(self, vardef, order, *, as_subprocess=None, timeout=None):
         """
         Reorder the dimensions of a variable
 
@@ -563,9 +645,12 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable or the order is illegal
         """
-        return super().var_reorder(self._lookup(vardef), order)
+        return super().var_reorder(self._lookup(vardef),
+                                   order,
+                                   as_subprocess=as_subprocess,
+                                   timeout=timeout)
 
-    def var_unsqueeze(self, vardef, dim):
+    def var_unsqueeze(self, vardef, dim, *, as_subprocess=None, timeout=None):
         """
         Insert a singleton (1-lengthed) dimension to a variable
 
@@ -585,9 +670,12 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable is not found or the dimension is illegal
         """
-        return super().var_unsqueeze(self._lookup(vardef), dim)
+        return super().var_unsqueeze(self._lookup(vardef),
+                                     dim,
+                                     as_subprocess=as_subprocess,
+                                     timeout=timeout)
 
-    def var_squeeze(self, vardef, dim):
+    def var_squeeze(self, vardef, dim, *, as_subprocess=None, timeout=None):
         """
         Remove a singleton (1-lengthed) dimension from a variable
 
@@ -607,9 +695,12 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable is not found or the dimension is illegal
         """
-        return super().var_squeeze(self._lookup(vardef), dim)
+        return super().var_squeeze(self._lookup(vardef),
+                                   dim,
+                                   as_subprocess=as_subprocess,
+                                   timeout=timeout)
 
-    def move_to(self, stmt, side, dst):
+    def move_to(self, stmt, side, dst, *, as_subprocess=None, timeout=None):
         """
         Move a statement to a new position
 
@@ -645,9 +736,13 @@ class Schedule(ffi.Schedule):
             dst = dst_list[0]
         else:
             dst = dst_list[-1]
-        return super().move_to(self._lookup(stmt), side, dst)
+        return super().move_to(self._lookup(stmt),
+                               side,
+                               dst,
+                               as_subprocess=as_subprocess,
+                               timeout=timeout)
 
-    def inline(self, vardef):
+    def inline(self, vardef, *, as_subprocess=None, timeout=None):
         """
         Remove a variable. When the variable is used, recompute its value
 
@@ -662,9 +757,11 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the variable cannot be completely removed
         """
-        return super().inline(self._lookup(vardef))
+        return super().inline(self._lookup(vardef),
+                              as_subprocess=as_subprocess,
+                              timeout=timeout)
 
-    def parallelize(self, loop, parallel):
+    def parallelize(self, loop, parallel, *, as_subprocess=None, timeout=None):
         """
         Mark a loop with a parallel implementation
 
@@ -734,9 +831,18 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loop is not found or unable to be parallelized
         """
-        super().parallelize(self._lookup(loop), ParallelScope(parallel))
+        super().parallelize(self._lookup(loop),
+                            ParallelScope(parallel),
+                            as_subprocess=as_subprocess,
+                            timeout=timeout)
 
-    def parallelize_as(self, nest, reference, vardef):
+    def parallelize_as(self,
+                       nest,
+                       reference,
+                       vardef,
+                       *,
+                       as_subprocess=None,
+                       timeout=None):
         '''
         Parallelize a loop nest according to another loop nest to keep a tensor
         thread-local
@@ -758,10 +864,18 @@ class Schedule(ffi.Schedule):
             if any of the ID is not found, or the reference loop nest is already
             thread-non-local.
         '''
-        super().parallelize_as(self._lookup(nest), self._lookup(reference),
-                               self._lookup(vardef))
+        super().parallelize_as(self._lookup(nest),
+                               self._lookup(reference),
+                               self._lookup(vardef),
+                               as_subprocess=as_subprocess,
+                               timeout=timeout)
 
-    def unroll(self, loop, immediate=False):
+    def unroll(self,
+               loop,
+               immediate=False,
+               *,
+               as_subprocess=None,
+               timeout=None):
         """
         Unroll a loop
 
@@ -782,9 +896,12 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loop is not found or length of the loop is not a constant
         """
-        super().unroll(self._lookup(loop), immediate)
+        super().unroll(self._lookup(loop),
+                       immediate,
+                       as_subprocess=as_subprocess,
+                       timeout=timeout)
 
-    def vectorize(self, loop):
+    def vectorize(self, loop, *, as_subprocess=None, timeout=None):
         """
         Vectorize a loop
 
@@ -803,9 +920,15 @@ class Schedule(ffi.Schedule):
             if the ID or name is not found, or the dependence requirement is
             not met
         """
-        super().vectorize(self._lookup(loop))
+        super().vectorize(self._lookup(loop),
+                          as_subprocess=as_subprocess,
+                          timeout=timeout)
 
-    def separate_tail(self, noDuplicateVarDefs=False):
+    def separate_tail(self,
+                      noDuplicateVarDefs=False,
+                      *,
+                      as_subprocess=None,
+                      timeout=None):
         """
         Seperate main iterations and tail iterations of a loop
 
@@ -848,13 +971,18 @@ class Schedule(ffi.Schedule):
             memory use, since different thread may go to different branch.
             Set this parameter to true to stop duplicating VarDef nodes.
         """
-        super().separate_tail(noDuplicateVarDefs)
+        super().separate_tail(noDuplicateVarDefs,
+                              as_subprocess=as_subprocess,
+                              timeout=timeout)
 
     def as_matmul(self,
                   loop,
                   mode: AsMatMulMode = AsMatMulMode.KeepMemLayout,
                   target=None,
-                  backend: Union[str, ffi.MatMulBackend] = None):
+                  backend: Union[str, ffi.MatMulBackend] = None,
+                  *,
+                  as_subprocess=None,
+                  timeout=None):
         """
         Transform nested loops to be a external call to a matrix multiplication
 
@@ -892,8 +1020,12 @@ class Schedule(ffi.Schedule):
             else:
                 raise ffi.InvalidSchedule(
                     "No default MatMul backend for target " + target)
-        super().as_matmul(self._lookup(loop), mode, target,
-                          ffi.MatMulBackend(backend))
+        super().as_matmul(self._lookup(loop),
+                          mode,
+                          target,
+                          ffi.MatMulBackend(backend),
+                          as_subprocess=as_subprocess,
+                          timeout=timeout)
 
     def pluto_fuse(self,
                    loop0,
@@ -902,7 +1034,10 @@ class Schedule(ffi.Schedule):
                    nest_level_1=0,
                    fusable_overlap_threshold=1,
                    fusable_nonoverlap_tolerance=4,
-                   do_simplify=True):
+                   do_simplify=True,
+                   *,
+                   as_subprocess=None,
+                   timeout=None):
         """
         Use Pluto+ algorithm to permute and fuse two loops, with as most parallelizable
         loops as possible at outermost levels.
@@ -941,12 +1076,23 @@ class Schedule(ffi.Schedule):
         InvalidSchedule
             if the loops are not consequent
         """
-        return super().pluto_fuse(self._lookup(loop0), self._lookup(loop1),
-                                  nest_level_0, nest_level_1,
+        return super().pluto_fuse(self._lookup(loop0),
+                                  self._lookup(loop1),
+                                  nest_level_0,
+                                  nest_level_1,
                                   fusable_overlap_threshold,
-                                  fusable_nonoverlap_tolerance, do_simplify)
+                                  fusable_nonoverlap_tolerance,
+                                  do_simplify,
+                                  as_subprocess=as_subprocess,
+                                  timeout=timeout)
 
-    def pluto_permute(self, loop, nest_level=0, do_simplify=True):
+    def pluto_permute(self,
+                      loop,
+                      nest_level=0,
+                      do_simplify=True,
+                      *,
+                      as_subprocess=None,
+                      timeout=None):
         """
         Use Pluto+ algorithm to permute a single loop, with as most parallelizable loops
         as possible at outermost levels.
@@ -966,8 +1112,11 @@ class Schedule(ffi.Schedule):
             The ID of permuted loop and level of parallelizable loops
 
         """
-        return super().pluto_permute(self._lookup(loop), nest_level,
-                                     do_simplify)
+        return super().pluto_permute(self._lookup(loop),
+                                     nest_level,
+                                     do_simplify,
+                                     as_subprocess=as_subprocess,
+                                     timeout=timeout)
 
     def auto_schedule(self, target):
         """

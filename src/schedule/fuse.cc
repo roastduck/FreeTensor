@@ -18,6 +18,7 @@
 #include <schedule/check_not_in_lib.h>
 #include <schedule/fuse.h>
 #include <schedule/hoist_selected_var.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -301,7 +302,18 @@ std::pair<Stmt, ID> fuse(const Stmt &_ast, const ID &loop0, const ID &loop1,
     return std::make_pair(ast, mutator.fused());
 }
 
-ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
+ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict,
+                  const std::optional<bool> &asSubprocess,
+                  const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "fuse", ast(),
+            subprocessArgs({"--loop0", idArg(loop0), "--loop1", idArg(loop1),
+                            "--strict", boolArg(strict)}),
+            timeout);
+        applySubprocessResult(result);
+        return idFromJson(result.info_.value()["id"]);
+    }
     beginTransaction();
     auto log = appendLog(
         MAKE_SCHEDULE_LOG(Fuse, freetensor::fuse, loop0, loop1, strict));
@@ -315,7 +327,18 @@ ID Schedule::fuse(const ID &loop0, const ID &loop1, bool strict) {
     }
 }
 
-ID Schedule::fuse(const ID &loop0, bool strict) {
+ID Schedule::fuse(const ID &loop0, bool strict,
+                  const std::optional<bool> &asSubprocess,
+                  const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "fuse", ast(),
+            subprocessArgs(
+                {"--loop0", idArg(loop0), "--strict", boolArg(strict)}),
+            timeout);
+        applySubprocessResult(result);
+        return idFromJson(result.info_.value()["id"]);
+    }
     beginTransaction();
     auto l0 = find(loop0);
 

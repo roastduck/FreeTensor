@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_cpu_heap():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cpu_heap(as_subprocess):
     with ft.VarDef([("x", (), "int32", "cache", "cpu"),
                     ("y", (2, 2), "int32", "cache", "cpu/heap"),
                     ("t", (), "int32", "cache", "cpu/heap"),
@@ -18,7 +19,8 @@ def test_cpu_heap():
     ast = ft.lower(ast,
                    verbose=1,
                    target=ft.CPU().target(),
-                   skip_passes=["prop_one_time_use"])
+                   skip_passes=["prop_one_time_use"],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "cache", "cpu"),
                     ("i", (), "int32", "input", "cpu"),
@@ -39,7 +41,8 @@ def test_cpu_heap():
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_gpu_global_heap():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_gpu_global_heap(as_subprocess):
     with ft.GPU():
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("y", (2,), "int32", "cache", "gpu/global/heap"),
@@ -57,7 +60,8 @@ def test_gpu_global_heap():
         ast = ft.lower(ast,
                        verbose=1,
                        target=ft.GPU(0).target(),
-                       skip_passes=["prop_one_time_use"])
+                       skip_passes=["prop_one_time_use"],
+                       as_subprocess=as_subprocess)
 
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("i", (), "int32", "input", "gpu/global"),
@@ -78,7 +82,8 @@ def test_gpu_global_heap():
         assert std.match(ast)
 
 
-def test_transform_to_cpu_heap():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_transform_to_cpu_heap(as_subprocess):
     with ft.VarDef([("x", (), "int32", "cache", "cpu"),
                     ("y", (2, 2), "int32", "cache", "cpu"),
                     ("t", (), "int32", "cache", "cpu"),
@@ -94,7 +99,8 @@ def test_transform_to_cpu_heap():
     ast = ft.lower(ast,
                    verbose=1,
                    target=ft.CPU().target(),
-                   skip_passes=["prop_one_time_use"])
+                   skip_passes=["prop_one_time_use"],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "cache", "cpu"),
                     ("i", (), "int32", "input", "cpu"),
@@ -115,7 +121,8 @@ def test_transform_to_cpu_heap():
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_transform_to_gpu_global_heap():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_transform_to_gpu_global_heap(as_subprocess):
     with ft.GPU():
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("y", (2,), "int32", "cache", "gpu/global"),
@@ -133,7 +140,8 @@ def test_transform_to_gpu_global_heap():
         ast = ft.lower(ast,
                        verbose=1,
                        target=ft.GPU(0).target(),
-                       skip_passes=["prop_one_time_use"])
+                       skip_passes=["prop_one_time_use"],
+                       as_subprocess=as_subprocess)
 
         with ft.VarDef([("x", (), "int32", "cache", "gpu/global"),
                         ("i", (), "int32", "input", "gpu/global"),
@@ -153,7 +161,8 @@ def test_transform_to_gpu_global_heap():
         assert std.match(ast)
 
 
-def test_transform_dynamic_size():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_transform_dynamic_size(as_subprocess):
     with ft.VarDef("n", (), "int32", "input", "cpu") as n:
         with ft.VarDef([("x", (n[...],), "int32", "input", "cpu"),
                         ("y", (n[...],), "int32", "cache", "cpu"),
@@ -170,7 +179,8 @@ def test_transform_dynamic_size():
     ast = ft.lower(ast,
                    verbose=1,
                    target=ft.CPU().target(),
-                   skip_passes=['shrink_var'])
+                   skip_passes=['shrink_var'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("n", (), "int32", "input", "cpu") as n:
         with ft.VarDef([("x", (n[...],), "int32", "input", "cpu"),
@@ -191,7 +201,8 @@ def test_transform_dynamic_size():
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_transform_dynamic_size_caused_by_thread_dim():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_transform_dynamic_size_caused_by_thread_dim(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "gpu/global"),
                     ("s", (16,), "int32", "output", "gpu/global"),
                     ("m", (16,), "int32", "output", "gpu/global")]) as (x, s,
@@ -208,7 +219,8 @@ def test_transform_dynamic_size_caused_by_thread_dim():
     ast = ft.lower(s.ast(),
                    verbose=1,
                    target=ft.GPU(0).target(),
-                   skip_passes=['shrink_var'])
+                   skip_passes=['shrink_var'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "gpu/global"),
                     ("s", (16,), "int32", "output", "gpu/global"),

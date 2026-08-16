@@ -5,6 +5,7 @@
 #include <pass/rename_var.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -118,7 +119,13 @@ Stmt NormalizeVarInKernel::visit(const For &op) {
     }
 }
 
-Stmt normalizeVarInKernel(const Stmt &_op) {
+Stmt normalizeVarInKernel(const Stmt &_op,
+                          const std::optional<bool> &asSubprocess,
+                          const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("gpu_normalize_var_in_kernel", _op, {},
+                                       asSubprocess, timeout);
+    }
     auto op = NormalizeVarInKernel{}(_op);
     return simplify(z3Simplify(op));
 }

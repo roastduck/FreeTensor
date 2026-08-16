@@ -5,6 +5,7 @@
 
 #include <func.h>
 #include <pass/z3_simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -32,7 +33,14 @@ class MoveOutFirstOrLastIter : public Z3SimplifyWithSymbolTable {
  * for i = 0 to n
  *   B
  */
-inline Stmt moveOutFirstOrLastIter(const Stmt &op) {
+inline Stmt
+moveOutFirstOrLastIter(const Stmt &op,
+                       const std::optional<bool> &asSubprocess = std::nullopt,
+                       const std::optional<double> &timeout = std::nullopt) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("move_out_first_or_last_iter", op, {},
+                                       asSubprocess, timeout);
+    }
     return MoveOutFirstOrLastIter()(op);
 }
 

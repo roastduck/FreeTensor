@@ -12,6 +12,7 @@
 #include <func.h>
 #include <math/bounds.h>
 #include <mutator.h>
+#include <subprocess.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -191,7 +192,9 @@ class MakeSync : public Mutator {
     Stmt visit(const MatMul &op) override;
 };
 
-Stmt makeSync(const Stmt &op, const Ref<GPUTarget> &target);
+Stmt makeSync(const Stmt &op, const Ref<GPUTarget> &target,
+              const std::optional<bool> &asSubprocess = std::nullopt,
+              const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(makeSync)
 

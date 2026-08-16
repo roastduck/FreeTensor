@@ -1,9 +1,9 @@
 import os
 
 from .. import ffi
-from ..ffi import (ASTNodeType, InvalidSchedule, InvalidAutoGrad,
+from ..ffi import (ASTNodeType, Error, InvalidSchedule, InvalidAutoGrad,
                    InvalidProgram, DriverError, InvalidIO, SymbolNotFound,
-                   AssertAlwaysFalse, ParserError)
+                   AssertAlwaysFalse, ParserError, SubprocessError)
 
 from .context import pop_ast, pop_ast_and_user_grads, StmtRange
 from .expr import *

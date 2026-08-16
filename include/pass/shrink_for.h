@@ -9,6 +9,7 @@
 #include <func.h>
 #include <hash.h>
 #include <mutator.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -75,11 +76,15 @@ class ShrinkFor : public CompTransientBounds<SymbolTable<Mutator>> {
  * @{
  */
 Stmt shrinkFor(const Stmt &op, const ID &subAST = ID(), bool doSimplify = true,
-               bool unordered = false);
+               bool unordered = false,
+               const std::optional<bool> &asSubprocess = std::nullopt,
+               const std::optional<double> &timeout = std::nullopt);
 inline Stmt shrinkFor(const Stmt &op, const Stmt &subAST,
-                      bool doSimplify = true, bool unordered = false) {
+                      bool doSimplify = true, bool unordered = false,
+                      const std::optional<bool> &asSubprocess = std::nullopt,
+                      const std::optional<double> &timeout = std::nullopt) {
     return shrinkFor(op, subAST.isValid() ? subAST->id() : ID(), doSimplify,
-                     unordered);
+                     unordered, asSubprocess, timeout);
 }
 /** @} */
 

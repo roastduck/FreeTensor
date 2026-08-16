@@ -10,6 +10,7 @@
 #include <schedule/cache.h>
 #include <schedule/check_not_in_lib.h>
 #include <schedule/check_var_cross_parallel.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -323,7 +324,20 @@ cacheReduction(const Stmt &_ast, const ID &stmt, const std::string &var,
 }
 
 std::tuple<ID, ID, std::string, ID>
-Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
+Schedule::cache(const ID &stmt, const std::string &var, MemType mtype,
+                const std::optional<bool> &asSubprocess,
+                const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "cache", ast(),
+            subprocessArgs({"--stmt", idArg(stmt), "--var", var, "--mtype",
+                            toString(mtype)}),
+            timeout);
+        applySubprocessResult(result);
+        const auto &info = result.info_.value();
+        return {idFromJson(info["fill"]), idFromJson(info["flush"]),
+                info["var"].get<std::string>(), idFromJson(info["vardef"])};
+    }
     beginTransaction();
     auto log = appendLog(
         MAKE_SCHEDULE_LOG(Cache, freetensor::cache, stmt, var, mtype));
@@ -338,8 +352,20 @@ Schedule::cache(const ID &stmt, const std::string &var, MemType mtype) {
 }
 
 std::tuple<ID, ID, std::string, ID>
-Schedule::cacheReduction(const ID &stmt, const std::string &var,
-                         MemType mtype) {
+Schedule::cacheReduction(const ID &stmt, const std::string &var, MemType mtype,
+                         const std::optional<bool> &asSubprocess,
+                         const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "cache_reduction", ast(),
+            subprocessArgs({"--stmt", idArg(stmt), "--var", var, "--mtype",
+                            toString(mtype)}),
+            timeout);
+        applySubprocessResult(result);
+        const auto &info = result.info_.value();
+        return {idFromJson(info["init"]), idFromJson(info["reduce"]),
+                info["var"].get<std::string>(), idFromJson(info["vardef"])};
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
         CacheReduction, freetensor::cacheReduction, stmt, var, mtype));

@@ -7,6 +7,7 @@
 #include <container_utils.h>
 #include <func.h>
 #include <mutator.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -114,7 +115,9 @@ class ShrinkVar : public Mutator {
  *
  * @{
  */
-Stmt shrinkVar(const Stmt &op);
+Stmt shrinkVar(const Stmt &op,
+               const std::optional<bool> &asSubprocess = std::nullopt,
+               const std::optional<double> &timeout = std::nullopt);
 Stmt shrinkSingleVar(const Stmt &op, const ID &varDefId);
 /** @} */
 

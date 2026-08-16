@@ -11,6 +11,7 @@
 #include <driver/target.h>
 #include <func.h>
 #include <mutator.h>
+#include <subprocess.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -84,7 +85,9 @@ class MultiplexMutator : public SymbolTable<Mutator> {
  * @param defId : If set, only alter this VarDef
  */
 Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target,
-                      const ID &defId = ID());
+                      const ID &defId = ID(),
+                      const std::optional<bool> &asSubprocess = std::nullopt,
+                      const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(multiplexBuffers)
 

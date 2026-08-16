@@ -1,9 +1,15 @@
 #include <analyze/deps.h>
 #include <pass/remove_cyclic_assign.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
-Stmt removeCyclicAssign(const Stmt &op) {
+Stmt removeCyclicAssign(const Stmt &op, const std::optional<bool> &asSubprocess,
+                        const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("remove_cyclic_assign", op, {},
+                                       asSubprocess, timeout);
+    }
     std::unordered_map<Stmt, Stmt> later2earlier;
     std::unordered_set<Stmt> redundant;
     auto foundRAW = [&](const Dependence &d) {

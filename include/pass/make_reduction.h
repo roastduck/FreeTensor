@@ -6,6 +6,7 @@
 
 #include <func.h>
 #include <mutator.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -41,7 +42,14 @@ inline Stmt makeReduction(const Stmt &op,
     return MakeReduction(types, canonicalOnly)(op);
 }
 
-inline Stmt makeReduction(const Stmt &op) {
+inline Stmt
+makeReduction(const Stmt &op,
+              const std::optional<bool> &asSubprocess = std::nullopt,
+              const std::optional<double> &timeout = std::nullopt) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("make_reduction", op, {}, asSubprocess,
+                                       timeout);
+    }
     return makeReduction(op, {ReduceOp::Add, ReduceOp::Mul, ReduceOp::Min,
                               ReduceOp::Max, ReduceOp::LAnd, ReduceOp::LOr});
 }

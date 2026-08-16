@@ -10,6 +10,7 @@
 #include <pass/sink_var.h>
 #include <schedule.h>
 #include <schedule/inlining.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -186,7 +187,14 @@ Stmt inlining(const Stmt &_ast, const ID &def) {
     return ast;
 }
 
-void Schedule::inlining(const ID &def) {
+void Schedule::inlining(const ID &def, const std::optional<bool> &asSubprocess,
+                        const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "inline", ast(), subprocessArgs({"--vardef", idArg(def)}), timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(Inline, freetensor::inlining, def));
     try {

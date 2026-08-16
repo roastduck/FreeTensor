@@ -3,7 +3,8 @@ import pytest
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global")
                    ]) as (x, y):
@@ -18,8 +19,8 @@ def test_basic():
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize('Li', 'blockIdx.x')
-    s.set_mem_type('V_t', 'gpu/local')
+    s.parallelize('Li', 'blockIdx.x', as_subprocess=as_subprocess)
+    s.set_mem_type('V_t', 'gpu/local', as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global")
@@ -38,7 +39,8 @@ def test_basic():
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_found(as_subprocess):
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global")
                    ]) as (x, y):
@@ -53,13 +55,14 @@ def test_not_found():
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize('Li', 'blockIdx.x')
+    s.parallelize('Li', 'blockIdx.x', as_subprocess=as_subprocess)
     with pytest.raises(ft.InvalidSchedule):
-        s.set_mem_type('XXXX', 'gpu/local')
+        s.set_mem_type('XXXX', 'gpu/local', as_subprocess=as_subprocess)
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_reject_indicet_access_by_load():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reject_indicet_access_by_load(as_subprocess):
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global"),
                     ("offset", (), "int32", "input", "byvalue")]) as (x, y,
@@ -75,13 +78,14 @@ def test_reject_indicet_access_by_load():
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize('Li', 'blockIdx.x')
+    s.parallelize('Li', 'blockIdx.x', as_subprocess=as_subprocess)
     with pytest.raises(ft.InvalidSchedule):
-        s.set_mem_type('V_t', 'gpu/local')
+        s.set_mem_type('V_t', 'gpu/local', as_subprocess=as_subprocess)
 
 
 @pytest.mark.skipif(not ft.with_cuda(), reason="requires CUDA")
-def test_reject_indicet_access_dynamic_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reject_indicet_access_dynamic_loop(as_subprocess):
     with ft.VarDef([("x", (1000, 1000), "int32", "input", "gpu/global"),
                     ("y", (1000, 1000), "int32", "output", "gpu/global"),
                     ("n", (), "int32", "input", "byvalue")]) as (x, y, n):
@@ -95,6 +99,6 @@ def test_reject_indicet_access_dynamic_loop():
 
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=1)
-    s.parallelize('Li', 'blockIdx.x')
+    s.parallelize('Li', 'blockIdx.x', as_subprocess=as_subprocess)
     with pytest.raises(ft.InvalidSchedule):
-        s.set_mem_type('V_t', 'gpu/local')
+        s.set_mem_type('V_t', 'gpu/local', as_subprocess=as_subprocess)

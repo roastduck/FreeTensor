@@ -6,6 +6,7 @@
 #include <hash.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/merge_and_hoist_if.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -101,7 +102,12 @@ Stmt MergeAndHoistIf::visit(const For &_op) {
     return op;
 }
 
-Stmt mergeAndHoistIf(const Stmt &_op) {
+Stmt mergeAndHoistIf(const Stmt &_op, const std::optional<bool> &asSubprocess,
+                     const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("merge_and_hoist_if", _op, {},
+                                       asSubprocess, timeout);
+    }
     auto op = flattenStmtSeq(_op);
     for (int i = 0;; i++) {
         if (i > 100) {

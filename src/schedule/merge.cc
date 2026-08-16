@@ -5,6 +5,7 @@
 #include <schedule/check_not_in_lib.h>
 #include <schedule/hoist_selected_var.h>
 #include <schedule/merge.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -132,7 +133,17 @@ std::pair<Stmt, ID> merge(const Stmt &_ast, const ID &loop1, const ID &loop2) {
     return std::make_pair(ast, mutator.newId());
 }
 
-ID Schedule::merge(const ID &loop1, const ID &loop2) {
+ID Schedule::merge(const ID &loop1, const ID &loop2,
+                   const std::optional<bool> &asSubprocess,
+                   const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "merge", ast(),
+            subprocessArgs({"--loop1", idArg(loop1), "--loop2", idArg(loop2)}),
+            timeout);
+        applySubprocessResult(result);
+        return idFromJson(result.info_.value()["id"]);
+    }
     beginTransaction();
     auto log =
         appendLog(MAKE_SCHEDULE_LOG(Merge, freetensor::merge, loop1, loop2));

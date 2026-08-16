@@ -1,5 +1,6 @@
 #include <analyze/all_uses.h>
 #include <pass/make_heap_alloc.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -124,6 +125,13 @@ Stmt MakeHeapAlloc::visit(const For &_op) {
     return ret;
 }
 
-Stmt makeHeapAlloc(const Stmt &op) { return MakeHeapAlloc()(op); }
+Stmt makeHeapAlloc(const Stmt &op, const std::optional<bool> &asSubprocess,
+                   const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("make_heap_alloc", op, {}, asSubprocess,
+                                       timeout);
+    }
+    return MakeHeapAlloc()(op);
+}
 
 } // namespace freetensor

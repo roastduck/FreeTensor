@@ -3,6 +3,8 @@
 #include <analyze/deps.h>
 #include <analyze/find_loop_variance.h>
 #include <pass/gpu/multiplex_buffers.h>
+#include <serialize/print_driver.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -112,7 +114,15 @@ Stmt MultiplexMutator::visit(const ReduceTo &_op) {
 }
 
 Stmt multiplexBuffers(const Stmt &op, const Ref<GPUTarget> &target,
-                      const ID &defId) {
+                      const ID &defId, const std::optional<bool> &asSubprocess,
+                      const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "gpu_multiplex_buffers", op,
+            subprocessArgs({"--target-meta", dumpTarget(target), "--def-id",
+                            idArg(defId)}),
+            asSubprocess, timeout);
+    }
     FindParallelLoops finder(target, defId);
     finder(op);
 

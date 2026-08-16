@@ -8,6 +8,7 @@
 #include <schedule/fission.h>
 #include <schedule/hoist_selected_var.h>
 #include <schedule/reorder.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -275,7 +276,27 @@ Stmt reorder(const Stmt &_ast, const std::vector<ID> &_dstOrder,
     return ast;
 }
 
-void Schedule::reorder(const std::vector<ID> &order, ReorderMode mode) {
+void Schedule::reorder(const std::vector<ID> &order, ReorderMode mode,
+                       const std::optional<bool> &asSubprocess,
+                       const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        std::string orderStr;
+        for (auto &&id : order) {
+            if (!orderStr.empty()) {
+                orderStr += ",";
+            }
+            orderStr += idArg(id);
+        }
+        auto modeStr = mode == ReorderMode::PerfectOnly ? "PerfectOnly"
+                       : mode == ReorderMode::MoveOutImperfect
+                           ? "MoveOutImperfect"
+                           : "MoveInImperfect";
+        auto result = runTransformSubprocess(
+            "reorder", ast(),
+            subprocessArgs({"--order", orderStr, "--mode", modeStr}), timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log =
         appendLog(MAKE_SCHEDULE_LOG(Reorder, freetensor::reorder, order, mode));

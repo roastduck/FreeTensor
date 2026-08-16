@@ -3,6 +3,7 @@
 #include <analyze/find_stmt.h>
 #include <container_utils.h>
 #include <pass/sink_var.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -181,7 +182,17 @@ Stmt SinkVar::visit(const VarDef &_op) {
 
 Stmt sinkVar(const Stmt &_op,
              const std::optional<std::unordered_set<ID>> &toSink,
-             const std::function<bool(const Stmt &)> &scopeFilter) {
+             const std::function<bool(const Stmt &)> &scopeFilter,
+             const std::optional<bool> &asSubprocess,
+             const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        if (toSink.has_value() || scopeFilter != nullptr) {
+            ERROR("sink_var with to_sink or scope_filter cannot run as "
+                  "subprocess");
+        }
+        return runPassSubprocess<Stmt>("sink_var", _op, {}, asSubprocess,
+                                       timeout);
+    }
     auto op = _op;
 
     auto variantMap = Lazy([op]() { return findLoopVariance(op).second; });

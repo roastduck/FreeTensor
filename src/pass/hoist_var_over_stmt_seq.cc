@@ -6,6 +6,7 @@
 #include <container_utils.h>
 #include <pass/flatten_stmt_seq.h>
 #include <pass/hoist_var_over_stmt_seq.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -82,7 +83,26 @@ Stmt HoistVarOverStmtSeq::visit(const StmtSeq &op) {
 }
 
 Stmt hoistVarOverStmtSeq(const Stmt &_op,
-                         const std::optional<std::vector<ID>> &togetherIds) {
+                         const std::optional<std::vector<ID>> &togetherIds,
+                         const std::optional<bool> &asSubprocess,
+                         const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        std::string together;
+        if (togetherIds.has_value()) {
+            for (auto &&id : *togetherIds) {
+                if (!together.empty()) {
+                    together += ",";
+                }
+                together += idArg(id);
+            }
+        }
+        std::vector<std::string> args;
+        if (togetherIds.has_value()) {
+            args = subprocessArgs({"--together-ids", together});
+        }
+        return runPassSubprocess<Stmt>("hoist_var_over_stmt_seq", _op, args,
+                                       asSubprocess, timeout);
+    }
     auto op = _op;
     for (int i = 0;; i++) {
         if (i > 100) {

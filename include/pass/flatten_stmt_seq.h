@@ -3,6 +3,7 @@
 
 #include <func.h>
 #include <mutator.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -26,7 +27,16 @@ class FlattenStmtSeq : public Mutator {
  *
  * This pass also clears Assume nodes (even if they are not empty)
  */
-inline Stmt flattenStmtSeq(const Stmt &op) { return FlattenStmtSeq()(op); }
+inline Stmt
+flattenStmtSeq(const Stmt &op,
+               const std::optional<bool> &asSubprocess = std::nullopt,
+               const std::optional<double> &timeout = std::nullopt) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("flatten_stmt_seq", op, {}, asSubprocess,
+                                       timeout);
+    }
+    return FlattenStmtSeq()(op);
+}
 
 DEFINE_PASS_FOR_FUNC(flattenStmtSeq)
 

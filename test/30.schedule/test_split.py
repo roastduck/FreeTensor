@@ -2,13 +2,14 @@ import freetensor as ft
 import pytest
 
 
-def test_factor():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_factor(as_subprocess):
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    outer, inner = s.split("L1", 4)
+    outer, inner = s.split("L1", 4, as_subprocess=as_subprocess)
     assert s.find(outer) == s.find("$split.0{L1}")
     assert s.find(inner) == s.find("$split.1{L1}")
     ast = ft.lower(s.ast(), verbose=1)
@@ -22,13 +23,14 @@ def test_factor():
     assert std.match(ast)
 
 
-def test_factor_with_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_factor_with_step(as_subprocess):
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         with ft.For("i", 14, -2, -2, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.split("L1", 2)
+    s.split("L1", 2, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -42,13 +44,14 @@ def test_factor_with_step():
     assert std.match(ast)
 
 
-def test_nparts():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_nparts(as_subprocess):
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    outer, inner = s.split("L1", nparts=4)
+    outer, inner = s.split("L1", nparts=4, as_subprocess=as_subprocess)
     assert s.find(outer) == s.find("$split.0{L1}")
     assert s.find(inner) == s.find("$split.1{L1}")
     ast = ft.lower(s.ast(), verbose=1)
@@ -62,13 +65,14 @@ def test_nparts():
     assert std.match(ast)
 
 
-def test_nparts_with_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_nparts_with_step(as_subprocess):
     with ft.VarDef("y", (16,), "int32", "output", "cpu") as y:
         with ft.For("i", 14, -2, -2, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.split("L1", nparts=2)
+    s.split("L1", nparts=2, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -82,13 +86,14 @@ def test_nparts_with_step():
     assert std.match(ast)
 
 
-def test_guard():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_guard(as_subprocess):
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.split("L1", 4)
+    s.split("L1", 4, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -103,13 +108,14 @@ def test_guard():
     assert std.match(ast)
 
 
-def test_guard_with_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_guard_with_step(as_subprocess):
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10, 2, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.split("L1", 3)
+    s.split("L1", 3, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -124,13 +130,14 @@ def test_guard_with_step():
     assert std.match(ast)
 
 
-def test_shift():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_shift(as_subprocess):
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.split("L1", 4, -1, 1)
+    s.split("L1", 4, -1, 1, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -145,13 +152,14 @@ def test_shift():
     assert std.match(ast)
 
 
-def test_factor_too_short():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_factor_too_short(as_subprocess):
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    outer, inner = s.split("L1", 16)
+    outer, inner = s.split("L1", 16, as_subprocess=as_subprocess)
     assert outer is None
     assert s.find(inner) == s.find("$split.1{L1}")
     ast = ft.lower(s.ast(), verbose=1)
@@ -164,13 +172,14 @@ def test_factor_too_short():
     assert std.match(ast)
 
 
-def test_nparts_too_short():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_nparts_too_short(as_subprocess):
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8, label="L1") as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    outer, inner = s.split("L1", nparts=16)
+    outer, inner = s.split("L1", nparts=16, as_subprocess=as_subprocess)
     assert s.find(outer) == s.find("$split.0{L1}")
     assert inner is None
     ast = ft.lower(s.ast(), verbose=1)
@@ -183,19 +192,21 @@ def test_nparts_too_short():
     assert std.match(ast)
 
 
-def test_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_found(as_subprocess):
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.split("L1", 4)
+        s.split("L1", 4, as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_simplify_split_then_merge():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_split_then_merge(as_subprocess):
     with ft.VarDef("y", (10,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 10, label="L") as i:
             y[i] = i
@@ -203,8 +214,8 @@ def test_simplify_split_then_merge():
     ast = ft.pop_ast()
     std = ast
     s = ft.Schedule(ast)
-    L0, L1 = s.split("L", 4)
-    L = s.merge(L0, L1)
+    L0, L1 = s.split("L", 4, as_subprocess=as_subprocess)
+    L = s.merge(L0, L1, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -212,14 +223,15 @@ def test_simplify_split_then_merge():
     assert std.match(ast)
 
 
-def test_name_conflict():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_name_conflict(as_subprocess):
     with ft.VarDef("y", (8, 8), "int32", "output", "cpu") as y:
         with ft.For("i.0", 0, 8) as i0:
             with ft.For("i", 0, 8, label="L1") as i:
                 y[i0, i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    outer, inner = s.split("L1", 4)
+    outer, inner = s.split("L1", 4, as_subprocess=as_subprocess)
     assert s.find(outer) == s.find("$split.0{L1}")
     assert s.find(inner) == s.find("$split.1{L1}")
     ast = ft.lower(s.ast(), verbose=1)

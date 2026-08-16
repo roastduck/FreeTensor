@@ -2,13 +2,17 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
@@ -20,14 +24,18 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_multiple_loops():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_loops(as_subprocess):
     with ft.VarDef("y", (4, 8, 16), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
                 with ft.For("k", 0, 16, label="L3") as k:
                     y[i, j, k] = (i + j) * k
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L3", "L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (4, 8, 16), "int32", "output", "cpu") as y:
@@ -40,7 +48,8 @@ def test_multiple_loops():
     assert std.match(ast)
 
 
-def test_if_in_between():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_if_in_between(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -48,7 +57,10 @@ def test_if_in_between():
                 with ft.For("j", 0, 8, label="L2") as j:
                     y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
@@ -62,7 +74,8 @@ def test_if_in_between():
     assert std.match(ast)
 
 
-def test_move_out_imperfect_stmt_in_between_before():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_out_imperfect_stmt_in_between_before(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -70,10 +83,11 @@ def test_move_out_imperfect_stmt_in_between_before():
             with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(
-        ast,
-        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveOutImperfect),
-        verbose=1)
+    ast = ft.schedule(ast,
+                      lambda s: s.reorder(["L2", "L1"],
+                                          ft.ReorderMode.MoveOutImperfect,
+                                          as_subprocess=as_subprocess),
+                      verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -88,7 +102,8 @@ def test_move_out_imperfect_stmt_in_between_before():
     assert std.match(ast)
 
 
-def test_move_out_imperfect_stmt_in_between_after():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_out_imperfect_stmt_in_between_after(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -96,10 +111,11 @@ def test_move_out_imperfect_stmt_in_between_after():
                 y[i, j] = i + j
             z[i] = i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(
-        ast,
-        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveOutImperfect),
-        verbose=1)
+    ast = ft.schedule(ast,
+                      lambda s: s.reorder(["L2", "L1"],
+                                          ft.ReorderMode.MoveOutImperfect,
+                                          as_subprocess=as_subprocess),
+                      verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -114,7 +130,8 @@ def test_move_out_imperfect_stmt_in_between_after():
     assert std.match(ast)
 
 
-def test_move_in_imperfect_stmt_in_between_before():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_in_imperfect_stmt_in_between_before(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -122,10 +139,11 @@ def test_move_in_imperfect_stmt_in_between_before():
             with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(
-        ast,
-        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect),
-        verbose=1)
+    ast = ft.schedule(ast,
+                      lambda s: s.reorder(["L2", "L1"],
+                                          ft.ReorderMode.MoveInImperfect,
+                                          as_subprocess=as_subprocess),
+                      verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -140,7 +158,8 @@ def test_move_in_imperfect_stmt_in_between_before():
     assert std.match(ast)
 
 
-def test_move_in_imperfect_stmt_in_between_after():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_in_imperfect_stmt_in_between_after(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -148,10 +167,11 @@ def test_move_in_imperfect_stmt_in_between_after():
                 y[i, j] = i + j
             z[i] = i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(
-        ast,
-        lambda s: s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect),
-        verbose=1)
+    ast = ft.schedule(ast,
+                      lambda s: s.reorder(["L2", "L1"],
+                                          ft.ReorderMode.MoveInImperfect,
+                                          as_subprocess=as_subprocess),
+                      verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -166,7 +186,8 @@ def test_move_in_imperfect_stmt_in_between_after():
     assert std.match(ast)
 
 
-def test_move_in_imperfect_loop_in_between():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_in_imperfect_loop_in_between(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -175,10 +196,11 @@ def test_move_in_imperfect_loop_in_between():
             with ft.For("j", 0, 8, label="L3") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(
-        ast,
-        lambda s: s.reorder(["L3", "L1"], ft.ReorderMode.MoveInImperfect),
-        verbose=1)
+    ast = ft.schedule(ast,
+                      lambda s: s.reorder(["L3", "L1"],
+                                          ft.ReorderMode.MoveInImperfect,
+                                          as_subprocess=as_subprocess),
+                      verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -194,7 +216,9 @@ def test_move_in_imperfect_loop_in_between():
     assert std.match(ast)
 
 
-def test_move_in_imperfect_multiple_loops_in_between_separated_by_vardef():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_in_imperfect_multiple_loops_in_between_separated_by_vardef(
+        as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4, 8), "int32", "output", "cpu"),
                     ("w", (4, 8), "int32", "output", "cpu"),
@@ -209,10 +233,11 @@ def test_move_in_imperfect_multiple_loops_in_between_separated_by_vardef():
             with ft.For("j", 0, 8, label="L3") as j:
                 y[i, j] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(
-        ast,
-        lambda s: s.reorder(["L3", "L1"], ft.ReorderMode.MoveInImperfect),
-        verbose=1)
+    ast = ft.schedule(ast,
+                      lambda s: s.reorder(["L3", "L1"],
+                                          ft.ReorderMode.MoveInImperfect,
+                                          as_subprocess=as_subprocess),
+                      verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
@@ -234,13 +259,17 @@ def test_move_in_imperfect_multiple_loops_in_between_separated_by_vardef():
     assert std.match(ast)
 
 
-def test_legal_dependence():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_legal_dependence(as_subprocess):
     with ft.VarDef("y", (8,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
                 y[j] = (y[j] + 1) * j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (8,), "int32", "inout", "cpu") as y:
@@ -252,14 +281,18 @@ def test_legal_dependence():
     assert std.match(ast)
 
 
-def test_legal_dependence_only_inner_loops():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_legal_dependence_only_inner_loops(as_subprocess):
     with ft.VarDef("y", (16,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
                 with ft.For("k", 0, 16, label="L3") as k:
                     y[k] = (y[k] + 1) * j * k
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L3", "L2"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L3", "L2"], as_subprocess=as_subprocess),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef("y", (16,), "int32", "inout", "cpu") as y:
@@ -272,7 +305,8 @@ def test_legal_dependence_only_inner_loops():
     assert std.match(ast)
 
 
-def test_illegal_dependence():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_illegal_dependence(as_subprocess):
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 0
         with ft.For("i", 0, 4, label="L1") as i:
@@ -281,12 +315,13 @@ def test_illegal_dependence():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.reorder(["L2", "L1"])
+        s.reorder(["L2", "L1"], as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_move_in_imperfect_illegal_dependence_of_stmt_in_between():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_in_imperfect_illegal_dependence_of_stmt_in_between(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (), "int32", "cache", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -296,12 +331,16 @@ def test_move_in_imperfect_illegal_dependence_of_stmt_in_between():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect)
+        s.reorder(["L2", "L1"],
+                  ft.ReorderMode.MoveInImperfect,
+                  as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_move_in_imperfect_illegal_dependence_of_stmt_in_between_on_local_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_in_imperfect_illegal_dependence_of_stmt_in_between_on_local_var(
+        as_subprocess):
 
     @ft.transform
     def f(x: ft.Var[(4,), "int32", "input"], y: ft.Var[(4,), "int32", "inout"]):
@@ -315,10 +354,13 @@ def test_move_in_imperfect_illegal_dependence_of_stmt_in_between_on_local_var():
 
     s = ft.Schedule(f, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
-        s.reorder(["L2", "L1"], ft.ReorderMode.MoveInImperfect)
+        s.reorder(["L2", "L1"],
+                  ft.ReorderMode.MoveInImperfect,
+                  as_subprocess=as_subprocess)
 
 
-def test_reduction():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reduction(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (1,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
@@ -326,7 +368,10 @@ def test_reduction():
             with ft.For("j", 0, 8, label="L2") as j:
                 y[0] = y[0] + x[i, j]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
@@ -340,7 +385,8 @@ def test_reduction():
     assert std.match(ast)
 
 
-def test_local_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_local_var(as_subprocess):
     with ft.VarDef([
         ("x0", (4, 8), "int32", "input", "cpu"),
         ("x1", (4, 8), "int32", "input", "cpu"),
@@ -354,7 +400,10 @@ def test_local_var():
                     y1[i, j] = buf[0] * 2
                     y2[i, j] = buf[0] * 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
     ast = ft.lower(ast, verbose=1)
 
     with ft.VarDef([
@@ -374,7 +423,8 @@ def test_local_var():
     assert std.match(ast)
 
 
-def test_dep_by_external_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dep_by_external_var(as_subprocess):
     with ft.VarDef([("idx1", (4, 8), "int32", "input", "cpu"),
                     ("idx2", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
@@ -388,10 +438,11 @@ def test_dep_by_external_var():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
-        s.reorder(["L2", "L1"])
+        s.reorder(["L2", "L1"], as_subprocess=as_subprocess)
 
 
-def test_no_dep_by_invariant_external_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_dep_by_invariant_external_var(as_subprocess):
     with ft.VarDef([("idx1", (), "int32", "input", "cpu"),
                     ("idx2", (), "int32", "input", "cpu"),
                     ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
@@ -403,7 +454,7 @@ def test_no_dep_by_invariant_external_var():
                 # After adding with i or j, they are all different among iterations
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    s.reorder(["L2", "L1"])
+    s.reorder(["L2", "L1"], as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1)
 
@@ -419,7 +470,8 @@ def test_no_dep_by_invariant_external_var():
     assert std.match(ast)
 
 
-def test_no_dep_by_external_var_variant_of_another_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_dep_by_external_var_variant_of_another_loop(as_subprocess):
     with ft.VarDef([("idx1", (4,), "int32", "input", "cpu"),
                     ("idx2", (4,), "int32", "input", "cpu"),
                     ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
@@ -434,7 +486,7 @@ def test_no_dep_by_external_var_variant_of_another_loop():
                     # among iterations
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    s.reorder(["L2", "L1"])
+    s.reorder(["L2", "L1"], as_subprocess=as_subprocess)
     ast = s.ast()
     ast = ft.lower(ast, verbose=1)
 
@@ -451,7 +503,8 @@ def test_no_dep_by_external_var_variant_of_another_loop():
     assert std.match(ast)
 
 
-def test_dep_by_external_var_reversed_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dep_by_external_var_reversed_loop(as_subprocess):
     with ft.VarDef([("idx1", (4, 8), "int32", "input", "cpu"),
                     ("idx2", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 9), "int32", "output", "cpu")]) as (idx1, idx2,
@@ -465,10 +518,11 @@ def test_dep_by_external_var_reversed_loop():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
-        s.reorder(["L2", "L1"])
+        s.reorder(["L2", "L1"], as_subprocess=as_subprocess)
 
 
-def test_no_merge_if_outer_iter_var_is_used_in_inner():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_merge_if_outer_iter_var_is_used_in_inner(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, i, label="L2") as j:
@@ -476,16 +530,20 @@ def test_no_merge_if_outer_iter_var_is_used_in_inner():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
-        s.reorder(["L2", "L1"])
+        s.reorder(["L2", "L1"], as_subprocess=as_subprocess)
 
 
-def test_ternary_expr_in_indices():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_ternary_expr_in_indices(as_subprocess):
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
                 y[i * 8 + j + ft.if_then_else(i <= 1, 16, -16)] = i + j
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
 
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("j", 0, 8, label="L2") as j:
@@ -496,7 +554,8 @@ def test_ternary_expr_in_indices():
     assert std.match(ast)
 
 
-def test_ternary_expr_in_if():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_ternary_expr_in_if(as_subprocess):
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
@@ -504,7 +563,10 @@ def test_ternary_expr_in_if():
                     y[i + j] = i
 
     ast = ft.pop_ast(verbose=True)
-    ast = ft.schedule(ast, lambda s: s.reorder(["L2", "L1"]), verbose=1)
+    ast = ft.schedule(
+        ast,
+        lambda s: s.reorder(["L2", "L1"], as_subprocess=as_subprocess),
+        verbose=1)
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.For("j", 0, 8) as j:
             with ft.For("i", 0, 4) as i:

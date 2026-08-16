@@ -1,4 +1,5 @@
 #include <mutex>
+#include <subprocess.h>
 
 #include <analyze/all_side_effect_intrinsics.h>
 #include <analyze/all_uses.h>
@@ -23,7 +24,16 @@ struct ReplaceInfo {
 } // namespace
 
 Stmt tensorPropConst(const Stmt &_op, const ID &bothInSubAST,
-                     const ID &eitherInSubAST) {
+                     const ID &eitherInSubAST,
+                     const std::optional<bool> &asSubprocess,
+                     const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "tensor_prop_const", _op,
+            subprocessArgs({"--both-in-sub-ast", idArg(bothInSubAST),
+                            "--either-in-sub-ast", idArg(eitherInSubAST)}),
+            asSubprocess, timeout);
+    }
     auto op = _op;
 
     for (int i = 0;; i++) {

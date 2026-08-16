@@ -5,6 +5,7 @@
 #include <hash.h>
 #include <pass/gpu/lower_vector.h>
 #include <pass/simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -232,7 +233,12 @@ Stmt LowerVector::visit(const ReduceTo &op) {
     return BaseClass::visit(op);
 }
 
-Stmt lowerVector(const Stmt &_op) {
+Stmt lowerVector(const Stmt &_op, const std::optional<bool> &asSubprocess,
+                 const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("gpu_lower_vector", _op, {},
+                                       asSubprocess, timeout);
+    }
     auto op = LowerVector()(_op);
     return simplify(op);
 }

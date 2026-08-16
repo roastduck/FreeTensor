@@ -6,6 +6,7 @@
 #include <analyze/symbol_table.h>
 #include <func.h>
 #include <mutator.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -48,7 +49,9 @@ class RemoveDeadVar : public SymbolTable<Mutator> {
     Stmt visit(const StmtSeq &op) override;
 };
 
-Stmt removeDeadVar(const Stmt &op);
+Stmt removeDeadVar(const Stmt &op,
+                   const std::optional<bool> &asSubprocess = std::nullopt,
+                   const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(removeDeadVar)
 

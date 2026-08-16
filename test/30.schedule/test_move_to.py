@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_pure_swap_forward():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pure_swap_forward(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -18,7 +19,7 @@ def test_pure_swap_forward():
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S2", ft.MoveToSide.After, "S1")
+    s.move_to("S2", ft.MoveToSide.After, "S1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -39,7 +40,8 @@ def test_pure_swap_forward():
     assert std.match(ast)
 
 
-def test_pure_swap_backward():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pure_swap_backward(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -55,7 +57,7 @@ def test_pure_swap_backward():
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S1", ft.MoveToSide.Before, "S2")
+    s.move_to("S1", ft.MoveToSide.Before, "S2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -76,7 +78,8 @@ def test_pure_swap_backward():
     assert std.match(ast)
 
 
-def test_swap_to_begin():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_swap_to_begin(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -92,7 +95,7 @@ def test_swap_to_begin():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     dst = s.find("L1").body.stmts[0]
-    s.move_to("S1", ft.MoveToSide.Before, dst)
+    s.move_to("S1", ft.MoveToSide.Before, dst, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -113,7 +116,8 @@ def test_swap_to_begin():
     assert std.match(ast)
 
 
-def test_swap_to_end():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_swap_to_end(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -129,7 +133,7 @@ def test_swap_to_end():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     dst = s.find("L1").body.stmts[-1]
-    s.move_to("S1", ft.MoveToSide.After, dst)
+    s.move_to("S1", ft.MoveToSide.After, dst, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -150,7 +154,8 @@ def test_swap_to_end():
     assert std.match(ast)
 
 
-def test_pure_fission_forward():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pure_fission_forward(as_subprocess):
     with ft.VarDef([
         ("y1", (4, 4), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
@@ -162,7 +167,7 @@ def test_pure_fission_forward():
                 y2[i, j] = i * j + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S1", ft.MoveToSide.Before, "L2")
+    s.move_to("S1", ft.MoveToSide.Before, "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -181,7 +186,8 @@ def test_pure_fission_forward():
     assert std.match(ast)
 
 
-def test_pure_fission_backward():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_pure_fission_backward(as_subprocess):
     with ft.VarDef([
         ("y1", (4, 4), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
@@ -193,7 +199,7 @@ def test_pure_fission_backward():
                 y2[i, j] = i * j + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S1", ft.MoveToSide.After, "L2")
+    s.move_to("S1", ft.MoveToSide.After, "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -212,7 +218,8 @@ def test_pure_fission_backward():
     assert std.match(ast)
 
 
-def test_swap_and_fission_forward():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_swap_and_fission_forward(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
@@ -228,7 +235,7 @@ def test_swap_and_fission_forward():
                 y3[i, j] = i * j + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S3", ft.MoveToSide.Before, "S1")
+    s.move_to("S3", ft.MoveToSide.Before, "S1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -249,7 +256,8 @@ def test_swap_and_fission_forward():
     assert std.match(ast)
 
 
-def test_swap_and_fission_backward():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_swap_and_fission_backward(as_subprocess):
     with ft.VarDef([
         ("y1", (4, 4), "int32", "output", "cpu"),
         ("y2", (4, 4), "int32", "output", "cpu"),
@@ -265,7 +273,7 @@ def test_swap_and_fission_backward():
             y3[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S2", ft.MoveToSide.After, "S1")
+    s.move_to("S2", ft.MoveToSide.After, "S1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -286,7 +294,8 @@ def test_swap_and_fission_backward():
     assert std.match(ast)
 
 
-def test_crossing_var_def():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_crossing_var_def(as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
@@ -302,7 +311,7 @@ def test_crossing_var_def():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     dst = s.find("L1").body.stmts[0]
-    s.move_to("S1", ft.MoveToSide.Before, dst)
+    s.move_to("S1", ft.MoveToSide.Before, dst, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["prop_one_time_use"], verbose=1)
@@ -324,7 +333,8 @@ def test_crossing_var_def():
     assert std.match(ast)
 
 
-def test_after_multiple_statements():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_after_multiple_statements(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -342,7 +352,7 @@ def test_after_multiple_statements():
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S4", ft.MoveToSide.After, "S1|S2")
+    s.move_to("S4", ft.MoveToSide.After, "S1|S2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -363,7 +373,8 @@ def test_after_multiple_statements():
     assert std.match(ast)
 
 
-def test_before_multiple_statements():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_before_multiple_statements(as_subprocess):
     with ft.VarDef([
         ("y1", (4,), "int32", "output", "cpu"),
         ("y2", (4,), "int32", "output", "cpu"),
@@ -381,7 +392,7 @@ def test_before_multiple_statements():
             y4[i] = i + 4
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.move_to("S1", ft.MoveToSide.Before, "S3|S4")
+    s.move_to("S1", ft.MoveToSide.Before, "S3|S4", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)

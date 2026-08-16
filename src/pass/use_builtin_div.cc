@@ -1,5 +1,6 @@
 #include <analyze/comp_unique_bounds_combination.h>
 #include <pass/use_builtin_div.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -92,6 +93,13 @@ Expr UseBuiltinDiv::visit(const Mod &_op) {
     return op;
 }
 
-Stmt useBuiltinDiv(const Stmt &_op) { return UseBuiltinDiv()(_op); }
+Stmt useBuiltinDiv(const Stmt &_op, const std::optional<bool> &asSubprocess,
+                   const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("use_builtin_div", _op, {}, asSubprocess,
+                                       timeout);
+    }
+    return UseBuiltinDiv()(_op);
+}
 
 } // namespace freetensor

@@ -2,12 +2,15 @@
 #define FREE_TENSOR_REMOVE_CYCLIC_ASSIGN_H
 
 #include <pass/remove_writes.h>
+#include <subprocess.h>
 namespace freetensor {
 
 /**
  * Simplify things like `a = b; b = a`
  */
-Stmt removeCyclicAssign(const Stmt &op);
+Stmt removeCyclicAssign(const Stmt &op,
+                        const std::optional<bool> &asSubprocess = std::nullopt,
+                        const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(removeCyclicAssign)
 

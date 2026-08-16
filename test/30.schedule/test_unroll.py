@@ -7,7 +7,8 @@ target = device.target()
 # Please refer to test/40.codegen for some architecture dependent test cases
 
 
-def test_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_found(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -17,13 +18,14 @@ def test_not_found():
     s = ft.Schedule(func)
     code = ft.codegen(s.func(), target)
     with pytest.raises(ft.InvalidSchedule):
-        s.unroll("L0")
+        s.unroll("L0", as_subprocess=as_subprocess)
     code_ = ft.codegen(s.func(), target)
 
     assert str(code) == str(code_)
 
 
-def test_not_constant():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_constant(as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (n, y):
         with ft.For("i", 0, n[()], label="L1") as i:
@@ -34,13 +36,14 @@ def test_not_constant():
     s = ft.Schedule(func)
     code = ft.codegen(s.func(), target)
     with pytest.raises(ft.InvalidSchedule):
-        s.unroll("L1")
+        s.unroll("L1", as_subprocess=as_subprocess)
     code_ = ft.codegen(s.func(), target)
 
     assert str(code) == str(code_)
 
 
-def test_unbounded_length():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_unbounded_length(as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("x", (4, 4), "int32", "output", "cpu")]) as (n, x):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -52,13 +55,14 @@ def test_unbounded_length():
     s = ft.Schedule(func)
     code = ft.codegen(s.func(), target)
     with pytest.raises(ft.InvalidSchedule):
-        s.unroll("L2")
+        s.unroll("L2", as_subprocess=as_subprocess)
     code_ = ft.codegen(s.func(), target)
 
     assert str(code) == str(code_)
 
 
-def test_constant_length():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_constant_length(as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("x", (8,), "int32", "output", "cpu")]) as (n, x):
         with ft.For("i", n[()], n[()] + 4, label="L1") as i:
@@ -68,20 +72,21 @@ def test_constant_length():
     print(func)
     s = ft.Schedule(func)
     code = ft.codegen(s.func(), target)
-    s.unroll("L1")
+    s.unroll("L1", as_subprocess=as_subprocess)
     code_ = ft.codegen(s.func(), target)
 
     assert code != code_
 
 
-def test_immediate_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_immediate_basic(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
             y[i] = x[i] + 1
 
     s = ft.Schedule(ft.pop_ast())
-    s.unroll("L1", True)
+    s.unroll("L1", True, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -97,7 +102,8 @@ def test_immediate_basic():
     assert std.match(ast)
 
 
-def test_immediate_with_offset():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_immediate_with_offset(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         y[0] = 0
@@ -105,7 +111,7 @@ def test_immediate_with_offset():
             y[i] = x[i] + 1
 
     s = ft.Schedule(ft.pop_ast())
-    s.unroll("L1", True)
+    s.unroll("L1", True, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -121,14 +127,15 @@ def test_immediate_with_offset():
     assert std.match(ast)
 
 
-def test_immediate_with_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_immediate_with_step(as_subprocess):
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
                     ("y", (8,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 6, -2, -2, label="L1") as i:
             y[i] = x[i] + 1
 
     s = ft.Schedule(ft.pop_ast())
-    s.unroll("L1", True)
+    s.unroll("L1", True, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -144,7 +151,8 @@ def test_immediate_with_step():
     assert std.match(ast)
 
 
-def test_folding_sum():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_folding_sum(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 0
@@ -152,7 +160,7 @@ def test_folding_sum():
             y[()] = y[()] + x[i]
 
     s = ft.Schedule(ft.pop_ast())
-    s.unroll("L1", True)
+    s.unroll("L1", True, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)

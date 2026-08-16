@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN --mount=type=cache,target=/root/.cache/pip \
     python3 -m pip install --upgrade pip && \
     python3 -m pip install \
-        "py-build-cmake~=0.1.8" \
+        "py-build-cmake~=0.5.0" \
         importlib_metadata \
         z3-solver \
         setuptools

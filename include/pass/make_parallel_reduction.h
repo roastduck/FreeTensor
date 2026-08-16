@@ -12,6 +12,7 @@
 #include <driver/target.h>
 #include <func.h>
 #include <mutator.h>
+#include <subprocess.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -190,7 +191,10 @@ class MakeSyncReduction : public SymbolTable<Mutator> {
  *
  * @param target : Target information. Can be null for target-agnostic debugging
  */
-Stmt makeParallelReduction(const Stmt &op, const Ref<Target> &target);
+Stmt makeParallelReduction(
+    const Stmt &op, const Ref<Target> &target,
+    const std::optional<bool> &asSubprocess = std::nullopt,
+    const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(makeParallelReduction)
 

@@ -1,5 +1,6 @@
 #include <analyze/all_uses.h>
 #include <schedule.h>
+#include <schedule/subprocess_utils.h>
 #include <schedule/var_reorder.h>
 
 namespace freetensor {
@@ -62,15 +63,16 @@ Expr VarReorder::visit(const Load &_op) {
 }
 
 Stmt VarReorder::visit(const MatMul &op) {
-    if (!var_.empty() && !forceReorderInMatMul_ && (allReads(op->equivalent_).count(var_) ||
-                          allWrites(op->equivalent_).count(var_))) {
+    if (!var_.empty() && !forceReorderInMatMul_ &&
+        (allReads(op->equivalent_).count(var_) ||
+         allWrites(op->equivalent_).count(var_))) {
         throw InvalidSchedule("Please call var_reorder before as_matmul");
     }
     return BaseClass::visit(op);
 }
 
 Stmt varReorderImpl(const Stmt &_ast, const ID &def,
-                const std::vector<int> &order, bool forceReorderInMatMul) {
+                    const std::vector<int> &order, bool forceReorderInMatMul) {
     VarReorder mutator(def, order, forceReorderInMatMul);
     auto ast = mutator(_ast);
     if (!mutator.found()) {
@@ -79,12 +81,28 @@ Stmt varReorderImpl(const Stmt &_ast, const ID &def,
     return ast;
 }
 
-Stmt varReorder(const Stmt &ast, const ID &def,
-                const std::vector<int> &order) {
+Stmt varReorder(const Stmt &ast, const ID &def, const std::vector<int> &order) {
     return varReorderImpl(ast, def, order);
 }
 
-void Schedule::varReorder(const ID &def, const std::vector<int> &order) {
+void Schedule::varReorder(const ID &def, const std::vector<int> &order,
+                          const std::optional<bool> &asSubprocess,
+                          const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        std::string orderStr;
+        for (auto &&i : order) {
+            if (!orderStr.empty()) {
+                orderStr += ",";
+            }
+            orderStr += std::to_string(i);
+        }
+        auto result = runTransformSubprocess(
+            "var_reorder", ast(),
+            subprocessArgs({"--vardef", idArg(def), "--order", orderStr}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(
         MAKE_SCHEDULE_LOG(VarReorder, freetensor::varReorder, def, order));

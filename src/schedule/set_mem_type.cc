@@ -1,6 +1,7 @@
 #include <schedule.h>
 #include <schedule/check_var_cross_parallel.h>
 #include <schedule/set_mem_type.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -26,7 +27,19 @@ Stmt setMemType(const Stmt &_ast, const ID &def, MemType mtype,
 }
 
 void Schedule::setMemType(const ID &def, MemType mtype,
-                          bool rejectIndirectAccess) {
+                          bool rejectIndirectAccess,
+                          const std::optional<bool> &asSubprocess,
+                          const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "set_mem_type", ast(),
+            subprocessArgs({"--vardef", idArg(def), "--mtype", toString(mtype),
+                            "--reject-indirect-access",
+                            boolArg(rejectIndirectAccess)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(SetMemType, freetensor::setMemType,
                                            def, mtype, rejectIndirectAccess));
@@ -39,7 +52,9 @@ void Schedule::setMemType(const ID &def, MemType mtype,
     }
 }
 
-void Schedule::setMemType(const ID &def, MemType mtype) {
+void Schedule::setMemType(const ID &def, MemType mtype,
+                          const std::optional<bool> &asSubprocess,
+                          const std::optional<double> &timeout) {
     bool rejectIndirectAccess;
     switch (mtype) {
     case MemType::GPULocal:
@@ -49,7 +64,7 @@ void Schedule::setMemType(const ID &def, MemType mtype) {
     default:
         rejectIndirectAccess = false;
     }
-    setMemType(def, mtype, rejectIndirectAccess);
+    setMemType(def, mtype, rejectIndirectAccess, asSubprocess, timeout);
 }
 
 } // namespace freetensor

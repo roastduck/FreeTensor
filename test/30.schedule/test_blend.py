@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -10,7 +11,7 @@ def test_basic():
             y2[i] = i + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
@@ -30,7 +31,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_begin_and_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_begin_and_step(as_subprocess):
     with ft.VarDef([("y1", (8,), "int32", "output", "cpu"),
                     ("y2", (8,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 6, -2, -2, label="L1") as i:
@@ -38,7 +40,7 @@ def test_begin_and_step():
             y2[i] = i + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
@@ -58,7 +60,8 @@ def test_begin_and_step():
     assert std.match(ast)
 
 
-def test_inner_if():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_inner_if(as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
@@ -70,7 +73,7 @@ def test_inner_if():
                 y2[i] = i + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
@@ -101,7 +104,8 @@ def test_inner_if():
     assert std.match(ast)
 
 
-def test_inner_if_fuse():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_inner_if_fuse(as_subprocess):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
@@ -113,7 +117,7 @@ def test_inner_if_fuse():
                 y2[i] = i + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
@@ -137,7 +141,8 @@ def test_inner_if_fuse():
     assert std.match(ast)
 
 
-def test_inner_if_else():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_inner_if_else(as_subprocess):
     with ft.VarDef([
         ("x", (2,), "int32", "input", "cpu"),
         ("y1", (2,), "int32", "output", "cpu"),
@@ -152,7 +157,7 @@ def test_inner_if_else():
                 y2[i] = i - 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
@@ -183,7 +188,8 @@ def test_inner_if_else():
     assert std.match(ast)
 
 
-def test_inner_for():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_inner_for(as_subprocess):
     with ft.VarDef([
         ("x", (2,), "int32", "input", "cpu"),
         ("y1", (2,), "int32", "inout", "cpu"),
@@ -195,7 +201,7 @@ def test_inner_for():
                 y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -218,7 +224,8 @@ def test_inner_for():
     assert std.match(ast)
 
 
-def test_inner_for_fuse():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_inner_for_fuse(as_subprocess):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y1", (2,), "int32", "inout", "cpu"),
@@ -230,7 +237,7 @@ def test_inner_for_fuse():
                 y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -250,7 +257,8 @@ def test_inner_for_fuse():
     assert std.match(ast)
 
 
-def test_inner_for_fuse_different_begin():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_inner_for_fuse_different_begin(as_subprocess):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y1", (2,), "int32", "inout", "cpu"),
@@ -262,7 +270,7 @@ def test_inner_for_fuse_different_begin():
                 y2[i] *= 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -282,7 +290,8 @@ def test_inner_for_fuse_different_begin():
     assert std.match(ast)
 
 
-def test_unsolvable_dependence():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_unsolvable_dependence(as_subprocess):
     with ft.VarDef([("y1", (), "int32", "inout", "cpu"),
                     ("y2", (), "int32", "inout", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 2, label="L1") as i:
@@ -291,12 +300,13 @@ def test_unsolvable_dependence():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.blend("L1")
+        s.blend("L1", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_loop_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_not_found(as_subprocess):
     with ft.VarDef([("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (y1, y2):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -305,12 +315,13 @@ def test_loop_not_found():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.blend("L2")
+        s.blend("L2", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_var_def_inside():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_var_def_inside(as_subprocess):
     with ft.VarDef([("x", (2,), "int32", "input", "cpu"),
                     ("y1", (2,), "int32", "output", "cpu"),
                     ("y2", (2,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -321,7 +332,7 @@ def test_var_def_inside():
                 y2[i] = b[()] + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -342,7 +353,8 @@ def test_var_def_inside():
     assert std.match(ast)
 
 
-def test_var_def_inside_no_need_to_split():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_var_def_inside_no_need_to_split(as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "cpu"),
                     ("x", (2,), "int32", "input", "cpu"),
                     ("y", (2,), "int32", "output", "cpu")]) as (n, x, y):
@@ -352,7 +364,7 @@ def test_var_def_inside_no_need_to_split():
                 y[i] = b[()] * x[i]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.blend("L1")
+    s.blend("L1", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)

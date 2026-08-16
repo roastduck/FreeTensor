@@ -17,6 +17,7 @@
 #include <schedule.h>
 #include <schedule/parallelize.h>
 #include <schedule/parallelize_as.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -294,7 +295,18 @@ Stmt parallelizeAs(const Stmt &_ast, const ID &nest, const ID &reference,
 }
 
 void Schedule::parallelizeAs(const ID &nest, const ID &reference,
-                             const ID &defId) {
+                             const ID &defId,
+                             const std::optional<bool> &asSubprocess,
+                             const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "parallelize_as", ast(),
+            subprocessArgs({"--nest", idArg(nest), "--reference",
+                            idArg(reference), "--def-id", idArg(defId)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(MAKE_SCHEDULE_LOG(
         ParallelizeAs, freetensor::parallelizeAs, nest, reference, defId));

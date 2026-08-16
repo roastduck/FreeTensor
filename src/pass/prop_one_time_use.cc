@@ -1,4 +1,5 @@
 #include <mutex>
+#include <subprocess.h>
 
 #include <analyze/all_uses.h>
 #include <analyze/check_not_modified.h>
@@ -54,7 +55,15 @@ topoSort(const std::unordered_map<AST, std::pair<Stmt, ReplaceInfo>> &r2w,
 
 } // Anonymous namespace
 
-Stmt propOneTimeUse(const Stmt &_op, const ID &subAST) {
+Stmt propOneTimeUse(const Stmt &_op, const ID &subAST,
+                    const std::optional<bool> &asSubprocess,
+                    const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "prop_one_time_use", _op,
+            subprocessArgs({"--sub-ast", idArg(subAST)}), asSubprocess,
+            timeout);
+    }
     auto op = makeReduction(_op);
 
     // A new Store/ReduceTo node may contain Load nodes out of their VarDef

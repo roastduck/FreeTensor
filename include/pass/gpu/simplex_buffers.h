@@ -12,6 +12,7 @@
 #include <hash.h>
 #include <mutator.h>
 #include <pass/replace_iter.h>
+#include <subprocess.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -142,7 +143,9 @@ class ApplySimplexOffset : public SymbolTable<Mutator> {
  *
  * @param defId : If set, only alter this VarDef
  */
-Stmt simplexBuffers(const Stmt &op, const ID &defId = ID());
+Stmt simplexBuffers(const Stmt &op, const ID &defId = ID(),
+                    const std::optional<bool> &asSubprocess = std::nullopt,
+                    const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(simplexBuffers)
 

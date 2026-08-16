@@ -7,6 +7,7 @@
 #include <schedule/check_not_in_lib.h>
 #include <schedule/fission.h>
 #include <schedule/hoist_selected_var.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -310,7 +311,21 @@ fission(const Stmt &_ast, const ID &loop, FissionSide side, const ID &splitter,
 std::pair<Schedule::IDMap, Schedule::IDMap>
 Schedule::fission(const ID &loop, FissionSide side, const ID &splitter,
                   bool allowEnlarge, const std::string &suffix0,
-                  const std::string &suffix1) {
+                  const std::string &suffix1,
+                  const std::optional<bool> &asSubprocess,
+                  const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto sideStr = side == FissionSide::Before ? "Before" : "After";
+        auto result = runTransformSubprocess(
+            "fission", ast(),
+            subprocessArgs({"--loop", idArg(loop), "--side", sideStr,
+                            "--splitter", idArg(splitter), "--allow-enlarge",
+                            boolArg(allowEnlarge)}),
+            timeout);
+        applySubprocessResult(result);
+        const auto &info = result.info_.value();
+        return {idMapFromJson(info["first"]), idMapFromJson(info["second"])};
+    }
     beginTransaction();
     auto log =
         appendLog(MAKE_SCHEDULE_LOG(Fission, freetensor::fission, loop, side,

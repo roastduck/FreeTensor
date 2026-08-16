@@ -6,12 +6,13 @@ if not ft.fast_math():
                 allow_module_level=True)
 
 
-def test_cencel_const_in_numerator_and_denominator():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cencel_const_in_numerator_and_denominator(as_subprocess):
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = (3 * x[()]) / (2 * y[()])
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
@@ -21,12 +22,13 @@ def test_cencel_const_in_numerator_and_denominator():
     assert std.match(ast)
 
 
-def test_simplify_sqrt_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_sqrt_1(as_subprocess):
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = ft.sqrt(x[()]) * ft.sqrt(x[()])
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32>=0", "output", "cpu")]) as (x, y):
@@ -36,13 +38,14 @@ def test_simplify_sqrt_1():
     assert std.match(ast)
 
 
-def test_simplify_sqrt_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_sqrt_2(as_subprocess):
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
         y[()] = ft.min(2 * ft.sqrt(x1[()]), 3 * ft.sqrt(x2[()]))
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
@@ -53,13 +56,14 @@ def test_simplify_sqrt_2():
     assert std.match(ast)
 
 
-def test_simplify_sqrt_3():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_sqrt_3(as_subprocess):
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x1, x2, y):
         y[()] = ft.min(-2 * ft.sqrt(x1[()]), -3 * ft.sqrt(x2[()]))
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
@@ -70,7 +74,8 @@ def test_simplify_sqrt_3():
     assert std.match(ast)
 
 
-def test_simplify_sqrt_4():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_sqrt_4(as_subprocess):
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
                     ("x3", (), "float32", "input", "cpu"),
@@ -78,7 +83,7 @@ def test_simplify_sqrt_4():
         y[()] = (ft.sqrt(x1[()]) * x2[()] /
                  ft.sqrt(x3[()])) * (ft.sqrt(x1[()]) * x2[()] / ft.sqrt(x3[()]))
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x1", (), "float32", "input", "cpu"),
                     ("x2", (), "float32", "input", "cpu"),
@@ -91,12 +96,13 @@ def test_simplify_sqrt_4():
     assert std.match(ast)
 
 
-def test_simplify_square_abs():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_square_abs(as_subprocess):
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = ft.abs(x[()]) * ft.abs(x[()])
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32>=0", "output", "cpu")]) as (x, y):
@@ -106,12 +112,13 @@ def test_simplify_square_abs():
     assert std.match(ast)
 
 
-def test_simplify_redundant_abs():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_simplify_redundant_abs(as_subprocess):
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = ft.abs(ft.abs(x[()]))
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32>=0", "output", "cpu")]) as (x, y):
@@ -121,12 +128,13 @@ def test_simplify_redundant_abs():
     assert std.match(ast)
 
 
-def test_fold_into_if_expr():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fold_into_if_expr(as_subprocess):
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = x[()] * ft.if_then_else(x[()] > 0, 1, 0)
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "float32", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
@@ -136,12 +144,13 @@ def test_fold_into_if_expr():
     assert std.match(ast)
 
 
-def test_type_hint_from_user():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type_hint_from_user(as_subprocess):
     with ft.VarDef([("x", (), "float32>=0", "input", "cpu"),
                     ("y", (), "float32", "output", "cpu")]) as (x, y):
         y[()] = ft.abs(x[()])
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "float32>=0", "input", "cpu"),
                     ("y", (), "float32>=0", "output", "cpu")]) as (x, y):

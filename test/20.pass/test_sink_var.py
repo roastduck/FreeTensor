@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_sink_stmt_seq_back():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_sink_stmt_seq_back(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -13,7 +15,7 @@ def test_sink_stmt_seq_back():
             y1[0] = 0
             y2[0] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -30,7 +32,8 @@ def test_sink_stmt_seq_back():
     assert std.match(ast)
 
 
-def test_sink_stmt_seq_front():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_sink_stmt_seq_front(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -42,7 +45,7 @@ def test_sink_stmt_seq_front():
                 y1[i] = b[0] * i
                 y2[i] = b[0] + i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -59,7 +62,8 @@ def test_sink_stmt_seq_front():
     assert std.match(ast)
 
 
-def test_sink_for_no_deps():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_sink_for_no_deps(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -69,7 +73,7 @@ def test_sink_for_no_deps():
                 y1[i] = b[i] * i
                 y2[i] = b[i] + i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -85,7 +89,8 @@ def test_sink_for_no_deps():
     assert std.match(ast)
 
 
-def test_sink_for_invariant():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_sink_for_invariant(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -95,7 +100,7 @@ def test_sink_for_invariant():
                 y1[i] = b[()] * i
                 y2[i] = b[()] + i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -110,7 +115,8 @@ def test_sink_for_invariant():
     assert std.match(ast)
 
 
-def test_no_sink_reduction():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_sink_reduction(as_subprocess):
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.VarDef("b", (), "int32", "cache", "cpu") as b:
             with ft.For("i", 0, 32) as i:
@@ -121,7 +127,8 @@ def test_no_sink_reduction():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    verbose=1,
-                   skip_passes=['use_builtin_div', 'float_simplify'])
+                   skip_passes=['use_builtin_div', 'float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (32,), "int32", "output", "cpu") as y:
         with ft.VarDef("b", (), "int32", "cache", "cpu") as b:
@@ -135,7 +142,8 @@ def test_no_sink_reduction():
     assert std.match(ast)
 
 
-def test_sink_if():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_sink_if(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -150,7 +158,7 @@ def test_sink_if():
                     y1[i] = b[i] * i
                     y2[i] = b[i] + i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -173,7 +181,8 @@ def test_sink_if():
     assert std.match(ast)
 
 
-def test_cross_other_vardef():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cross_other_vardef(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -188,7 +197,7 @@ def test_cross_other_vardef():
                         y1[i] = t1[i] + t2[i]
                         y2[i] = t1[i] * t2[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),

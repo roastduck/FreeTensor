@@ -109,6 +109,13 @@ class ParserError : public Error {
         : Error(msg, loc) {}
 };
 
+class SubprocessError : public Error {
+  public:
+    SubprocessError(const std::string &msg,
+                    std::source_location loc = std::source_location::current())
+        : Error(msg, loc) {}
+};
+
 class UnexpectedQueryResult : public Error {
   public:
     UnexpectedQueryResult(

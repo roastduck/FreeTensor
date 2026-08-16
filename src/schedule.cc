@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <chrono>
 
+#include <nlohmann/json.hpp>
+
 #include <autograd/clear_mark_version.h>
 #include <codegen/code_gen.h>
 #include <container_utils.h>
@@ -27,11 +29,15 @@
 #include <schedule/separate_tail.h>
 #include <schedule/set_mem_type.h>
 #include <schedule/split.h>
+#include <schedule/subprocess_utils.h>
 #include <schedule/swap.h>
 #include <schedule/unroll.h>
 #include <schedule/var_merge.h>
 #include <schedule/var_reorder.h>
+#include <schedule/var_squeeze.h>
+#include <schedule/var_unsqueeze.h>
 #include <schedule/vectorize.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -94,6 +100,14 @@ void Schedule::abortTransaction() {
 
 const Stmt &Schedule::ast() const { return openTrans_.back().ast_; }
 void Schedule::setAst(const Stmt &ast) { openTrans_.back().ast_ = ast; }
+
+void Schedule::applySubprocessResult(const SubprocessResult &result) {
+    if (result.ast_->nodeType() == ASTNodeType::Func) {
+        setAst(result.ast_.as<FuncNode>()->body_);
+    } else {
+        setAst(result.ast_.as<StmtNode>());
+    }
+}
 
 const ScheduleLog &Schedule::logs() const { return openTrans_.back().logs_; }
 void Schedule::setLogs(const ScheduleLog &logs) {

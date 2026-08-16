@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_merge():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_merge(as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "output", "cpu"),
@@ -17,7 +19,10 @@ def test_merge():
             with ft.Else():
                 y2[i] = 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -36,7 +41,8 @@ def test_merge():
     assert std.match(ast)
 
 
-def test_no_merge_different_cond():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_merge_different_cond(as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y1", (5,), "int32", "output", "cpu"),
@@ -52,7 +58,10 @@ def test_no_merge_different_cond():
             with ft.Else():
                 y2[i] = 3
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['float_simplify'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['float_simplify'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -73,7 +82,8 @@ def test_no_merge_different_cond():
     assert std.match(ast)
 
 
-def test_no_merge_may_update():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_merge_may_update(as_subprocess):
     with ft.VarDef("a", (4,), "int32", "inout", "cpu") as a:
         with ft.For("i", 0, 4) as i:
             with ft.If(a[i] > 10):
@@ -81,7 +91,7 @@ def test_no_merge_may_update():
             with ft.If(a[i] > 10):
                 a[i] = a[i] / 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef("a", (4,), "int32", "inout", "cpu") as a:
         with ft.For("i", 0, 4) as i:
@@ -94,7 +104,8 @@ def test_no_merge_may_update():
     assert std.match(ast)
 
 
-def test_hoist():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_hoist(as_subprocess):
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 3) as i:
@@ -104,7 +115,8 @@ def test_hoist():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    skip_passes=['shrink_for', 'use_builtin_div'],
-                   verbose=1)
+                   verbose=1,
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):
@@ -117,7 +129,8 @@ def test_hoist():
     assert std.match(ast)
 
 
-def test_not_hoisting_not_pure_nested():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_hoisting_not_pure_nested(as_subprocess):
     with ft.VarDef([
         ("x", (3, 4), "int32", "input", "cpu"),
         ("y", (3, 4), "int32", "output", "cpu"),
@@ -128,7 +141,10 @@ def test_not_hoisting_not_pure_nested():
                 with ft.If(i % 2 == 0):
                     y[i, j] = x[i, j]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, skip_passes=['use_builtin_div'], verbose=1)
+    ast = ft.lower(ast,
+                   skip_passes=['use_builtin_div'],
+                   verbose=1,
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("x", (3, 4), "int32", "input", "cpu"),
@@ -144,7 +160,8 @@ def test_not_hoisting_not_pure_nested():
     assert std.match(ast)
 
 
-def test_not_hoisting_when_being_updated():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_hoisting_when_being_updated(as_subprocess):
     with ft.VarDef([
         ("n", (), "int32", "inout", "cpu"),
         ("x", (4,), "int32", "input", "cpu"),
@@ -155,7 +172,7 @@ def test_not_hoisting_when_being_updated():
                 y[i] = 0
                 n[()] += x[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("n", (), "int32", "inout", "cpu"),
@@ -171,7 +188,8 @@ def test_not_hoisting_when_being_updated():
     assert std.match(ast)
 
 
-def test_hoist_then_merge():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_hoist_then_merge(as_subprocess):
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 3) as i:
@@ -183,7 +201,8 @@ def test_hoist_then_merge():
     ast = ft.pop_ast(verbose=True)
     ast = ft.lower(ast,
                    skip_passes=['shrink_for', 'use_builtin_div'],
-                   verbose=1)
+                   verbose=1,
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "inout", "cpu")]) as (x, y):
@@ -197,7 +216,8 @@ def test_hoist_then_merge():
     assert std.match(ast)
 
 
-def test_merge_then_hoist():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_merge_then_hoist(as_subprocess):
     with ft.VarDef([
         ("x", (), "int32", "input", "cpu"),
         ("y1", (4,), "int32", "inout", "cpu"),
@@ -209,7 +229,7 @@ def test_merge_then_hoist():
             with ft.If(x[()] < 2):
                 y2[i] = 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef("x", (), "int32", "input", "cpu") as x:
         with ft.If(x[()] < 2):

@@ -1,6 +1,7 @@
 #ifndef FREE_TENSOR_MERGE_AND_HOIST_IF_H
 #define FREE_TENSOR_MERGE_AND_HOIST_IF_H
 
+#include <subprocess.h>
 #include <unordered_set>
 
 #include <analyze/symbol_table.h>
@@ -65,7 +66,9 @@ class MergeAndHoistIf : public SymbolTable<Mutator> {
     Stmt visit(const For &op) override;
 };
 
-Stmt mergeAndHoistIf(const Stmt &op);
+Stmt mergeAndHoistIf(const Stmt &op,
+                     const std::optional<bool> &asSubprocess = std::nullopt,
+                     const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(mergeAndHoistIf)
 

@@ -14,6 +14,7 @@
 #include <pass/shrink_for.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -394,7 +395,16 @@ void ShrinkFor::setSubAST(const Stmt &subAST) {
 }
 
 Stmt shrinkFor(const Stmt &_op, const ID &_subAST, bool doSimplify,
-               bool unordered) {
+               bool unordered, const std::optional<bool> &asSubprocess,
+               const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "shrink_for", _op,
+            subprocessArgs({"--sub-ast", idArg(_subAST), "--do-simplify",
+                            boolArg(doSimplify), "--unordered",
+                            boolArg(unordered)}),
+            asSubprocess, timeout);
+    }
     auto op = _op;
     auto subAST = _subAST;
 

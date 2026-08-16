@@ -1,13 +1,15 @@
 import freetensor as ft
+import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("a", (), "int32", "inout", "cpu"),
                     ("b", (), "int32", "output", "cpu")]) as (a, b):
         b[()] = a[()]
         a[()] = b[()]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("a", (), "int32", "inout", "cpu"),
                     ("b", (), "int32", "output", "cpu")]) as (a, b):
@@ -17,7 +19,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_in_branch():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_in_branch(as_subprocess):
     with ft.VarDef([("cond", (), "bool", "input", "cpu"),
                     ("a", (), "int32", "inout", "cpu"),
                     ("b", (), "int32", "output", "cpu")]) as (cond, a, b):
@@ -26,7 +29,7 @@ def test_in_branch():
             a[()] = b[()]
     ast = ft.pop_ast(verbose=True)
     # Run this pass only. No sinking vars into If
-    ast = ft.remove_cyclic_assign(ast)
+    ast = ft.remove_cyclic_assign(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("cond", (), "bool", "input", "cpu"),
@@ -39,7 +42,8 @@ def test_in_branch():
     assert std.match(ast)
 
 
-def test_in_branch_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_in_branch_2(as_subprocess):
     with ft.VarDef([("p", (4,), "int32", "input", "cpu"),
                     ("a", (4,), "int32", "inout", "cpu"),
                     ("b", (4,), "int32", "output", "cpu")]) as (p, a, b):
@@ -51,7 +55,7 @@ def test_in_branch_2():
                     a[i] = b[i]
     ast = ft.pop_ast(verbose=True)
     # Run this pass only. No sinking vars into If
-    ast = ft.remove_cyclic_assign(ast)
+    ast = ft.remove_cyclic_assign(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("p", (4,), "int32", "input", "cpu"),

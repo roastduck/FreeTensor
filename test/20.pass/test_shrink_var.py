@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -10,7 +12,7 @@ def test_basic():
             y1[2] = b[2] + 1
             y2[2] = b[2] + 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -24,7 +26,8 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_iter():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_iter(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -34,7 +37,7 @@ def test_iter():
                 y1[i] = b[i] * i
                 y2[i] = b[i] + i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
@@ -49,7 +52,8 @@ def test_iter():
     assert std.match(ast)
 
 
-def test_multiple_bounds():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_multiple_bounds(as_subprocess):
     with ft.VarDef([("x", (10, 5), "int32", "input", "cpu"),
                     ("y1", (10, 5), "int32", "output", "cpu"),
                     ("y2", (10, 5), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -65,7 +69,10 @@ def test_multiple_bounds():
                         y1[i, j] += b[j]
                         y2[i, j] += b[j]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['make_heap_alloc'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['make_heap_alloc'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (10, 5), "int32", "input", "cpu"),
                     ("y1", (10, 5), "int32", "output", "cpu"),
@@ -86,7 +93,8 @@ def test_multiple_bounds():
     assert std.match(ast)
 
 
-def test_external_vars_in_bounds():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_external_vars_in_bounds(as_subprocess):
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
                     ("x", (100,), "int32", "input", "cpu"),
@@ -98,7 +106,10 @@ def test_external_vars_in_bounds():
                 t[i] = x[i] + 1
                 y[i] = t[i] * t[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['make_heap_alloc'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['make_heap_alloc'],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("a", (), "int32", "input", "cpu"),
                     ("b", (), "int32", "input", "cpu"),
@@ -113,7 +124,8 @@ def test_external_vars_in_bounds():
     assert std.match(ast)
 
 
-def test_bound_only_on_reads():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_bound_only_on_reads(as_subprocess):
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
                     ("y1", (8,), "int32", "output", "cpu"),
                     ("y2", (8,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -124,7 +136,7 @@ def test_bound_only_on_reads():
                 y1[i] = b[i] + 1
                 y2[i] = b[i] + 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
                     ("y1", (8,), "int32", "output", "cpu"),
@@ -140,7 +152,8 @@ def test_bound_only_on_reads():
     assert std.match(ast)
 
 
-def test_read_bound_with_offset():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_read_bound_with_offset(as_subprocess):
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
                     ("y", (6,), "int32", "output", "cpu"),
                     ("z", (8,), "int32", "cache", "cpu")]) as (x, y, z):
@@ -150,7 +163,10 @@ def test_read_bound_with_offset():
             y[i] = z[i + 1]
 
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
+    ast = ft.lower(ast,
+                   verbose=1,
+                   skip_passes=['prop_one_time_use'],
+                   as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (8,), "int32", "input", "cpu"),
@@ -164,7 +180,8 @@ def test_read_bound_with_offset():
     assert ft.pop_ast().match(ast)
 
 
-def test_no_changing_unbounded_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_changing_unbounded_var(as_subprocess):
     with ft.VarDef([("idx", (4,), "int32", "input", "cpu"),
                     ("x", (4, 4), "int32", "input", "cpu"),
                     ("t", (4, 4), "int32", "cache", "cpu"),
@@ -174,7 +191,10 @@ def test_no_changing_unbounded_var():
                 t[idx[i], j] = x[idx[i], j] + 1
                 y[idx[i], j] = t[idx[i], j] * 2
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=2, skip_passes=['prop_one_time_use'])
+    ast = ft.lower(ast,
+                   verbose=2,
+                   skip_passes=['prop_one_time_use'],
+                   as_subprocess=as_subprocess)
 
     # No additional guards should be added even we don't know the range of `idx[i]`
     with ft.VarDef([("idx", (4,), "int32", "input", "cpu"),
@@ -188,7 +208,8 @@ def test_no_changing_unbounded_var():
     assert ft.pop_ast().match(ast)
 
 
-def test_const_in_branch_1():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_const_in_branch_1(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -202,7 +223,7 @@ def test_const_in_branch_1():
                 y2[i] = b[i] + i
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
@@ -221,7 +242,8 @@ def test_const_in_branch_1():
     assert std.match(ast)
 
 
-def test_const_in_branch_2():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_const_in_branch_2(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y1", (4,), "int32", "output", "cpu"),
                     ("y2", (4,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -235,7 +257,7 @@ def test_const_in_branch_2():
                 y2[i] = b[i] + i
     ast = ft.pop_ast()
     print(ast)
-    ast = ft.lower(ast)
+    ast = ft.lower(ast, as_subprocess=as_subprocess)
     print(ast)
 
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
@@ -254,7 +276,8 @@ def test_const_in_branch_2():
     assert std.match(ast)
 
 
-def test_over_relaxed_linear():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_over_relaxed_linear(as_subprocess):
     with ft.VarDef([("x", (12,), "int32", "input", "cpu"),
                     ("y1", (12,), "int32", "output", "cpu"),
                     ("y2", (12,), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -267,7 +290,7 @@ def test_over_relaxed_linear():
                     y1[i * 4 + j] = b[i * 100 + j * 10] * i
                     y2[i * 4 + j] = b[i * 100 + j * 10] + i
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (12,), "int32", "input", "cpu"),
                     ("y1", (12,), "int32", "output", "cpu"),

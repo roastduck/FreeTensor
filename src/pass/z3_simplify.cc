@@ -5,6 +5,7 @@
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -599,7 +600,12 @@ Stmt Z3SimplifyWithSymbolTable::visit(const For &op) {
     return ret;
 }
 
-Stmt z3Simplify(const Stmt &_op) {
+Stmt z3Simplify(const Stmt &_op, const std::optional<bool> &asSubprocess,
+                const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("z3_simplify", _op, {}, asSubprocess,
+                                       timeout);
+    }
     auto op = annotateConds(_op);
     op = Z3SimplifyWithSymbolTable()(op);
     op = flattenStmtSeq(op);

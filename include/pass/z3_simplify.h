@@ -156,7 +156,9 @@ class Z3SimplifyWithSymbolTable : public Z3Simplify,
     Stmt visit(const For &op) override;
 };
 
-Stmt z3Simplify(const Stmt &op);
+Stmt z3Simplify(const Stmt &op,
+                const std::optional<bool> &asSubprocess = std::nullopt,
+                const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(z3Simplify)
 

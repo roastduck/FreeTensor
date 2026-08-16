@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         ft.MarkLabel("Dc")
@@ -15,7 +16,7 @@ def test_basic():
                     y[i, j] = c[i, 0, j] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_squeeze("Dc", 1)
+    s.var_squeeze("Dc", 1, as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -33,7 +34,8 @@ def test_basic():
     std = ft.pop_ast()
 
 
-def test_not_singleton():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_singleton(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
@@ -41,18 +43,19 @@ def test_not_singleton():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_squeeze("Dy", 0)
+        s.var_squeeze("Dy", 0, as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_out_of_range():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_out_of_range(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_squeeze("Dy", 1)
+        s.var_squeeze("Dy", 1, as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)

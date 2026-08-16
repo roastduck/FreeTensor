@@ -11,6 +11,7 @@
 #include <pass/flatten_stmt_seq.h>
 #include <pass/replace_iter.h>
 #include <pass/simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -1029,10 +1030,22 @@ Stmt builtinSimplify(const Stmt &op) {
     return flattenStmtSeq(simplifyImpl<BuiltinSimplify>(op));
 }
 
-Stmt pbSimplify(const Stmt &op) {
+Stmt pbSimplify(const Stmt &op, const std::optional<bool> &asSubprocess,
+                const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("pb_simplify", op, {}, asSubprocess,
+                                       timeout);
+    }
     return flattenStmtSeq(simplifyImpl<PBSimplify>(op));
 }
 
-Stmt simplify(const Stmt &op) { return builtinSimplify(op); }
+Stmt simplify(const Stmt &op, const std::optional<bool> &asSubprocess,
+              const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("simplify", op, {}, asSubprocess,
+                                       timeout);
+    }
+    return builtinSimplify(op);
+}
 
 } // namespace freetensor

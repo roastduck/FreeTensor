@@ -6,6 +6,8 @@
 #include <schedule.h>
 #include <schedule/as_matmul.h>
 #include <schedule/lower_cutlass_micro_block.h>
+#include <schedule/subprocess_utils.h>
+#include <serialize/print_driver.h>
 
 namespace freetensor {
 
@@ -458,7 +460,22 @@ Stmt asMatMul(const Stmt &_ast, const ID &loop, MatMulBackend backend) {
 }
 
 void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
-                        const Ref<Target> &target, MatMulBackend backend) {
+                        const Ref<Target> &target, MatMulBackend backend,
+                        const std::optional<bool> &asSubprocess,
+                        const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto modeStr = mode == AsMatMulMode::KeepMemLayout   ? "KeepMemLayout"
+                       : mode == AsMatMulMode::TryVarReorder ? "TryVarReorder"
+                                                             : "TryTranspose";
+        auto result = runTransformSubprocess(
+            "as_matmul", ast(),
+            subprocessArgs({"--loop", idArg(loop), "--mode", modeStr,
+                            "--target-meta", dumpTarget(target), "--backend",
+                            toString(backend)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     if (backend == MatMulBackend::CutlassMicroBlock &&
         mode != AsMatMulMode::TryVarReorder) {
         throw InvalidSchedule(
@@ -505,13 +522,16 @@ void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
 }
 
 void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
-                        const Ref<Target> &target) {
+                        const Ref<Target> &target,
+                        const std::optional<bool> &asSubprocess,
+                        const std::optional<double> &timeout) {
     switch (target->type()) {
     case TargetType::CPU:
-        asMatMul(loop, mode, target, MatMulBackend::Mkl);
+        asMatMul(loop, mode, target, MatMulBackend::Mkl, asSubprocess, timeout);
         break;
     case TargetType::GPU:
-        asMatMul(loop, mode, target, MatMulBackend::Cutlass);
+        asMatMul(loop, mode, target, MatMulBackend::Cutlass, asSubprocess,
+                 timeout);
         break;
     default:
         throw InvalidSchedule(
@@ -519,8 +539,10 @@ void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
     }
 }
 
-void Schedule::asMatMul(const ID &loop, AsMatMulMode mode) {
-    asMatMul(loop, mode, Config::defaultTarget());
+void Schedule::asMatMul(const ID &loop, AsMatMulMode mode,
+                        const std::optional<bool> &asSubprocess,
+                        const std::optional<double> &timeout) {
+    asMatMul(loop, mode, Config::defaultTarget(), asSubprocess, timeout);
 }
 
 } // namespace freetensor

@@ -6,6 +6,7 @@
 #include <hash.h>
 #include <mutator.h>
 #include <pass/const_fold.h>
+#include <subprocess.h>
 
 #include <map>
 
@@ -131,7 +132,9 @@ class ScalarPropConst : public SymbolTable<ConstFold> {
  * This version of const propagation is designed for only scalars and meant to
  * be fast. It uses traditional dataflow techniques
  */
-Stmt scalarPropConst(const Stmt &op);
+Stmt scalarPropConst(const Stmt &op,
+                     const std::optional<bool> &asSubprocess = std::nullopt,
+                     const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(scalarPropConst)
 

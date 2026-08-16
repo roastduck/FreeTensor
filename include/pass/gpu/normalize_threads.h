@@ -8,6 +8,7 @@
 #include <func.h>
 #include <mutator.h>
 #include <pass/shrink_for.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -64,7 +65,9 @@ class ShrinkNormalizedThreads : public ShrinkFor {
  * thread scopes. Semantic of the original program will be perserved by adding
  * conditions into the kernel body
  */
-Stmt normalizeThreads(const Stmt &op);
+Stmt normalizeThreads(const Stmt &op,
+                      const std::optional<bool> &asSubprocess = std::nullopt,
+                      const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(normalizeThreads)
 

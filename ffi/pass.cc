@@ -8,6 +8,7 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/gpu/multiplex_buffers.h>
 #include <pass/gpu/normalize_threads.h>
+#include <pass/gpu/normalize_var_in_kernel.h>
 #include <pass/gpu/simplex_buffers.h>
 #include <pass/hoist_var_over_stmt_seq.h>
 #include <pass/make_heap_alloc.h>
@@ -33,148 +34,321 @@ namespace freetensor {
 using namespace pybind11::literals;
 
 void init_ffi_pass(py::module_ &m) {
-    m.def("simplify", static_cast<Func (*)(const Func &)>(&simplify), "func"_a);
-    m.def("simplify", static_cast<Stmt (*)(const Stmt &)>(&simplify), "stmt"_a);
+    m.def("simplify",
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &simplify<const std::optional<bool> &,
+                        const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def("simplify",
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&simplify),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
-    m.def("z3_simplify", static_cast<Func (*)(const Func &)>(&z3Simplify),
-          "func"_a);
-    m.def("z3_simplify", static_cast<Stmt (*)(const Stmt &)>(&z3Simplify),
-          "stmt"_a);
+    m.def("z3_simplify",
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &z3Simplify<const std::optional<bool> &,
+                          const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def("z3_simplify",
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&z3Simplify),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
-    m.def("pb_simplify", static_cast<Func (*)(const Func &)>(&pbSimplify),
-          "func"_a);
-    m.def("pb_simplify", static_cast<Stmt (*)(const Stmt &)>(&pbSimplify),
-          "stmt"_a);
+    m.def("pb_simplify",
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &pbSimplify<const std::optional<bool> &,
+                          const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def("pb_simplify",
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&pbSimplify),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
-    m.def("float_simplify", static_cast<Func (*)(const Func &)>(&floatSimplify),
-          "func"_a);
-    m.def("float_simplify", static_cast<Stmt (*)(const Stmt &)>(&floatSimplify),
-          "stmt"_a);
+    m.def("float_simplify",
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &floatSimplify<const std::optional<bool> &,
+                             const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def("float_simplify",
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&floatSimplify),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("flatten_stmt_seq",
-          static_cast<Func (*)(const Func &)>(&flattenStmtSeq), "func"_a);
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &flattenStmtSeq<const std::optional<bool> &,
+                              const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("flatten_stmt_seq",
-          static_cast<Stmt (*)(const Stmt &)>(&flattenStmtSeq), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&flattenStmtSeq),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("move_out_first_or_last_iter",
-          static_cast<Func (*)(const Func &)>(&moveOutFirstOrLastIter),
-          "func"_a);
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &moveOutFirstOrLastIter<const std::optional<bool> &,
+                                      const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("move_out_first_or_last_iter",
-          static_cast<Stmt (*)(const Stmt &)>(&moveOutFirstOrLastIter),
-          "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &moveOutFirstOrLastIter),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("scalar_prop_const",
-          static_cast<Func (*)(const Func &)>(&scalarPropConst), "func"_a);
-    m.def("scalar_prop_const",
-          static_cast<Stmt (*)(const Stmt &)>(&scalarPropConst), "stmt"_a);
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &scalarPropConst<const std::optional<bool> &,
+                               const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def(
+        "scalar_prop_const",
+        static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                             const std::optional<double> &)>(&scalarPropConst),
+        "stmt"_a, "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 
     m.def("sink_var",
           static_cast<Func (*)(
               const Func &, const std::optional<std::unordered_set<ID>> &,
-              const std::function<bool(const Stmt &)> &)>(&sinkVar),
-          "func"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr);
+              const std::function<bool(const Stmt &)> &,
+              const std::optional<bool> &, const std::optional<double> &)>(
+              &sinkVar<const std::optional<std::unordered_set<ID>> &,
+                       const std::function<bool(const Stmt &)> &,
+                       const std::optional<bool> &,
+                       const std::optional<double> &>),
+          "func"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr,
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
     m.def("sink_var",
           static_cast<Stmt (*)(
               const Stmt &, const std::optional<std::unordered_set<ID>> &,
-              const std::function<bool(const Stmt &)> &)>(&sinkVar),
-          "stmt"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr);
+              const std::function<bool(const Stmt &)> &,
+              const std::optional<bool> &, const std::optional<double> &)>(
+              &sinkVar),
+          "stmt"_a, "to_sink"_a = std::nullopt, "scope_filter"_a = nullptr,
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 
-    m.def("shrink_var", static_cast<Func (*)(const Func &)>(&shrinkVar),
-          "func"_a);
-    m.def("shrink_var", static_cast<Stmt (*)(const Stmt &)>(&shrinkVar),
-          "stmt"_a);
+    m.def("shrink_var",
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &shrinkVar<const std::optional<bool> &,
+                         const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def("shrink_var",
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&shrinkVar),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("shrink_for",
           static_cast<Func (*)(const Func &, const ID &, const bool &,
-                               const bool &)>(&shrinkFor),
+                               const bool &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &shrinkFor<const ID &, const bool &, const bool &,
+                         const std::optional<bool> &,
+                         const std::optional<double> &>),
           "func"_a, py::arg_v("sub_ast", ID(), "ID()"), "do_simplify"_a = true,
-          "unordered"_a = false);
+          "unordered"_a = false, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def("shrink_for",
+          static_cast<Stmt (*)(const Stmt &, const ID &, bool, bool,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(&shrinkFor),
+          "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"), "do_simplify"_a = true,
+          "unordered"_a = false, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+
+    m.def("merge_and_hoist_if",
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &mergeAndHoistIf<const std::optional<bool> &,
+                               const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def(
-        "shrink_for",
-        static_cast<Stmt (*)(const Stmt &, const ID &, bool, bool)>(&shrinkFor),
-        "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"), "do_simplify"_a = true,
-        "unordered"_a = false);
+        "merge_and_hoist_if",
+        static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                             const std::optional<double> &)>(&mergeAndHoistIf),
+        "stmt"_a, "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 
-    m.def("merge_and_hoist_if",
-          static_cast<Func (*)(const Func &)>(&mergeAndHoistIf), "func"_a);
-    m.def("merge_and_hoist_if",
-          static_cast<Stmt (*)(const Stmt &)>(&mergeAndHoistIf), "stmt"_a);
-
-    m.def("make_reduction", static_cast<Func (*)(const Func &)>(&makeReduction),
-          "func"_a);
-    m.def("make_reduction", static_cast<Stmt (*)(const Stmt &)>(&makeReduction),
-          "stmt"_a);
+    m.def("make_reduction",
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &makeReduction<const std::optional<bool> &,
+                             const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
+    m.def("make_reduction",
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&makeReduction),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("make_parallel_reduction",
-          static_cast<Func (*)(const Func &, const Ref<Target> &)>(
-              &makeParallelReduction),
-          "func"_a, "target"_a);
+          static_cast<Func (*)(const Func &, const Ref<Target> &,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &makeParallelReduction<const Ref<Target> &,
+                                     const std::optional<bool> &,
+                                     const std::optional<double> &>),
+          "func"_a, "target"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("make_parallel_reduction",
-          static_cast<Stmt (*)(const Stmt &, const Ref<Target> &)>(
-              &makeParallelReduction),
-          "stmt"_a, "target"_a);
+          static_cast<Stmt (*)(
+              const Stmt &, const Ref<Target> &, const std::optional<bool> &,
+              const std::optional<double> &)>(&makeParallelReduction),
+          "stmt"_a, "target"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("tensor_prop_const",
-          static_cast<Func (*)(const Func &, const ID &, const ID &)>(
-              &tensorPropConst),
+          static_cast<Func (*)(const Func &, const ID &, const ID &,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &tensorPropConst<const ID &, const ID &,
+                               const std::optional<bool> &,
+                               const std::optional<double> &>),
           "func"_a, py::arg_v("both_in_sub_ast", ID(), "ID()"),
-          py::arg_v("either_in_sub_ast", ID(), "ID()"));
+          py::arg_v("either_in_sub_ast", ID(), "ID()"),
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
     m.def("tensor_prop_const",
-          static_cast<Stmt (*)(const Stmt &, const ID &, const ID &)>(
-              &tensorPropConst),
+          static_cast<Stmt (*)(
+              const Stmt &, const ID &, const ID &, const std::optional<bool> &,
+              const std::optional<double> &)>(&tensorPropConst),
           "stmt"_a, py::arg_v("both_in_sub_ast", ID(), "ID()"),
-          py::arg_v("either_in_sub_ast", ID(), "ID()"));
+          py::arg_v("either_in_sub_ast", ID(), "ID()"),
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 
     m.def("prop_one_time_use",
-          static_cast<Func (*)(const Func &, const ID &)>(&propOneTimeUse),
-          "func"_a, py::arg_v("sub_ast", ID(), "ID()"));
+          static_cast<Func (*)(const Func &, const ID &,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &propOneTimeUse<const ID &, const std::optional<bool> &,
+                              const std::optional<double> &>),
+          "func"_a, py::arg_v("sub_ast", ID(), "ID()"),
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
     m.def("prop_one_time_use",
-          static_cast<Stmt (*)(const Stmt &, const ID &)>(&propOneTimeUse),
-          "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"));
+          static_cast<Stmt (*)(const Stmt &, const ID &,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(&propOneTimeUse),
+          "stmt"_a, py::arg_v("sub_ast", ID(), "ID()"),
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 
     m.def("remove_writes",
-          static_cast<Func (*)(const Func &, const ID &)>(&removeWrites),
-          "func"_a, py::arg_v("single_def_id", ID(), "ID()"));
+          static_cast<Func (*)(const Func &, const ID &,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &removeWrites<const ID &, const std::optional<bool> &,
+                            const std::optional<double> &>),
+          "func"_a, py::arg_v("single_def_id", ID(), "ID()"),
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
     m.def("remove_writes",
-          static_cast<Stmt (*)(const Stmt &, const ID &)>(&removeWrites),
-          "stmt"_a, py::arg_v("single_def_id", ID(), "ID()"));
+          static_cast<Stmt (*)(const Stmt &, const ID &,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(&removeWrites),
+          "stmt"_a, py::arg_v("single_def_id", ID(), "ID()"),
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 
     m.def("remove_cyclic_assign",
-          static_cast<Func (*)(const Func &)>(&removeCyclicAssign), "func"_a);
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &removeCyclicAssign<const std::optional<bool> &,
+                                  const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("remove_cyclic_assign",
-          static_cast<Stmt (*)(const Stmt &)>(&removeCyclicAssign), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &removeCyclicAssign),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("remove_dead_var",
-          static_cast<Func (*)(const Func &)>(&removeDeadVar), "func"_a);
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &removeDeadVar<const std::optional<bool> &,
+                             const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("remove_dead_var",
-          static_cast<Stmt (*)(const Stmt &)>(&removeDeadVar), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&removeDeadVar),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("make_heap_alloc",
-          static_cast<Func (*)(const Func &)>(&makeHeapAlloc), "func"_a);
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &makeHeapAlloc<const std::optional<bool> &,
+                             const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("make_heap_alloc",
-          static_cast<Stmt (*)(const Stmt &)>(&makeHeapAlloc), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&makeHeapAlloc),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("use_builtin_div",
-          static_cast<Func (*)(const Func &)>(&useBuiltinDiv), "func"_a);
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &useBuiltinDiv<const std::optional<bool> &,
+                             const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("use_builtin_div",
-          static_cast<Stmt (*)(const Stmt &)>(&useBuiltinDiv), "stmt"_a);
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(&useBuiltinDiv),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     m.def("hoist_var_over_stmt_seq",
-          static_cast<Func (*)(const Func &,
-                               const std::optional<std::vector<ID>> &)>(
+          static_cast<Func (*)(
+              const Func &, const std::optional<std::vector<ID>> &,
+              const std::optional<bool> &, const std::optional<double> &)>(
               &hoistVarOverStmtSeq),
-          "func"_a, "together_ids"_a = std::nullopt);
+          "func"_a, "together_ids"_a = std::nullopt,
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
     m.def("hoist_var_over_stmt_seq",
-          static_cast<Stmt (*)(const Stmt &,
-                               const std::optional<std::vector<ID>> &)>(
+          static_cast<Stmt (*)(
+              const Stmt &, const std::optional<std::vector<ID>> &,
+              const std::optional<bool> &, const std::optional<double> &)>(
               &hoistVarOverStmtSeq),
-          "stmt"_a, "together_ids"_a = std::nullopt);
+          "stmt"_a, "together_ids"_a = std::nullopt,
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 
     // CPU
     m.def("cpu_lower_parallel_reduction",
-          static_cast<Func (*)(const Func &)>(&cpu::lowerParallelReduction));
+          static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &cpu::lowerParallelReduction<const std::optional<bool> &,
+                                           const std::optional<double> &>),
+          "func"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
     m.def("cpu_lower_parallel_reduction",
-          static_cast<Stmt (*)(const Stmt &)>(&cpu::lowerParallelReduction));
+          static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                               const std::optional<double> &)>(
+              &cpu::lowerParallelReduction),
+          "stmt"_a, "as_subprocess"_a = std::nullopt,
+          "timeout"_a = std::nullopt);
 
     // GPU
 #ifdef FT_WITH_CUDA
@@ -190,77 +364,138 @@ void init_ffi_pass(py::module_ &m) {
 
     m.def(GPU_ONLY(
         "gpu_lower_parallel_reduction",
-        static_cast<Func (*)(const Func &)>(&gpu::lowerParallelReduction)));
-    m.def(GPU_ONLY(
-        "gpu_lower_parallel_reduction",
-        static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerParallelReduction)));
+        static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                             const std::optional<double> &)>(
+            &gpu::lowerParallelReduction<const std::optional<bool> &,
+                                         const std::optional<double> &>),
+        "func"_a, "as_subprocess"_a = std::nullopt,
+        "timeout"_a = std::nullopt));
+    m.def(
+        GPU_ONLY("gpu_lower_parallel_reduction",
+                 static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                                      const std::optional<double> &)>(
+                     &gpu::lowerParallelReduction),
+                 "stmt"_a, "as_subprocess"_a = std::nullopt,
+                 "timeout"_a = std::nullopt));
 
-    m.def(GPU_ONLY("gpu_normalize_threads",
-                   static_cast<Func (*)(const Func &)>(&gpu::normalizeThreads),
-                   "func"_a));
-    m.def(GPU_ONLY("gpu_normalize_threads",
-                   static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeThreads),
-                   "stmt"_a));
+    m.def(
+        GPU_ONLY("gpu_normalize_threads",
+                 static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                                      const std::optional<double> &)>(
+                     &gpu::normalizeThreads<const std::optional<bool> &,
+                                            const std::optional<double> &>),
+                 "func"_a, "as_subprocess"_a = std::nullopt,
+                 "timeout"_a = std::nullopt));
+    m.def(
+        GPU_ONLY("gpu_normalize_threads",
+                 static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                                      const std::optional<double> &)>(
+                     &gpu::normalizeThreads),
+                 "stmt"_a, "as_subprocess"_a = std::nullopt,
+                 "timeout"_a = std::nullopt));
+
+    m.def(
+        GPU_ONLY("gpu_normalize_var_in_kernel",
+                 static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                                      const std::optional<double> &)>(
+                     &gpu::normalizeVarInKernel<const std::optional<bool> &,
+                                                const std::optional<double> &>),
+                 "func"_a, "as_subprocess"_a = std::nullopt,
+                 "timeout"_a = std::nullopt));
+    m.def(
+        GPU_ONLY("gpu_normalize_var_in_kernel",
+                 static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                                      const std::optional<double> &)>(
+                     &gpu::normalizeVarInKernel),
+                 "stmt"_a, "as_subprocess"_a = std::nullopt,
+                 "timeout"_a = std::nullopt));
 
     m.def(GPU_ONLY(
-        "gpu_normalize_var_in_kernel",
-        static_cast<Func (*)(const Func &)>(&gpu::normalizeVarInKernel),
-        "func"_a));
+        "gpu_make_sync",
+        static_cast<Func (*)(const Func &, const Ref<GPUTarget> &,
+                             const std::optional<bool> &,
+                             const std::optional<double> &)>(
+            &gpu::makeSync<const Ref<GPUTarget> &, const std::optional<bool> &,
+                           const std::optional<double> &>),
+        "func"_a, "target"_a, "as_subprocess"_a = std::nullopt,
+        "timeout"_a = std::nullopt));
     m.def(GPU_ONLY(
-        "gpu_normalize_var_in_kernel",
-        static_cast<Stmt (*)(const Stmt &)>(&gpu::normalizeVarInKernel),
-        "stmt"_a));
+        "gpu_make_sync",
+        static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &,
+                             const std::optional<bool> &,
+                             const std::optional<double> &)>(&gpu::makeSync),
+        "stmt"_a, "target"_a, "as_subprocess"_a = std::nullopt,
+        "timeout"_a = std::nullopt));
 
-    m.def(GPU_ONLY("gpu_make_sync",
-                   static_cast<Func (*)(const Func &, const Ref<GPUTarget> &)>(
-                       &gpu::makeSync),
-                   "func"_a, "target"_a));
-    m.def(GPU_ONLY("gpu_make_sync",
-                   static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &)>(
-                       &gpu::makeSync),
-                   "stmt"_a, "target"_a));
-
-    m.def(GPU_ONLY(
-        "gpu_multiplex_buffers",
-        static_cast<Func (*)(const Func &, const Ref<GPUTarget> &, const ID &)>(
-            &gpu::multiplexBuffers),
-        "func"_a, "target"_a, "def_id"_a = std::nullopt));
-    m.def(GPU_ONLY(
-        "gpu_multiplex_buffers",
-        static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &, const ID &)>(
-            &gpu::multiplexBuffers),
-        "stmt"_a, "target"_a, "def_id"_a = std::nullopt));
+    m.def(
+        GPU_ONLY("gpu_multiplex_buffers",
+                 static_cast<Func (*)(const Func &, const Ref<GPUTarget> &,
+                                      const ID &, const std::optional<bool> &,
+                                      const std::optional<double> &)>(
+                     &gpu::multiplexBuffers<const Ref<GPUTarget> &, const ID &,
+                                            const std::optional<bool> &,
+                                            const std::optional<double> &>),
+                 "func"_a, "target"_a, py::arg_v("def_id", ID(), "ID()"),
+                 "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt));
+    m.def(GPU_ONLY("gpu_multiplex_buffers",
+                   static_cast<Stmt (*)(const Stmt &, const Ref<GPUTarget> &,
+                                        const ID &, const std::optional<bool> &,
+                                        const std::optional<double> &)>(
+                       &gpu::multiplexBuffers),
+                   "stmt"_a, "target"_a, py::arg_v("def_id", ID(), "ID()"),
+                   "as_subprocess"_a = std::nullopt,
+                   "timeout"_a = std::nullopt));
 
     m.def(GPU_ONLY(
         "gpu_simplex_buffers",
-        static_cast<Func (*)(const Func &, const ID &)>(&gpu::simplexBuffers),
-        "func"_a, "def_id"_a = std::nullopt));
-    m.def(GPU_ONLY(
-        "gpu_simplex_buffers",
-        static_cast<Stmt (*)(const Stmt &, const ID &)>(&gpu::simplexBuffers),
-        "stmt"_a, "def_id"_a = std::nullopt));
+        static_cast<Func (*)(const Func &, const ID &,
+                             const std::optional<bool> &,
+                             const std::optional<double> &)>(
+            &gpu::simplexBuffers<const ID &, const std::optional<bool> &,
+                                 const std::optional<double> &>),
+        "func"_a, py::arg_v("def_id", ID(), "ID()"),
+        "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt));
+    m.def(GPU_ONLY("gpu_simplex_buffers",
+                   static_cast<Stmt (*)(
+                       const Stmt &, const ID &, const std::optional<bool> &,
+                       const std::optional<double> &)>(&gpu::simplexBuffers),
+                   "stmt"_a, py::arg_v("def_id", ID(), "ID()"),
+                   "as_subprocess"_a = std::nullopt,
+                   "timeout"_a = std::nullopt));
 
-    m.def(GPU_ONLY("gpu_lower_vector",
-                   static_cast<Func (*)(const Func &)>(&gpu::lowerVector),
-                   "func"_a));
-    m.def(GPU_ONLY("gpu_lower_vector",
-                   static_cast<Stmt (*)(const Stmt &)>(&gpu::lowerVector),
-                   "stmt"_a));
+    m.def(
+        GPU_ONLY("gpu_lower_vector",
+                 static_cast<Func (*)(const Func &, const std::optional<bool> &,
+                                      const std::optional<double> &)>(
+                     &gpu::lowerVector<const std::optional<bool> &,
+                                       const std::optional<double> &>),
+                 "func"_a, "as_subprocess"_a = std::nullopt,
+                 "timeout"_a = std::nullopt));
+    m.def(GPU_ONLY(
+        "gpu_lower_vector",
+        static_cast<Stmt (*)(const Stmt &, const std::optional<bool> &,
+                             const std::optional<double> &)>(&gpu::lowerVector),
+        "stmt"_a, "as_subprocess"_a = std::nullopt,
+        "timeout"_a = std::nullopt));
 
 #undef GPU_ONLY
 
     m.def("lower",
           static_cast<Func (*)(const Func &, const Ref<Target> &,
-                               const std::unordered_set<std::string> &, int)>(
-              &lower),
+                               const std::unordered_set<std::string> &, int,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(&lower),
           "func"_a, "target"_a = nullptr,
-          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0);
+          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0,
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
     m.def("lower",
           static_cast<Stmt (*)(const Stmt &, const Ref<Target> &,
-                               const std::unordered_set<std::string> &, int)>(
-              &lower),
+                               const std::unordered_set<std::string> &, int,
+                               const std::optional<bool> &,
+                               const std::optional<double> &)>(&lower),
           "stmt"_a, "target"_a = nullptr,
-          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0);
+          "skip_passes"_a = std::unordered_set<std::string>{}, "verbose"_a = 0,
+          "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt);
 }
 
 } // namespace freetensor

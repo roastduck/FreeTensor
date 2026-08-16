@@ -2,6 +2,7 @@
 #include <pass/simplify.h>
 #include <schedule.h>
 #include <schedule/check_not_in_lib.h>
+#include <schedule/subprocess_utils.h>
 #include <schedule/unroll.h>
 
 namespace freetensor {
@@ -82,7 +83,18 @@ Stmt unroll(const Stmt &_ast, const ID &loop, bool immediate) {
     return ast;
 }
 
-void Schedule::unroll(const ID &loop, bool immediate) {
+void Schedule::unroll(const ID &loop, bool immediate,
+                      const std::optional<bool> &asSubprocess,
+                      const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "unroll", ast(),
+            subprocessArgs(
+                {"--loop", idArg(loop), "--immediate", boolArg(immediate)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log = appendLog(
         MAKE_SCHEDULE_LOG(Unroll, freetensor::unroll, loop, immediate));

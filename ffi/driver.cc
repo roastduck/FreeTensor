@@ -36,18 +36,15 @@ void init_ffi_driver(py::module_ &m) {
 
     // Serialization
     m.def("load_target",
-          [](const std::pair<const std::string &, const std::string &>
-                 &txt_data) { return std::apply(loadTarget, txt_data); });
+          [](const std::string &txt) { return loadTarget(txt); });
     m.def("load_device",
           [](const std::pair<const std::string &, const std::string &>
                  &txt_data) { return std::apply(loadDevice, txt_data); });
     m.def("load_array",
           [](const std::pair<const std::string &, const std::string &>
                  &txt_data) { return std::apply(loadArray, txt_data); });
-    m.def("dump_target", [](const Ref<Target> &target_) {
-        auto &&[ret_meta, ret_data] = dumpTarget(target_);
-        return std::make_pair(ret_meta, py::bytes(ret_data));
-    });
+    m.def("dump_target",
+          [](const Ref<Target> &target_) { return dumpTarget(target_); });
     m.def("dump_device", [](const Ref<Device> &device_) {
         auto &&[ret_meta, ret_data] = dumpDevice(device_);
         return std::make_pair(ret_meta, py::bytes(ret_data));

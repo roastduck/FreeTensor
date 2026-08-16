@@ -2,14 +2,15 @@ import freetensor as ft
 import pytest
 
 
-def test_basic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_basic(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 8, label="L2") as j:
                 y[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
-    merged = s.merge("L1", "L2")
+    merged = s.merge("L1", "L2", as_subprocess=as_subprocess)
     assert s.find(merged) == s.find("$merge{L1, L2}")
     ast = ft.lower(s.ast(), skip_passes=["use_builtin_div"], verbose=1)
 
@@ -21,14 +22,15 @@ def test_basic():
     assert std.match(ast)
 
 
-def test_non_zero_begin():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_non_zero_begin(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 2, 6, label="L1") as i:
             with ft.For("j", 4, 12, label="L2") as j:
                 y[i - 2, j - 4] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L2")
+    s.merge("L1", "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -41,14 +43,15 @@ def test_non_zero_begin():
     assert std.match(ast)
 
 
-def test_step():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_step(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 2, -2, -2, label="L1") as i:
             with ft.For("j", 6, -2, -2, label="L2") as j:
                 y[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L2")
+    s.merge("L1", "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -62,7 +65,8 @@ def test_step():
     assert std.match(ast)
 
 
-def test_invalid():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_invalid(as_subprocess):
     with ft.VarDef("y", (4, 4, 4), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, 4, label="L2") as j:
@@ -71,12 +75,13 @@ def test_invalid():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.merge("L1", "L3")
+        s.merge("L1", "L3", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_if_in_between():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_if_in_between(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -85,7 +90,7 @@ def test_if_in_between():
                     y[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L2")
+    s.merge("L1", "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -100,7 +105,8 @@ def test_if_in_between():
     assert std.match(ast)
 
 
-def test_stmt_in_between():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_stmt_in_between(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -109,7 +115,7 @@ def test_stmt_in_between():
                 y[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L2")
+    s.merge("L1", "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -125,7 +131,8 @@ def test_stmt_in_between():
     assert std.match(ast)
 
 
-def test_loop_in_between():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_loop_in_between(as_subprocess):
     with ft.VarDef([("y", (4, 8), "int32", "output", "cpu"),
                     ("z", (4, 8), "int32", "output", "cpu")]) as (y, z):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -135,7 +142,7 @@ def test_loop_in_between():
                 y[i, j] = i * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L3")
+    s.merge("L1", "L3", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -152,7 +159,8 @@ def test_loop_in_between():
     assert std.match(ast)
 
 
-def test_def_in_between():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_def_in_between(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -162,7 +170,7 @@ def test_def_in_between():
                     y[i, j] = z[()] * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L2")
+    s.merge("L1", "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -179,7 +187,8 @@ def test_def_in_between():
     assert std.match(ast)
 
 
-def test_def_in_between_besides_inner_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_def_in_between_besides_inner_loop(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -191,7 +200,7 @@ def test_def_in_between_besides_inner_loop():
                     y[i, j] = z[()] * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L2")
+    s.merge("L1", "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -210,7 +219,8 @@ def test_def_in_between_besides_inner_loop():
     assert std.match(ast)
 
 
-def test_prop_expr_of_outer_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_prop_expr_of_outer_loop(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.VarDef("z", (), "int32", "output", "cpu") as z:
@@ -219,7 +229,7 @@ def test_prop_expr_of_outer_loop():
                     y[i, j] = z[()] * j
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.merge("L1", "L2")
+    s.merge("L1", "L2", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -235,7 +245,8 @@ def test_prop_expr_of_outer_loop():
     assert std.match(ast)
 
 
-def test_no_merge_if_outer_iter_var_is_used_in_inner():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_merge_if_outer_iter_var_is_used_in_inner(as_subprocess):
     with ft.VarDef("y", (4, 8), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4, label="L1") as i:
             with ft.For("j", 0, i, label="L2") as j:
@@ -243,4 +254,4 @@ def test_no_merge_if_outer_iter_var_is_used_in_inner():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast, verbose=2)
     with pytest.raises(ft.InvalidSchedule):
-        s.merge("L1", "L2")
+        s.merge("L1", "L2", as_subprocess=as_subprocess)

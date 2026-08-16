@@ -8,7 +8,8 @@ target = device.target()
 # in test/40.codegen
 
 
-def test_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_found(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -18,13 +19,14 @@ def test_not_found():
     s = ft.Schedule(func)
     code = ft.codegen(s.func(), target)
     with pytest.raises(ft.InvalidSchedule):
-        s.vectorize("L0")
+        s.vectorize("L0", as_subprocess=as_subprocess)
     code_ = ft.codegen(s.func(), target)
 
     assert str(code) == str(code_)
 
 
-def test_dep_not_met():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dep_not_met(as_subprocess):
     with ft.VarDef("y", (5,), "int32", "inout", "cpu") as y:
         with ft.For("i", 1, 5, label="L1") as i:
             y[i] = y[i - 1] + y[i]
@@ -33,13 +35,14 @@ def test_dep_not_met():
     s = ft.Schedule(func)
     code = ft.codegen(s.func(), target)
     with pytest.raises(ft.InvalidSchedule):
-        s.vectorize("L1")
+        s.vectorize("L1", as_subprocess=as_subprocess)
     code_ = ft.codegen(s.func(), target)
 
     assert str(code) == str(code_)
 
 
-def test_dep_not_met_reduction():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_dep_not_met_reduction(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[...] = 0
@@ -50,7 +53,7 @@ def test_dep_not_met_reduction():
     s = ft.Schedule(func)
     code = ft.codegen(s.func(), target)
     with pytest.raises(ft.InvalidSchedule):
-        s.vectorize("L1")
+        s.vectorize("L1", as_subprocess=as_subprocess)
     code_ = ft.codegen(s.func(), target)
 
     assert str(code) == str(code_)

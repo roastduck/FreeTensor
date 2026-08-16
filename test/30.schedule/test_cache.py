@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_cache_read():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cache_read(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -12,7 +13,7 @@ def test_cache_read():
                 y[i] += x[i, j] * (x[i, j] + 1)
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache("S0", "x", "cpu")
+    s.cache("S0", "x", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -30,7 +31,8 @@ def test_cache_read():
     assert std.match(ast)
 
 
-def test_cache_write():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cache_write(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4,), "int32", "output", "cpu"),
@@ -41,7 +43,7 @@ def test_cache_write():
                 y[i] += x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache(s.find("L1").body, "y", "cpu")
+    s.cache(s.find("L1").body, "y", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -61,7 +63,8 @@ def test_cache_write():
     assert std.match(ast)
 
 
-def test_reduction():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_reduction(as_subprocess):
     with ft.VarDef([("x", (4, 8, 8), "int32", "input", "cpu"),
                     ("y", (4, 8), "int32", "inout", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -71,7 +74,7 @@ def test_reduction():
     ast = ft.pop_ast()
     print(ast)
     s = ft.Schedule(ast)
-    s.cache("L2", "y", "cpu")
+    s.cache("L2", "y", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)
@@ -92,7 +95,8 @@ def test_reduction():
     assert std.match(ast)
 
 
-def test_cache_read_and_write():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cache_read_and_write(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "inout", "cpu"),
@@ -105,7 +109,7 @@ def test_cache_read_and_write():
                     y[i, j] = x[i, j] + 1
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache("S0", "y", "cpu")
+    s.cache("S0", "y", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
 
@@ -126,7 +130,8 @@ def test_cache_read_and_write():
     assert std.match(ast)
 
 
-def test_different_indices():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_different_indices(as_subprocess):
     with ft.VarDef([("x", (5,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -134,7 +139,7 @@ def test_different_indices():
             y[i] = x[i] + x[i + 1]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache("S0", "x", "cpu")
+    s.cache("S0", "x", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
@@ -152,7 +157,8 @@ def test_different_indices():
     assert std.match(ast)
 
 
-def test_no_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_var(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "cpu"),
         ("y", (4, 8), "int32", "output", "cpu"),
@@ -164,12 +170,13 @@ def test_no_var():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache("S0", "z", "cpu")
+        s.cache("S0", "z", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_no_stmt():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_no_stmt(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -179,12 +186,13 @@ def test_no_stmt():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.cache("S0", "x", "cpu")
+        s.cache("S0", "x", "cpu", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_sharing_locals():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_sharing_locals(as_subprocess):
     with ft.VarDef([
         ("x", (4, 8), "int32", "input", "gpu/global"),
         ("y", (4, 8), "int32", "output", "gpu/global"),
@@ -194,15 +202,16 @@ def test_sharing_locals():
                 y[i, j] = x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.parallelize("L2", "threadIdx.x")
+    s.parallelize("L2", "threadIdx.x", as_subprocess=as_subprocess)
     ast = s.ast()
     with pytest.raises(ft.InvalidSchedule):
-        s.cache("L2", "y", "gpu/local")
+        s.cache("L2", "y", "gpu/local", as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_local_var_as_index():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_local_var_as_index(as_subprocess):
     with ft.VarDef([("x", (4, 8), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4, label="L1") as i:
@@ -211,7 +220,7 @@ def test_local_var_as_index():
                 y[i] += x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache("L2", "x", "cpu")
+    s.cache("L2", "x", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -230,7 +239,8 @@ def test_local_var_as_index():
     assert std.match(ast)
 
 
-def test_cache_with_condition():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cache_with_condition(as_subprocess):
     with ft.VarDef([
         ("n", (), "int32", "input", "cpu"),
         ("x", (4, 8), "int32", "input", "cpu"),
@@ -243,7 +253,7 @@ def test_cache_with_condition():
                     y[i] += x[i, j] * 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache("L2", "x", "cpu")
+    s.cache("L2", "x", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=['prop_one_time_use'], verbose=1)
@@ -266,7 +276,8 @@ def test_cache_with_condition():
     assert std.match(ast)
 
 
-def test_cache_with_multiple_conditions():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cache_with_multiple_conditions(as_subprocess):
     with ft.VarDef([
         ("n", (), "int32", "input", "cpu"),
         ("m", (), "int32", "input", "cpu"),
@@ -283,7 +294,7 @@ def test_cache_with_multiple_conditions():
                     y[i] += x[i, j] * 3
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache("L2", "x", "cpu")
+    s.cache("L2", "x", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1, skip_passes=['prop_one_time_use'])
@@ -311,7 +322,8 @@ def test_cache_with_multiple_conditions():
     assert std.match(ast)
 
 
-def test_fill_is_necessary_when_possibly_not_written():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_fill_is_necessary_when_possibly_not_written(as_subprocess):
     with ft.VarDef([("x", (3, 4), "int32", "input", "cpu"),
                     ("y", (3, 4), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 2, label="L1") as i:
@@ -322,7 +334,7 @@ def test_fill_is_necessary_when_possibly_not_written():
                 y[2, j] = x[1, j]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.cache(s.find("L2").body, "y", "cpu")
+    s.cache(s.find("L2").body, "y", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, verbose=1)

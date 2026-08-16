@@ -55,7 +55,9 @@ def lower(ast=None,
           target: Optional[ffi.Target] = None,
           skip_passes: Sequence[str] = [],
           jit_cache: Callable[Callable, Callable] = functools.cache,
-          verbose: int = 0):
+          verbose: int = 0,
+          as_subprocess=None,
+          timeout=None):
     '''
     Lower an AST using a series of passes
 
@@ -99,11 +101,18 @@ def lower(ast=None,
                 return lower(ast.instantiate_by_only_jit_args(*jit_args),
                              target=target,
                              skip_passes=skip_passes,
-                             verbose=verbose)
+                             verbose=verbose,
+                             as_subprocess=as_subprocess,
+                             timeout=timeout)
 
         return LowerTemplate(ast.params, ast.jit_param_names)
 
-    ret = ffi.lower(ast, target, skip_passes=set(skip_passes), verbose=verbose)
+    ret = ffi.lower(ast,
+                    target,
+                    skip_passes=set(skip_passes),
+                    verbose=verbose,
+                    as_subprocess=as_subprocess,
+                    timeout=timeout)
     if isinstance(ast, Func):
         ret = Func(ret.name, ret.params, ret.returns, ret.body)
         if ast.has_backward():
@@ -112,6 +121,8 @@ def lower(ast=None,
                       target=target,
                       skip_passes=skip_passes,
                       jit_cache=jit_cache,
-                      verbose=verbose), ast.input_name_to_gradient_name,
+                      verbose=verbose,
+                      as_subprocess=as_subprocess,
+                      timeout=timeout), ast.input_name_to_gradient_name,
                 ast.output_name_to_gradient_name)
     return ret

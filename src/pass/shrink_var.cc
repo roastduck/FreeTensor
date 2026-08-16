@@ -6,6 +6,7 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/z3_simplify.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -99,7 +100,12 @@ Stmt ShrinkVar::visit(const ReduceTo &_op) {
     return op;
 }
 
-Stmt shrinkVar(const Stmt &_op) {
+Stmt shrinkVar(const Stmt &_op, const std::optional<bool> &asSubprocess,
+               const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("shrink_var", _op, {}, asSubprocess,
+                                       timeout);
+    }
     auto op = removeDeadVar(_op);
 
     op = shrinkLinearIndices(op);

@@ -13,6 +13,7 @@ void init_ffi_except(py::module_ &m) {
     py::register_exception<SymbolNotFound>(m, "SymbolNotFound");
     py::register_exception<AssertAlwaysFalse>(m, "AssertAlwaysFalse");
     py::register_exception<ParserError>(m, "ParserError");
+    py::register_exception<SubprocessError>(m, "SubprocessError");
     py::register_exception<UnexpectedQueryResult>(m, "UnexpectedQueryResult");
 
     py::register_exception_translator([](std::exception_ptr p) {

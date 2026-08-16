@@ -13,6 +13,8 @@
 #include <pass/gpu/make_sync.h>
 #include <pass/merge_and_hoist_if.h>
 #include <pass/normalize_loops.h>
+#include <serialize/print_driver.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -561,7 +563,15 @@ static Stmt doMakeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
     return mergeAndHoistIf(op);
 }
 
-Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target) {
+Stmt makeSync(const Stmt &_op, const Ref<GPUTarget> &target,
+              const std::optional<bool> &asSubprocess,
+              const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>(
+            "gpu_make_sync", _op,
+            subprocessArgs({"--target-meta", dumpTarget(target)}), asSubprocess,
+            timeout);
+    }
     auto op = _op;
     while (true) {
         try {

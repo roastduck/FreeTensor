@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <functional>
+#include <optional>
 #include <unordered_map>
 
 #include <analyze/find_stmt.h>
@@ -18,6 +19,7 @@
 #include <schedule/schedule_log.h>
 #include <schedule/var_split.h>
 #include <stmt.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -56,6 +58,7 @@ class Schedule {
 
   private:
     void setAst(const Stmt &ast);
+    void applySubprocessResult(const SubprocessResult &result);
     void setLogs(const ScheduleLog &log);
 
     /**
@@ -270,8 +273,10 @@ class Schedule {
      * @return : (outer loop ID, inner loop ID), either ID can be invalid if
      * the loop is proved to have only a single iteration
      */
-    std::pair<ID, ID> split(const ID &id, int factor = -1, int nparts = -1,
-                            int shift = 0);
+    std::pair<ID, ID>
+    split(const ID &id, int factor = -1, int nparts = -1, int shift = 0,
+          const std::optional<bool> &asSubprocess = std::nullopt,
+          const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Reorder directly nested loops
@@ -288,7 +293,9 @@ class Schedule {
      * dependences
      */
     void reorder(const std::vector<ID> &order,
-                 ReorderMode mode = ReorderMode::PerfectOnly);
+                 ReorderMode mode = ReorderMode::PerfectOnly,
+                 const std::optional<bool> &asSubprocess = std::nullopt,
+                 const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Merge two directly nested loops into one
@@ -305,7 +312,9 @@ class Schedule {
      * @throw InvalidSchedule if the loops are not directly nested
      * @return : ID of the merged loop
      */
-    ID merge(const ID &loop1, const ID &loop2);
+    ID merge(const ID &loop1, const ID &loop2,
+             const std::optional<bool> &asSubprocess = std::nullopt,
+             const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Permute perfectly nested loops (directly nested loops without statements
@@ -358,11 +367,12 @@ class Schedule {
      * loop}). If a loop is removed because it has an empty body, it will not be
      * in the returned map
      */
-    std::pair<IDMap, IDMap> fission(const ID &loop, FissionSide side,
-                                    const ID &splitter,
-                                    bool allowEnlarge = true,
-                                    const std::string &suffix0 = ".0",
-                                    const std::string &suffix1 = ".1");
+    std::pair<IDMap, IDMap>
+    fission(const ID &loop, FissionSide side, const ID &splitter,
+            bool allowEnlarge = true, const std::string &suffix0 = ".0",
+            const std::string &suffix1 = ".1",
+            const std::optional<bool> &asSubprocess = std::nullopt,
+            const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Fuse two directly following loops with the same length into one
@@ -386,8 +396,12 @@ class Schedule {
      * @return : ID of the result loop
      * @{
      */
-    ID fuse(const ID &loop0, const ID &loop1, bool strict = false);
-    ID fuse(const ID &loop0, bool strict = false);
+    ID fuse(const ID &loop0, const ID &loop1, bool strict = false,
+            const std::optional<bool> &asSubprocess = std::nullopt,
+            const std::optional<double> &timeout = std::nullopt);
+    ID fuse(const ID &loop0, bool strict = false,
+            const std::optional<bool> &asSubprocess = std::nullopt,
+            const std::optional<double> &timeout = std::nullopt);
     /** @} */
 
     /**
@@ -399,7 +413,9 @@ class Schedule {
      * @throw InvalidSchedule if the statements are not found or the
      * dependences cannot be solved
      */
-    void swap(const std::vector<ID> &order);
+    void swap(const std::vector<ID> &order,
+              const std::optional<bool> &asSubprocess = std::nullopt,
+              const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Unroll a loop and interleave statements from each iteration
@@ -428,7 +444,9 @@ class Schedule {
      * @throw InvalidSchedule if the loop is not found, the loop length is not a
      * constant, or the dependences cannot be solved
      */
-    void blend(const ID &loop);
+    void blend(const ID &loop,
+               const std::optional<bool> &asSubprocess = std::nullopt,
+               const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Cache a variable into a new local variable
@@ -465,7 +483,9 @@ class Schedule {
      * node of the cache variable)
      */
     std::tuple<ID, ID, std::string, ID>
-    cache(const ID &stmt, const std::string &var, MemType mtype);
+    cache(const ID &stmt, const std::string &var, MemType mtype,
+          const std::optional<bool> &asSubprocess = std::nullopt,
+          const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Perform local reductions (e.g. sum) in a local variable first, and then
@@ -497,7 +517,9 @@ class Schedule {
      * cache variable, ID of the VarDef node of the cache variable)
      */
     std::tuple<ID, ID, std::string, ID>
-    cacheReduction(const ID &stmt, const std::string &var, MemType mtype);
+    cacheReduction(const ID &stmt, const std::string &var, MemType mtype,
+                   const std::optional<bool> &asSubprocess = std::nullopt,
+                   const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Change where a variable is stored
@@ -518,8 +540,12 @@ class Schedule {
      *
      * @{
      */
-    void setMemType(const ID &def, MemType mtype);
-    void setMemType(const ID &def, MemType mtype, bool rejectIndirectAccess);
+    void setMemType(const ID &def, MemType mtype,
+                    const std::optional<bool> &asSubprocess = std::nullopt,
+                    const std::optional<double> &timeout = std::nullopt);
+    void setMemType(const ID &def, MemType mtype, bool rejectIndirectAccess,
+                    const std::optional<bool> &asSubprocess = std::nullopt,
+                    const std::optional<double> &timeout = std::nullopt);
     /** @} */
 
     /**
@@ -539,7 +565,9 @@ class Schedule {
      * @throw InvalidSchedule if the variable or the dimension is not found
      */
     void varSplit(const ID &def, int dim, VarSplitMode mode, int factor = -1,
-                  int nparts = -1);
+                  int nparts = -1,
+                  const std::optional<bool> &asSubprocess = std::nullopt,
+                  const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Merge two dimensions of a variable
@@ -547,7 +575,9 @@ class Schedule {
      * @param def : ID of the VarDef statement of the specific variable
      * @param dim : Merge the `dim`-th and the `(dim + 1)`-th dimension
      */
-    void varMerge(const ID &def, int dim);
+    void varMerge(const ID &def, int dim,
+                  const std::optional<bool> &asSubprocess = std::nullopt,
+                  const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Reorder the dimensions of a variable
@@ -556,7 +586,9 @@ class Schedule {
      * @param order : new order of the dimensions
      * @throw InvalidSchedule if the variable or the order is illegal
      */
-    void varReorder(const ID &def, const std::vector<int> &order);
+    void varReorder(const ID &def, const std::vector<int> &order,
+                    const std::optional<bool> &asSubprocess = std::nullopt,
+                    const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Insert a singleton (1-lengthed) dimension to a variable
@@ -570,7 +602,9 @@ class Schedule {
      * @throw InvalidSchedule if the variable is not found or the dimension is
      * illegal
      */
-    void varUnsqueeze(const ID &def, int dim);
+    void varUnsqueeze(const ID &def, int dim,
+                      const std::optional<bool> &asSubprocess = std::nullopt,
+                      const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Remove a singleton (1-lengthed) dimension from a variable
@@ -584,7 +618,9 @@ class Schedule {
      * @throw InvalidSchedule if the variable is not found or the dimension is
      * illegal
      */
-    void varSqueeze(const ID &def, int dim);
+    void varSqueeze(const ID &def, int dim,
+                    const std::optional<bool> &asSubprocess = std::nullopt,
+                    const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Move a statement to a new position
@@ -602,7 +638,10 @@ class Schedule {
      * @return : (The new ID of the moved statement, The out-most newly
      * introduced statments including the added loops)
      */
-    std::pair<ID, ID> moveTo(const ID &stmt, MoveToSide side, const ID &dst);
+    std::pair<ID, ID>
+    moveTo(const ID &stmt, MoveToSide side, const ID &dst,
+           const std::optional<bool> &asSubprocess = std::nullopt,
+           const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Remove a variable. When the variable is used, recompute its value
@@ -611,7 +650,9 @@ class Schedule {
      * not be an I/O varible
      * @throw InvalidSchedule if the variable cannot be completely removed
      */
-    void inlining(const ID &def);
+    void inlining(const ID &def,
+                  const std::optional<bool> &asSubprocess = std::nullopt,
+                  const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Mark a loop with a parallel implementation
@@ -675,7 +716,9 @@ class Schedule {
      * parallelized
      */
     void parallelize(const ID &loop, const ParallelScope &parallel,
-                     bool allowReduction = true);
+                     bool allowReduction = true,
+                     const std::optional<bool> &asSubprocess = std::nullopt,
+                     const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Parallelize a loop nest according to another loop nest to keep a tensor
@@ -690,7 +733,9 @@ class Schedule {
      * @throw InvalidSchedule if any of the ID is not found, or the reference
      * loop nest is already thread-non-local.
      */
-    void parallelizeAs(const ID &nest, const ID &reference, const ID &defId);
+    void parallelizeAs(const ID &nest, const ID &reference, const ID &defId,
+                       const std::optional<bool> &asSubprocess = std::nullopt,
+                       const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Unroll a loop
@@ -705,7 +750,9 @@ class Schedule {
      * @throw InvalidSchedule if the loop is not found or length of the loop is
      * not a constant
      */
-    void unroll(const ID &loop, bool immediate = false);
+    void unroll(const ID &loop, bool immediate = false,
+                const std::optional<bool> &asSubprocess = std::nullopt,
+                const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Vectorize a loop
@@ -718,7 +765,9 @@ class Schedule {
      * @throw InvalidSchedule if the ID or name is not found, or the dependence
      * requirement is not met
      */
-    void vectorize(const ID &loop);
+    void vectorize(const ID &loop,
+                   const std::optional<bool> &asSubprocess = std::nullopt,
+                   const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Seperate main iterations and tail iterations of a loop
@@ -760,7 +809,9 @@ class Schedule {
      * different branch. Set this parameter to true to stop duplicating VarDef
      * nodes.
      */
-    void separateTail(bool noDuplicateVarDefs = false);
+    void separateTail(bool noDuplicateVarDefs = false,
+                      const std::optional<bool> &asSubprocess = std::nullopt,
+                      const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Transform nested loops to be a external call to a matrix multiplication
@@ -780,10 +831,16 @@ class Schedule {
      * multiplication
      */
     void asMatMul(const ID &loop, AsMatMulMode mode, const Ref<Target> &target,
-                  MatMulBackend backend);
-    void asMatMul(const ID &loop, AsMatMulMode mode, const Ref<Target> &target);
+                  MatMulBackend backend,
+                  const std::optional<bool> &asSubprocess = std::nullopt,
+                  const std::optional<double> &timeout = std::nullopt);
+    void asMatMul(const ID &loop, AsMatMulMode mode, const Ref<Target> &target,
+                  const std::optional<bool> &asSubprocess = std::nullopt,
+                  const std::optional<double> &timeout = std::nullopt);
     void asMatMul(const ID &loop,
-                  AsMatMulMode mode = AsMatMulMode::KeepMemLayout);
+                  AsMatMulMode mode = AsMatMulMode::KeepMemLayout,
+                  const std::optional<bool> &asSubprocess = std::nullopt,
+                  const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Use Pluto+ algorithm to permute and fuse two loops, with as most
@@ -807,11 +864,12 @@ class Schedule {
      * @return std::pair<ID, int> : The ID of fused loop and level of
      * parallelizable loops
      */
-    std::pair<ID, int> plutoFuse(const ID &loop0, const ID &loop1,
-                                 int nestLevel0 = 0, int nestLevel1 = 0,
-                                 int fusableOverlapThreshold = 1,
-                                 int fusableNonOverlapTolerance = 4,
-                                 bool doSimplify = true);
+    std::pair<ID, int>
+    plutoFuse(const ID &loop0, const ID &loop1, int nestLevel0 = 0,
+              int nestLevel1 = 0, int fusableOverlapThreshold = 1,
+              int fusableNonOverlapTolerance = 4, bool doSimplify = true,
+              const std::optional<bool> &asSubprocess = std::nullopt,
+              const std::optional<double> &timeout = std::nullopt);
 
     /**
      * Use Pluto+ algorithm to permute a single loop, with as most
@@ -825,8 +883,10 @@ class Schedule {
      * @return std::pair<ID, int> : The ID of permuted loop and level of
      * parallelizable loops
      */
-    std::pair<ID, int> plutoPermute(const ID &loop, int nestLevel = 0,
-                                    bool doSimplify = true);
+    std::pair<ID, int>
+    plutoPermute(const ID &loop, int nestLevel = 0, bool doSimplify = true,
+                 const std::optional<bool> &asSubprocess = std::nullopt,
+                 const std::optional<double> &timeout = std::nullopt);
 
     /**
      * (Experimental) Automatic scheduling using some heuristics

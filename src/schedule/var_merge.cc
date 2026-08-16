@@ -1,5 +1,6 @@
 #include <pass/const_fold.h>
 #include <schedule.h>
+#include <schedule/subprocess_utils.h>
 #include <schedule/var_merge.h>
 
 namespace freetensor {
@@ -75,7 +76,18 @@ Stmt varMerge(const Stmt &_ast, const ID &def, int dim) {
     return constFold(ast);
 }
 
-void Schedule::varMerge(const ID &def, int dim) {
+void Schedule::varMerge(const ID &def, int dim,
+                        const std::optional<bool> &asSubprocess,
+                        const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "var_merge", ast(),
+            subprocessArgs(
+                {"--vardef", idArg(def), "--dim", std::to_string(dim)}),
+            timeout);
+        applySubprocessResult(result);
+        return;
+    }
     beginTransaction();
     auto log =
         appendLog(MAKE_SCHEDULE_LOG(VarMerge, freetensor::varMerge, def, dim));

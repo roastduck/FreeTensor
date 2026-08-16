@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_move_out_first():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_out_first(as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y", (4,), "int32", "inout", "cpu"),
@@ -11,7 +13,7 @@ def test_move_out_first():
                 y[i] = 0
             y[i] += x[i]
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
@@ -25,7 +27,8 @@ def test_move_out_first():
     assert std.match(ast)
 
 
-def test_move_out_last():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_move_out_last(as_subprocess):
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),
         ("y", (4,), "int32", "inout", "cpu"),
@@ -35,7 +38,7 @@ def test_move_out_last():
             with ft.If(i == 3):
                 y[i] = 0
     ast = ft.pop_ast(verbose=True)
-    ast = ft.lower(ast, verbose=1)
+    ast = ft.lower(ast, verbose=1, as_subprocess=as_subprocess)
 
     with ft.VarDef([
         ("x", (4,), "int32", "input", "cpu"),

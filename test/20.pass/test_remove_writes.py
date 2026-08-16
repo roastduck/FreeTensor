@@ -1,7 +1,9 @@
 import freetensor as ft
+import pytest
 
 
-def test_type1_write_then_write():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_write(as_subprocess):
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
         y[()] = 2
@@ -11,7 +13,8 @@ def test_type1_write_then_write():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 2
@@ -20,7 +23,8 @@ def test_type1_write_then_write():
     assert std.match(ast)
 
 
-def test_type1_write_then_write_across_loops():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_write_across_loops(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = i + 1
@@ -32,7 +36,8 @@ def test_type1_write_then_write_across_loops():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -42,7 +47,8 @@ def test_type1_write_then_write_across_loops():
     assert std.match(ast)
 
 
-def test_type1_before_read():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_before_read(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
                     ("y2", (), "int32", "output", "cpu")]) as (x, y1, y2):
@@ -57,7 +63,8 @@ def test_type1_before_read():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
@@ -71,7 +78,8 @@ def test_type1_before_read():
     assert std.match(ast)
 
 
-def test_type1_one_then_many():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_one_then_many(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         y[0] = 1
         with ft.For("i", 0, 4) as i:
@@ -82,7 +90,8 @@ def test_type1_one_then_many():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -92,7 +101,8 @@ def test_type1_one_then_many():
     assert std.match(ast)
 
 
-def test_type1_one_then_many_reduce_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_one_then_many_reduce_no_remove(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         y[0] = 1
         with ft.For("i", 0, 4) as i:
@@ -103,7 +113,8 @@ def test_type1_one_then_many_reduce_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         y[0] = 1
@@ -114,7 +125,8 @@ def test_type1_one_then_many_reduce_no_remove():
     assert std.match(ast)
 
 
-def test_type1_many_then_ones():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_many_then_ones(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = i
@@ -128,7 +140,8 @@ def test_type1_many_then_ones():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         y[0] = 0
@@ -140,7 +153,8 @@ def test_type1_many_then_ones():
     assert std.match(ast)
 
 
-def test_type1_many_then_ones_reduce():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_many_then_ones_reduce(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = 1
@@ -154,7 +168,8 @@ def test_type1_many_then_ones_reduce():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         y[0] = 2
@@ -166,7 +181,8 @@ def test_type1_many_then_ones_reduce():
     assert std.match(ast)
 
 
-def test_type1_many_then_one_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_many_then_one_no_remove(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = i
@@ -177,7 +193,8 @@ def test_type1_many_then_one_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -188,7 +205,8 @@ def test_type1_many_then_one_no_remove():
     assert std.match(ast)
 
 
-def test_type1_repeated_then_one():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_repeated_then_one(as_subprocess):
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[0] = i
@@ -199,7 +217,8 @@ def test_type1_repeated_then_one():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (1,), "int32", "output", "cpu") as y:
         y[0] = 1
@@ -208,7 +227,8 @@ def test_type1_repeated_then_one():
     assert std.match(ast)
 
 
-def test_type1_write_then_reduce():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_reduce(as_subprocess):
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
         y[()] = y[()] + 2
@@ -218,7 +238,8 @@ def test_type1_write_then_reduce():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 3
@@ -227,7 +248,8 @@ def test_type1_write_then_reduce():
     assert std.match(ast)
 
 
-def test_type1_write_then_reduce_sub():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_reduce_sub(as_subprocess):
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
         y[()] = y[()] - 2
@@ -237,7 +259,8 @@ def test_type1_write_then_reduce_sub():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = -1
@@ -246,7 +269,8 @@ def test_type1_write_then_reduce_sub():
     assert std.match(ast)
 
 
-def test_type1_write_then_reduce_across_loops():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_reduce_across_loops(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] = i + 1
@@ -258,7 +282,8 @@ def test_type1_write_then_reduce_across_loops():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -268,7 +293,8 @@ def test_type1_write_then_reduce_across_loops():
     assert std.match(ast)
 
 
-def test_type1_write_then_reduce_across_loops_different_indices():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_reduce_across_loops_different_indices(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 2, 6) as i:
             y[i - 2] = i + 1
@@ -280,7 +306,8 @@ def test_type1_write_then_reduce_across_loops_different_indices():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -290,7 +317,8 @@ def test_type1_write_then_reduce_across_loops_different_indices():
     assert std.match(ast)
 
 
-def test_type1_write_then_reduce_expr_modified_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_reduce_expr_modified_no_remove(as_subprocess):
     with ft.VarDef([("y", (), "int32", "output", "cpu"),
                     ("z", (), "int32", "inout", "cpu")]) as (y, z):
         y[()] = z[()]
@@ -302,7 +330,8 @@ def test_type1_write_then_reduce_expr_modified_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("y", (), "int32", "output", "cpu"),
                     ("z", (), "int32", "inout", "cpu")]) as (y, z):
@@ -314,7 +343,8 @@ def test_type1_write_then_reduce_expr_modified_no_remove():
     assert std.match(ast)
 
 
-def test_type1_reduce_then_reduce():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_reduce_then_reduce(as_subprocess):
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
         y[()] += 1
         y[()] += 2
@@ -324,7 +354,8 @@ def test_type1_reduce_then_reduce():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
         y[()] += 3
@@ -333,7 +364,8 @@ def test_type1_reduce_then_reduce():
     assert std.match(ast)
 
 
-def test_type1_reduce_then_reduce_sub():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_reduce_then_reduce_sub(as_subprocess):
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
         y[()] -= 1
         y[()] -= 2
@@ -343,7 +375,8 @@ def test_type1_reduce_then_reduce_sub():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "inout", "cpu") as y:
         y[()] -= 3
@@ -352,7 +385,8 @@ def test_type1_reduce_then_reduce_sub():
     assert std.match(ast)
 
 
-def test_type1_reduce_then_reduce_across_loops():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_reduce_then_reduce_across_loops(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4) as i:
             y[i] += 1
@@ -364,7 +398,8 @@ def test_type1_reduce_then_reduce_across_loops():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -374,7 +409,8 @@ def test_type1_reduce_then_reduce_across_loops():
     assert std.match(ast)
 
 
-def test_type1_reduce_then_reduce_across_loops_differnet_indices():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_reduce_then_reduce_across_loops_differnet_indices(as_subprocess):
     with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
         with ft.For("i", 2, 6) as i:
             y[i - 2] += i
@@ -386,7 +422,8 @@ def test_type1_reduce_then_reduce_across_loops_differnet_indices():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (4,), "int32", "inout", "cpu") as y:
         with ft.For("i", 0, 4) as i:
@@ -396,7 +433,8 @@ def test_type1_reduce_then_reduce_across_loops_differnet_indices():
     assert std.match(ast)
 
 
-def test_type1_write_then_multiple_reduces():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_multiple_reduces(as_subprocess):
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
         y[()] = y[()] + 2
@@ -407,7 +445,8 @@ def test_type1_write_then_multiple_reduces():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 6
@@ -416,7 +455,8 @@ def test_type1_write_then_multiple_reduces():
     assert std.match(ast)
 
 
-def test_type1_write_then_loop_then_reduce_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_write_then_loop_then_reduce_no_remove(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 0
@@ -429,7 +469,8 @@ def test_type1_write_then_loop_then_reduce_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -442,7 +483,8 @@ def test_type1_write_then_loop_then_reduce_no_remove():
     assert std.match(ast)
 
 
-def test_type1_read_by_following_write_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_read_by_following_write_no_remove(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()]
@@ -454,7 +496,8 @@ def test_type1_read_by_following_write_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -466,7 +509,8 @@ def test_type1_read_by_following_write_no_remove():
     assert std.match(ast)
 
 
-def test_type1_not_kill_later_store():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_not_kill_later_store(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[()] > 0):
@@ -478,7 +522,8 @@ def test_type1_not_kill_later_store():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("y", (), "int32", "output", "cpu") as y:
         y[()] = 1
@@ -487,7 +532,8 @@ def test_type1_not_kill_later_store():
     assert std.match(ast)
 
 
-def test_type1_not_kill_later_reduce_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_not_kill_later_reduce_no_remove(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         with ft.If(x[()] > 0):
@@ -499,7 +545,8 @@ def test_type1_not_kill_later_reduce_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -511,7 +558,8 @@ def test_type1_not_kill_later_reduce_no_remove():
     assert std.match(ast)
 
 
-def test_type1_not_kill_earlier_store_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_not_kill_earlier_store_no_remove(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = 1
@@ -523,7 +571,8 @@ def test_type1_not_kill_earlier_store_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -535,7 +584,8 @@ def test_type1_not_kill_earlier_store_no_remove():
     assert std.match(ast)
 
 
-def test_type1_not_kill_earlier_reduce_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type1_not_kill_earlier_reduce_no_remove(as_subprocess):
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
         y[()] = x[()] + 1
@@ -547,7 +597,8 @@ def test_type1_not_kill_earlier_reduce_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (), "int32", "input", "cpu"),
                     ("y", (), "int32", "output", "cpu")]) as (x, y):
@@ -559,7 +610,8 @@ def test_type1_not_kill_earlier_reduce_no_remove():
     assert std.match(ast)
 
 
-def test_type2_inner_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type2_inner_loop(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -571,7 +623,8 @@ def test_type2_inner_loop():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (4,), "int32", "output", "cpu")]) as (x, y):
@@ -582,7 +635,8 @@ def test_type2_inner_loop():
     assert std.match(ast)
 
 
-def test_type2_outer_loop():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type2_outer_loop(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (8,), "int32", "output", "cpu")]) as (x, y):
         with ft.For("i", 0, 4) as i:
@@ -594,7 +648,8 @@ def test_type2_outer_loop():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (8,), "int32", "output", "cpu")]) as (x, y):
@@ -605,7 +660,8 @@ def test_type2_outer_loop():
     assert std.match(ast)
 
 
-def test_type2_used_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type2_used_no_remove(as_subprocess):
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (1,), "int32", "output", "cpu"),
                     ("z", (4,), "int32", "output", "cpu"),
@@ -620,7 +676,8 @@ def test_type2_used_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x", (4,), "int32", "input", "cpu"),
                     ("y", (1,), "int32", "output", "cpu"),
@@ -635,7 +692,8 @@ def test_type2_used_no_remove():
     assert std.match(ast)
 
 
-def test_type2_dynamic():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_type2_dynamic(as_subprocess):
     with ft.VarDef([("n", (), "int32", "input", "byvalue"),
                     ("m", (), "int32", "input", "byvalue")]) as (n, m):
         with ft.Assert(ft.l_and(n[()] > 0, m[()] > 0)):
@@ -652,7 +710,8 @@ def test_type2_dynamic():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("n", (), "int32", "input", "byvalue"),
                     ("m", (), "int32", "input", "byvalue")]) as (n, m):
@@ -668,7 +727,8 @@ def test_type2_dynamic():
     assert std.match(ast)
 
 
-def test_cross_var_def():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_cross_var_def(as_subprocess):
     with ft.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),
                     ("y1", (), "int32", "output", "cpu"),
@@ -687,7 +747,8 @@ def test_cross_var_def():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("x1", (), "int32", "input", "cpu"),
                     ("x2", (), "int32", "input", "cpu"),
@@ -704,7 +765,8 @@ def test_cross_var_def():
     assert std.match(ast)
 
 
-def test_same_parent_but_dep_and_circular_dependence_on_init():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_same_parent_but_dep_and_circular_dependence_on_init(as_subprocess):
     with ft.VarDef([("f", (10,), "float32", "output", "cpu"),
                     ("u", (10,), "float32", "cache", "cpu")]) as (f, u):
         with ft.For("l", 0, 10) as l:
@@ -720,7 +782,8 @@ def test_same_parent_but_dep_and_circular_dependence_on_init():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("f", (10,), "float32", "output", "cpu"),
                     ("u", (10,), "float32", "cache", "cpu")]) as (f, u):
@@ -735,7 +798,8 @@ def test_same_parent_but_dep_and_circular_dependence_on_init():
     assert std.match(ast)
 
 
-def test_circular_dependence_in_parallel():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_circular_dependence_in_parallel(as_subprocess):
     with ft.VarDef([("a", (256,), "float32", "inout", "cpu"),
                     ("b", (256,), "float32", "cache", "cpu"),
                     ("c", (256,), "float32", "cache", "cpu")]) as (a, b, c):
@@ -761,7 +825,8 @@ def test_circular_dependence_in_parallel():
                        "cpu_lower_parallel_reduction", 'scalar_prop_const',
                        'tensor_prop_const', 'prop_one_time_use'
                    ],
-                   verbose=1)
+                   verbose=1,
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef([("a", (256,), "float32", "inout", "cpu"),
                     ("c", (256,), "float32", "cache", "cpu")]) as (a, c):
@@ -782,7 +847,8 @@ def test_circular_dependence_in_parallel():
     assert std.match(ast)
 
 
-def test_one_loop_depends_on_multiple_statements_no_remove():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_one_loop_depends_on_multiple_statements_no_remove(as_subprocess):
     with ft.VarDef("u", (2, 2), "float64", "input", "cpu") as u:
         with ft.VarDef("y", (2,), "float64", "output", "cpu") as y:
             with ft.VarDef("tmp", (2,), "float64", "cache", "cpu") as tmp:
@@ -805,7 +871,8 @@ def test_one_loop_depends_on_multiple_statements_no_remove():
                    skip_passes=[
                        'scalar_prop_const', 'tensor_prop_const',
                        'prop_one_time_use', 'make_heap_alloc', 'float_simplify'
-                   ])
+                   ],
+                   as_subprocess=as_subprocess)
 
     with ft.VarDef("u", (2, 2), "float64", "input", "cpu") as u:
         with ft.VarDef("y", (2,), "float64", "output", "cpu") as y:

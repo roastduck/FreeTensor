@@ -9,6 +9,7 @@
 #include <func.h>
 #include <mutator.h>
 #include <pass/const_fold.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -49,7 +50,9 @@ class FloatSimplify : public SymbolTable<ConstFold> {
  *
  * This pass is by-passed when Config::fastMath is unset
  */
-Stmt floatSimplify(const Stmt &op);
+Stmt floatSimplify(const Stmt &op,
+                   const std::optional<bool> &asSubprocess = std::nullopt,
+                   const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(floatSimplify)
 

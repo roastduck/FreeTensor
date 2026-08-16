@@ -7,6 +7,7 @@
 #include <schedule.h>
 #include <schedule/check_not_in_lib.h>
 #include <schedule/split.h>
+#include <schedule/subprocess_utils.h>
 
 namespace freetensor {
 
@@ -114,7 +115,21 @@ std::pair<Stmt, std::pair<ID, ID>> split(const Stmt &_ast, const ID &id,
 }
 
 std::pair<ID, ID> Schedule::split(const ID &id, int factor, int nparts,
-                                  int shift) {
+                                  int shift,
+                                  const std::optional<bool> &asSubprocess,
+                                  const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        auto result = runTransformSubprocess(
+            "split", ast(),
+            subprocessArgs({"--id", idArg(id), "--factor",
+                            std::to_string(factor), "--nparts",
+                            std::to_string(nparts), "--shift",
+                            std::to_string(shift)}),
+            timeout);
+        applySubprocessResult(result);
+        const auto &info = result.info_.value();
+        return {idFromJson(info["outer"]), idFromJson(info["inner"])};
+    }
     beginTransaction();
     auto log = appendLog(
         MAKE_SCHEDULE_LOG(Split, freetensor::split, id, factor, nparts, shift));

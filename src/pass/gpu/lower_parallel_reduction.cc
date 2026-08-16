@@ -13,6 +13,7 @@
 #include <pass/shrink_var.h>
 #include <pass/simplify.h>
 #include <pass/sink_var.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -279,7 +280,13 @@ Stmt CorrectInterThreadDependence::visit(const For &op) {
     return ret;
 }
 
-Stmt lowerParallelReduction(const Stmt &_op) {
+Stmt lowerParallelReduction(const Stmt &_op,
+                            const std::optional<bool> &asSubprocess,
+                            const std::optional<double> &timeout) {
+    if (shouldRunInSubprocess(asSubprocess, timeout)) {
+        return runPassSubprocess<Stmt>("gpu_lower_parallel_reduction", _op, {},
+                                       asSubprocess, timeout);
+    }
     auto op = _op;
 
     // 0. Pre-run pass/gpu/normalize_thread_dims here before

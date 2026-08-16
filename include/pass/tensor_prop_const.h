@@ -2,6 +2,7 @@
 #define FREE_TENSOR_TENSOR_PROP_CONST_H
 
 #include <func.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -32,7 +33,9 @@ namespace freetensor {
  * destination is in this sub-tree
  */
 Stmt tensorPropConst(const Stmt &op, const ID &bothInSubAST = ID(),
-                     const ID &eitherInSubAST = ID());
+                     const ID &eitherInSubAST = ID(),
+                     const std::optional<bool> &asSubprocess = std::nullopt,
+                     const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(tensorPropConst)
 

@@ -7,6 +7,7 @@
 #include <func.h>
 #include <mutator.h>
 #include <pass/rename_var.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -43,7 +44,9 @@ class HoistVarOverStmtSeq : public RenameVar {
  */
 Stmt hoistVarOverStmtSeq(
     const Stmt &op,
-    const std::optional<std::vector<ID>> &togetherIds = std::nullopt);
+    const std::optional<std::vector<ID>> &togetherIds = std::nullopt,
+    const std::optional<bool> &asSubprocess = std::nullopt,
+    const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(hoistVarOverStmtSeq)
 

@@ -9,6 +9,7 @@
 #include <func.h>
 #include <memory>
 #include <mutator.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -34,7 +35,9 @@ class NormalizeVarInKernel : public CompTransientBounds<SymbolTable<Mutator>> {
  * The shape of all variables defined inside a kernel must be determined outside
  * the kernel
  */
-Stmt normalizeVarInKernel(const Stmt &s);
+Stmt normalizeVarInKernel(
+    const Stmt &s, const std::optional<bool> &asSubprocess = std::nullopt,
+    const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(normalizeVarInKernel)
 

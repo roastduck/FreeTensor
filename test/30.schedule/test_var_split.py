@@ -2,7 +2,8 @@ import freetensor as ft
 import pytest
 
 
-def test_factor():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_factor(as_subprocess):
     with ft.VarDef("z", (), "int32", "inout", "cpu") as z:
         ft.MarkLabel("Dy")
         with ft.VarDef("y", (8,), "int32", "cache", "cpu") as y:
@@ -12,7 +13,11 @@ def test_factor():
                 z[...] += y[i]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_split("Dy", 0, ft.VarSplitMode.FixedSize, 4)
+    s.var_split("Dy",
+                0,
+                ft.VarSplitMode.FixedSize,
+                4,
+                as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast,
@@ -33,7 +38,8 @@ def test_factor():
     assert std.match(ast)
 
 
-def test_nparts():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_nparts(as_subprocess):
     with ft.VarDef("z", (), "int32", "inout", "cpu") as z:
         ft.MarkLabel("Dy")
         with ft.VarDef("y", (8,), "int32", "cache", "cpu") as y:
@@ -43,7 +49,11 @@ def test_nparts():
                 z[...] += y[i]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_split("Dy", 0, ft.VarSplitMode.FixedSize, nparts=4)
+    s.var_split("Dy",
+                0,
+                ft.VarSplitMode.FixedSize,
+                nparts=4,
+                as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast,
@@ -64,7 +74,8 @@ def test_nparts():
     assert std.match(ast)
 
 
-def test_non_divisible():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_non_divisible(as_subprocess):
     with ft.VarDef("z", (), "int32", "inout", "cpu") as z:
         ft.MarkLabel("Dy")
         with ft.VarDef("y", (10,), "int32", "cache", "cpu") as y:
@@ -74,7 +85,11 @@ def test_non_divisible():
                 z[...] += y[i]
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_split("Dy", 0, ft.VarSplitMode.FixedSize, 4)
+    s.var_split("Dy",
+                0,
+                ft.VarSplitMode.FixedSize,
+                4,
+                as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast,
@@ -95,14 +110,19 @@ def test_non_divisible():
     assert std.match(ast)
 
 
-def test_view_of_io_var():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_view_of_io_var(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
             y[i] = i
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_split("Dy", 0, ft.VarSplitMode.FixedSize, 4)
+    s.var_split("Dy",
+                0,
+                ft.VarSplitMode.FixedSize,
+                4,
+                as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
     ast = ft.lower(ast, skip_passes=["use_builtin_div"], verbose=1)
@@ -120,7 +140,8 @@ def test_view_of_io_var():
     assert std.match(ast)
 
 
-def test_guard_view_when_caching():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_guard_view_when_caching(as_subprocess):
     ft.MarkLabel("Dx")
     with ft.VarDef("x", (10,), "int32", "input", "cpu") as x:
         with ft.VarDef([("y", (10,), "int32", "output", "cpu"),
@@ -130,8 +151,12 @@ def test_guard_view_when_caching():
                 z[i] = x[i] + 2
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
-    s.var_split("Dx", 0, ft.VarSplitMode.FixedSize, 4)
-    s.cache("Li", "x.view", "cpu")
+    s.var_split("Dx",
+                0,
+                ft.VarSplitMode.FixedSize,
+                4,
+                as_subprocess=as_subprocess)
+    s.cache("Li", "x.view", "cpu", as_subprocess=as_subprocess)
     ast = s.ast()
     print(ast)
 
@@ -156,7 +181,8 @@ def test_guard_view_when_caching():
     assert std.match(ast)
 
 
-def test_not_found():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_not_found(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
@@ -164,12 +190,16 @@ def test_not_found():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_split("Dx", 0, ft.VarSplitMode.FixedSize)
+        s.var_split("Dx",
+                    0,
+                    ft.VarSplitMode.FixedSize,
+                    as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)
 
 
-def test_out_of_range():
+@pytest.mark.parametrize("as_subprocess", [False, True])
+def test_out_of_range(as_subprocess):
     ft.MarkLabel("Dy")
     with ft.VarDef("y", (8,), "int32", "output", "cpu") as y:
         with ft.For("i", 0, 8) as i:
@@ -177,6 +207,9 @@ def test_out_of_range():
     ast = ft.pop_ast(verbose=True)
     s = ft.Schedule(ast)
     with pytest.raises(ft.InvalidSchedule):
-        s.var_split("Dy", 1, ft.VarSplitMode.FixedSize)
+        s.var_split("Dy",
+                    1,
+                    ft.VarSplitMode.FixedSize,
+                    as_subprocess=as_subprocess)
     ast_ = s.ast()  # Should not changed
     assert ast_.match(ast)

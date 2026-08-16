@@ -14,6 +14,7 @@
 #include <math/bounds.h>
 #include <mutator.h>
 #include <pass/const_fold.h>
+#include <subprocess.h>
 #include <visitor.h>
 
 namespace freetensor {
@@ -156,8 +157,12 @@ class PBSimplify : public SimplifyPass {
  * @{
  */
 Stmt builtinSimplify(const Stmt &op);
-Stmt pbSimplify(const Stmt &op);
-Stmt simplify(const Stmt &op);
+Stmt pbSimplify(const Stmt &op,
+                const std::optional<bool> &asSubprocess = std::nullopt,
+                const std::optional<double> &timeout = std::nullopt);
+Stmt simplify(const Stmt &op,
+              const std::optional<bool> &asSubprocess = std::nullopt,
+              const std::optional<double> &timeout = std::nullopt);
 /** @} */
 
 DEFINE_PASS_FOR_FUNC(builtinSimplify)

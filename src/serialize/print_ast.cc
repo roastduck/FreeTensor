@@ -1,4 +1,5 @@
 #include <cctype>
+#include <cmath>
 
 #include <config.h>
 #include <container_utils.h>
@@ -284,6 +285,14 @@ void PrintVisitor::visit(const IntConst &op) {
 }
 
 void PrintVisitor::visit(const FloatConst &op) {
+    if (std::isnan(op->val_)) {
+        ERROR("NaN floating constants are not supported by AST serialization");
+    }
+    if (std::isinf(op->val_)) {
+        os() << prettyLiteral(op->val_ < 0 ? "-@!inf" : "@!inf");
+        return;
+    }
+
     std::ostringstream oss;
     if (hexFloat_) {
         oss << std::hexfloat << op->val_;

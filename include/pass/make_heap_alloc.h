@@ -6,6 +6,7 @@
 #include <func.h>
 #include <mutator.h>
 #include <pass/const_fold.h>
+#include <subprocess.h>
 
 namespace freetensor {
 
@@ -74,7 +75,9 @@ class MakeHeapAlloc : public ConstFold {
  *
  * This transformation is not applied to scalars
  */
-Stmt makeHeapAlloc(const Stmt &op);
+Stmt makeHeapAlloc(const Stmt &op,
+                   const std::optional<bool> &asSubprocess = std::nullopt,
+                   const std::optional<double> &timeout = std::nullopt);
 
 DEFINE_PASS_FOR_FUNC(makeHeapAlloc);
 

@@ -83,10 +83,13 @@ void init_ffi_schedule(py::module_ &m) {
              static_cast<std::vector<Stmt> (Schedule::*)(const Ref<Selector> &)
                              const>(&Schedule::findAtLeastOne))
         .def("split", &Schedule::split, "id"_a, "factor"_a = -1,
-             "nparts"_a = -1, "shift"_a = 0)
+             "nparts"_a = -1, "shift"_a = 0, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
         .def("reorder", &Schedule::reorder, "order"_a,
-             "mode"_a = ReorderMode::PerfectOnly)
-        .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a)
+             "mode"_a = ReorderMode::PerfectOnly,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("merge", &Schedule::merge, "loop1"_a, "loop2"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def(
             "permute",
             [](Schedule &s, const std::vector<ID> &loopsId,
@@ -102,63 +105,98 @@ void init_ffi_schedule(py::module_ &m) {
             },
             "loops_id"_a, "transform_func"_a)
         .def("fission", &Schedule::fission, "loop"_a, "side"_a, "splitter"_a,
-             "allow_enlarge"_a = true, "suffix0"_a = ".0", "suffix1"_a = ".1")
+             "allow_enlarge"_a = true, "suffix0"_a = ".0", "suffix1"_a = ".1",
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("fuse",
-             static_cast<ID (Schedule::*)(const ID &, const ID &, bool)>(
-                 &Schedule::fuse),
-             "loop0"_a, "loop1"_a, "strict"_a = false)
+             static_cast<ID (Schedule::*)(
+                 const ID &, const ID &, bool, const std::optional<bool> &,
+                 const std::optional<double> &)>(&Schedule::fuse),
+             "loop0"_a, "loop1"_a, "strict"_a = false,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("fuse",
-             static_cast<ID (Schedule::*)(const ID &, bool)>(&Schedule::fuse),
-             "loop0"_a, "strict"_a = false)
-        .def("swap", &Schedule::swap, "order"_a)
-        .def("blend", &Schedule::blend, "loop"_a)
-        .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a)
+             static_cast<ID (Schedule::*)(
+                 const ID &, bool, const std::optional<bool> &,
+                 const std::optional<double> &)>(&Schedule::fuse),
+             "loop0"_a, "strict"_a = false, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
+        .def("swap", &Schedule::swap, "order"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("blend", &Schedule::blend, "loop"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("cache", &Schedule::cache, "stmt"_a, "var"_a, "mtype"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("cache_reduction", &Schedule::cacheReduction, "stmt"_a, "var"_a,
-             "mtype"_a)
+             "mtype"_a, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
         .def("set_mem_type",
-             static_cast<void (Schedule::*)(const ID &, MemType)>(
-                 &Schedule::setMemType),
-             "vardef"_a, "mtype"_a)
+             static_cast<void (Schedule::*)(
+                 const ID &, MemType, const std::optional<bool> &,
+                 const std::optional<double> &)>(&Schedule::setMemType),
+             "vardef"_a, "mtype"_a, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
         .def("set_mem_type",
-             static_cast<void (Schedule::*)(const ID &, MemType, bool)>(
+             static_cast<void (Schedule::*)(const ID &, MemType, bool,
+                                            const std::optional<bool> &,
+                                            const std::optional<double> &)>(
                  &Schedule::setMemType),
-             "vardef"_a, "mtype"_a, "reject_indirect_access"_a)
+             "vardef"_a, "mtype"_a, "reject_indirect_access"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("var_split", &Schedule::varSplit, "vardef"_a, "dim"_a, "mode"_a,
-             "factor"_a = -1, "nparts"_a = -1)
-        .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a)
-        .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a)
-        .def("var_unsqueeze", &Schedule::varUnsqueeze, "vardef"_a, "dim"_a)
-        .def("var_squeeze", &Schedule::varSqueeze, "vardef"_a, "dim"_a)
-        .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a)
-        .def("inline", &Schedule::inlining, "vardef"_a)
+             "factor"_a = -1, "nparts"_a = -1, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
+        .def("var_merge", &Schedule::varMerge, "vardef"_a, "dim"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("var_reorder", &Schedule::varReorder, "vardef"_a, "order"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("var_unsqueeze", &Schedule::varUnsqueeze, "vardef"_a, "dim"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("var_squeeze", &Schedule::varSqueeze, "vardef"_a, "dim"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("move_to", &Schedule::moveTo, "stmt"_a, "side"_a, "dst"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("inline", &Schedule::inlining, "vardef"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("parallelize", &Schedule::parallelize, "loop"_a, "parallel"_a,
-             "allow_reduction"_a = true)
+             "allow_reduction"_a = true, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
         .def("parallelize_as", &Schedule::parallelizeAs, "nest"_a,
-             "reference"_a, "def_id"_a)
-        .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false)
-        .def("vectorize", &Schedule::vectorize, "loop"_a)
+             "reference"_a, "def_id"_a, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
+        .def("unroll", &Schedule::unroll, "loop"_a, "immedate"_a = false,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
+        .def("vectorize", &Schedule::vectorize, "loop"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("separate_tail", &Schedule::separateTail,
-             "noDuplicateVarDefs"_a = false)
+             "noDuplicateVarDefs"_a = false, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
         .def("as_matmul",
              static_cast<void (Schedule::*)(
-                 const ID &, AsMatMulMode, const Ref<Target> &, MatMulBackend)>(
+                 const ID &, AsMatMulMode, const Ref<Target> &, MatMulBackend,
+                 const std::optional<bool> &, const std::optional<double> &)>(
                  &Schedule::asMatMul),
-             "loop"_a, "mode"_a, "target"_a, "backend"_a)
+             "loop"_a, "mode"_a, "target"_a, "backend"_a,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("as_matmul",
-             static_cast<void (Schedule::*)(const ID &, AsMatMulMode,
-                                            const Ref<Target> &)>(
+             static_cast<void (Schedule::*)(
+                 const ID &, AsMatMulMode, const Ref<Target> &,
+                 const std::optional<bool> &, const std::optional<double> &)>(
                  &Schedule::asMatMul),
-             "loop"_a, "mode"_a, "target"_a)
+             "loop"_a, "mode"_a, "target"_a, "as_subprocess"_a = std::nullopt,
+             "timeout"_a = std::nullopt)
         .def("as_matmul",
-             static_cast<void (Schedule::*)(const ID &, AsMatMulMode)>(
-                 &Schedule::asMatMul),
-             "loop"_a, "mode"_a = AsMatMulMode::KeepMemLayout)
+             static_cast<void (Schedule::*)(
+                 const ID &, AsMatMulMode, const std::optional<bool> &,
+                 const std::optional<double> &)>(&Schedule::asMatMul),
+             "loop"_a, "mode"_a = AsMatMulMode::KeepMemLayout,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("pluto_fuse", &Schedule::plutoFuse, "loop0"_a, "loop1"_a,
              "nest_level_0"_a = 0, "nest_level_1"_a = 0,
              "fusable_overlap_threshold"_a = 1,
-             "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true)
+             "fusable_nonoverlap_tolerance"_a = 4, "do_simplify"_a = true,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("pluto_permute", &Schedule::plutoPermute, "loop"_a,
-             "nest_level"_a = 0, "do_simplify"_a = true)
+             "nest_level"_a = 0, "do_simplify"_a = true,
+             "as_subprocess"_a = std::nullopt, "timeout"_a = std::nullopt)
         .def("auto_schedule",
              [](Schedule &s, const Ref<Target> &target) {
                  // Pybind11 doesn't support Ref<std::vector>, need lambda
