@@ -196,8 +196,8 @@ Stmt sinkVar(const Stmt &_op,
     std::unordered_set<ID> needDepAnalysis, analyzedDeps;
     std::unordered_set<std::pair<ID, ID>> deps; // {(vardef, loop)}
     for (int i = 0;; i++) {
-        if (i > 100) {
-            WARNING("SinkVar iterates over 100 rounds. Maybe there is a bug");
+        if (i > 500) {
+            WARNING("SinkVar iterates over 500 rounds. Maybe there is a bug");
             break;
         }
 

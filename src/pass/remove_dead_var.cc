@@ -132,9 +132,9 @@ Stmt removeDeadVar(const Stmt &_op) {
 
         RemoveDeadVar mutator;
         op = mutator(op);
-        if (mutator.isFixPoint() || i > 100) {
-            if (i > 100) {
-                WARNING("removeDeadVar iterates over 100 rounds. Maybe there "
+        if (mutator.isFixPoint() || i > 500) {
+            if (i > 500) {
+                WARNING("removeDeadVar iterates over 500 rounds. Maybe there "
                         "is a bug");
             }
             break;

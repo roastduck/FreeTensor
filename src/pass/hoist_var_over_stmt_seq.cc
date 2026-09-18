@@ -85,8 +85,8 @@ Stmt hoistVarOverStmtSeq(const Stmt &_op,
                          const std::optional<std::vector<ID>> &togetherIds) {
     auto op = _op;
     for (int i = 0;; i++) {
-        if (i > 100) {
-            WARNING("HoistVarOverStmtSeq iterates over 100 rounds. Maybe there "
+        if (i > 500) {
+            WARNING("HoistVarOverStmtSeq iterates over 500 rounds. Maybe there "
                     "is a bug");
             break;
         }
